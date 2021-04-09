@@ -20,47 +20,47 @@
 
 Don't bore us, give us the screen shots!
 
-Main entry screen
+**Main entry screen**
 
 ![screen](extras/screenshots/Clock.png)
 
-Tuner
+**Tuner**
 
 ![screen](extras/screenshots/Tuner.png)
 
-CD player
+**CD player**
 
 ![screen](extras/screenshots/CD%20player.png)
 
-Second trip counter
+**Second trip counter**
 
 ![screen](extras/screenshots/Trip%20counter%20%232.png)
 
-"Pre-flight" checks
+**"Pre-flight" checks**
 
 ![screen](extras/screenshots/Pre-flight%20checks.png)
 
-Instrument cluster
+**Instrument cluster**
 
 ![screen](extras/screenshots/Instruments.png)
 
-Current location
+**Current location**
 
 ![screen](extras/screenshots/Current%20location.png)
 
-Sat nav main menu
+**Sat nav main menu**
 
 ![screen](extras/screenshots/Sat%20nav%20menu.png)
 
-Sat nav enter destination - city
+**Sat nav enter destination - city**
 
 ![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
 
-Sat nav - personal address
+**Sat nav - personal address**
 
 ![screen](extras/screenshots/Sat%20nav%20address.png)
 
-Sat nav guidance
+**Sat nav guidance**
 
 ![screen](extras/screenshots/Sat%20nav%20guidance.png)
 
