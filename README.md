@@ -20,49 +20,49 @@
 
 Don't bore us, give us the screen shots!
 
-![screen](extras/screenshots/Clock.png)
-
 Main entry screen
 
-![screen](extras/screenshots/Tuner.png)
+![screen](extras/screenshots/Clock.png)
 
 Tuner
 
-![screen](extras/screenshots/CD%20player.png)
+![screen](extras/screenshots/Tuner.png)
 
 CD player
 
-![screen](extras/screenshots/Trip%20counter%20%232.png)
+![screen](extras/screenshots/CD%20player.png)
 
 Second trip counter
 
-![screen](extras/screenshots/Pre-flight%20checks.png)
+![screen](extras/screenshots/Trip%20counter%20%232.png)
 
 "Pre-flight" checks
 
-![screen](extras/screenshots/Instruments.png)
+![screen](extras/screenshots/Pre-flight%20checks.png)
 
 Instrument cluster
 
-![screen](extras/screenshots/Current%20location.png)
+![screen](extras/screenshots/Instruments.png)
 
 Current location
 
-![screen](extras/screenshots/Sat%20nav%20menu.png)
+![screen](extras/screenshots/Current%20location.png)
 
 Sat nav main menu
 
-![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
+![screen](extras/screenshots/Sat%20nav%20menu.png)
 
 Sat nav enter destination - city
 
-![screen](extras/screenshots/Sat%20nav%20address.png)
+![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
 
 Sat nav - personal address
 
-![screen](extras/screenshots/Sat%20nav%20guidance.png)
+![screen](extras/screenshots/Sat%20nav%20address.png)
 
 Sat nav guidance
+
+![screen](extras/screenshots/Sat%20nav%20guidance.png)
 
 ## 🎈 Description <a name = "description"></a>
 
