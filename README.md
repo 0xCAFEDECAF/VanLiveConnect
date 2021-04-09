@@ -8,10 +8,10 @@
 
 - [Screen Shots](#screenshots)
 - [Description](#description)
-- [Technical Details](#details")
+- [Technical Details](#details)
 - [Schematics](#schematics)
 - [Building the Project](#building)
-- [Used Libraries](#libraries")
+- [Used Libraries](#libraries)
 - [Work to be Done](#todo)
 - [Frequently Asked Questions](#faq)
 - [License](#license)
@@ -20,47 +20,47 @@
 
 Don't bore us, give us the screen shots!
 
-![screen](extras/schematics/Clock.png)
+![screen](extras/screenshots/Clock.png)
 
 Main entry screen
 
-![screen](extras/schematics/Tuner.png)
+![screen](extras/screenshots/Tuner.png)
 
 Tuner
 
-![screen](extras/schematics/CD%20Player.png)
+![screen](extras/screenshots/CD%20player.png)
 
 CD player
 
-![screen](extras/schematics/Trip%20counter%20#2.png)
+![screen](extras/screenshots/Trip%20counter%20%232.png)
 
 Second trip counter
 
-![screen](extras/schematics/Pre-flight%20checks.png)
+![screen](extras/screenshots/Pre-flight%20checks.png)
 
 "Pre-flight" checks
 
-![screen](extras/schematics/Instruments.png)
+![screen](extras/screenshots/Instruments.png)
 
 Instrument cluster
 
-![screen](extras/schematics/Current%20location.png)
+![screen](extras/screenshots/Current%20location.png)
 
 Current location
 
-![screen](extras/schematics/Sat%20nav%20menu.png)
+![screen](extras/screenshots/Sat%20nav%20menu.png)
 
 Sat nav main menu
 
-![screen](extras/schematics/Sat%20nav%20enter%20city.png)
+![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
 
 Sat nav enter destination - city
 
-![screen](extras/schematics/Sat%20nav%20address.png)
+![screen](extras/screenshots/Sat%20nav%20address.png)
 
 Sat nav - personal address
 
-![screen](extras/schematics/Sat%20nav%20guidance.png)
+![screen](extras/screenshots/Sat%20nav%20guidance.png)
 
 Sat nav guidance
 
@@ -146,8 +146,10 @@ To compile the project you will need the following:
 * [ESP8266 Board Manager](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed, and
 * Various libraries installed as listed in the [Used Libraries](#libraries") section below.
 
-In the "Tools" menu, choose a CPU frequency of 160 MHz, and set the lwIP variant to "v2 Higher Bandwidth
-(no features)".
+In the "Tools" menu, choose:
+
+* CPU frequency: 160 MHz, and
+* lwIP variant: "v2 Higher Bandwidth (no features)".
 
 #### Uploading
 
@@ -235,4 +237,3 @@ Do whatever you like with it, but contributions are appreciated!
 [level converter]: https://www.tinytronics.nl/shop/en/dc-dc-converters/level-converters/i2c-uart-bi-directional-logic-level-converter-5v-3.3v-2-channel-with-supply
 [SN65HVD230]: https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf?ts=1592992149874
 [voltage divider]: https://www.quora.com/How-many-pins-on-Arduino-Uno-give-a3-3v-pin-output
-
