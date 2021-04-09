@@ -56,7 +56,7 @@ Don't bore us, give us the screen shots!
 
 ![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
 
-**Sat nav - personal address**
+**Sat nav - personal address entry (not mine!)**
 
 ![screen](extras/screenshots/Sat%20nav%20personal%20address.png)
 
