@@ -58,7 +58,7 @@ Don't bore us, give us the screen shots!
 
 **Sat nav - personal address**
 
-![screen](extras/screenshots/Sat%20nav%20address.png)
+![screen](extras/screenshots/Sat%20nav%20personal%20address.png)
 
 **Sat nav guidance**
 
