@@ -40,7 +40,7 @@ Don't bore us, give us the screen shots!
 
 ![screen](extras/screenshots/Pre-flight%20checks.png)
 
-**Instrument cluster**
+**Instrument cluster (YMMV 🤣)**
 
 ![screen](extras/screenshots/Instruments.png)
 
