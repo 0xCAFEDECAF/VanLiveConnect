@@ -95,7 +95,7 @@ in order to stream the live data to be visualised.
 The web page itself, as served by this sketch, uses and self-hosts the following open-source bundles:
 * jQuery v3.5.1 - compressed, production version - original download
   [here](https://code.jquery.com/jquery-3.5.1.min.js).
-* FontAwesome v5.15.1 - original download
+* FontAwesome v5.15.2 - original download
   [here](https://use.fontawesome.com/releases/v5.15.2/fontawesome-free-5.15.2-web.zip).
 
 As said, the served web page self-hosts all resources. No internet connection is needed!
@@ -194,7 +194,7 @@ The application itself embeds:
   by John Resig is [licensed](https://github.com/jquery/jquery/blob/main/LICENSE.txt) under the
   [MIT License](https://opensource.org/licenses/MIT)
 
-* Font/icons [Font Awesome v5.15.1](https://use.fontawesome.com/releases/v5.15.2/fontawesome-free-5.15.2-web.zip)
+* Font/icons [Font Awesome v5.15.2](https://use.fontawesome.com/releases/v5.15.2/fontawesome-free-5.15.2-web.zip)
   by Dave Gandy is [licensed](https://fontawesome.com/license/free) under the following licenses:
   - Icons: [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/)
   - Fonts: [SIL OFL 1.1 License](https://scripts.sil.org/OFL)
