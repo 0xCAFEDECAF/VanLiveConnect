@@ -28,9 +28,21 @@ Don't bore us, give us the screen shots!
 
 ![screen](extras/screenshots/Tuner.png)
 
+**Tuner presets popup**
+
+![screen](extras/screenshots/Tuner%20presets%20popup.png)
+
+**Audio settings**
+
+![screen](extras/screenshots/Audio%20settings%20popup.png)
+
 **CD player**
 
 ![screen](extras/screenshots/CD%20player.png)
+
+**CD changer**
+
+![screen](extras/screenshots/CD%20changer.png)
 
 **Second trip counter**
 
@@ -63,6 +75,14 @@ Don't bore us, give us the screen shots!
 **Sat nav guidance**
 
 ![screen](extras/screenshots/Sat%20nav%20guidance.png)
+
+**Door open popup**
+
+![screen](extras/screenshots/Door%20open%20popup.png)
+
+**Warning popup**
+
+![screen](extras/screenshots/Warning%20popup.png)
 
 ## 🎈 Description <a name = "description"></a>
 
@@ -211,7 +231,8 @@ The application itself embeds:
 
 ## 👷 Work to be Done<a name = "todo"></a>
 
-Some menus and screens still need to be completed.
+* Some menus and screens still need to be completed.
+* Support other languages
 
 ## ❓ Frequently Asked Questions<a name = "faq"></a>
 
