@@ -387,8 +387,12 @@ void setup()
 #endif // WIFI_AP_MODE
     Serial.println(F("/MFD.html"));
 
-    VanBusRx.Setup(RX_PIN);
-    Serial.printf_P(PSTR("VanBusRx queue of size %d is set up\n"), VAN_RX_QUEUE_SIZE);
+    // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
+    // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
+    // Looks like it should be set to at least 100.
+    #define VAN_PACKET_QUEUE_SIZE 100
+    VanBusRx.Setup(RX_PIN, VAN_PACKET_QUEUE_SIZE);
+    Serial.printf_P(PSTR("VanBusRx queue of size %d is set up\n"), VanBusRx.QueueSize());
 
     irSetup();
 } // setup

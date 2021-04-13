@@ -669,8 +669,8 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="main_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
         Main menu<br style="line-height:100px;" />
-        <div 
-          class="button buttonSelected"
+        <div id="main_menu_goto_satnav_button"
+          class="button buttonDisabled"
           on_click="satnavGotoMainMenu();">
           Navigation / Guidance
         </div>
@@ -1323,13 +1323,13 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_last_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
             <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_last_destination_street" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_last_destination_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <!-- TODO - Keep this? Original MFD does not show house number here -->
             <!--
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_last_destination_house_number" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_last_destination_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
             -->
 

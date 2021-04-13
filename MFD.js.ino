@@ -253,8 +253,7 @@ function writeToDom(jsonObj)
                             for (var property in propertyObj)
                             {
                                 var value = propertyObj[property];
-                                //document.getElementById(item)[attribute][property] = value;
-                                $(selector).get(0)[attribute][property] = value; // TODO - check if this works
+                                $(selector).get(0)[attribute][property] = value;
                             } // for
                         }
                         else
@@ -295,8 +294,7 @@ function writeToDom(jsonObj)
                         $(selector).removeClass("ledOn");
                     } // if
                 }
-                //else if ($(selector).hasClass("icon") || document.getElementById(item) instanceof SVGElement)
-                else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement) // TODO - check if this works
+                else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
                 {
                     //console.log("ICON or SVG element", item);
 
@@ -459,8 +457,6 @@ function nextLargeScreen()
         "pre_flight",
         "instruments",
         "satnav_current_location",
-
-        // TODO - the following entries only to be shown in demo mode
 
         "main_menu",
         "screen_configuration_menu",
@@ -675,15 +671,15 @@ function gotoMenu(menu)
     // Skip disabled items
     while ($(items[nextSelectedIdx]).hasClass("buttonDisabled"))
     {
-        nextSelectedIdx = (nextSelectedIdx + 1) % menuLength;
+        nextSelectedIdx = (nextSelectedIdx + 1) % items.length;
         if (nextSelectedIdx === currentlySelectedIdx) break;
     } // while
 
     // Only if anything changed
     if (nextSelectedIdx !== currentlySelectedIdx)
     {
-        $(menu[currentlySelectedIdx]).removeClass("buttonSelected");
-        $(menu[nextSelectedIdx]).addClass("buttonSelected");
+        $(items[currentlySelectedIdx]).removeClass("buttonSelected");
+        $(items[nextSelectedIdx]).addClass("buttonSelected");
     } // if
 } // gotoMenu
 
@@ -2171,6 +2167,9 @@ function handleItemChange(item, value)
 
         case "satnav_status_2":
         {
+            // As soon as we hear anything from the sat nav, enable the "Navigation/Guidance" entry in the main menu
+            $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
+
             // Has anything changed?
             if (value === satnavMode) break;
             satnavMode = value;
@@ -2246,6 +2245,18 @@ function handleItemChange(item, value)
         {
             $("#satnav_current_destination_house_number_shown").text(
                 value === "" || value === "0" ? "No number" : value);
+        } // case
+        break;
+
+        case "satnav_last_destination_street":
+        {
+            $("#satnav_last_destination_street_shown").text(value === "" ? "City centre" : value);
+        } // case
+        break;
+
+        case "satnav_last_destination_house_number":
+        {
+            $("#satnav_last_destination_house_number_shown").text(value === "" ? "No number" : value);
         } // case
         break;
 
