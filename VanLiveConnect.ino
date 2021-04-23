@@ -58,7 +58,8 @@ char dummy_var_to_use_cpp11[] PROGMEM = R"==(")==";
 ESP8266WebServer webServer;
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-const String version = ESP.getSketchMD5();
+// Defined in Esp.ino
+extern const String md5Checksum;
 
 // Returns true if the actual Etag is equal to the received Etag in If-None-Match header field.
 // Shamelessly copied from: https://werner.rothschopf.net/microcontroller/202011_arduino_webserver_caching_en.htm .
@@ -216,7 +217,7 @@ void servePage(const char* urlPath, const char* mimeType, const char* content)
 {
     printHttpRequest();
     unsigned long start = millis();
-    if (! checkETag(version))
+    if (! checkETag(md5Checksum))
     {
         //webServer.sendHeader(F("Cache-Control"), F("public"), true);
         webServer.sendHeader(F("Cache-Control"), F("private, max-age=31536000"), true); // cache 365 days

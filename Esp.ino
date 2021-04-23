@@ -7,6 +7,8 @@ const char PROGMEM dioStr[] = "DIO";
 const char PROGMEM doutStr[] = "DOUT";
 const char PROGMEM unknownStr[] = "UNKNOWN";
 
+const String md5Checksum = ESP.getSketchMD5();
+
 void printSystemSpecs()
 {
     Serial.printf_P(PSTR("CPU Speed: %u MHz\n"), system_get_cpu_freq());
@@ -27,6 +29,9 @@ void printSystemSpecs()
         ideMode == FM_DOUT ? doutStr :
         unknownStr);
     Serial.printf_P(PSTR("Flash chip configuration %S\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
+
+    Serial.print(F("Software image MD5 checksum: "));
+    Serial.println(md5Checksum);
 
     // Might need this later
     Serial.print(F("Starting SPI Flash File System (SPIFFS)...."));
@@ -74,7 +79,9 @@ const char* espDataToJson()
             "\"esp_ip_address\": \"%s\",\n"
             "\"esp_wifi_rssi\": \"%d dB\",\n"
 
-            "\"esp_free_ram\": \"%u bytes\"\n"
+            "\"esp_free_ram\": \"%u bytes\",\n"
+
+            "\"img_md5_checksum\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -101,7 +108,9 @@ const char* espDataToJson()
         WiFi.localIP().toString().c_str(),
         WiFi.RSSI(),
 
-        system_get_free_heap_size()
+        system_get_free_heap_size(),
+
+        md5Checksum.c_str()
     );
 
     // JSON buffer overflow?
