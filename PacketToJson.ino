@@ -2832,20 +2832,27 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
 
     const uint8_t* data = pkt.Data();
 
-    static uint8_t report = 0xFF;
+    uint8_t globalSeqNo = data[0] & 0x07;
+    uint8_t packetFragmentNo = data[0] >> 3 & 0x0F;
+    bool lastPacket = data[0] & 0x80;
+
+    #define INVALID_SATNAV_REPORT (0xFF)
+    static uint8_t report = INVALID_SATNAV_REPORT;
+    static uint8_t lastFragmentNo = 0;
 
     int offsetInPacket = 1;
-    if ((data[0] & 0x7F) <= 7)
+    if (packetFragmentNo == 0)
     {
-        // First packet of a report sequence
+        // First fragment
 
         report = data[1];
+        lastFragmentNo = 0;
 
         // Reset
         offsetInPacket = 2;
         offsetInBuffer = 0;
 
-        // Clear all records and reset array indexes. Otherwise, if the last packet of the previous report sequence
+        // Clear all records and reset array indexes. Otherwise, if the last fragment of the previous report
         // was missed, the data will continue to pile up after the previous records.
         for (int i = 0; i < currentRecord; i++)
         {
@@ -2853,6 +2860,24 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
         } // for
         currentRecord = 0;
         currentString = 0;
+    }
+    else
+    {
+        // Missed a previous fragment?
+        if (report == INVALID_SATNAV_REPORT) return VAN_PACKET_PARSE_FRAGMENT_MISSED;
+
+        uint8_t expectedFragmentNo = lastFragmentNo + 1;
+        if (expectedFragmentNo > 0x0F) expectedFragmentNo = 1;  // Rolling over to 1 instead of 0??
+
+        // Missed the expected fragment?
+        if (packetFragmentNo != expectedFragmentNo)
+        {
+            Serial.printf_P(PSTR("--> packetFragmentNo = %u ; expectedFragmentNo = %u\n"), packetFragmentNo, expectedFragmentNo);
+            report = INVALID_SATNAV_REPORT;
+            return VAN_PACKET_PARSE_FRAGMENT_MISSED;
+        } // if
+
+        lastFragmentNo = packetFragmentNo;
     } // if
 
     while (offsetInPacket < dataLen - 1)
@@ -2888,26 +2913,6 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
             // Better safe than sorry
             if (currentRecord < MAX_SATNAV_RECORDS && currentString < MAX_SATNAV_STRINGS_PER_RECORD)
             {
-                // The last character can be 0x81: this indicates that the entry cannot be selected with the current
-                // disk
-                // Note: 0x81 is probably chosen because it is an empty character in the range of extended ASCII codes 
-                // TODO - use the String.replace function instead; see below
-/*
-                if (bufLen > 0 && buffer[bufLen - 1] == 0x81)
-                {
-                    static const char* circledSmallLetterX = "&#x24E7;";
-                    if (bufLen - 1 + sizeof(circledSmallLetterX) <= MAX_SATNAV_STRING_SIZE)
-                    {
-                        // Replace by JSON/HTML-friendly "&#x24E7;"
-                        strcpy(buffer + bufLen - 1, circledSmallLetterX);
-                    }
-                    else
-                    {
-                        // Not enough room to append the "&#x24E7;": simply replace the 0x81 by 'X'; what else can we do?
-                        buffer[bufLen - 1] = 'X';
-                    } // if
-                } // if
-*/
                 // Copy the current string buffer into the array
                 records[currentRecord][currentString] = buffer;
 
@@ -2917,8 +2922,6 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 records[currentRecord][currentString].replace("\x81", "&#x24E7;");
 
                 // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
-                //records[currentRecord][currentString].replace("\xEB", "&euml;");
-                // TODO - test the following
                 AsciiToHtml(records[currentRecord][currentString]);
 
                 if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
@@ -2936,11 +2939,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
         } // if
     } // while
 
-    // Not last packet in report sequence?
+    // Not last fragment?
     if ((data[0] & 0x80) == 0x00) return VAN_PACKET_NO_CONTENT;
 
-    // If the first packet was missed, we have no idea what kind of report this is, unfortunately...
-    if (report == 0xFF) return VAN_PACKET_PARSE_FRAGMENT_MISSED;
+    // Fragment was missed?
+    if (report == INVALID_SATNAV_REPORT) return VAN_PACKET_PARSE_FRAGMENT_MISSED;
 
     // Last packet in sequence
 
@@ -3265,10 +3268,10 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
     at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // Reset
-    report = 0xFF;
+    report = INVALID_SATNAV_REPORT;
     offsetInBuffer = 0;
 
-    // Clear all records and reset array indexes. Otherwise, if the first packet of the next report sequence
+    // Clear all records and reset array indexes. Otherwise, if the first fragment of the next report
     // is missed, the data will continue to pile up after the current records.
     for (int i = 0; i < currentRecord; i++)
     {

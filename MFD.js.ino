@@ -1568,7 +1568,7 @@ function satnavConfirmStreetMode()
     $("#satnav_current_destination_street").show();
 
     // Showing current destination street, so enable the "Validate" button
-    $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
+    $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_street").text === "");
 
     // Set button text
     // TODO - set full text, make button auto-expand when selected
@@ -2840,7 +2840,7 @@ function handleItemChange(item, value)
             $("#satnav_enter_characters_list_button").toggleClass("buttonDisabled", value > +60);
 
             // User selected a service which has no address entries for the specified location
-            if ($("#mfd_to_satnav_request").is(":visible") && value === 0)
+            if ($("#mfd_to_satnav_request").is(":visible") && value == 0)
             {
                 showStatusPopup("This service<br />is not available<br />for this location");
             } // if
