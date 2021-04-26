@@ -11,6 +11,13 @@ function numberWithSpaces(x)
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 } // numberWithSpaces
 
+// Example of invocation:
+// await sleep(300); // sleep 0.3 seconds
+function sleep(ms)
+{
+  return new Promise(resolve => setTimeout(resolve, ms));
+} // sleep
+
 // -----
 // On-screen clocks
 
@@ -152,12 +159,23 @@ var fixFieldsOnDemo =
     "satnav_distance_to_dest_via_road"
 ];
 
+var wait = true;
+
 function writeToDom(jsonObj)
 {
+    // if (wait)
+    // {
+        // wait = false
+        // setTimeout(function () { writeToDom(jsonObj) }, 1000); // check again in a second
+        // sleep(1000);
+    // } // if
+
+    // wait = true;
+
     // These log entries can be used to literally re-play a session; simply copy-paste these lines into the console
     // window of the web-browser. Also it can be really useful to copy and save these lines into a text file for
     // later re-playing at your desk.
-    console.log("writeToDom(" + JSON.stringify(jsonObj) + ");");
+    //console.log("writeToDom(" + JSON.stringify(jsonObj) + ");");
 
     for (var item in jsonObj)
     {
@@ -368,6 +386,11 @@ function changeLargeScreenTo(id)
     if (id === currentLargeScreenId) return;
 
     //console.log("changeLargeScreenTo('" + id + "')");
+    //if (id === "satnav_guidance")
+    //{
+        // console.log("changeLargeScreenTo('" + id + "')");
+        // console.trace();
+    //} // if
 
     lastScreenChanged = Date.now();
 
@@ -398,7 +421,7 @@ function selectDefaultScreen(audioSource)
     var screen = "";
 
     //if (satnavMode === "IN_GUIDANCE_MODE" || satnavMode === "IN_GUIDANCE_MODE_NOT_ON_MAP") screen = "satnav_guidance";
-    if (satnavMode === "IN_GUIDANCE_MODE") screen = "satnav_guidance";
+    if (satnavMode === "IN_GUIDANCE_MODE" && satnavRouteComputed) screen = "satnav_guidance";
 
     if (screen === "")
     {
@@ -711,10 +734,6 @@ function gotoMenu(menu)
     currentMenu = menu;
     changeLargeScreenTo(currentMenu);
 
-    // Perform menu's "on_goto" action, if specified
-    var onGoto = $("#" + currentMenu).attr("on_goto");
-    if (onGoto) eval(onGoto);
-
     // Retrieve all the buttons in the currently shown menu
     var buttons = $("#" + currentMenu).find(".button");
     if (buttons.length === 0) return;
@@ -737,6 +756,13 @@ function gotoMenu(menu)
     {
         $(buttons[currentlySelectedIdx]).removeClass("buttonSelected");
         $(buttons[nextSelectedIdx]).addClass("buttonSelected");
+    } // if
+
+    // Perform menu's "on_goto" action, if specified
+    var onGoto = $("#" + currentMenu).attr("on_goto");
+    if (onGoto)
+    {
+        eval(onGoto);
     } // if
 } // gotoMenu
 
@@ -844,7 +870,11 @@ function findSelectedButton()
 function buttonClicked()
 {
     var selected = findSelectedButton();
-    if (selected === undefined) return;
+    if (selected === undefined)
+    {
+        //console.log("buttonClicked - NO BUTTON!");
+        return;
+    } // if
 
     var screen = selected.screen;
     var currentButton = selected.button;
@@ -910,7 +940,7 @@ function setTick(id)
     if (id === undefined) return;
 
     // In a group, only one tick box can be ticked at a time
-    $("#" + id).parent().find(".tickBox").each(function(){$(this).text("")})
+    $("#" + id).parent().find(".tickBox").each(function() { $(this).text("") } );
 
     $("#" + id).html("<b>&#10004;</b>");
 } // setTick
@@ -921,7 +951,7 @@ function toggleTick(id)
     if (id === undefined) return;
 
     // In a group, only one tick box can be ticked at a time
-    $("#" + id).parent().find(".tickBox").each(function(){$(this).text("")})
+    $("#" + id).parent().find(".tickBox").each(function() { $(this).text("") } );
 
     $("#" + id).html($("#" + id).text() === "" ? "<b>&#10004;</b>" : "");
 } // toggleTick
@@ -1597,18 +1627,21 @@ function satnavGotoEnterStreetOrNumber()
 // Handler for the "Correction" button in the "satnav_enter_characters" screen
 function satnavRemoveEnteredCharacter()
 {
+    //console.log("satnavRemoveEnteredCharacter()");
+
     var currentText = $("#satnav_entered_string").text();
+    //console.log("currentText = '" + currentText + "'");
     currentText = currentText.slice(0, -1);
+    //console.log("currentText = '" + currentText + "'");
     $("#satnav_entered_string").text(currentText);
 
     handleItemChange.lastEnteredSatnavLetter = null;
 
-    satnavSelectFirstAvailableCharacter();
-
-    // If the entered string has become empty, disable the "Correction" button
-    // if (currentText.length === 0) $("#satnav_enter_characters_correction_button").addClass("buttonDisabled");
-    // else $("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");
+    // If the entered string has become empty, disable the "Correction" button...
     $("#satnav_enter_characters_correction_button").toggleClass("buttonDisabled", currentText.length === 0);
+
+    // ... and jump back to the characters
+    if (currentText.length === 0) satnavSelectFirstAvailableCharacter();
 } // satnavRemoveEnteredCharacter
 
 function satnavCheckIfCityCenterMustBeAdded()
@@ -1872,6 +1905,17 @@ function satnavRenameEntryInDirectoryRemoveCharacter()
     $("#satnav_rename_entry_in_directory_entry").text(s);
 } // satnavRenameEntryInDirectoryRemoveCharacter
 
+// Find the ticked button and select it
+function satnavGuidancePreferenceSelectTickedButton()
+{
+    $("#satnav_guidance_preference_menu").find(".tickBox").each(
+        function()
+        {
+            $(this).toggleClass("buttonSelected", $(this).text() !== "");
+        }
+    );
+} // satnavGuidancePreferenceSelectTickedButton
+
 function satnavGuidancePreferenceValidate()
 {
     if (menuStack[0] !== "satnav_guidance")
@@ -1902,6 +1946,8 @@ function satnavRenameBusinessAddressEntry()
 
 function satnavSwitchToGuidanceScreen()
 {
+    //console.log("satnavSwitchToGuidanceScreen()");
+
     menuStack = [];
     currentMenu = "satnav_guidance";
     changeLargeScreenTo("satnav_guidance");
@@ -1966,45 +2012,7 @@ function handleItemChange(item, value)
             hideAudioSettingsPopupAfter(4000);
         } // case
         break;
-/*
-        case "volume":
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // Check if anything actually changed
-            if (value === currentAudioVolumeValue) break;
-            currentAudioVolumeValue = value;
-
-            // TODO - factor out following into separate function
-
-            // Bail out if no audio is playing
-            var audioSource = document.getElementById("audio_source").innerHTML;
-            if (audioSource !== "TUNER"
-                && audioSource !== "TAPE"
-                && audioSource !== "CD"
-                && audioSource !== "CD_CHANGER")
-            {
-                break;
-            } // if
-            //if (document.getElementById("audio").style.display === "none") break;
-
-            // Audio popup already visible due to display of audio settings?
-            if (isAudioMenuVisible) break;
-
-            // If the tuner presets popup is visible, hide it
-            hideTunerPresetsPopup();
-
-            // Show the audio settings popup to display the current volume
-            console.log("Showing audio popup to display volume");
-            document.getElementById(highlightIds[audioSettingHighlightIndex]).style.display = "none";
-            document.getElementById("audio_settings_popup").style.display = "block";
-            updatingAudioVolume = true;
-
-            // Hide popup after 4 seconds
-            hideAudioSettingsPopupAfter(4000);
-        } // case
-        break;
-*/
         case "audio_menu":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
@@ -2533,7 +2541,7 @@ function handleItemChange(item, value)
             }
             else if (value === "OFF")
             {
-                // After 1 second, show the audio screen (or fallback to current location or clock)
+                // After 2 seconds, show the audio screen (or fallback to current location or clock)
                 clearInterval(handleItemChange.contactKeyOffTimer);
                 handleItemChange.contactKeyOffTimer = setTimeout(
                     function ()
@@ -2541,7 +2549,7 @@ function handleItemChange(item, value)
                         selectDefaultScreen();
                         handleItemChange.contactKeyOffTimer = null;
                     },
-                    1000
+                    2000
                 );
             } // if
         } // case
@@ -2566,8 +2574,6 @@ function handleItemChange(item, value)
 
         case "satnav_status_2":
         {
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
             // TODO - also show an icon indicating the sat nav mode?
 
             // As soon as we hear anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
@@ -2577,6 +2583,14 @@ function handleItemChange(item, value)
             // Has anything changed?
             if (value === satnavMode) break;
             satnavMode = value;
+
+            //console.log("Item '" + item + "' set to '" + value + "'");
+
+            if (value === "IDLE")
+            {
+                satnavRouteComputed = false;
+                //console.log("Item 'satnav_route_computed' set to 'NO'");
+            } // if
 
             // Hide any popup "Navigation system being initialised" if no longer "INITIALIZING"
             if (value !== "INITIALIZING") hidePopup("satnav_initializing_popup");
@@ -2596,11 +2610,13 @@ function handleItemChange(item, value)
 
         case "satnav_route_computed":
         {
-            var newValue = value === "YES";
+            var newValue = value === "YES" && satnavMode !== "IDLE";
 
             // Has anything changed?
             if (newValue === satnavRouteComputed) break;
             satnavRouteComputed = newValue;
+
+            //console.log("Item '" + item + "' set to '" + value + "'");
 
             if (satnavMode === "IN_GUIDANCE_MODE")
             {
@@ -2635,19 +2651,6 @@ function handleItemChange(item, value)
         case "satnav_not_on_map_follow_heading_as_text":
         {
             // TODO - "satnav_heading_to_dest" shows invalid data in this case?
-        } // case
-        break;
-
-        case "satnav_status_3":
-        {
-            /*
-            // TODO - this does not happen. If the nag screen is accepted by the user, this is not shown on the
-            // VAN bus; it seems to be an MFD-internal thing.
-            if (value === "ACCEPTED_TERMS_AND_CONDITIONS") changeLargeScreenTo("satnav_main_menu");
-
-            // Directly assuming we know where we are after a guidance session has stopped
-            else if (value === "STOPPING_NAVIGATION") changeLargeScreenTo("satnav_current_location");
-            */
         } // case
         break;
 
@@ -2690,6 +2693,20 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_private_address_house_number":
+        {
+            $('[gid="satnav_private_address_house_number_shown"]').text(
+                value === "" || value === "0" ? "No number" : value);
+        } // case
+        break;
+
+        case "satnav_business_address_house_number":
+        {
+            $('[gid="satnav_business_address_house_number_shown"]').text(
+                value === "" || value === "0" ? "No number" : value);
+        } // case
+        break;
+
         case "satnav_last_destination_street":
         {
             $('[gid="satnav_last_destination_street_shown"]').text(value === "" ? "City centre" : value);
@@ -2721,7 +2738,7 @@ function handleItemChange(item, value)
         //case "satnav_to_mfd_response":
         case "mfd_to_satnav_request":
         {
-            console.log("Item '" + item + "' set to '" + value + "'");
+            //console.log("Item '" + item + "' set to '" + value + "'");
 
             // "City ce"? Yes, that is the text in this button when entering a street
             if (value === "Enter street") $("#satnav_enter_characters_change_or_city_center_button").text("City Ce");
@@ -2732,6 +2749,12 @@ function handleItemChange(item, value)
         case "mfd_to_satnav_enter_character":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
+
+            if (value === "")
+            {
+                handleItemChange.lastEnteredSatnavLetter = null;
+                break;
+            } // if
 
             // Save for later; the same character can be repeated by the user pressing the "Val" button on the
             // IR remote control. In that case we do not get another "mfd_to_satnav_enter_character" value!
@@ -2847,24 +2870,41 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
+            if (! $("#satnav_show_place_of_interest_address").is(":visible")) break;
+
             var selectedEntry = +value + 1;
             //document.getElementById("satnav_place_of_interest_address_entry_number").innerText = selectedEntry;
             $("#satnav_place_of_interest_address_entry_number").text(selectedEntry);
 
             // Enable the "previous" and "next" buttons, except if at first resp. last entry
-            var lastEntry = $("#satnav_to_mfd_list_size").text();
-            // $("#satnav_place_of_interest_address_previous_button").removeClass("buttonDisabled");
-            // $("#satnav_place_of_interest_address_next_button").removeClass("buttonDisabled");
-            // if (selectedEntry === 1)
-            // {
-                // $("#satnav_place_of_interest_address_previous_button").addClass("buttonDisabled");
-            // }
-            // if (selectedEntry === lastEntry)
-            // {
-                // $("#satnav_place_of_interest_address_next_button").addClass("buttonDisabled");
-            // } // if
+            var lastEntry = + $("#satnav_to_mfd_list_size").text();
+
             $("#satnav_place_of_interest_address_previous_button").toggleClass("buttonDisabled", selectedEntry === 1);
             $("#satnav_place_of_interest_address_next_button").toggleClass("buttonDisabled", selectedEntry === lastEntry);
+
+            // If a selected button becomes disabled, select another
+            if (selectedEntry === 1)
+            {
+                $("#satnav_place_of_interest_address_previous_button").removeClass("buttonSelected");
+            }
+            if (selectedEntry === lastEntry)
+            {
+                $("#satnav_place_of_interest_address_next_button").removeClass("buttonSelected");
+            } // if
+
+            if (selectedEntry === 1 && selectedEntry === lastEntry)
+            {
+                $("#satnav_place_of_interest_address_validate_button").addClass("buttonSelected");
+            }
+            else if (selectedEntry === 1)
+            {
+                $("#satnav_place_of_interest_address_next_button").addClass("buttonSelected");
+            }
+            else if (selectedEntry === lastEntry)
+            {
+                $("#satnav_place_of_interest_address_previous_button").addClass("buttonSelected");
+            } // if
+
         } // case
         break;
 
@@ -2987,7 +3027,11 @@ function handleItemChange(item, value)
             $("#satnav_to_mfd_show_characters_line_2").toggleClass("buttonDisabled", spill.length === 0);
 
             // When a new list of available characters comes in, the highlight always moves back to the first character
-            satnavSelectFirstAvailableCharacter();
+            if ($("#satnav_to_mfd_show_characters_line_1").hasClass("buttonSelected")
+                || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected"))
+            {
+                satnavSelectFirstAvailableCharacter();
+            } // if
         } // case
         break;
 
@@ -2999,7 +3043,7 @@ function handleItemChange(item, value)
             lowestHouseNumberInRange = value.replace(/From (.*) to .*/, "$1");
             highestHouseNumberInRange = value.replace(/From .* to (.*)/, "$1");
 
-            if (lowestHouseNumberInRange === 0 && highestHouseNumberInRange === 0)
+            if (+lowestHouseNumberInRange == 0 && +highestHouseNumberInRange == 0)
             {
                 // No house number can be entered: go directly to next screen 
                 gotoMenu("satnav_show_current_destination");
@@ -3031,7 +3075,7 @@ function handleItemChange(item, value)
         //case "satnav_list":
         case "mfd_to_satnav_request_type":
         {
-            console.log("Item '" + item + "' set to '" + value + "'");
+            //console.log("Item '" + item + "' set to '" + value + "'");
 
             // TODO - if disclaimer screen is visible, this will change screen again
             if (value === "REQ_LIST_LENGTH") changeLargeScreenTo("satnav_enter_characters")
@@ -3042,7 +3086,7 @@ function handleItemChange(item, value)
 
         case "satnav_heading_to_dest":  // Any guidance data (as given by the 9CE packets): show guidance screen
         {
-            console.log("Item '" + item + "' set to '" + value + "'");
+            //console.log("Item '" + item + "' set to '" + value + "'");
 
             changeLargeScreenTo("satnav_guidance");
 
@@ -3140,8 +3184,12 @@ function handleItemChange(item, value)
         case "mfd_remote_control":
         {
             // Ignore same button press within 300 ms
-            
-            if (value === handleItemChange.lastIrCode && Date.now() - handleItemChange.lastIrCodeProcessed < 300) break;
+            if (value === handleItemChange.lastIrCode && Date.now() - handleItemChange.lastIrCodeProcessed < 300)
+            {
+                //console.log("mfd_remote_control - too quick");
+                break;
+            } // if
+
             handleItemChange.lastIrCode = value;
             handleItemChange.lastIrCodeProcessed = Date.now();
 
@@ -3165,6 +3213,8 @@ function handleItemChange(item, value)
                 if (hidePopup("satnav_initializing_popup")) break;
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break
+
+                if (hidePopup("satnav_guidance_preference_popup")) break;
 
                 // Ignore the "Esc" button when in guidance mode
                 if ($("#satnav_guidance").is(":visible")) break;
@@ -3202,7 +3252,11 @@ function handleItemChange(item, value)
                 // remote control. Call it "the 'Teams' effect": just when you press a button, the 'Teams' app
                 // decides by itself to move that button away and put another button in its place, so you end up
                 // clicking the wrong button. We don't want that!
-                if (Date.now() - lastScreenChanged < 200) break;
+                if (Date.now() - lastScreenChanged < 200)
+                {
+                    //console.log("mfd_remote_control - ENTER_BUTTON: ignored");
+                    break;
+                } // if
 
                 // In sat nav guidance mode, show the "Guidance tools" menu
                 if ($("#satnav_guidance").is(":visible")) gotoTopLevelMenu("satnav_guidance_tools_menu");
@@ -3219,73 +3273,7 @@ function handleItemChange(item, value)
 } // handleItemChange
 
 // -----
-// Demo stuff
-
-// TODO - remove all this below
-
-// Show some legs
-/*
-document.getElementById("satnav_curr_turn_icon_leg_90_0").style.display = "block";
-document.getElementById("satnav_curr_turn_icon_leg_157_5").style.display = "block";
-document.getElementById("satnav_curr_turn_icon_leg_202_5").style.display = "block";
-
-document.getElementById("satnav_next_turn_icon_leg_112_5").style.display = "block";
-document.getElementById("satnav_next_turn_icon_leg_180_0").style.display = "block";
-document.getElementById("satnav_next_turn_icon_leg_225_0").style.display = "block";
-
-// Show some "no entry" icons
-document.getElementById("satnav_curr_turn_icon_no_entry_157_5").style.display = "block";
-
-document.getElementById("satnav_next_turn_icon_no_entry_180_0").style.display = "block";
-
-var currTurnAngle = 247.5;
-document.getElementById("satnav_curr_turn_icon_direction").style.transform = "rotate("+currTurnAngle+"deg)";
-document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute("d", describeArc(150, 150, 30, currTurnAngle - 180, 180));
-
-var nextTurnAngle = 295.0;
-document.getElementById("satnav_next_turn_icon_direction").style.transform = "rotate("+nextTurnAngle+"deg)";
-document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute("d", describeArc(150, 150, 30, nextTurnAngle - 180, 180));
-*/
-
-/*
-// Update heading to destination
-function updateHeading()
-{
-    if( typeof updateHeading.rotation == 'undefined' )
-    {
-        updateHeading.rotation = 247.5;
-    }
-    var attribute = "style";
-    var property = "transform";
-    document.getElementById("satnav_heading_to_dest")[attribute][property] = "rotate(" + updateHeading.rotation + "deg)";
-    updateHeading.rotation += 22.5;
-    updateHeading.rotation %= 360;
-} // updateHeading
-*/
-// Update direction to destination
-function updateDirection()
-{
-    var attribute = "style";
-    var property = "transform";
-
-    if (typeof updateDirection.currTurnDirection == 'undefined') updateDirection.currTurnDirection = 247.5;
-    document.getElementById("satnav_curr_turn_icon_direction")[attribute][property] =
-        "rotate(" + updateDirection.currTurnDirection + "deg)";
-    document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute(
-        "d", describeArc(150, 150, 30, updateDirection.currTurnDirection - 180, 180)
-    );
-    updateDirection.currTurnDirection += 22.5;
-    updateDirection.currTurnDirection %= 360;
-
-    if (typeof updateDirection.nextTurnDirection == 'undefined') updateDirection.nextTurnDirection = 247.5 + 45;
-    document.getElementById("satnav_next_turn_icon_direction")[attribute][property] =
-        "rotate(" + updateDirection.nextTurnDirection + "deg)";
-    document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute(
-        "d", describeArc(150, 150, 30, updateDirection.nextTurnDirection - 180, 180)
-    );
-    updateDirection.nextTurnDirection += 22.5;
-    updateDirection.nextTurnDirection %= 360;
-} // updateDirection
+// Functions for demo
 
 // Set "demo mode" on to prevent certain fields from being overwritten; fill DOM elements with demo values
 function demoMode()
@@ -3482,13 +3470,13 @@ function demoMode()
     $("#satnav_private_address_entry").text("HOME");
     $('[gid="satnav_private_address_city"]').text("AMSTELVEEN");
     $('[gid="satnav_private_address_street"]').text("SPORTLAAN");
-    $("#satnav_private_address_house_number").text("23");
+    $('[gid="satnav_private_address_house_number_shown"]').text("23");
 
     // Sat nav business address entry
     $("#satnav_business_address_entry").text("WORK");
     $('[gid="satnav_business_address_city"]').text("Schiphol");
     $('[gid="satnav_business_address_street"]').text("Westzijde");
-    $("#satnav_business_address_house_number").text("1118");
+    $('[gid="satnav_business_address_house_number_shown"]').text("1118");
 
     // Sat nav place of interest address entry
     $("#satnav_place_of_interest_address_entry").text("P1 Short-term parking");
@@ -3564,20 +3552,69 @@ function demoMode()
     $("#presets_memory_5_select").show();
 } // demoMode
 
-// TODO - remove
+// TODO - remove all this below
 
-//updateHeading();
-//updateDirection();
-//setInterval(updateHeading, 1500);
-//setInterval(updateDirection, 500);
+// Show some legs
+/*
+document.getElementById("satnav_curr_turn_icon_leg_90_0").style.display = "block";
+document.getElementById("satnav_curr_turn_icon_leg_157_5").style.display = "block";
+document.getElementById("satnav_curr_turn_icon_leg_202_5").style.display = "block";
 
-//changeLargeScreenTo("tuner");
-//showPopup("tuner_presets_popup");
-//showPopup("audio_settings_popup");
-//showPopup("door_open_popup");
-//changeLargeScreenTo("satnav_guidance_preference_menu");
-//changeLargeScreenTo("satnav_show_place_of_interest_address");
-//changeLargeScreenTo("satnav_choose_from_list");
-//highlightFirstLetter("satnav_house_number_show_characters");
-//highlightFirstLine("satnav_list");
+document.getElementById("satnav_next_turn_icon_leg_112_5").style.display = "block";
+document.getElementById("satnav_next_turn_icon_leg_180_0").style.display = "block";
+document.getElementById("satnav_next_turn_icon_leg_225_0").style.display = "block";
+
+// Show some "no entry" icons
+document.getElementById("satnav_curr_turn_icon_no_entry_157_5").style.display = "block";
+
+document.getElementById("satnav_next_turn_icon_no_entry_180_0").style.display = "block";
+
+var currTurnAngle = 247.5;
+document.getElementById("satnav_curr_turn_icon_direction").style.transform = "rotate("+currTurnAngle+"deg)";
+document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute("d", describeArc(150, 150, 30, currTurnAngle - 180, 180));
+
+var nextTurnAngle = 295.0;
+document.getElementById("satnav_next_turn_icon_direction").style.transform = "rotate("+nextTurnAngle+"deg)";
+document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute("d", describeArc(150, 150, 30, nextTurnAngle - 180, 180));
+*/
+
+/*
+// Update heading to destination
+function updateHeading()
+{
+    if( typeof updateHeading.rotation == 'undefined' )
+    {
+        updateHeading.rotation = 247.5;
+    }
+    var attribute = "style";
+    var property = "transform";
+    document.getElementById("satnav_heading_to_dest")[attribute][property] = "rotate(" + updateHeading.rotation + "deg)";
+    updateHeading.rotation += 22.5;
+    updateHeading.rotation %= 360;
+} // updateHeading
+*/
+// Update direction to destination
+function updateDirection()
+{
+    var attribute = "style";
+    var property = "transform";
+
+    if (typeof updateDirection.currTurnDirection == 'undefined') updateDirection.currTurnDirection = 247.5;
+    document.getElementById("satnav_curr_turn_icon_direction")[attribute][property] =
+        "rotate(" + updateDirection.currTurnDirection + "deg)";
+    document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute(
+        "d", describeArc(150, 150, 30, updateDirection.currTurnDirection - 180, 180)
+    );
+    updateDirection.currTurnDirection += 22.5;
+    updateDirection.currTurnDirection %= 360;
+
+    if (typeof updateDirection.nextTurnDirection == 'undefined') updateDirection.nextTurnDirection = 247.5 + 45;
+    document.getElementById("satnav_next_turn_icon_direction")[attribute][property] =
+        "rotate(" + updateDirection.nextTurnDirection + "deg)";
+    document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute(
+        "d", describeArc(150, 150, 30, updateDirection.nextTurnDirection - 180, 180)
+    );
+    updateDirection.nextTurnDirection += 22.5;
+    updateDirection.nextTurnDirection %= 360;
+} // updateDirection
 )=====";

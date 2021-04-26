@@ -382,6 +382,7 @@ enum SatNavRequest_t
     SR_ENTER_HOUSE_NUMBER_LETTER = 0x07,  // Never seen, just guessing
     SR_PLACE_OF_INTEREST_CATEGORY = 0x08,
     SR_PLACE_OF_INTEREST = 0x09,
+    SR_ARCHIVE_IN_DIRECTORY = 0x0B,
     SR_LAST_DESTINATION = 0x0E,
     SR_NEXT_STREET = 0x0F,  // Shown during SatNav guidance in the (solid line) top box
     SR_CURRENT_STREET = 0x10,  // Shown during SatNav guidance in the (dashed line) bottom box
@@ -407,6 +408,7 @@ const char* SatNavRequestStr(uint8_t data)
         data == SR_ENTER_HOUSE_NUMBER_LETTER ? PSTR("Enter letter") :
         data == SR_PLACE_OF_INTEREST_CATEGORY ? PSTR("Place of interest category") :
         data == SR_PLACE_OF_INTEREST ? PSTR("Place of interest") :
+        data == SR_ARCHIVE_IN_DIRECTORY ? PSTR("Archive in directory") :
         data == SR_LAST_DESTINATION ? PSTR("Last destination") :
         data == SR_NEXT_STREET ? PSTR("Next street") :
         data == SR_CURRENT_STREET ? PSTR("Current street") :
@@ -2387,9 +2389,9 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"satnav_route_computed\": \"%S\",\n" // Report this first. TODO - explain why
             "\"satnav_status_2\": \"%S\",\n"
             "\"satnav_destination_reachable\": \"%S\",\n"
-            "\"satnav_route_computed\": \"%S\",\n"
             "\"satnav_on_map\": \"%S\",\n"
             "\"satnav_download_finished\": \"%S\",\n"
             "\"satnav_disc_present\": \"%S\",\n"
@@ -2400,13 +2402,14 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
 
     int at = snprintf_P(buf, n, jsonFormatter,
 
+        data[1] & 0x20 ? noStr : yesStr,
+
         (data[1] & 0x0F) == 0x00 ? PSTR("INITIALIZING") :
         (data[1] & 0x0F) == 0x01 ? PSTR("IDLE") :
         (data[1] & 0x0F) == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
         ToHexStr((uint8_t)(data[1] & 0x0F)),
 
         data[1] & 0x10 ? yesStr : noStr,
-        data[1] & 0x20 ? noStr : yesStr,
         data[1] & 0x40 ? noStr : yesStr,
         data[1] & 0x80 ? yesStr : noStr,
 
@@ -3302,6 +3305,8 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
             "\"mfd_to_satnav_request_type\": \"%S\",\n"
             "\"mfd_to_satnav_go_to_screen\": \"%S\"";
 
+    // TODO - handle SR_ARCHIVE_IN_DIRECTORY
+
     int at = snprintf_P(buf, n, jsonFormatter,
         SatNavRequestStr(request),
 
@@ -3492,7 +3497,8 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
-        request == SR_DESTINATION && param == 0xFF && type == 1 ? PSTR("satnav_show_current_destination") : // emptyStr :
+        //request == SR_DESTINATION && param == 0xFF && type == 1 ? PSTR("satnav_show_current_destination") : // emptyStr :
+        request == SR_DESTINATION && param == 0xFF && type == 1 ? emptyStr :
 
         emptyStr
     );
@@ -3579,6 +3585,8 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
         SatNavRequestStr(data[1]),
         (uint16_t)data[4] << 8 | data[5]
     );
+
+    // TODO - handle SR_ARCHIVE_IN_DIRECTORY
 
     // Available letters are bit-coded in bytes 17...20. Print the letter if it is available.
     for (int byte = 0; byte <= 3; byte++)

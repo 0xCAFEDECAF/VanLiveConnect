@@ -979,7 +979,10 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav guidance criteria menu -->
 
-        <div id="satnav_guidance_preference_menu" style="position:absolute; display:none; left:60px; top:140px; width:920px; height:410px;">
+        <div id="satnav_guidance_preference_menu"
+          on_goto="satnavGuidancePreferenceSelectTickedButton();"
+          on_esc="satnavSwitchToGuidanceScreen();"
+          style="position:absolute; display:none; left:60px; top:140px; width:920px; height:410px;">
 
           <span id="satnav_guidance_preference_fastest" class="tickBox button"
             on_click="toggleTick(); navigateButtons('UP_BUTTON');"></span> Fastest route<br style="line-height:70px;" />
@@ -999,7 +1002,10 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav vocal synthesis level screen -->
 
-        <div id="satnav_vocal_synthesis_level" class="tag menuTitle" style="display:none; left:60px; top:140px; width:920px; height:410px;">
+        <div id="satnav_vocal_synthesis_level"
+          on_esc="satnavSwitchToGuidanceScreen();"
+          class="tag menuTitle" style="display:none; left:60px; top:140px; width:920px; height:410px;">
+
           Vocal synthesis level<br style="line-height:100px;" />
           <div class="tag" style="left:50px; top:148px; width:200px;">Level</div>
 
@@ -1205,7 +1211,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_private_address_house_number" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div gid="satnav_private_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div id="satnav_show_private_address_validate_button"
@@ -1229,7 +1235,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div gid="satnav_private_address_house_number" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div gid="satnav_private_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div button_orientation="horizontal"
@@ -1262,7 +1268,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_business_address_house_number" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div gid="satnav_business_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div id="satnav_show_business_address_validate_button"
@@ -1286,7 +1292,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div gid="satnav_business_address_house_number" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div gid="satnav_business_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div button_orientation="horizontal"
@@ -1349,8 +1355,8 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- TODO - Might need the full screen width for long city / street names -->
           <div id="satnav_show_current_destination"
-            on_esc="satnavGotoMainMenu()"
             on_goto="selectFirstMenuItem('satnav_show_current_destination');"
+            on_esc="satnavGotoMainMenu();"
             style="left:25px; top:110px; width:1330px; display:none;">
 
             <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Programmed destination</div>
@@ -1390,6 +1396,8 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- TODO - Might need the full screen width for long city / street names -->
           <div id="satnav_show_programmed_destination"
+            on_enter="selectButton('satnav_show_programmed_destination_validate_button');"
+            on_esc="satnavSwitchToGuidanceScreen();"
             style="display:none;">
 
             <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Programmed destination</div>
@@ -1409,7 +1417,7 @@ char mfd_html[] PROGMEM = R"=====(
               button_orientation="horizontal"
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-              <div
+              <div id="satnav_show_programmed_destination_validate_button"
                 on_click="satnavSwitchToGuidanceScreen();"
                 class="icon button buttonSelected"
                 style="left:0px; top:0px; width:180px; height:40px;">
@@ -2040,6 +2048,8 @@ char mfd_html[] PROGMEM = R"=====(
            Note: this popup can be placed on top of the "satnav_calculating_route_popup"
         -->
 
+      <!-- on_exit="satnavSwitchToGuidanceScreen();" -->
+      <!-- on_esc="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) showPopup('satnav_calculating_route_popup');" -->
       <div id="satnav_guidance_preference_popup"
         on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
@@ -2057,7 +2067,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
             <div id="satnav_guidance_preference_popup_no_button"
               class="icon button"
-              on_click="hidePopup('satnav_calculating_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu');"
+              on_click="hidePopup('satnav_guidance_preference_popup'); hidePopup('satnav_calculating_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu');"
               style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>
