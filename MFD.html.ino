@@ -920,7 +920,9 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav main menu -->
 
-        <div id="satnav_main_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
+        <div id="satnav_main_menu"
+          on_enter="highlightIndexes['satnav_list'] = 0;"
+          class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Navigation / Guidance<br style="line-height:100px;" />
 
           <div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
@@ -1060,13 +1062,13 @@ char mfd_html[] PROGMEM = R"=====(
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
               <div id="satnav_enter_characters_validate_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
-                on_click="satnavGotoEnterStreetOrNumber();"
+                on_click="userHadOpportunityToEnterStreet = true; satnavGotoEnterStreetOrNumber();"
                 class="icon button buttonDisabled"
                 style="left:0px; top:0px; width:180px; height:40px;">
                 Validate
               </div>
               <div id="satnav_enter_characters_correction_button"
-                on_click="satnavRemoveEnteredCharacter();"
+                on_click="userHadOpportunityToEnterStreet = true; satnavRemoveEnteredCharacter();"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 class="icon button buttonDisabled"
                 style="left:210px; top:0px; width:230px; height:40px;">
@@ -1074,22 +1076,22 @@ char mfd_html[] PROGMEM = R"=====(
               </div>
               <div id="satnav_enter_characters_list_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
-                on_click="satnavGotoListScreen();"
+                on_click="userHadOpportunityToEnterStreet = true; satnavGotoListScreen();"
                 class="icon button buttonDisabled"
                 style="left:470px; top:0px; width:240px; height:40px;">
                 List <span gid="satnav_to_mfd_list_size"></span>
               </div>
               <div id="satnav_enter_characters_change_or_city_center_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
-                on_click="satnavEnterCharactersChangeOrCityCenterButtonPress();"
+                on_click="userHadOpportunityToEnterStreet = true; satnavEnterCharactersChangeOrCityCenterButtonPress();"
                 class="icon button"
                 style="left:740px; top:0px; width:170px; height:40px;">
                 Change
               </div>
             </div>
 
+              <!-- on_enter="satnavConfirmCityMode();" -->
             <div id="satnav_enter_city_characters"
-              on_enter="satnavConfirmCityMode();"
               style="display:none;">
 
               <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>
@@ -1100,8 +1102,8 @@ char mfd_html[] PROGMEM = R"=====(
                 class="dots" style="left:25px; top:160px; width:925px; font-size:50px;"></div>
             </div>
 
+              <!-- on_enter="satnavConfirmStreetMode();" -->
             <div id="satnav_enter_street_characters"
-              on_enter="satnavConfirmStreetMode();"
               style="display:none;">
 
               <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter street</div>
@@ -1117,6 +1119,7 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- ...or choosing entry from list... -->
           <!--<div id="satnav_choose_from_list" on_exit="menuStack.pop();" style="display:none;">-->
           <!--on_enter="satnavCheckIfCityCenterMustBeAdded();" -->
+            <!-- on_esc="satnavRemoveEnteredCharacter(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);" -->
           <div id="satnav_choose_from_list"
             style="display:none;">
 
@@ -1395,8 +1398,9 @@ char mfd_html[] PROGMEM = R"=====(
           </div>  <!-- "satnav_show_current_destination" -->
 
           <!-- TODO - Might need the full screen width for long city / street names -->
+            <!-- on_enter="selectButton('satnav_show_programmed_destination_validate_button');" -->
           <div id="satnav_show_programmed_destination"
-            on_enter="selectButton('satnav_show_programmed_destination_validate_button');"
+            on_enter="$('#satnav_last_destination_city').text(''); $('#satnav_last_destination_street_shown').text(''); $('#satnav_last_destination_house_number_shown').text('');"
             on_esc="satnavSwitchToGuidanceScreen();"
             style="display:none;">
 
@@ -1406,11 +1410,13 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_last_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
             <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div gid="satnav_last_destination_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_last_destination_street_shown" gid="satnav_last_destination_street_shown"
+              class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div gid="satnav_last_destination_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_last_destination_house_number_shown" gid="satnav_last_destination_house_number_shown"
+              class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div 

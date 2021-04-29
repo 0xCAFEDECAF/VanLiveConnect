@@ -82,8 +82,10 @@ bool checkETag(const String& etag)
     } // for
 
     webServer.sendHeader(F("ETag"), String("\"") + etag + "\"");
-    // webServer.sendHeader("Cache-Control", "public, max-age=2678400"); // cache 31 days
-    webServer.sendHeader(F("Cache-Control"), F("private, max-age=31536000")); // cache 365 days
+
+    // Cache 10 seconds, then falls back to using the "If-None-Match" mechanism
+    webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+
     return false;
 } // checkETag
 
@@ -206,8 +208,10 @@ void serveFont(const char* urlPath, const char* content, unsigned int content_le
 {
     printHttpRequest();
     unsigned long start = millis();
-    //webServer.sendHeader(F("Cache-Control"), F("public"), true);
-    webServer.sendHeader(F("Cache-Control"), F("private, max-age=31536000"), true); // cache 365 days
+
+    // Cache 10 seconds
+    webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+
     webServer.send_P(200, fontWoffStr, content, content_len);  
     Serial.printf_P(PSTR("[webServer] Sending '%S' took: %lu msec\n"), urlPath, millis() - start);
 } // serveFont
@@ -219,8 +223,8 @@ void servePage(const char* urlPath, const char* mimeType, const char* content)
     unsigned long start = millis();
     if (! checkETag(md5Checksum))
     {
-        //webServer.sendHeader(F("Cache-Control"), F("public"), true);
-        webServer.sendHeader(F("Cache-Control"), F("private, max-age=31536000"), true); // cache 365 days
+        // Cache 10 seconds, then falls back to using the "If-None-Match" mechanism
+        webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
         webServer.send_P(200, mimeType, content);  
     } // if
     Serial.printf_P(PSTR("[webServer] Sending '%S' took: %lu msec\n"), urlPath, millis() - start);

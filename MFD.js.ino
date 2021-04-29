@@ -13,10 +13,11 @@ function numberWithSpaces(x)
 
 // Example of invocation:
 // await sleep(300); // sleep 0.3 seconds
-function sleep(ms)
-{
-  return new Promise(resolve => setTimeout(resolve, ms));
-} // sleep
+// Does not work with IE11, which does not understand =>
+// function sleep(ms)
+// {
+  // return new Promise(resolve => setTimeout(resolve, ms));
+// } // sleep
 
 // -----
 // On-screen clocks
@@ -163,15 +164,6 @@ var wait = true;
 
 function writeToDom(jsonObj)
 {
-    // if (wait)
-    // {
-        // wait = false
-        // setTimeout(function () { writeToDom(jsonObj) }, 1000); // check again in a second
-        // sleep(1000);
-    // } // if
-
-    // wait = true;
-
     // These log entries can be used to literally re-play a session; simply copy-paste these lines into the console
     // window of the web-browser. Also it can be really useful to copy and save these lines into a text file for
     // later re-playing at your desk.
@@ -215,7 +207,6 @@ function writeToDom(jsonObj)
                 if($(selector).length > 0)
                 {
                     // Remove current lines
-                    //$(selector).val("");
                     $(selector).empty();
 
                     var len = jsonObj[item].length;
@@ -274,7 +265,6 @@ function writeToDom(jsonObj)
                         }
                         else
                         {
-                            //document.getElementById(item).setAttribute(attribute, attrValue);
                             $(selector).attr(attribute, attrValue);
                         } // if
                     } // for
@@ -308,15 +298,7 @@ function writeToDom(jsonObj)
                 }
                 else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
                 {
-                    // Handling of "icon" class objects: no text copy, just show or hide
-                    // if (jsonObj[item].toUpperCase() === "ON" || jsonObj[item].toUpperCase() === "YES")
-                    // {
-                        // $(selector).show();
-                    // }
-                    // else
-                    // {
-                        // $(selector).hide();
-                    // } // if
+                    // Handling of "icon" class objects: no text copy, just show or hide.
                     // From https://stackoverflow.com/questions/27950151/hide-show-element-with-a-boolean :
                     $(selector).toggle(jsonObj[item].toUpperCase() === "ON" || jsonObj[item].toUpperCase() === "YES");
                 }
@@ -420,7 +402,6 @@ function selectDefaultScreen(audioSource)
 
     var screen = "";
 
-    //if (satnavMode === "IN_GUIDANCE_MODE" || satnavMode === "IN_GUIDANCE_MODE_NOT_ON_MAP") screen = "satnav_guidance";
     if (satnavMode === "IN_GUIDANCE_MODE" && satnavRouteComputed) screen = "satnav_guidance";
 
     if (screen === "")
@@ -630,10 +611,7 @@ function showPopup(id, msec)
 
     // Hide popup after "msec" milliseconds
     clearInterval(showPopup.popupTimer);
-    showPopup.popupTimer = setTimeout(
-        function () { hidePopup(id); },
-        msec
-    );
+    showPopup.popupTimer = setTimeout(function () { hidePopup(id); }, msec);
 } // showPopup
 
 // Hide the specified popup. If not specified, hide the current
@@ -666,7 +644,6 @@ function showNotificationPopup(message, msec, isWarning)
     if (isWarning === undefined) isWarning = false;
 
     // Set the notification text
-    //document.getElementById("last_message_displayed_on_mfd").innerHTML = message;
     $("#last_message_displayed_on_mfd").html(message);
 
     // Show the notification popup
@@ -741,20 +718,22 @@ function gotoMenu(menu)
     // Move the "buttonSelected" class to the first enabled button in the list
 
     var currentlySelected = $("#" + currentMenu).find(".buttonSelected");
-    var currentlySelectedIdx = currentlySelected.index() - 1;  // will be -2 if no buttons are selected
+    var currentlySelectedIdx = buttons.index(currentlySelected);  // will be -1 if no buttons are selected
     var nextSelectedIdx = 0;
 
     // Skip disabled buttons
-    while ($(buttons[nextSelectedIdx]).hasClass("buttonDisabled"))
+    var isButtonEnabled = ! $(buttons[nextSelectedIdx]).hasClass("buttonDisabled");
+    while (! isButtonEnabled)
     {
         nextSelectedIdx = (nextSelectedIdx + 1) % buttons.length;
-        if (nextSelectedIdx === 0) return;  // Went all the way round?
+        if (nextSelectedIdx === 0) break;  // Went all the way round?
+        isButtonEnabled = ! $(buttons[nextSelectedIdx]).hasClass("buttonDisabled");
     } // while
 
-    // Only if anything changed
-    if (nextSelectedIdx !== currentlySelectedIdx)
+    // Only if found an enabled button that is not the current
+    if (isButtonEnabled && nextSelectedIdx !== currentlySelectedIdx)
     {
-        $(buttons[currentlySelectedIdx]).removeClass("buttonSelected");
+        if (currentlySelectedIdx >= 0) $(buttons[currentlySelectedIdx]).removeClass("buttonSelected");
         $(buttons[nextSelectedIdx]).addClass("buttonSelected");
     } // if
 
@@ -835,7 +814,7 @@ function findSelectedButton()
     var screen;
 
     // If a popup is showing, get the selected button from that
-    // TODO - there could be multiple popups showing (one over the other). The following code has trouble with that.
+    // TODO - there could be multiple popups showing (one over the other). The following code may have trouble with that.
     var popup = $(".notificationPopup:visible");
     if (popup.length >= 1)
     {
@@ -998,7 +977,7 @@ function navigateButtons(keyPressed)
         var nextSelected = currentlySelected;
 
         // Select the next button, thereby skipping disabled or invisible buttons
-        // TODO - ugly code
+        // TODO - ugly code, nicer to use "if (...) break;" statements
         do
         {
             nextSelected = (nextSelected + (keyPressed === buttonForNext ? 1 : nButtons - 1)) % nButtons;
@@ -1371,14 +1350,7 @@ function hideAudioSettingsPopupAfter(msec)
     // (Re-)arm the timer to hide the popup after the specified number of milliseconds
     //console.log("(Re-)arming popup timeout to " + msec / 1000 + " seconds");
     clearInterval(audioSettingsPopupTimer);
-    audioSettingsPopupTimer = setTimeout(
-        function ()
-        {
-            //console.log("Closing audio popup (timeout)");
-            hideAudioSettingsPopup();
-        },
-        msec
-    );
+    audioSettingsPopupTimer = setTimeout(function () { hideAudioSettingsPopup(); }, msec);
 } // hideAudioSettingsPopupAfter
 
 // The IDs of the audio settings highlight boxes ("divs") to be cycled through
@@ -1400,7 +1372,6 @@ function highlightAudioSetting(goToFirst)
 
     // Hide the current box
     //console.log("Hiding box '" + highlightIds[audioSettingHighlightIndex] + "'");
-    //document.getElementById(highlightIds[audioSettingHighlightIndex]).style.display = "none";
     $("#" + highlightIds[audioSettingHighlightIndex]).hide();
 
     // Either reset to the first ID, or get the ID of the next box
@@ -1443,8 +1414,7 @@ function showAudioSettingsPopup()
     isAudioMenuVisible = true;
 
     // Hide the popup after 12 seconds.
-    // Note: must be at least 12 seconds, otherwise the popup will appear again just before it is being
-    //   force-closed.
+    // Note: set to at least 12 seconds, otherwise the popup will appear again just before it is being force-closed.
     hideAudioSettingsPopupAfter(12000);
 } // showAudioSettingsPopup
 
@@ -1506,6 +1476,8 @@ function satnavGotoListScreen()
 {
     gotoMenu("satnav_choose_from_list");
 
+    //highlightFirstLine("satnav_list");
+
     handleItemChange.lastEnteredSatnavLetter = null;
 } // satnavGotoListScreen
 
@@ -1535,8 +1507,10 @@ function satnavConfirmCityMode()
 
     $("#satnav_current_destination_city").show();
 
-    // Showing current destination city, so enable the "Validate" button
-    $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
+    // // Showing current destination city, so enable the "Validate" button
+    // $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
+    // If a current destination city is shown, enable the "Validate" button
+    $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_city").text === "");
 
     // Set button text
     $('#satnav_enter_characters_change_or_city_center_button').text('Change');
@@ -1556,6 +1530,8 @@ function satnavEnterByLetterMode()
     satnavSelectFirstAvailableCharacter();
 } // satnavEnterByLetterMode
 
+var userHadOpportunityToEnterStreet = false;
+
 // Puts the "Enter street" screen into the mode where the user simply has to confirm the current destination street
 function satnavConfirmStreetMode()
 {
@@ -1567,7 +1543,7 @@ function satnavConfirmStreetMode()
 
     $("#satnav_current_destination_street").show();
 
-    // Showing current destination street, so enable the "Validate" button
+    // If a current destination street is shown, enable the "Validate" button
     $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_street").text === "");
 
     // Set button text
@@ -1575,6 +1551,8 @@ function satnavConfirmStreetMode()
     $('#satnav_enter_characters_change_or_city_center_button').text('City Ce');
 
     satnavSelectFirstAvailableCharacter();
+
+    userHadOpportunityToEnterStreet = false;
 } // satnavConfirmStreetMode
 
 // Toggle between character-by-character entry mode, and confirming the current destination city
@@ -1607,7 +1585,13 @@ function satnavGotoEnterCity()
     menuStack = [ "main_menu", "satnav_main_menu" ];
     currentMenu = undefined;
 
+    // Clear the character-by-character entry string
+    $("#satnav_entered_string").text("");
+    handleItemChange.lastEnteredSatnavLetter = null;
+
     gotoMenu("satnav_enter_city_characters");
+
+    satnavConfirmCityMode();
 } // satnavGotoEnterCity
 
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
@@ -1617,6 +1601,7 @@ function satnavGotoEnterStreetOrNumber()
     if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
     {
         gotoMenu("satnav_enter_street_characters");
+        satnavConfirmStreetMode();
     }
     else
     {
@@ -1624,15 +1609,16 @@ function satnavGotoEnterStreetOrNumber()
     } // if
 } // satnavGotoEnterStreetOrNumber
 
-// Handler for the "Correction" button in the "satnav_enter_characters" screen
+// Boolean to indicate if the user has pressed 'Esc' within a list of cities or streets; in that case the entered
+// characters are removed until there is more than one character to choose from.
+var satnavRollingBackEntryByCharacter = false;
+
+// Handler for the "Correction" button in the "satnav_enter_characters" screen.
+// Removes the last entered character.
 function satnavRemoveEnteredCharacter()
 {
-    //console.log("satnavRemoveEnteredCharacter()");
-
     var currentText = $("#satnav_entered_string").text();
-    //console.log("currentText = '" + currentText + "'");
     currentText = currentText.slice(0, -1);
-    //console.log("currentText = '" + currentText + "'");
     $("#satnav_entered_string").text(currentText);
 
     handleItemChange.lastEnteredSatnavLetter = null;
@@ -1646,19 +1632,14 @@ function satnavRemoveEnteredCharacter()
 
 function satnavCheckIfCityCenterMustBeAdded()
 {
-    // console.log("satnavCheckIfCityCenterMustBeAdded() '" +
-        // ($("#satnav_choose_from_list").is(":visible") ? "visible" : "invisible") + "' '"  +
-        // $("#mfd_to_satnav_request").text() + "' '" +
-        // //$("#satnav_current_destination_street").text() + "' '" +
-        // $("#satnav_entered_string").text() + "'"
-    // );
-
     // If changed to screen "satnav_choose_from_list" while entering the street with no street entered,
     // then add "City center" at the top of the list
-    if ($("#satnav_choose_from_list").is(":visible")
-        && $("#mfd_to_satnav_request").text() === "Enter street"
-        //&& $("#satnav_current_destination_street").text() === ""
-        && $("#satnav_entered_string").text() === "")
+    if (
+        $("#satnav_choose_from_list").is(":visible")
+        && $("#mfd_to_satnav_request").text() === "Enter street"  // TODO - other language?
+        && $("#satnav_entered_string").text() === ""
+        && ! userHadOpportunityToEnterStreet
+       )
     {
         $("#satnav_list").html("City center<br />" + $("#satnav_list").html());
     } // if
@@ -1776,7 +1757,6 @@ function satnavCheckEnteredHouseNumber()
     else
     {
         satnavHouseNumberEntryMode();
-        //showPopup("satnav_invalid_number_popup", 7000);
         showStatusPopup("This number is<br />not listed for<br />this street", 7000);
     } // if
 } // satnavCheckEnteredHouseNumber
@@ -1983,7 +1963,6 @@ function handleItemChange(item, value)
             if (handleItemChange.hideHeadUnitPopupsTimer != null) break;
 
             // Bail out if no audio is playing
-            //var audioSource = document.getElementById("audio_source").innerHTML;
             var audioSource = $("#audio_source").text();
             if (audioSource !== "TUNER"
                 && audioSource !== "TAPE"
@@ -1992,7 +1971,6 @@ function handleItemChange(item, value)
             {
                 break;
             } // if
-            //if (document.getElementById("audio").style.display === "none") break;
 
             // Audio popup already visible due to display of audio settings?
             if (isAudioMenuVisible) break;
@@ -2002,8 +1980,6 @@ function handleItemChange(item, value)
 
             // Show the audio settings popup to display the current volume
             //console.log("Showing audio popup to display volume");
-            //document.getElementById(highlightIds[audioSettingHighlightIndex]).style.display = "none";
-            //document.getElementById("audio_settings_popup").style.display = "block";
             $("#" + highlightIds[audioSettingHighlightIndex]).hide();
             $("#audio_settings_popup").show();
             updatingAudioVolume = true;
@@ -2046,7 +2022,8 @@ function handleItemChange(item, value)
                 //{
                 //    break;
                 //} // if
-                if (document.getElementById("audio").style.display === "none") break;
+                //if (document.getElementById("audio").style.display === "none") break;
+                if (! $("#audio").is(":visible")) break;
 
                 // Don't do anything on "AUDIO (released)" or any other variant
                 if (value !== "AUDIO") break;
@@ -2068,6 +2045,14 @@ function handleItemChange(item, value)
             // If "audio_source" changed to "CD", we directly show the "searching CD" icon
             if (audioSource !== "CD" && value === "CD")
             {
+                if (! $("#cd_present").hasClass("ledOn"))
+                {
+                    // Show "No CD" popup for a few seconds
+                    showStatusPopup("No CD", 3000);
+
+                    break;
+                } // if
+
                 // Show the "searching" icon
                 $("#cd_status_inserted").show();
                 $("#cd_status_pause").hide();
@@ -2079,6 +2064,14 @@ function handleItemChange(item, value)
             // If "audio_source" changed to "CD_CHANGER", we directly show the "searching CD" icon
             else if (audioSource !== "CD_CHANGER" && value === "CD_CHANGER")
             {
+                if (! $("#cd_changer_cartridge_present").hasClass("ledOn"))
+                {
+                    // Show "No CD" popup for a few seconds
+                    showStatusPopup("No CD", 3000);
+
+                    break;
+                } // if
+
                 // Show the "searching" icon
                 $("#cd_changer_status_pause").hide();
                 $("#cd_changer_status_play").hide();
@@ -2145,10 +2138,6 @@ function handleItemChange(item, value)
                 if ($(selector).hasClass("ledOn")) break;
 
                 // Show "NO CD X" text for a few seconds
-                // document.getElementById("cd_changer_current_disc").style.display = "none";
-                // document.getElementById("cd_changer_disc_not_present").style.display = "block";
-                // document.getElementById("cd_changer_selected_disc").innerText = value;
-                // document.getElementById("cd_changer_selected_disc").style.display = "block";
                 $("cd_changer_current_disc").hide();
                 $("cd_changer_disc_not_present").show();
                 $("cd_changer_selected_disc").text(value);
@@ -2160,10 +2149,6 @@ function handleItemChange(item, value)
                     function ()
                     {
                         // Show the CD currently playing
-                        // document.getElementById("cd_changer_disc_not_present").style.display = "none";
-                        // document.getElementById("cd_changer_selected_disc").style.display = "none";
-                        // document.getElementById("cd_changer_current_disc").style.display = "block";
-
                         $("#cd_changer_disc_not_present").hide();
                         $("#cd_changer_selected_disc").hide();
                         $("#cd_changer_current_disc").show();
@@ -2608,6 +2593,20 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_status_3":
+        {
+            // TODO - test this
+
+            if (value === "POWERING_OFF")
+            {
+                $("#main_menu_goto_satnav_button").addClass("buttonDisabled");
+                $("#satnav_disc_present").addClass("ledOff");
+                handleItemChange.nSatNavDiscUnreadable = 1;
+                satnavDisclaimerAccepted = false;
+            } // if
+        } // case
+        break;
+
         case "satnav_route_computed":
         {
             var newValue = value === "YES" && satnavMode !== "IDLE";
@@ -2660,8 +2659,6 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // if (value === "") $("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
-            // else $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
             $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 
             $("#satnav_entered_string").text("");
@@ -2677,8 +2674,6 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // if (value === "") $("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
-            // else $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
             $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 
             $("#satnav_entered_string").text("");
@@ -2750,14 +2745,24 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            if (value === "")
+            if (value === "" || value === "?")
             {
                 handleItemChange.lastEnteredSatnavLetter = null;
                 break;
             } // if
 
+            if (value === "Esc")
+            {
+                // Going into "character roll-back" mode
+                satnavRollingBackEntryByCharacter = true;
+                break;
+            } // if
+
+            satnavRollingBackEntryByCharacter = false;
+
             // Save for later; the same character can be repeated by the user pressing the "Val" button on the
-            // IR remote control. In that case we do not get another "mfd_to_satnav_enter_character" value!
+            // IR remote control. In that case we do not get another "mfd_to_satnav_enter_character" value.
+            // See code at 'case "mfd_to_satnav_instruction"'.
             handleItemChange.lastEnteredSatnavLetter = value;
 
             satnavEnterByLetterMode();
@@ -2787,6 +2792,7 @@ function handleItemChange(item, value)
                 $("#satnav_list").text("");
 
                 satnavGotoListScreen();
+
                 // Also make the list box invisible so that the spinning disk icon behind it appears
                 // TODO - make this work
                 //document.getElementById("satnav_list").style.display = "none";
@@ -2796,8 +2802,12 @@ function handleItemChange(item, value)
             if (value === "satnav_enter_city_characters" || value === "satnav_enter_street_characters")
             {
                 // Clear the character-by-character entry string
-                $("#satnav_entered_string").text("");
-                handleItemChange.lastEnteredSatnavLetter = null;
+                //$("#satnav_entered_string").text("");
+                //handleItemChange.lastEnteredSatnavLetter = null;
+
+                // If the "Esc" button of the remote control was pressed inside the list screen, the last entered
+                // character must be removed
+                //satnavRemoveEnteredCharacter();
 
                 gotoMenu(value);
                 break;
@@ -2835,14 +2845,12 @@ function handleItemChange(item, value)
 
             // "List XXX" button: only enable if less than 50 items in list
             // TODO - check if <= 60 is indeed the condition for enabling the button
-            // if (value > +60) $("#satnav_enter_characters_list_button").addClass("buttonDisabled");
-            // else $("#satnav_enter_characters_list_button").removeClass("buttonDisabled");
             $("#satnav_enter_characters_list_button").toggleClass("buttonDisabled", value > +60);
 
             // User selected a service which has no address entries for the specified location
             if ($("#mfd_to_satnav_request").is(":visible") && value == 0)
             {
-                showStatusPopup("This service<br />is not available<br />for this location");
+                showStatusPopup("This service is<br />not available for<br />this location", 8000);
             } // if
         } // case
         break;
@@ -2853,8 +2861,8 @@ function handleItemChange(item, value)
 
             satnavCheckIfCityCenterMustBeAdded();
 
-            // When the data comes in, always highlight the first line
-            highlightFirstLine("satnav_list");
+            // Highlight the current line (or the first, if no line is currently highlighted)
+            highlightLine("satnav_list");
 
             //if (value === "") break;
 
@@ -2873,7 +2881,6 @@ function handleItemChange(item, value)
             if (! $("#satnav_show_place_of_interest_address").is(":visible")) break;
 
             var selectedEntry = +value + 1;
-            //document.getElementById("satnav_place_of_interest_address_entry_number").innerText = selectedEntry;
             $("#satnav_place_of_interest_address_entry_number").text(selectedEntry);
 
             // Enable the "previous" and "next" buttons, except if at first resp. last entry
@@ -2912,7 +2919,6 @@ function handleItemChange(item, value)
         {
             if (value === "") break;
 
-            //document.getElementById("satnav_place_of_interest_address_distance_km").innerText = value / 1000;
             $("#satnav_place_of_interest_address_distance_km").text(value / 1000);
         } // case
         break;
@@ -2992,28 +2998,42 @@ function handleItemChange(item, value)
         {
             if (value !== "Val") break;
 
-            if (handleItemChange.lastEnteredSatnavLetter == null) break;
+            if (satnavRollingBackEntryByCharacter)
+            {
+                // In "character roll-back" mode, remove the last entered character
+                satnavRemoveEnteredCharacter();
+            }
+            else
+            {
+                if (handleItemChange.lastEnteredSatnavLetter == null) break;
 
-            // The user is pressing "Val" to enter the chosen letter
+                // The user is pressing "Val" on the remote control, to enter the chosen letter
 
-            // Append the entered character
-            // document.getElementById("satnav_entered_string").insertAdjacentHTML(
-                // "beforeend",
-                // handleItemChange.lastEnteredSatnavLetter
-            // );
-            $("#satnav_entered_string").append(handleItemChange.lastEnteredSatnavLetter);
+                // Append the entered character
+                $("#satnav_entered_string").append(handleItemChange.lastEnteredSatnavLetter);
 
-            // Disable the "Validate" button
-            $("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
+                // Enable the "Correction" button
+                $("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");
 
-            // Enable the "Correction" button
-            $("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");
+                // Disable the "Validate" button
+                $("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
+            } // if
         } // case
         break;
 
         case "satnav_to_mfd_show_characters":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
+
+            if (value.length === 1)
+            {
+                // Save for later; this character can be automatically selected by the MFD without the user explicitly
+                // pressing the "Val" button on the remote control. See code at 'case "mfd_to_satnav_instruction"'.
+                handleItemChange.lastEnteredSatnavLetter = value;
+            } // if
+
+            // "Character roll-back" mode ends when there is more than one character to choose from
+            if (value.length > 1) satnavRollingBackEntryByCharacter = false;
 
             // On the original MFD, there is only room for 24 characters. If there are more characters, spill over
             // to the next line.
@@ -3022,8 +3042,6 @@ function handleItemChange(item, value)
             $("#satnav_to_mfd_show_characters_line_2").text(spill);
 
             // Enable the second line only if it contains something
-            // if (spill.length === 0) $("#satnav_to_mfd_show_characters_line_2").addClass("buttonDisabled");
-            // else $("#satnav_to_mfd_show_characters_line_2").removeClass("buttonDisabled");
             $("#satnav_to_mfd_show_characters_line_2").toggleClass("buttonDisabled", spill.length === 0);
 
             // When a new list of available characters comes in, the highlight always moves back to the first character
@@ -3072,7 +3090,6 @@ function handleItemChange(item, value)
         } // case
         break;
 /*
-        //case "satnav_list":
         case "mfd_to_satnav_request_type":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
@@ -3183,8 +3200,8 @@ function handleItemChange(item, value)
 
         case "mfd_remote_control":
         {
-            // Ignore same button press within 300 ms
-            if (value === handleItemChange.lastIrCode && Date.now() - handleItemChange.lastIrCodeProcessed < 300)
+            // Ignore same button press within 200 ms
+            if (value === handleItemChange.lastIrCode && Date.now() - handleItemChange.lastIrCodeProcessed < 200)
             {
                 //console.log("mfd_remote_control - too quick");
                 break;
@@ -3214,6 +3231,7 @@ function handleItemChange(item, value)
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break
 
+                // Hiding this popup might make the underlying "Computing route in progress" popup visible
                 if (hidePopup("satnav_guidance_preference_popup")) break;
 
                 // Ignore the "Esc" button when in guidance mode
@@ -3262,7 +3280,6 @@ function handleItemChange(item, value)
                 if ($("#satnav_guidance").is(":visible")) gotoTopLevelMenu("satnav_guidance_tools_menu");
                 //else if ($("#satnav_list").is(":visible")) changeLargeScreenTo("satnav_enter_street_characters");
                 else buttonClicked();
-                //buttonClicked();
             } // if
         } // case
         break;
@@ -3592,7 +3609,7 @@ function updateHeading()
     updateHeading.rotation += 22.5;
     updateHeading.rotation %= 360;
 } // updateHeading
-*/
+
 // Update direction to destination
 function updateDirection()
 {
@@ -3617,4 +3634,5 @@ function updateDirection()
     updateDirection.nextTurnDirection += 22.5;
     updateDirection.nextTurnDirection %= 360;
 } // updateDirection
+*/
 )=====";

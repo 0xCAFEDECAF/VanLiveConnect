@@ -244,12 +244,12 @@ bool irReceive(TIrPacket& irPacket)
 
     irrecv.resume(); // Receive the next value
 
-    // Ignore same code within 300 ms
+    // Ignore same code within 200 ms
     static unsigned long lastValue = 0;
     static unsigned long lastUpdate = 0;
 
     // Arithmetic has safe roll-over
-    if (irPacket.value == lastValue && millis() - lastUpdate < 300UL) return false;
+    if (irPacket.value == lastValue && millis() - lastUpdate < 200UL) return false;
 
     lastUpdate = millis();
     lastValue = irPacket.value;
