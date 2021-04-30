@@ -210,7 +210,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 
 The application itself embeds:
 
-* Javascript library [jQuery v3.5.1 - compressed, production version](https://code.jquery.com/jquery-3.5.1.min.js)
+* Javascript library [jQuery v3.5.1 (compressed, production version)](https://code.jquery.com/jquery-3.5.1.min.js)
   by John Resig is [licensed](https://github.com/jquery/jquery/blob/main/LICENSE.txt) under the
   [MIT License](https://opensource.org/licenses/MIT)
 
@@ -221,9 +221,9 @@ The application itself embeds:
   - Code: [MIT License](https://opensource.org/licenses/MIT)
 
 * Font [DSEG version 0.46](https://github.com/keshikan/DSEG/releases/download/v0.46/fonts-DSEG_v046.zip)
-  by Keshikan(Twitter:@keshinomi_88pro)
-  License: Copyright (c) 2018, keshikan (http://www.keshikan.net), with Reserved Font Name "DSEG". This Font
-  Software is licensed under the [SIL Open Font License, Version 1.1](https://scripts.sil.org/OFL).
+  by Keshikan (Twitter:@keshinomi_88pro).<br />
+  License: Copyright (c) 2018, keshikan (http://www.keshikan.net), with Reserved Font Name "DSEG".<br />
+  This Font Software is licensed under the [SIL Open Font License, Version 1.1](https://scripts.sil.org/OFL).
 
 * Font [Dots All For Now JL. 1.00 - 7/16/01](https://fonts2u.com/download/dots-all-for-now-jl.font)
   (c) 2001 by Jeffrey N. Levine.
