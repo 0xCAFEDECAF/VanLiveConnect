@@ -12,6 +12,7 @@
 - [Schematics](#schematics)
 - [Building the Project](#building)
 - [Used Libraries](#libraries)
+- [Limitations, Caveats](#limits)
 - [Work to be Done](#todo)
 - [Frequently Asked Questions](#faq)
 - [License](#license)
@@ -163,13 +164,23 @@ on pins D5, D6 and D7, facing outward; see also the above schematics.
 To compile the project you will need the following:
 
 * [Arduino IDE](https://www.arduino.cc/en/software), with
-* [ESP8266 Board Manager](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed, and
+* [ESP8266 Board Manager](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed.
+  I am currently using [version 2.6.3](https://github.com/esp8266/Arduino/releases/tag/2.6.3) but other versions
+  may also be working fine.
 * Various libraries installed as listed in the [Used Libraries](#libraries") section below.
 
 In the "Tools" menu, choose:
 
 * CPU frequency: 160 MHz, and
 * lwIP variant: "v2 Higher Bandwidth (no features)".
+
+I seem to have better Wi-Fi performance by setting the variable 'build.sdk' to:
+
+    build.sdk=NONOSDK22x_191122
+
+inside the following file:
+
+    %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\platform.txt
 
 #### Uploading
 
@@ -195,17 +206,6 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3 and 2.3.4 .
 
-Optionally, for debugging purposes, you can download the following code as ``.zip`` file and install in the Arduino
-IDE via the "Sketch" menu → "Include Library" → "Add .ZIP Library...":
-
-* Telnet server for ESP8266 / ESP32 - Cloning the serial port via Telnet - Written by Wolfgang Mattis -
-  original download [here](https://github.com/yasheena/telnetspy); the``.zip`` file is found
-  [here](https://github.com/yasheena/telnetspy/archive/master.zip).
-
-  This makes it possible to debug via a telnet port instead of having to connect the serial port via USB.
-  To switch to the telnet port instead of the physical serial over USB, simply re-define ``#define SERIAL Serial`` to
-  ``#define SERIAL TELNETSPY`` in the ``VanLiveConnect.ino`` file.
-
 ### Attributions
 
 The application itself embeds:
@@ -228,6 +228,15 @@ The application itself embeds:
 * Font [Dots All For Now JL. 1.00 - 7/16/01](https://fonts2u.com/download/dots-all-for-now-jl.font)
   (c) 2001 by Jeffrey N. Levine.
   License: Freeware for commercial or non-commercial use.
+
+## ⚠️ Limitations, Caveats<a name = "limits"></a>
+
+Not all VAN bus packets are received error-free; see [this explanation](https://github.com/0xCAFEDECAF/VanBus#limits).
+
+When using the sat nav, this sometimes causes a screen to stay empty. If that happens, try again by using the "Esc"
+button on the remote control and going into the same screen again.
+
+I am investigating how to improve on the error-free reception of VAN bus frames.
 
 ## 👷 Work to be Done<a name = "todo"></a>
 
