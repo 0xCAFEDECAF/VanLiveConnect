@@ -174,7 +174,7 @@ In the "Tools" menu, choose:
 * CPU frequency: 160 MHz, and
 * lwIP variant: "v2 Higher Bandwidth (no features)".
 
-I seem to have better Wi-Fi performance by setting the variable 'build.sdk' to:
+I seem to have better Wi-Fi performance by setting the variable `build.sdk` to:
 
     build.sdk=NONOSDK22x_191122
 
