@@ -48,7 +48,7 @@ int RX_PIN = D2; // Set to GPIO pin connected to VAN bus transceiver output
 
 #define DNS_PORT (53)
 DNSServer dnsServer;
-IPAddress apIP(172, 217, 28, 1);
+IPAddress apIP(AP_IP);
 
 #endif // WIFI_AP_MODE
 
@@ -163,14 +163,15 @@ extern char webfonts_fa_solid_900_woff[];
 extern unsigned int webfonts_fa_solid_900_woff_len;
 
 // Defined in fa-regular-400.woff.ino
-extern char webfonts_fa_regular_400_woff[];
-extern unsigned int webfonts_fa_regular_400_woff_len;
+//extern char webfonts_fa_regular_400_woff[];
+//extern unsigned int webfonts_fa_regular_400_woff_len;
 
 extern char jQuery_js[];  // Defined in jquery-3.5.1.min.js.ino
 extern char mfd_js[];  // Defined in MFD.js.ino
 
 // Cascading style sheet files
 extern char faAll_css[];  // Defined in fa-all.css.ino
+//extern char faSolid_css[];  // Defined in fa-solid.css.ino
 extern char carInfo_css[];  // Defined in CarInfo.css.ino
 
 // HTML files
@@ -210,7 +211,8 @@ void serveFont(const char* urlPath, const char* content, unsigned int content_le
     unsigned long start = millis();
 
     // Cache 10 seconds
-    webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+    // TODO - does this header have any effect?
+    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
 
     webServer.send_P(200, fontWoffStr, content, content_len);  
     Serial.printf_P(PSTR("[webServer] Sending '%S' took: %lu msec\n"), urlPath, millis() - start);
@@ -236,6 +238,37 @@ void serveMainHtml()
     servePage(PSTR("/MFD.html"), PSTR("text/html"), mfd_html);
 } // serveMainHtml
 
+void handleNotFound()
+{
+    if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
+
+#ifdef WIFI_AP_MODE
+    // If webServer.uri() ends with '.html' or '.txt', then serve the main HTML page ('/MFD.html').
+    // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
+    // http://detectportal.firefox.com/success.txt
+    if (webServer.uri().endsWith(".html") || webServer.uri().endsWith(".txt"))
+    {
+        return serveMainHtml();
+    } // if
+#endif
+
+    // Gold-plated response
+    String message = F("File Not Found\n\n");
+    message += F("URI: ");
+    message += webServer.uri();
+    message += F("\nMethod: ");
+    message += (webServer.method() == HTTP_GET) ? F("GET") : F("POST");
+    message += F("\nArguments: ");
+    message += webServer.args();
+    message += F("\n");
+    for (uint8_t i = 0; i < webServer.args(); i++)
+    {
+        message += " " + webServer.argName(i) + F(": ") + webServer.arg(i) + F("\n");
+    } // for
+
+    webServer.send(404, F("text/plain;charset=utf-8"), message);
+} // handleNotFound
+
 // Results returned from the IR decoder
 typedef struct
 {
@@ -247,6 +280,7 @@ typedef struct
 
 // Defined in Wifi.ino
 void setupWifi();
+const char* WifiDataToJson(IPAddress& client);
 
 // Defined in IRrecv.ino
 void irSetup();
@@ -254,40 +288,40 @@ const char* parseIrPacketToJson(TIrPacket& pkt);
 bool irReceive(TIrPacket& irPacket);
 
 // Defined in Esp.ino
-void printSystemSpecs();
-const char* espDataToJson();
+void PrintSystemSpecs();
+const char* EspDataToJson();
 
 // Defined in PacketToJson.ino
 const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
+const char* EquipmentStatusDataToJson();
 void PrintJsonText(const char* jsonBuffer);
 
-void broadcastJsonText(const char* json)
+void BroadcastJsonText(const char* json)
 {
-    if (strlen(json) > 0)
+    if (strlen(json) <= 0) return;
+
+    delay(1); // Give some time to system to process other things?
+
+    unsigned long start = millis();
+
+    webSocket.broadcastTXT(json);
+
+    // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
+    // If that takes really long (seconds or more), the VAN bus Rx queue will overrun.
+    unsigned long duration = millis() - start;
+    if (duration > 100)
     {
-        delay(1); // Give some time to system to process other things?
+        Serial.printf_P(
+            PSTR("Sending %zu JSON bytes via 'webSocket.broadcastTXT' took: %lu msec\n"),
+            strlen(json),
+            duration);
 
-        unsigned long start = millis();
-
-        webSocket.broadcastTXT(json);
-
-        // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
-        // If that takes really long (seconds or more), the VAN bus Rx queue will overrun.
-        unsigned long duration = millis() - start;
-        if (duration > 100)
-        {
-            Serial.printf_P(
-                PSTR("Sending %zu JSON bytes via 'webSocket.broadcastTXT' took: %lu msec\n"),
-                strlen(json),
-                duration);
-
-            Serial.print(F("JSON object:\n"));
-            PrintJsonText(json);
-        } // if
+        Serial.print(F("JSON object:\n"));
+        PrintJsonText(json);
     } // if
-} // broadcastJsonText
+} // BroadcastJsonText
 
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
+void WebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
 {
     switch(type)
     {
@@ -299,15 +333,24 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
         case WStype_CONNECTED:
         {
-            IPAddress ip = webSocket.remoteIP(num);
-            Serial.printf("Websocket [%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+            IPAddress clientIp = webSocket.remoteIP(num);
+            Serial.printf("Websocket [%u] Connected from %d.%d.%d.%d url: %s\n",
+                num,
+                clientIp[0], clientIp[1], clientIp[2], clientIp[3],
+                payload);
 
-            // Dump some system data
-            broadcastJsonText(espDataToJson());
+            // Dump ESP system data
+            BroadcastJsonText(EspDataToJson());
+
+            // Dump Wi-Fi and IP data
+            BroadcastJsonText(WifiDataToJson(clientIp));
+
+            // Dump equipment status data, e.g. presence of sat nav and other devices
+            BroadcastJsonText(EquipmentStatusDataToJson());
         }
         break;
     } // switch
-} // webSocketEvent
+} // WebSocketEvent
 
 void setup()
 {
@@ -318,7 +361,7 @@ void setup()
     Serial.begin(115200);
     Serial.println(F("Starting VAN bus \"Live Connect\" server"));
 
-    printSystemSpecs();
+    PrintSystemSpecs();
 
     setupWifi();
 
@@ -348,9 +391,9 @@ void setup()
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
         serveFont(PSTR("/webfonts/fa-solid-900.woff"), webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });
-    webServer.on(F("/webfonts/fa-regular-400.woff"), [](){
-        serveFont(PSTR("/webfonts/fa-regular-400.woff"), webfonts_fa_regular_400_woff, webfonts_fa_regular_400_woff_len);
-    });
+    // webServer.on(F("/webfonts/fa-regular-400.woff"), [](){
+        // serveFont(PSTR("/webfonts/fa-regular-400.woff"), webfonts_fa_regular_400_woff, webfonts_fa_regular_400_woff_len);
+    // });
 
     // Javascript files
     webServer.on(F("/jquery-3.5.1.min.js"), [](){
@@ -364,6 +407,9 @@ void setup()
     webServer.on(F("/css/all.css"), [](){
         servePage(PSTR("/css/all.css"), textCssStr, faAll_css);
     });
+    // webServer.on(F("/css/solid.css"), [](){
+        // servePage(PSTR("/css/solid.css"), textCssStr, faSolid_css);
+    // });
     webServer.on(F("/CarInfo.css"), [](){
         servePage(PSTR("/CarInfo.css"), textCssStr, carInfo_css);
     });
@@ -371,10 +417,9 @@ void setup()
     // HTML files
     webServer.on(F("/MFD.html"), serveMainHtml);
 
-    // Reply to all other requests with '/MFD.html'
-    webServer.onNotFound(serveMainHtml);
-
     webServer.on("/dumpOnly", handleDumpFilter);
+
+    webServer.onNotFound(handleNotFound);
 
     const char* headers[] = {"If-None-Match"};
     webServer.collectHeaders(headers, sizeof(headers)/ sizeof(headers[0]));
@@ -382,7 +427,7 @@ void setup()
     webServer.begin();
 
     webSocket.begin();
-    webSocket.onEvent(webSocketEvent);
+    webSocket.onEvent(WebSocketEvent);
 
     Serial.print(F("Please surf to: http://"));
 #ifdef WIFI_AP_MODE
@@ -415,12 +460,12 @@ void loop()
 
     // IR receiver
     TIrPacket irPacket;
-    if (irReceive(irPacket)) broadcastJsonText(parseIrPacketToJson(irPacket));
+    if (irReceive(irPacket)) BroadcastJsonText(parseIrPacketToJson(irPacket));
 
     // VAN bus receiver
     TVanPacketRxDesc pkt;
     bool isQueueOverrun = false;
-    if (VanBusRx.Receive(pkt, &isQueueOverrun)) broadcastJsonText(ParseVanPacketToJson(pkt));
+    if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
     if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
     // Print statistics every 5 seconds

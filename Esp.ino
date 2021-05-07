@@ -9,7 +9,7 @@ const char PROGMEM unknownStr[] = "UNKNOWN";
 
 const String md5Checksum = ESP.getSketchMD5();
 
-void printSystemSpecs()
+void PrintSystemSpecs()
 {
     Serial.printf_P(PSTR("CPU Speed: %u MHz\n"), system_get_cpu_freq());
     Serial.printf_P(PSTR("SDK: %s\n"), system_get_sdk_version());
@@ -47,9 +47,9 @@ void printSystemSpecs()
             FloatToStr(floatBuf, fs_info.totalBytes / 1024.0 / 1024.0, 2)
         );
     } // if
-} // printSystemSpecs
+} // PrintSystemSpecs
 
-const char* espDataToJson()
+const char* EspDataToJson()
 {
     #define ESP_DATA_JSON_BUFFER_SIZE 1024
     static char jsonBuffer[ESP_DATA_JSON_BUFFER_SIZE];
@@ -116,12 +116,12 @@ const char* espDataToJson()
     // JSON buffer overflow?
     if (at >= ESP_DATA_JSON_BUFFER_SIZE) return "";
 
-    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+    // #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
 
-    Serial.print(F("ESP data as JSON object:\n"));
-    PrintJsonText(jsonBuffer);
+    // Serial.print(F("ESP data as JSON object:\n"));
+    // PrintJsonText(jsonBuffer);
 
-    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+    // #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return jsonBuffer;
-} // espDataToJson
+} // EspDataToJson

@@ -382,7 +382,10 @@ enum SatNavRequest_t
     SR_ENTER_HOUSE_NUMBER_LETTER = 0x07,  // Never seen, just guessing
     SR_PLACE_OF_INTEREST_CATEGORY = 0x08,
     SR_PLACE_OF_INTEREST = 0x09,
+    // TODO - SR_ARCHIVE_IN_PERSONAL_DIRECTORY = 0x0A ? In that case, SR_ARCHIVE_IN_PROFESSIONAL_DIRECTORY = 0x0B
     SR_ARCHIVE_IN_DIRECTORY = 0x0B,
+    // TODO - SR_RENAME_PERSONAL_DIRECTORY_ENTRY = 0x0C ? In that case, SR_RENAME_PROFESSIONAL_DIRECTORY_ENTRY = 0x0D
+    SR_RENAME_DIRECTORY_ENTRY = 0x0D,
     SR_LAST_DESTINATION = 0x0E,
     SR_NEXT_STREET = 0x0F,  // Shown during SatNav guidance in the (solid line) top box
     SR_CURRENT_STREET = 0x10,  // Shown during SatNav guidance in the (dashed line) bottom box
@@ -406,9 +409,10 @@ const char* SatNavRequestStr(uint8_t data)
         data == SR_ENTER_STREET ? PSTR("Enter street") :
         data == SR_ENTER_HOUSE_NUMBER ? PSTR("Enter number") :
         data == SR_ENTER_HOUSE_NUMBER_LETTER ? PSTR("Enter letter") :
-        data == SR_PLACE_OF_INTEREST_CATEGORY ? PSTR("Place of interest category") :
-        data == SR_PLACE_OF_INTEREST ? PSTR("Place of interest") :
+        data == SR_PLACE_OF_INTEREST_CATEGORY ? PSTR("Service") :
+        data == SR_PLACE_OF_INTEREST ? PSTR("Service address") :
         data == SR_ARCHIVE_IN_DIRECTORY ? PSTR("Archive in directory") :
+        data == SR_RENAME_DIRECTORY_ENTRY ? PSTR("Rename directory entry") :
         data == SR_LAST_DESTINATION ? PSTR("Last destination") : // TODO - change to SR_CURR_DESTINATION - "Current destination"
         data == SR_NEXT_STREET ? PSTR("Next street") :
         data == SR_CURRENT_STREET ? PSTR("Current street") :
@@ -979,6 +983,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
             code == 0x0100 ? PSTR("End-of-button-press") :
 
             // User selects street from list
+            // TODO - also when user selects category from list of services
             code == 0x0101 ? PSTR("Selected_street_from_list") :
 
             // User selects a menu entry or letter? User pressed "Val". Always followed by 0x0100.
@@ -2378,12 +2383,24 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus1Pkt
 
+// Saved equipment status
+const char* satnav_status_2 = emptyStr;
+bool satnav_disc_present = false; 
+
 VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#7CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#7CE
 
     const uint8_t* data = pkt.Data();
+
+    satnav_status_2 =
+        (data[1] & 0x0F) == 0x00 ? PSTR("INITIALIZING") : // TODO - change to "IDLE"
+        (data[1] & 0x0F) == 0x01 ? PSTR("IDLE") : // TODO - change to "READY"
+        (data[1] & 0x0F) == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
+        ToHexStr((uint8_t)(data[1] & 0x0F));
+
+    satnav_disc_present = (data[2] & 0x70) == 0x30;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2405,10 +2422,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
 
         data[1] & 0x20 ? noStr : yesStr,
 
-        (data[1] & 0x0F) == 0x00 ? PSTR("INITIALIZING") : // TODO - change to "IDLE"
-        (data[1] & 0x0F) == 0x01 ? PSTR("IDLE") : // TODO - change to "READY"
-        (data[1] & 0x0F) == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
-        ToHexStr((uint8_t)(data[1] & 0x0F)),
+        satnav_status_2,
 
         data[1] & 0x10 ? yesStr : noStr,
         data[1] & 0x40 ? noStr : yesStr,
@@ -3309,8 +3323,6 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
             "\"mfd_to_satnav_request_type\": \"%S\",\n"
             "\"mfd_to_satnav_go_to_screen\": \"%S\"";
 
-    // TODO - handle SR_ARCHIVE_IN_DIRECTORY
-
     int at = snprintf_P(buf, n, jsonFormatter,
         SatNavRequestStr(request),
 
@@ -3320,12 +3332,12 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         type == 3 ? PSTR("CITY_CENTER") :
         ToStr(type),
 
-        // Determines which sat nav screen must be/become visible. An exmpty string ("") indicates:
-        // stay in current screen
+        // Determines which sat nav screen must be/become visible.
+        // An exmpty string ("") indicates: stay in current screen.
 
         // Combinations:
         //
-        // * request == 0x02 ("ENTER_CITY"), 0x05 ("ENTER_STREET"),
+        // * request == 0x02 (SR_ENTER_CITY), 0x05 (SR_ENTER_STREET),
         //   param == 0x1D:
         //   - type = 0 (dataLen = 4): request (remaining) list length
         //     -- data[3]: (next) character to narrow down selection with. 0x00 if none.
@@ -3334,6 +3346,9 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //     -- data[7] << 8 | data[8]: number of items to retrieve
         //   - type = 2 (dataLen = 11): select entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
+        //   - type = 3 (dataLen = 9): select city center
+        //     -- data[5] << 8 | data[6]: offset in list (always 0)
+        //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
         request == SR_ENTER_CITY && param == 0x1D && type == 0 ? PSTR("satnav_enter_city_characters") :
         request == SR_ENTER_CITY && param == 0x1D && type == 1 ? PSTR("satnav_choose_from_list") :
@@ -3344,7 +3359,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_ENTER_STREET && param == 0x1D && type == 2 ? emptyStr :
         request == SR_ENTER_STREET && param == 0x1D && type == 3 ? PSTR("satnav_show_current_destination") :
 
-        // * request == 0x06 ("ENTER_HOUSE_NUMBER"),
+        // * request == 0x06 (SR_ENTER_HOUSE_NUMBER),
         //   param == 0x1D:
         //   - type = 1 (dataLen = 9): request range of house numbers
         //     -- data[7] << 8 | data[8]: always 1
@@ -3354,7 +3369,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_ENTER_HOUSE_NUMBER && param == 0x1D && type == 1 ? PSTR("satnav_current_destination_house_number") :
         request == SR_ENTER_HOUSE_NUMBER && param == 0x1D && type == 2 ? PSTR("satnav_show_current_destination") : // emptyStr :
 
-        // * request == 0x08 ("PLACE_OF_INTEREST_CATEGORY"),
+        // * request == 0x08 (SR_PLACE_OF_INTEREST_CATEGORY),
         //   param == 0x0D:
         //   - type = 0 (dataLen = 4): request list length. Satnav will respond with 38 and no
         //              letters or number to choose from.
@@ -3364,7 +3379,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_PLACE_OF_INTEREST_CATEGORY && param == 0x0D && type == 0 ? PSTR("satnav_choose_from_list") :
         request == SR_PLACE_OF_INTEREST_CATEGORY && param == 0x0D && type == 2 ? emptyStr :
 
-        // * request == 0x08 ("PLACE_OF_INTEREST_CATEGORY"),
+        // * request == 0x08 (SR_PLACE_OF_INTEREST_CATEGORY),
         //   param == 0xFF:
         //   - type = 0 (dataLen = 4): present nag screen. Satnav response is PLACE_OF_INTEREST_CATEGORY_LIST
         //              with list_size=38, but the MFD ignores that.
@@ -3375,7 +3390,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_PLACE_OF_INTEREST_CATEGORY && param == 0xFF && type == 0 ? emptyStr :
         request == SR_PLACE_OF_INTEREST_CATEGORY && param == 0xFF && type == 1 ? PSTR("satnav_choose_from_list") :
 
-        // * request == 0x09 ("PLACE_OF_INTEREST"),
+        // * request == 0x09 (SR_PLACE_OF_INTEREST),
         //   param == 0x0D:
         //   - type = 0 (dataLen = 4): request list length
         //   - type = 1 (dataLen = 9): request list 
@@ -3385,7 +3400,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_PLACE_OF_INTEREST && param == 0x0D && type == 0 ? PSTR("satnav_choose_from_list") :
         request == SR_PLACE_OF_INTEREST && param == 0x0D && type == 1 ? PSTR("satnav_show_place_of_interest_address") :
 
-        // * request == 0x09 ("PLACE_OF_INTEREST"),
+        // * request == 0x09 (SR_PLACE_OF_INTEREST),
         //   param == 0x0E:
         //   - type = 2 (dataLen = 11): select entry from list
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
@@ -3393,14 +3408,28 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         // TODO - popup with question: select fastest route? (Yes/No)
         request == SR_PLACE_OF_INTEREST && param == 0x0E && type == 2 ? emptyStr : // PSTR("satnav_guidance") :
 
-        // * request == 0x0E ("LAST_DESTINATION"),
+        // * request == 0x0B (SR_ARCHIVE_IN_DIRECTORY),
+        //   param == 0xFF:
+        //   - type = 0 (dataLen = 4): request list of available characters
+        //     -- data[3]: character entered by user. 0x00 if none.
+
+        request == SR_ARCHIVE_IN_DIRECTORY && param == 0xFF && type == 0 ? emptyStr :
+
+        // * request == 0x0B (SR_ARCHIVE_IN_DIRECTORY),
+        //   param == 0x0D:
+        //   - type = 2 (dataLen = 11): confirm entered name
+        //     -- no further data
+
+        request == SR_ARCHIVE_IN_DIRECTORY && param == 0x0D && type == 2 ? emptyStr :
+
+        // * request == 0x0E (SR_LAST_DESTINATION),
         //   param == 0x0D:
         //   - type = 2 (dataLen = 11):
         //     -- no further data
 
         request == SR_LAST_DESTINATION && param == 0x0D && type == 2 ? emptyStr :
 
-        // * request == 0x0E ("LAST_DESTINATION"),
+        // * request == 0x0E (SR_LAST_DESTINATION),
         //   param == 0xFF:
         //   - type = 1 (dataLen = 9):
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
@@ -3408,7 +3437,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
 
         request == SR_LAST_DESTINATION && param == 0xFF && type == 1 ? emptyStr : // PSTR("satnav_show_last_destination") :
 
-        // * request == 0x0F ("NEXT_STREET"),
+        // * request == 0x0F (SR_NEXT_STREET),
         //   param == 0xFF:
         //   - type = 1 (dataLen = 9):
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
@@ -3416,14 +3445,14 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
 
         request == SR_NEXT_STREET && param == 0xFF && type == 1 ? emptyStr : // PSTR("satnav_guidance") :
 
-        // * request == 0x10 ("CURRENT_STREET"),
+        // * request == 0x10 (SR_CURRENT_STREET),
         //   param == 0x0D:
         //   - type = 2 (dataLen = 11): select current location for e.g. places of interest
         //     -- no further data
 
         request == SR_CURRENT_STREET && param == 0x0D && type == 2 ? emptyStr :
 
-        // * request == 0x10 ("CURRENT_STREET"),
+        // * request == 0x10 (SR_CURRENT_STREET),
         //   param == 0xFF:
         //   - type = 1 (dataLen = 9): get current location during sat nav guidance
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
@@ -3434,7 +3463,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         // handle this.
         request == SR_CURRENT_STREET && param == 0xFF && type == 1 ? emptyStr : // PSTR("satnav_guidance") :
 
-        // * request == 0x11 ("PRIVATE_ADDRESS"),
+        // * request == 0x11 (SR_PRIVATE_ADDRESS),
         //   param == 0x0E:
         //   - type = 2 (dataLen = 11): select entry from list
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
@@ -3442,29 +3471,28 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         // TODO - popup with question: select fastest route? (Yes/No)
         request == SR_PRIVATE_ADDRESS && param == 0x0E && type == 2 ? emptyStr : // PSTR("satnav_guidance") :
 
-        // * request == 0x11 ("PRIVATE_ADDRESS"),
+        // * request == 0x11 (SR_PRIVATE_ADDRESS),
         //   param == 0xFF:
         //   - type = 1 (dataLen = 9): get entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
         request == SR_PRIVATE_ADDRESS && param == 0xFF && type == 1 ? PSTR("satnav_show_private_address") :
 
-        // * request == 0x12 ("BUSINESS_ADDRESS"),
+        // * request == 0x12 (SR_BUSINESS_ADDRESS),
         //   param == 0x0E:
         //   - type = 2 (dataLen = 11): select entry from list
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
-        // TODO - popup with question: select fastest route? (Yes/No)
         request == SR_BUSINESS_ADDRESS && param == 0x0E && type == 2 ? emptyStr : // PSTR("satnav_guidance") :
 
-        // * request == 0x12 ("BUSINESS_ADDRESS"),
+        // * request == 0x12 (SR_BUSINESS_ADDRESS),
         //   param == 0xFF:
         //   - type = 1 (dataLen = 9): get entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
         request == SR_BUSINESS_ADDRESS && param == 0xFF && type == 1 ? PSTR("satnav_show_business_address") :
 
-        // * request == 0x1B ("PRIVATE_ADDRESS_LIST"),
+        // * request == 0x1B (SR_PRIVATE_ADDRESS_LIST),
         //   param == 0xFF:
         //   - type = 0 (dataLen = 4): request list length
         //   - type = 1 (dataLen = 9): request list 
@@ -3474,7 +3502,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_PRIVATE_ADDRESS_LIST && param == 0xFF && type == 0 ? emptyStr : // PSTR("satnav_choose_from_list") :
         request == SR_PRIVATE_ADDRESS_LIST && param == 0xFF && type == 1 ? PSTR("satnav_choose_from_list") :
 
-        // * request == 0x1C ("BUSINESS_ADDRESS_LIST"),
+        // * request == 0x1C (SR_BUSINESS_ADDRESS_LIST),
         //   param == 0xFF:
         //   - type = 0 (dataLen = 4): request list length
         //   - type = 1 (dataLen = 9): request list 
@@ -3484,17 +3512,16 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         request == SR_BUSINESS_ADDRESS_LIST && param == 0xFF && type == 0 ? emptyStr : // PSTR("satnav_choose_from_list") :
         request == SR_BUSINESS_ADDRESS_LIST && param == 0xFF && type == 1 ? PSTR("satnav_choose_from_list") :
 
-        // * request == 0x1D ("DESTINATION"),
+        // * request == 0x1D (SR_DESTINATION),
         //   param == 0x0E:
-        //   - type = 2 (dataLen = 11): select fastest route
+        //   - type = 2 (dataLen = 11): select fastest route ?
         //     -- no further data
         //
         // TODO - run a session in which something else than fastest route is selected
 
-        // TODO - popup with question: select fastest route? (Yes/No)
         request == SR_DESTINATION && param == 0x0E && type == 2 ? emptyStr : // PSTR("satnav_guidance") :
 
-        // * request == 0x1D ("DESTINATION"),
+        // * request == 0x1D (SR_DESTINATION),
         //   param == 0xFF:
         //   - type = 1 (dataLen = 9): get current destination. Satnav replies (IDEN 0x6CE) with the last
         //     destination, a city center with GPS coordinate (if no street has been entered yet), or a
@@ -3502,7 +3529,6 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
-        //request == SR_DESTINATION && param == 0xFF && type == 1 ? PSTR("satnav_show_current_destination") : // emptyStr :
         request == SR_DESTINATION && param == 0xFF && type == 1 ? emptyStr :
 
         emptyStr
@@ -3582,12 +3608,12 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
         "\"data\":\n"
         "{\n"
             "\"satnav_to_mfd_response\": \"%S\",\n"
-            "\"satnav_to_mfd_list_size\": \"%u\",\n"
-            "\"satnav_to_mfd_show_characters\": \"";
+            "\"satnav_to_mfd_list_size\": \"%d\",\n"
+            "\"satnav_to_mfd_show_characters\": \"";  // TODO - rename to "satnav_to_mfd_available_characters"
 
     int at = snprintf_P(buf, n, jsonFormatter,
         SatNavRequestStr(data[1]),
-        (uint16_t)data[4] << 8 | data[5]
+        (sint16_t)(data[4] << 8 | data[5])
     );
 
     // TODO - handle SR_ARCHIVE_IN_DIRECTORY
@@ -3615,7 +3641,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
     // with '9' at bit 3 of byte 21. Print the number if it is available.
     for (int byte = 0; byte <= 1; byte++)
     {
-        for (int bit = (byte == 0 ? 2 : 0); bit < (byte == 1 ? 3 : 8); bit++)
+        for (int bit = (byte == 0 ? 2 : 0); bit < (byte == 1 ? 4 : 8); bit++)
         {
             if (data[byte + 20] >> bit & 0x01)
             {
@@ -4076,6 +4102,43 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToHeadUnitPkt
+
+// Dump equipment status data, e.g. presence of sat nav and other devices
+// Some data is not regularly sent over the VAN bus. If a websocket client connects, we want to give a direct
+// update of this data as received thus far, instead of having to wait for this data to appear on the bus.
+const char* EquipmentStatusDataToJson()
+{
+    #define EQPT_STATUS_DATA_JSON_BUFFER_SIZE 256
+    static char jsonBuffer[EQPT_STATUS_DATA_JSON_BUFFER_SIZE];
+
+    const static char jsonFormatter[] PROGMEM =
+    "{\n"
+        "\"event\": \"display\",\n"
+        "\"data\":\n"
+        "{\n"
+            "\"satnav_disc_present\": \"%S\",\n"
+            "\"satnav_status_2\": \"%S\"\n"
+        "}\n"
+    "}\n";
+
+    int at = snprintf_P(jsonBuffer, ESP_DATA_JSON_BUFFER_SIZE, jsonFormatter,
+
+        satnav_disc_present ? yesStr : noStr,
+        satnav_status_2
+    );
+
+    // JSON buffer overflow?
+    if (at >= EQPT_STATUS_DATA_JSON_BUFFER_SIZE) return "";
+
+    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+
+    Serial.print(F("Equipment status data as JSON object:\n"));
+    PrintJsonText(jsonBuffer);
+
+    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
+    return jsonBuffer;
+} // EquipmentStatusDataToJson
 
 // Check if the new packet data differs from the previous.
 // Optionally, print the new packet on Serial, highlighting the bytes that differ.

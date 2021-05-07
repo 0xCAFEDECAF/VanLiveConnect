@@ -11,68 +11,48 @@ function numberWithSpaces(x)
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 } // numberWithSpaces
 
-// Example of invocation:
-// await sleep(300); // sleep 0.3 seconds
-// Does not work with IE11, which does not understand =>
-// function sleep(ms)
-// {
-  // return new Promise(resolve => setTimeout(resolve, ms));
-// } // sleep
-
 // -----
 // On-screen clocks
 
 // Retrieve and show the current date and time
 function updateDateTime()
 {
-    var el = document.getElementById("date_small");
-    if (typeof(el) != 'undefined' && el != null)
-    {
-        var date = new Date().toLocaleDateString
-        (
-            'en-gb',
-            {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-            }
-        );
-        el.innerHTML = date;
-    } // if
+    var date = new Date().toLocaleDateString
+    (
+        'en-gb',
+        {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+        }
+    );
+    date = date.replace(/,[^0]*0/, ", ");  // IE11 incorrectly shows leading "0"
+    $("#date_small").text(date);
 
-    el = document.getElementById("date_weekday");
-    if (typeof(el) != 'undefined' && el != null)
-    {
-        var date = new Date().toLocaleDateString
-        (
-            'en-gb',
-            {
-                weekday: 'long',
-            }
-        );
-        el.innerHTML = date + ",";
-    } // if
+    var date = new Date().toLocaleDateString
+    (
+        'en-gb',
+        {
+            weekday: 'long',
+        }
+    );
+    $("#date_weekday").text(date + ",");
 
-    el = document.getElementById("date");
-    if (typeof(el) != 'undefined' && el != null)
-    {
-        var date = new Date().toLocaleDateString
-        (
-            'en-gb',
-            {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
-            }
-        );
-        el.innerHTML = date;
-    } // if
+    date = new Date().toLocaleDateString
+    (
+        'en-gb',
+        {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }
+    );
+    date = date.replace(/^.0/, "");  // IE11 incorrectly shows leading "0"
+    $("#date").text(date);
 
     var time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    el = document.getElementById("time");
-    if (typeof(el) != 'undefined' && el != null) el.innerHTML = time;
-    el = document.getElementById("time_small");
-    if (typeof(el) != 'undefined' && el != null) el.innerHTML = time;
+    $("#time").text(time);
+    $("#time_small").text(time);
 } // updateDateTime
 
 // Update now and every next second
@@ -130,13 +110,14 @@ var FancyWebSocket = function(url)
         dispatch(json.event, json.data)
     };  // function
 
-    conn.onclose = function(){dispatch('close',null)}
-    conn.onopen = function(){dispatch('open',null)}
+    conn.onclose = function() { dispatch('close', null); }
+    conn.onopen = function() { dispatch('open', null); }
 
     var dispatch = function(event_name, message)
     {
         var chain = callbacks[event_name];
-        if (typeof chain == 'undefined') return; // No callbacks for this event
+        //if (typeof chain == 'undefined') return; // No callbacks for this event
+        if (chain == undefined) return; // No callbacks for this event
         for (var i = 0; i < chain.length; i++)
         {
             chain[i](message)
@@ -144,7 +125,18 @@ var FancyWebSocket = function(url)
     } // function
 }; // FancyWebSocket
 
-var socket = new FancyWebSocket('ws://' + window.location.hostname + ':81/');
+var websocketServerHost = window.location.hostname;
+
+// TODO - hard coded "172.217.28", better to use AP_IP from Config.h.
+if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(/^172\.217\.28/))
+{
+    //websocketServerHost = "VanLiveConnect.lan";
+    websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
+} // if
+
+console.log("Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
+
+var socket = new FancyWebSocket("ws://" + websocketServerHost + ":81/");
 
 // In "demo mode", specific fields will not be updated
 var inDemoMode = false;
@@ -164,10 +156,33 @@ var wait = true;
 
 function writeToDom(jsonObj)
 {
-    // These log entries can be used to literally re-play a session; simply copy-paste these lines into the console
-    // window of the web-browser. Also it can be really useful to copy and save these lines into a text file for
-    // later re-playing at your desk.
-    //console.log("writeToDom(" + JSON.stringify(jsonObj) + ");");
+    // The following log entries can be used to literally re-play a session; simply copy-paste these lines into the
+    // console window of the web-browser. Also it can be really useful to copy and save these lines into a text file
+    // for later re-playing at your desk.
+
+    var now = Date.now();
+    if (typeof writeToDom.lastInvoked === "undefined")
+    {
+        // First time: print the sleep function for easy copy-pasting. Intervals will be at most 300 milliseconds.
+        // Note: some events need a minimum amount of time between them, e.g. the pressing of the same button on
+        // the remote control, or pressing a button on the remote control after changing to another screen.
+        console.log("function sleep(ms) { return new Promise(resolve => setTimeout(resolve, Math.min(ms, 300))); } //");
+
+        // Alternative, with actual intervals
+        //console.log("function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); } //");
+    }
+    else
+    {
+        var elapsed = now - writeToDom.lastInvoked;
+
+        // Don't let them wait longer than 20 seconds:
+        if (elapsed > 20000) elapsed = 20000;
+
+        console.log("await sleep(" + elapsed + "); //");
+    } // if
+    console.log("writeToDom(" + JSON.stringify(jsonObj) + "); //");
+
+    writeToDom.lastInvoked = now;
 
     for (var item in jsonObj)
     {
@@ -178,123 +193,89 @@ function writeToDom(jsonObj)
             continue;
         } // if
 
-        if (Array.isArray(jsonObj[item]))
+        // Select by 'id' attribute (must be unique in the DOM)
+        var selectorById = '#' + item;
+
+        // Select also by custom attribute 'gid' (need not be unique)
+        var selectorByAttr = '[gid="' + item + '"]';
+
+        // jQuery-style loop over merged, unique-element array (this is cool, looks like Perl! :-) )
+        $.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
         {
-            // Handling of "text area" DOM objects to show lists. Example:
-            //
-            // {
-            //   "event": "display",
-            //   "data": {
-            //     "alarm_list":
-            //     [
-            //       "Tyre pressure low",
-            //       "Door open",
-            //       "Water temperature too high",
-            //       "Oil level too low"
-            //     ]
-            //   }
-            // }
+            if ($(selector).length <= 0) return; // go to next iteration in .each()
 
-            // Select by 'id' attribute (must be unique in the DOM)
-            var selectorById = '#' + item;
-
-            // Select also by custom attribute 'gid' (need not be unique)
-            var selectorByAttr = '[gid="' + item + '"]';
-
-            // jQuery-style loop over merged, unique-element array (this is cool, starting to look like Perl! :-) )
-            $.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
+            if (Array.isArray(jsonObj[item]))
             {
-                if($(selector).length > 0)
-                {
-                    // Remove current lines
-                    $(selector).empty();
+                // Handling of multi-line DOM objects to show lists. Example:
+                //
+                // {
+                //   "event": "display",
+                //   "data": {
+                //     "alarm_list":
+                //     [
+                //       "Tyre pressure low",
+                //       "Door open",
+                //       "Water temperature too high",
+                //       "Oil level too low"
+                //     ]
+                //   }
+                // }
 
-                    var len = jsonObj[item].length;
-                    for (var i = 0; i < len; i++)
+                // Remove current lines
+                $(selector).empty();
+
+                var len = jsonObj[item].length;
+                for (var i = 0; i < len; i++) $(selector).append(jsonObj[item][i] + (i < len - 1 ? "<br />" : ""));
+            }
+            else if (!!jsonObj[item] && typeof(jsonObj[item]) === "object")
+            {
+                // Handling of "change attribute" events. Examples:
+                //
+                // {
+                //   "event": "display",
+                //   "data": {
+                //     "satnav_curr_heading_svg": { "transform": "rotate(247.5)" }
+                //   }
+                // }
+                //
+                // {
+                //   "event": "display",
+                //   "data": {
+                //     "notification_on_mfd": {
+                //       "style": { "display": "block" }
+                //     }
+                //   }
+                // }
+
+                var attributeObj = jsonObj[item];
+                for (var attribute in attributeObj)
+                {
+                    // Deeper nesting?
+                    if (typeof(attributeObj) === "object")
                     {
-                        $(selector).append(jsonObj[item][i] + (i < len - 1 ? "<br />" : ""));
-                    } // for
-                } // if
-            }); // each
-        }
-        else if (!!jsonObj[item] && typeof(jsonObj[item]) == "object")
-        {
-            // Handling of "change attribute" events. Examples:
-            //
-            // {
-            //   "event": "display",
-            //   "data": {
-            //     "satnav_curr_heading_svg": { "transform": "rotate(247.5)" }
-            //   }
-            // }
-            //
-            // {
-            //   "event": "display",
-            //   "data": {
-            //     "notification_on_mfd": {
-            //       "style": { "display": "block" }
-            //     }
-            //   }
-            // }
-
-            // Select by 'id' attribute (must be unique in the DOM)
-            var selectorById = '#' + item;
-
-            // Select also by custom attribute 'gid' (need not be unique)
-            var selectorByAttr = '[gid="' + item + '"]';
-
-            // jQuery-style loop over merged, unique-element array
-            $.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
-            {
-                if($(selector).length > 0)
-                {
-                    var attributeObj = jsonObj[item];
-                    for (var attribute in attributeObj)
+                        var propertyObj = attributeObj[attribute];
+                        for (var property in propertyObj)
+                        {
+                            var value = propertyObj[property];
+                            $(selector).get(0)[attribute][property] = value;
+                        } // for
+                    }
+                    else
                     {
                         var attrValue = attributeObj[attribute];
-
-                        // Deeper nesting?
-                        if (typeof(attributeObj) == "object")
-                        {
-                            var propertyObj = attributeObj[attribute];
-                            for (var property in propertyObj)
-                            {
-                                var value = propertyObj[property];
-                                $(selector).get(0)[attribute][property] = value;
-                            } // for
-                        }
-                        else
-                        {
-                            $(selector).attr(attribute, attrValue);
-                        } // if
-                    } // for
-                } // if
-            }); // each
-        }
-        else
-        {
-            // Select by 'id' attribute (must be unique in the DOM)
-            var selectorById = '#' + item;
-
-            // Select also by custom attribute 'gid' (need not be unique)
-            var selectorByAttr = '[gid="' + item + '"]';
-
-            // jQuery-style loop over merged, unique-element array
-            $.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
+                        $(selector).attr(attribute, attrValue);
+                    } // if
+                } // for
+            }
+            else
             {
                 if ($(selector).hasClass("led"))
                 {
                     // Handling of "led" class objects: no text copy, just turn ON or OFF
-                    if (jsonObj[item].toUpperCase() === "ON" || jsonObj[item].toUpperCase() === "YES")
-                    {
-                        $(selector).addClass("ledOn");
-                        $(selector).removeClass("ledOff");
-                    }
-                    else
-                    {
-                        $(selector).addClass("ledOff");
-                        $(selector).removeClass("ledOn");
-                    } // if
+                    var on = jsonObj[item].toUpperCase() === "ON" || jsonObj[item].toUpperCase() === "YES";
+
+                    $(selector).toggleClass("ledOn", on);
+                    $(selector).toggleClass("ledOff", ! on);
                 }
                 else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
                 {
@@ -307,8 +288,8 @@ function writeToDom(jsonObj)
                     // Handling of simple "text" objects
                     $(selector).html(jsonObj[item]);
                 } // if
-            });
-        } // if
+            } // if
+        }); // each
 
         // Check if a handler must be invoked
         handleItemChange(item, jsonObj[item]);
@@ -368,11 +349,6 @@ function changeLargeScreenTo(id)
     if (id === currentLargeScreenId) return;
 
     //console.log("changeLargeScreenTo('" + id + "')");
-    //if (id === "satnav_guidance")
-    //{
-        // console.log("changeLargeScreenTo('" + id + "')");
-        // console.trace();
-    //} // if
 
     lastScreenChanged = Date.now();
 
@@ -422,15 +398,15 @@ function selectDefaultScreen(audioSource)
 
     if (screen === "")
     {
-        var currentStreet = document.getElementById("satnav_curr_street").innerText;
-        var gpsFix = document.getElementById("satnav_gps_fix").classList.contains("ledOn");
-        if (currentStreet !== "") screen = "satnav_current_location";
+        //var currentStreet = document.getElementById("satnav_curr_street").innerText;
+        //var gpsFix = document.getElementById("satnav_gps_fix").classList.contains("ledOn");
+        if ($("#satnav_curr_street").text() !== "") screen = "satnav_current_location";
     } // if
 
     // Fall back to instrument screen if engine is running
     if (screen === "" && engineRunning === "YES") screen = "instruments";
 
-    // Final fallback screen
+    // Final fallback screen...
     if (screen === "") screen = "clock";
 
     changeLargeScreenTo(screen);
@@ -496,7 +472,7 @@ function nextLargeScreen()
     ]; 
 
     // Create and initialize static variable (that survives invocations of this function)
-    if (typeof nextLargeScreen.idIndex == "undefined") nextLargeScreen.idIndex = 0;
+    if (typeof nextLargeScreen.idIndex === "undefined") nextLargeScreen.idIndex = 0;
 
     // Get the ID of the next screen in the sequence
     //console.log(nextLargeScreen.idIndex);
@@ -556,7 +532,7 @@ function nextSmallScreen()
     var screenIds = ["trip_info", "tuner_small", "instrument_small"]; 
 
     // Create and initialize static variable (that survives invocations of this function)
-    if (typeof nextSmallScreen.idIndex == "undefined") nextSmallScreen.idIndex = 0;
+    if (typeof nextSmallScreen.idIndex === "undefined") nextSmallScreen.idIndex = 0;
 
     // Get the ID of the next screen in the sequence
     nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
@@ -597,7 +573,7 @@ function goFullScreen()
     //wscript.SendKeys("{F11}");
 } // goFullScreen
 
-// Show the specified popup, with a timeout if passed
+// Show the specified popup, with an optional timeout
 function showPopup(id, msec)
 {
     var popup = $("#" + id);
@@ -623,7 +599,6 @@ function hidePopup(id)
     if (! popup.is(":visible")) return false;
 
     //console.log("hidePopup(" + (id ? id : popup.text()) + ")");
-    //console.log("hidePopup('" + id + "')");
 
     popup.hide();
 
@@ -643,24 +618,25 @@ function showNotificationPopup(message, msec, isWarning)
     // IE11 does not support default parameters
     if (isWarning === undefined) isWarning = false;
 
+    // Show the required icon: "information" or "warning"
+    // document.getElementById("notification_icon_info").style.display = isWarning ? "none" : "block";
+    // document.getElementById("notification_icon_warning").style.display = isWarning ? "block" : "none";
+    $("#notification_icon_info").toggle(! isWarning);
+    $("#notification_icon_warning").toggle(isWarning);
+
     // Set the notification text
     $("#last_message_displayed_on_mfd").html(message);
 
     // Show the notification popup
-    $("#notification_popup").show();
+    // $("#notification_popup").show();
 
-    // Show the required icon: "information" or "warning"
-    document.getElementById("notification_icon_info").style.display = isWarning ? "none" : "block";
-    document.getElementById("notification_icon_warning").style.display = isWarning ? "block" : "none";
+    // if (! msec) return;
 
-    if (! msec) return;
+    // // Hide popup after timeout
+    // clearInterval(showNotificationPopup.timer);
+    // showNotificationPopup.timer = setTimeout( function () { hidePopup("notification_popup"); }, msec );
 
-    // Hide popup after timeout
-    clearInterval(showNotificationPopup.timer);
-    showNotificationPopup.timer = setTimeout(
-        function () { hidePopup("notification_popup"); },
-        msec
-    );
+    showPopup("notification_popup", msec);
 } // showNotificationPopup
 
 // Show a simple status popup (no icon) with a message and an optional timeout
@@ -672,16 +648,15 @@ function showStatusPopup(message, msec)
     //console.log("showStatusPopup('" + $("#status_popup_text").text() + "')");
 
     // Show the popup
-    $("#status_popup").show();
+    // $("#status_popup").show();
 
-    if (! msec) return;
+    // if (! msec) return;
 
-    // Hide popup after timeout
-    clearInterval(showStatusPopup.timer);
-    showStatusPopup.timer = setTimeout(
-        function () { hidePopup("status_popup"); },
-        msec
-    );
+    // // Hide popup after timeout
+    // clearInterval(showStatusPopup.timer);
+    // showStatusPopup.timer = setTimeout(function () { hidePopup("status_popup"); }, msec);
+
+    showPopup("status_popup", msec);
 } // showStatusPopup
 
 // -----
@@ -717,32 +692,36 @@ function gotoMenu(menu)
 
     // Move the "buttonSelected" class to the first enabled button in the list
 
-    var currentlySelected = $("#" + currentMenu).find(".buttonSelected");
-    var currentlySelectedIdx = buttons.index(currentlySelected);  // will be -1 if no buttons are selected
-    var nextSelectedIdx = 0;
+    var selectedButton = $("#" + currentMenu).find(".buttonSelected");
+    var currIdx = buttons.index(selectedButton);  // will be -1 if no buttons are selected
+    var nextIdx = 0;
 
     // Skip disabled buttons
-    var isButtonEnabled = ! $(buttons[nextSelectedIdx]).hasClass("buttonDisabled");
-    while (! isButtonEnabled)
+    // var isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
+    // while (! isButtonEnabled)
+    // {
+        // nextIdx = (nextIdx + 1) % buttons.length;
+        // if (nextIdx === 0) break;  // Went all the way round?
+        // isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
+    // } // while
+    do
     {
-        nextSelectedIdx = (nextSelectedIdx + 1) % buttons.length;
-        if (nextSelectedIdx === 0) break;  // Went all the way round?
-        isButtonEnabled = ! $(buttons[nextSelectedIdx]).hasClass("buttonDisabled");
+        isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
+        if (isButtonEnabled) break;
+        nextIdx = (nextIdx + 1) % buttons.length;
     } // while
+    while (nextIdx !== 0);
 
-    // Only if found an enabled button that is not the current
-    if (isButtonEnabled && nextSelectedIdx !== currentlySelectedIdx)
+    // Found an enabled button, which is not the current?
+    if (isButtonEnabled && nextIdx !== currIdx)
     {
-        if (currentlySelectedIdx >= 0) $(buttons[currentlySelectedIdx]).removeClass("buttonSelected");
-        $(buttons[nextSelectedIdx]).addClass("buttonSelected");
+        if (currIdx >= 0) $(buttons[currIdx]).removeClass("buttonSelected");
+        $(buttons[nextIdx]).addClass("buttonSelected");
     } // if
 
     // Perform menu's "on_goto" action, if specified
     var onGoto = $("#" + currentMenu).attr("on_goto");
-    if (onGoto)
-    {
-        eval(onGoto);
-    } // if
+    if (onGoto) eval(onGoto);
 } // gotoMenu
 
 function gotoTopLevelMenu(menu)
@@ -789,9 +768,9 @@ function selectButton(id)
         // Nothing specified?
         if (! gotoButtonId)
         {
-            var currentlySelected = allButtons.index(selectedButton);
-            var nextSelected = (currentlySelected + 1) % nButtons;
-            id = $(allButtons[nextSelected]).attr("id");
+            var currIdx = allButtons.index(selectedButton);
+            var nextIdx = (currIdx + 1) % nButtons;
+            id = $(allButtons[nextIdx]).attr("id");
         }
         else
         {
@@ -836,8 +815,10 @@ function findSelectedButton()
     {
         screen = $("#" + currentLargeScreenId).parent();
         currentButton = screen.find(".buttonSelected");
-        if (currentButton.length !== 1) return;  // Only select if it has only one selected button
     } // if
+
+    // Only select if exactly one selected button was found
+    if (currentButton.length !== 1) return;
 
     return {
         screen: screen,
@@ -855,7 +836,6 @@ function buttonClicked()
         return;
     } // if
 
-    var screen = selected.screen;
     var currentButton = selected.button;
 
     // console.log("buttonClicked: '" + currentButton.attr("id") + "' in '" +
@@ -956,13 +936,8 @@ function navigateButtons(keyPressed)
     if (! gotoButtonId)
     {
         var buttonOrientation = currentButton.parent().attr("button_orientation");
-        var buttonForNext = "DOWN_BUTTON";
-        var buttonForPrevious = "UP_BUTTON";
-        if (buttonOrientation === "horizontal")
-        {
-            buttonForNext = "RIGHT_BUTTON";
-            buttonForPrevious = "LEFT_BUTTON";
-        } // if
+        var buttonForNext = buttonOrientation === "horizontal" ? "RIGHT_BUTTON" : "DOWN_BUTTON";
+        var buttonForPrevious = buttonOrientation === "horizontal" ? "LEFT_BUTTON" : "UP_BUTTON";
 
         if (keyPressed !== buttonForNext && keyPressed !== buttonForPrevious) return;
 
@@ -973,43 +948,60 @@ function navigateButtons(keyPressed)
         var nButtons = allButtons.length;
         if (nButtons === 0) return;
 
-        var currentlySelected = allButtons.index(currentButton);
-        var nextSelected = currentlySelected;
+        var currIdx = allButtons.index(currentButton);
+        var nextIdx = currIdx;
 
         // Select the next button, thereby skipping disabled or invisible buttons
         // TODO - ugly code, nicer to use "if (...) break;" statements
+        // do
+        // {
+            // nextIdx = (nextIdx + (keyPressed === buttonForNext ? 1 : nButtons - 1)) % nButtons;
+        // }
+        // while
+          // (
+            // (
+              // $(allButtons[nextIdx]).hasClass("buttonDisabled")
+              // ||
+              // ! $(allButtons[nextIdx]).is(":visible")
+            // )
+            // && nextIdx !== currIdx
+          // );
+
         do
         {
-            nextSelected = (nextSelected + (keyPressed === buttonForNext ? 1 : nButtons - 1)) % nButtons;
+            nextIdx = (nextIdx + (keyPressed === buttonForNext ? 1 : nButtons - 1)) % nButtons;
+            if (nextIdx === currIdx) break;
+
+            var isButtonEnabled =
+                $(allButtons[nextIdx]).is(":visible")
+                && ! $(allButtons[nextIdx]).hasClass("buttonDisabled");
+
+            if (isButtonEnabled) break;
         }
-        while
-          (
-            (
-              $(allButtons[nextSelected]).hasClass("buttonDisabled")
-              ||
-              ! $(allButtons[nextSelected]).is(":visible")
-            )
-            && nextSelected !== currentlySelected
-          );
+        while (true);
 
         // Only if anything changed
-        if (nextSelected !== currentlySelected)
+        if (nextIdx !== currIdx)
         {
             // Perform "on_exit" action, if specified
             var onExit = currentButton.attr("on_exit");
             if (onExit) eval(onExit);
 
-            $(allButtons[currentlySelected]).removeClass("buttonSelected");
-            $(allButtons[nextSelected]).addClass("buttonSelected");
+            $(allButtons[currIdx]).removeClass("buttonSelected");
+            $(allButtons[nextIdx]).addClass("buttonSelected");
 
             // Perform "on_enter" action, if specified
-            var onEnter = $(allButtons[nextSelected]).attr("on_enter");
+            var onEnter = $(allButtons[nextIdx]).attr("on_enter");
             if (onEnter) eval(onEnter);
         } // if
     }
     else
     {
+        // Keep track of the buttons checked
+        var checkedButtons = {};
+
         var currentButtonId = currentButton.attr("id");
+        checkedButtons[currentButtonId] = true;
 
         var allButtons = screen.find(".button");
         var nButtons = allButtons.length;
@@ -1019,6 +1011,8 @@ function navigateButtons(keyPressed)
         // Skip disabled buttons, following the orientation of the buttons
         while ($("#" + gotoButtonId).hasClass("buttonDisabled"))
         {
+            checkedButtons[gotoButtonId] = true;
+
             var buttonForNext = keyPressed;
             var buttonOrientation = $("#" + gotoButtonId).parent().attr("button_orientation");
             if (buttonOrientation === "horizontal")
@@ -1031,20 +1025,20 @@ function navigateButtons(keyPressed)
 
             var nextButtonId = $("#" + gotoButtonId).attr(buttonForNext);
 
-            if (! nextButtonId)
+            if (nextButtonId)
             {
-                // Nothing specified? Then select the next resp. previous button in the list.
-                var currentlySelected = allButtons.index($("#" + gotoButtonId));
-                var nextSelected = (currentlySelected + (gotoNext ? 1 : nButtons - 1)) % nButtons;
-                gotoButtonId = $(allButtons[nextSelected]).attr("id");
+                gotoButtonId = nextButtonId;
             }
             else
             {
-                gotoButtonId = nextButtonId;
+                // Nothing specified? Then select the next resp. previous button in the list.
+                var currIdx = allButtons.index($("#" + gotoButtonId));
+                var nextIdx = (currIdx + (gotoNext ? 1 : nButtons - 1)) % nButtons;
+                gotoButtonId = $(allButtons[nextIdx]).attr("id");
             } // if
 
             // No further button in that direction? Or went all the way around? Then give up.
-            if (! gotoButtonId || gotoButtonId === currentButtonId) return;
+            if (! gotoButtonId || checkedButtons[gotoButtonId]) return;
         } // while
 
         // Only if anything changed
@@ -1071,7 +1065,7 @@ function navigateButtons(keyPressed)
 var highlightIndexes = {};
 
 // Highlight a letter in a text element
-function highlightLetter(id)
+function highlightLetter(id, index)
 {
     id = getFocusId(id);
     if (id === undefined) return;
@@ -1080,6 +1074,13 @@ function highlightLetter(id)
 
     // Nothing to highlight?
     if (text.length === 0) return;
+
+    if (typeof index !== "undefined")
+    {
+        if (index > text.length) index = text.length;
+        if (index < 0) index = 0;
+        highlightIndexes[id] = index;
+    } // if
 
     if (highlightIndexes[id] === undefined) highlightIndexes[id] = 0;
 
@@ -1092,6 +1093,11 @@ function highlightLetter(id)
         + text.substr(highlightIndexes[id] + 1, text.length);
     $("#" + id).html(text);
 } // highlightLetter
+
+function highlightLetterAtSamePosition(id)
+{
+    highlightLetter(undefined, highlightIndexes[id]);
+} // highlightLetterAtSamePosition
 
 // Remove any highlight from a text element
 function unhighlightLetter(id)
@@ -1108,8 +1114,7 @@ function highlightFirstLetter(id)
     id = getFocusId(id);
     if (id === undefined) return;
 
-    highlightIndexes[id] = 0;
-    highlightLetter(id);
+    highlightLetter(id, 0);
 } // highlightFirstLetter
 
 function highlightNextLetter(id)
@@ -1170,6 +1175,10 @@ function highlightLine(id)
     // bottom line is not shown partially.
     var heightOfHighlightedLine = $("#" + id + " .invertedText").height();
     var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
+
+    // Sometimes 'heightOfHighlightedLine' is 0 ??
+    if (heightOfHighlightedLine < heightOfUnhighlightedLine) return;
+
     var heightOfBox = $("#" + id).height();
     var nVisibleLines = (heightOfBox - heightOfHighlightedLine) / heightOfUnhighlightedLine + 1;
     var wantNVisibleLines = Math.floor(nVisibleLines);
@@ -1214,6 +1223,7 @@ function highlightFirstLine(id)
     id = getFocusId(id);
     if (id === undefined) return;
 
+    unhighlightLine(id);
     highlightIndexes[id] = 0;
     highlightLine(id);
 } // highlightFirstLine
@@ -1227,7 +1237,7 @@ function highlightNextLine(id)
 
     if (highlightIndexes[id] === undefined) highlightIndexes[id] = 0; else highlightIndexes[id]++;
 
-    // No, we do not want to roll-over
+    // Uncomment to have roll-over behaviour
     //var lines = splitIntoLines(id);
     //if (highlightIndexes[id] >= lines.length) highlightIndexes[id] = 0;  // Roll over
 
@@ -1258,7 +1268,7 @@ function highlightPreviousLine(id)
 
     if (highlightIndexes[id] === undefined) highlightIndexes[id] = lines.length - 1; else highlightIndexes[id]--;
 
-    // No, we do not want to roll-over
+    // Uncomment to have roll-over behaviour
     //if (highlightIndexes[id] < 0) highlightIndexes[id] = lines.length - 1;  // Roll over
 
     highlightLine(id);
@@ -1437,6 +1447,8 @@ var satnavRouteComputed = false;
 
 var satnavDisclaimerAccepted = false;
 
+var satnavLastEnteredChar = null;
+
 function satnavShowDisclaimer()
 {
     if (satnavDisclaimerAccepted) return;
@@ -1476,23 +1488,20 @@ function satnavGotoListScreen()
 {
     gotoMenu("satnav_choose_from_list");
 
-    //highlightFirstLine("satnav_list");
-
-    handleItemChange.lastEnteredSatnavLetter = null;
+    satnavLastEnteredChar = null;
 } // satnavGotoListScreen
 
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
 function satnavSelectFirstAvailableCharacter()
 {
     // None of the buttons is selected
-    // $("#satnav_enter_characters_validate_button").removeClass("buttonSelected");
-    // $("#satnav_enter_characters_correction_button").removeClass("buttonSelected");
-    // $("#satnav_enter_characters_list_button").removeClass("buttonSelected");
-    // $("#satnav_enter_characters_change_or_city_center_button").removeClass("buttonSelected");
     $("#satnav_enter_characters").find(".button").removeClass("buttonSelected");
 
+    // Select the first letter in the first row
     $("#satnav_to_mfd_show_characters_line_1").addClass("buttonSelected");
     highlightFirstLetter("satnav_to_mfd_show_characters_line_1");
+
+    $("#satnav_to_mfd_show_characters_line_2").removeClass("buttonSelected");
     unhighlightLetter("satnav_to_mfd_show_characters_line_2");
 } // satnavSelectFirstAvailableCharacter
 
@@ -1500,15 +1509,13 @@ function satnavSelectFirstAvailableCharacter()
 function satnavConfirmCityMode()
 {
     $("#satnav_entered_string").text("");
-    handleItemChange.lastEnteredSatnavLetter = null;
+    satnavLastEnteredChar = null;
 
     // No entered characters, so disable the "Correction" button
     $("#satnav_enter_characters_correction_button").addClass("buttonDisabled");
 
     $("#satnav_current_destination_city").show();
 
-    // // Showing current destination city, so enable the "Validate" button
-    // $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
     // If a current destination city is shown, enable the "Validate" button
     $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_city").text === "");
 
@@ -1536,7 +1543,7 @@ var userHadOpportunityToEnterStreet = false;
 function satnavConfirmStreetMode()
 {
     $("#satnav_entered_string").text("");
-    handleItemChange.lastEnteredSatnavLetter = null;
+    satnavLastEnteredChar = null;
 
     // No entered characters, so disable the "Correction" button
     $("#satnav_enter_characters_correction_button").addClass("buttonDisabled");
@@ -1587,7 +1594,7 @@ function satnavGotoEnterCity()
 
     // Clear the character-by-character entry string
     $("#satnav_entered_string").text("");
-    handleItemChange.lastEnteredSatnavLetter = null;
+    satnavLastEnteredChar = null;
 
     gotoMenu("satnav_enter_city_characters");
 
@@ -1621,7 +1628,7 @@ function satnavRemoveEnteredCharacter()
     currentText = currentText.slice(0, -1);
     $("#satnav_entered_string").text(currentText);
 
-    handleItemChange.lastEnteredSatnavLetter = null;
+    satnavLastEnteredChar = null;
 
     // If the entered string has become empty, disable the "Correction" button...
     $("#satnav_enter_characters_correction_button").toggleClass("buttonDisabled", currentText.length === 0);
@@ -1644,6 +1651,22 @@ function satnavCheckIfCityCenterMustBeAdded()
         $("#satnav_list").html("City center<br />" + $("#satnav_list").html());
     } // if
 } // satnavCheckIfCityCenterMustBeAdded
+
+function satnavListItemClicked()
+{
+    // When choosing a city or street from the list, hide the current destination house number, so that the
+    // entry format ("_ _ _") will be shown. If however, the current city and street are confirmed, then
+    // the current destination house number must be shown, so that it can also be confirmed.
+    $("#satnav_current_destination_house_number").text("");
+
+    //if (menuStack[menuStack.length-1] !== "satnav_directory_management_menu")
+    var comingFromMenu = menuStack[menuStack.length-1];
+    if (comingFromMenu === "satnav_enter_city_characters" || comingFromMenu === "satnav_enter_street_characters")
+    {
+        // Pop away this screen, so that escaping from the next screen leads to the previous
+        currentMenu = menuStack.pop();
+    } // if
+} // satnavListItemClicked
 
 // A new digit has been entered for the house number
 function satnavEnterDigit(enteredNumber)
@@ -1742,8 +1765,8 @@ function satnavCheckEnteredHouseNumber()
 
         // Check if the entered number is between the lowest and highest
         if (! ok &&
-            (+lowestHouseNumberInRange <= 0 || +enteredNumber >= +lowestHouseNumberInRange) &&
-            (+highestHouseNumberInRange <= 0 || +enteredNumber <= +highestHouseNumberInRange)
+            (lowestHouseNumberInRange <= 0 || +enteredNumber >= lowestHouseNumberInRange) &&
+            (highestHouseNumberInRange <= 0 || +enteredNumber <= highestHouseNumberInRange)
            )
         {
             ok = true;
@@ -1761,129 +1784,164 @@ function satnavCheckEnteredHouseNumber()
     } // if
 } // satnavCheckEnteredHouseNumber
 
-// Select the first letter in the first row
-function satnavSelectFirstLineOfArchiveInDirectoryScreen()
+// Enable/disable the buttons in the "satnav_show_place_of_interest_address" screen. Also select the
+// appropriate button.
+function satnavPlaceOfInterestAddressSetButtons(selectedEntry)
 {
-    $("#satnav_archive_in_directory_characters_line_1").addClass("buttonSelected");
-    highlightFirstLetter("satnav_archive_in_directory_characters_line_1");
+    $("#satnav_place_of_interest_address_entry_number").text(selectedEntry);
 
-    $("#satnav_archive_in_directory_characters_line_2").removeClass("buttonSelected");
-    unhighlightLetter("satnav_archive_in_directory_characters_line_2");
-} // satnavSelectFirstLineOfArchiveInDirectoryScreen
+    // Enable the "previous" and "next" buttons, except if at first resp. last entry
+    var lastEntry = + $("#satnav_to_mfd_list_size").text();
 
-function satnavEnterArchiveInDirectoryScreen()
-{
-    // Select the first letter in the first row
-    satnavSelectFirstLineOfArchiveInDirectoryScreen();
+    $("#satnav_place_of_interest_address_previous_button").toggleClass("buttonDisabled", selectedEntry === 1);
+    $("#satnav_place_of_interest_address_next_button").toggleClass("buttonDisabled", selectedEntry === lastEntry);
 
-    // On entry, all buttons are disabled
-    // $("#satnav_archive_in_directory_correction_button").addClass("buttonDisabled");
-    // $("#satnav_archive_in_directory_personal_button").addClass("buttonDisabled");
-    // $("#satnav_archive_in_directory_professional_button").addClass("buttonDisabled");
-    $("#satnav_archive_in_directory").find(".button").addClass("buttonDisabled");
+    // Select the appropriate button
+    if (selectedEntry === 1)
+    {
+        $("#satnav_place_of_interest_address_previous_button").removeClass("buttonSelected");
+    }
+    if (selectedEntry === lastEntry)
+    {
+        $("#satnav_place_of_interest_address_next_button").removeClass("buttonSelected");
+    } // if
 
-    // None of the buttons is selected
-    // $("#satnav_archive_in_directory_correction_button").removeClass("buttonSelected");
-    // $("#satnav_archive_in_directory_personal_button").removeClass("buttonSelected");
-    // $("#satnav_archive_in_directory_professional_button").removeClass("buttonSelected");
-    $("#satnav_archive_in_directory").find(".button").removeClass("buttonSelected");
-} // satnavEnterArchiveInDirectoryScreen
-
-// A new character is entered in the "satnav_archive_in_directory" screen
-function satnavArchiveInDirectoryEnterCharacter(entered)
-{
-    // Find out which character has been clicked on
-    if (! entered) entered = $("#satnav_archive_in_directory_characters_line_1 .invertedText").text();
-    if (! entered) entered = $("#satnav_archive_in_directory_characters_line_2 .invertedText").text();
-    if (! entered) return;
-
-    // Replace the '-' characters one by one, left to right
-    var s = $("#satnav_archive_in_directory_entry").text();
-    s = s.replace("-", entered);
-    $("#satnav_archive_in_directory_entry").text(s);
-
-    // Select the first letter in the first row
-    satnavSelectFirstLineOfArchiveInDirectoryScreen();
-
-    // Enable all buttons
-    // $("#satnav_archive_in_directory_correction_button").removeClass("buttonDisabled");
-    // $("#satnav_archive_in_directory_personal_button").removeClass("buttonDisabled");
-    // $("#satnav_archive_in_directory_professional_button").removeClass("buttonDisabled");
-    $("#satnav_archive_in_directory").find(".button").removeClass("buttonDisabled");
-} // satnavArchiveInDirectoryEnterCharacter
-
-// Remove the last entered character in the "satnav_archive_in_directory" screen
-function satnavArchiveInDirectoryRemoveCharacter()
-{
-    var s = $("#satnav_archive_in_directory_entry").text();
-    s = s.replace(/([^-]*)[^-](-*)/, "$1-$2");
-    $("#satnav_archive_in_directory_entry").text(s);
-} // satnavArchiveInDirectoryRemoveCharacter
+    if (selectedEntry === 1 && selectedEntry === lastEntry)
+    {
+        $("#satnav_place_of_interest_address_validate_button").addClass("buttonSelected");
+    }
+    else if (selectedEntry === 1)
+    {
+        $("#satnav_place_of_interest_address_validate_button").removeClass("buttonSelected");
+        $("#satnav_place_of_interest_address_next_button").addClass("buttonSelected");
+    }
+    else if (selectedEntry === lastEntry)
+    {
+        $("#satnav_place_of_interest_address_validate_button").removeClass("buttonSelected");
+        $("#satnav_place_of_interest_address_previous_button").addClass("buttonSelected");
+    } // if
+} // satnavPlaceOfInterestAddressSetButtons
 
 function satnavArchiveInDirectoryCreatePersonalEntry()
 {
     showPopup("satnav_input_stored_in_personal_dir_popup", 7000);
-    //exitMenu();
 } // satnavArchiveInDirectoryCreatePersonalEntry
 
 function satnavArchiveInDirectoryCreateProfessionalEntry()
 {
     showPopup("satnav_input_stored_in_professional_dir_popup", 7000);
-    //exitMenu();
 } // satnavArchiveInDirectoryCreateProfessionalEntry
+
+function satnavSetDirectoryAddressScreenMode(mode)
+{
+    $("#satnav_show_private_address").find(".button").removeClass("buttonSelected");
+    $("#satnav_show_business_address").find(".button").removeClass("buttonSelected");
+
+    // Make the appropriate set of buttons visible
+    if (mode === "SELECT")
+    {
+        $("#satnav_private_address_validate_buttons").show();
+        $("#satnav_private_address_manage_buttons").hide();
+        $("#satnav_show_private_address_validate_button").addClass("buttonSelected");
+
+        $("#satnav_business_address_validate_buttons").show();
+        $("#satnav_business_address_manage_buttons").hide();
+        $("#satnav_show_business_address_validate_button").addClass("buttonSelected");
+    }
+    else
+    {
+        // mode === "MANAGE"
+
+        $("#satnav_private_address_validate_buttons").hide();
+        $("#satnav_private_address_manage_buttons").show();
+        $("#satnav_manage_private_address_rename_button").addClass("buttonSelected");
+
+        $("#satnav_business_address_validate_buttons").hide();
+        $("#satnav_business_address_manage_buttons").show();
+        $("#satnav_manage_business_address_rename_button").addClass("buttonSelected");
+    } // if
+} // satnavSetDirectoryAddressScreenMode
+
+// Select the first letter in the first row
+function satnavSelectFirstLineOfDirectoryEntryScreen(screenId)
+{
+    var line1id = screenId + "_characters_line_1";
+    var line2id = screenId + "_characters_line_2";
+
+    $("#" + line1id).addClass("buttonSelected");
+    highlightFirstLetter(line1id);
+
+    $("#" + line2id).removeClass("buttonSelected");
+    unhighlightLetter(line2id);
+} // satnavSelectFirstLineOfDirectoryEntryScreen
+
+function satnavEnterArchiveInDirectoryScreen()
+{
+    satnavLastEnteredChar = null;
+
+    $("#satnav_archive_in_directory_entry").text("----------------");
+
+    // Select the first letter in the first row
+    satnavSelectFirstLineOfDirectoryEntryScreen("satnav_archive_in_directory");
+
+    // On entry into this screen, all buttons are disabled
+    $("#satnav_archive_in_directory").find(".button").addClass("buttonDisabled");
+    $("#satnav_archive_in_directory").find(".button").removeClass("buttonSelected");
+} // satnavEnterArchiveInDirectoryScreen
 
 function satnavEnterRenameDirectoryEntryScreen()
 {
+    satnavLastEnteredChar = null;
+
+    $("#satnav_rename_entry_in_directory_entry").text("----------------");
+
     // Select the first letter in the first row
-    $("#satnav_rename_entry_in_directory_characters_line_1").addClass("buttonSelected");
-    highlightFirstLetter("satnav_rename_entry_in_directory_characters_line_1");
+    satnavSelectFirstLineOfDirectoryEntryScreen("satnav_rename_entry_in_directory");
 
-    $("#satnav_rename_entry_in_directory_characters_line_2").removeClass("buttonSelected");
-    unhighlightLetter("satnav_rename_entry_in_directory_characters_line_2");
-
-    // On entry, all buttons are disabled
-    // $("#satnav_rename_entry_in_directory_validate_button").addClass("buttonDisabled");
-    // $("#satnav_rename_entry_in_directory_correction_button").addClass("buttonDisabled");
+    // On entry into this screen, all buttons are disabled
     $("#satnav_rename_entry_in_directory").find(".button").addClass("buttonDisabled");
-
-    // None of the buttons is selected
-    // $("#satnav_rename_entry_in_directory_validate_button").removeClass("buttonSelected");
-    // $("#satnav_rename_entry_in_directory_correction_button").removeClass("buttonSelected");
     $("#satnav_rename_entry_in_directory").find(".button").removeClass("buttonSelected");
 } // satnavEnterRenameDirectoryEntryScreen
 
-// A new character is entered in the "satnav_rename_entry_in_directory" screen
-function satnavRenameDirectoryEntryEnterCharacter(entered)
+// A new character is entered in the "satnav_rename_entry_in_directory" or "satnav_archive_in_directory" screen
+function satnavDirectoryEntryEnterCharacter(screenId, entered)
 {
-    // Find out which character has been clicked on
-    if (! entered) entered = $("#satnav_rename_entry_in_directory_characters_line_1 .invertedText").text();
-    if (! entered) entered = $("#satnav_rename_entry_in_directory_characters_line_2 .invertedText").text();
-    if (! entered) return;
+    var screenSelector = "#" + screenId;
+    var entrySelector = screenSelector + "_entry";
 
-    // Replace the '-' characters one by one, left to right
-    var s = $("#satnav_rename_entry_in_directory_entry").text();
-    s = s.replace("-", entered);
-    $("#satnav_rename_entry_in_directory_entry").text(s);
+    if (entered === "Esc")
+    {
+        // Remove the last character and replace it by "-"
+        var s = $(entrySelector).text();
+        s = s.replace(/([^-]*)[^-](-*)/, "$1-$2");
+        $(entrySelector).text(s);
 
-    // Select the first letter in the first row
-    $("#satnav_rename_entry_in_directory_characters_line_1").addClass("buttonSelected");
-    highlightFirstLetter("satnav_rename_entry_in_directory_characters_line_1");
+        // Was the last character removed?
+        if ($(entrySelector).text()[0] === "-")
+        {
+            // Select the first letter in the first row
+            satnavSelectFirstLineOfDirectoryEntryScreen(screenId);
+            $(screenSelector).find(".button").removeClass("buttonSelected");
+        } // if
+    }
+    else
+    {
+        if (entered != null)
+        {
+            // Replace the '-' characters one by one, left to right
+            var s = $(entrySelector).text();
+            s = s.replace("-", entered);
+            $(entrySelector).text(s);
+        } // if
 
-    $("#satnav_rename_entry_in_directory_characters_line_2").removeClass("buttonSelected");
-    unhighlightLetter("satnav_rename_entry_in_directory_characters_line_2");
+        // Select the first letter in the first row
+        satnavSelectFirstLineOfDirectoryEntryScreen(screenId);
+        $(screenSelector).find(".button").removeClass("buttonSelected");
+    } // if
 
-    // Enable all buttons
-    // $("#satnav_rename_entry_in_directory_validate_button").removeClass("buttonDisabled");
-    // $("#satnav_rename_entry_in_directory_correction_button").removeClass("buttonDisabled");
-    $("#satnav_rename_entry_in_directory").find(".button").removeClass("buttonDisabled");
-} // satnavRenameDirectoryEntryEnterCharacter
-
-function satnavRenameEntryInDirectoryRemoveCharacter()
-{
-    var s = $("#satnav_rename_entry_in_directory_entry").text();
-    s = s.replace(/([^-]*)[^-](-*)/, "$1-$2");
-    $("#satnav_rename_entry_in_directory_entry").text(s);
-} // satnavRenameEntryInDirectoryRemoveCharacter
+    // Enable or disable buttons, depending on if there is anything in the entry field
+    $(screenSelector).find(".button").toggleClass("buttonDisabled", $(entrySelector).text()[0] === "-");
+} // satnavDirectoryEntryEnterCharacter
 
 // Find the ticked button and select it
 function satnavGuidancePreferenceSelectTickedButton()
@@ -1910,19 +1968,19 @@ function satnavGuidancePreferenceValidate()
     } // if
 } // satnavGuidancePreferenceValidate
 
-function satnavRenamePrivateAddressEntry()
-{
-    var entry = $("#satnav_private_address_entry").text();
-    $("#satnav_rename_entry_in_directory_title").text("Rename (" + entry + ")");
-    gotoMenu("satnav_rename_entry_in_directory_entry");
-} // satnavRenamePrivateAddressEntry
+// function satnavRenamePrivateAddressEntry()
+// {
+    // //var entry = $("#satnav_private_address_entry").text();
+    // //$("#satnav_rename_entry_in_directory_title").text("Rename (" + entry + ")");
+    // gotoMenu("satnav_rename_entry_in_directory_entry");
+// } // satnavRenamePrivateAddressEntry
 
-function satnavRenameBusinessAddressEntry()
-{
-    var entry = $("#satnav_business_address_entry").text();
-    $("#satnav_rename_entry_in_directory_title").text("Rename (" + entry + ")");
-    gotoMenu("satnav_rename_entry_in_directory_entry");
-} // satnavRenameBusinessAddressEntry
+// function satnavRenameBusinessAddressEntry()
+// {
+    // //var entry = $("#satnav_business_address_entry").text();
+    // //$("#satnav_rename_entry_in_directory_title").text("Rename (" + entry + ")");
+    // gotoMenu("satnav_rename_entry_in_directory_entry");
+// } // satnavRenameBusinessAddressEntry
 
 function satnavSwitchToGuidanceScreen()
 {
@@ -2064,6 +2122,7 @@ function handleItemChange(item, value)
             // If "audio_source" changed to "CD_CHANGER", we directly show the "searching CD" icon
             else if (audioSource !== "CD_CHANGER" && value === "CD_CHANGER")
             {
+                // TODO - also handle case where cartridge is present but contains no discs
                 if (! $("#cd_changer_cartridge_present").hasClass("ledOn"))
                 {
                     // Show "No CD" popup for a few seconds
@@ -2462,7 +2521,7 @@ function handleItemChange(item, value)
             // Show or hide the "door open" popup
 
             // TODO - change to 10 minutes
-            if (value === "YES") showPopup("door_open_popup", 2000); else hidePopup("door_open_popup");
+            if (value === "YES") showPopup("door_open_popup", 4000); else hidePopup("door_open_popup");
         } // case
         break;
 
@@ -2479,17 +2538,9 @@ function handleItemChange(item, value)
 
             if (value !== "OPEN") break;
 
-            // Show the "door open" popup
-            //document.getElementById("door_open_popup").style.display = "block";
-
-            // Hide popup after 2 seconds
-            // TODO - change to 10 minutes
-            //clearInterval(handleItemChange.doorOpenPopupTimer);
-            //handleItemChange.doorOpenPopupTimer = setTimeout(
-            //    function () { document.getElementById("door_open_popup").style.display = "none"; },
-            //    2000
-            //);
-            showPopup("door_open_popup", 2000);
+            // Show the "door open" popup for 2 seconds
+            // TODO - change timeout to 10 seconds or maybe even longer
+            showPopup("door_open_popup", 4000);
         } // case
         break;
 
@@ -2559,6 +2610,9 @@ function handleItemChange(item, value)
 
         case "satnav_status_2":
         {
+            // Only if not empty
+            if (value === "") break;
+
             // TODO - also show an icon indicating the sat nav mode?
 
             // As soon as we hear anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
@@ -2574,15 +2628,24 @@ function handleItemChange(item, value)
             if (value === "IDLE")
             {
                 satnavRouteComputed = false;
-                //console.log("Item 'satnav_route_computed' set to 'NO'");
             } // if
 
-            // Hide any popup "Navigation system being initialised" if no longer "INITIALIZING"
-            if (value !== "INITIALIZING") hidePopup("satnav_initializing_popup");
+            // Show popup "Initialising navigator" as long as mode is "INITIALIZING"
+            if (value === "INITIALIZING")
+            {
+                if (currentLargeScreenId === "satnav_main_menu" || currentLargeScreenId === "satnav_disclaimer")
+                {
+                    showPopup("satnav_initializing_popup", 20000);
+                }
+            }
+            else
+            {
+                // Hide any popup "Navigation system being initialised" if no longer "INITIALIZING"
+                hidePopup("satnav_initializing_popup");
+            } // if
 
             if (value === "IN_GUIDANCE_MODE")
             {
-                //if (! satnavRouteComputed || $("#satnav_guidance_preference_popup").is("visible")) showPopup("satnav_calculating_route_popup");
                 if (! satnavRouteComputed) showPopup("satnav_calculating_route_popup");
                 else satnavSwitchToGuidanceScreen();
             }
@@ -2595,8 +2658,6 @@ function handleItemChange(item, value)
 
         case "satnav_status_3":
         {
-            // TODO - test this
-
             if (value === "POWERING_OFF")
             {
                 $("#main_menu_goto_satnav_button").addClass("buttonDisabled");
@@ -2647,12 +2708,6 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "satnav_not_on_map_follow_heading_as_text":
-        {
-            // TODO - "satnav_heading_to_dest" shows invalid data in this case?
-        } // case
-        break;
-
         case "satnav_current_destination_city":
         {
             if (! $("#satnav_enter_city_characters").is(":visible")) break;
@@ -2662,7 +2717,7 @@ function handleItemChange(item, value)
             $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 
             $("#satnav_entered_string").text("");
-            handleItemChange.lastEnteredSatnavLetter = null;
+            satnavLastEnteredChar = null;
         } // case
         break;
 
@@ -2677,7 +2732,7 @@ function handleItemChange(item, value)
             $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 
             $("#satnav_entered_string").text("");
-            handleItemChange.lastEnteredSatnavLetter = null;
+            satnavLastEnteredChar = null;
         } // case
         break;
 
@@ -2688,16 +2743,28 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_private_address_street":
+        {
+            $("#satnav_private_address_street_shown").text(value === "" ? "City centre" : value);
+        } // case
+        break;
+
         case "satnav_private_address_house_number":
         {
-            $('[gid="satnav_private_address_house_number_shown"]').text(
+            $("#satnav_private_address_house_number_shown").text(
                 value === "" || value === "0" ? "No number" : value);
+        } // case
+        break;
+
+        case "satnav_business_address_street":
+        {
+            $("#satnav_business_address_street_shown").text(value === "" ? "City centre" : value);
         } // case
         break;
 
         case "satnav_business_address_house_number":
         {
-            $('[gid="satnav_business_address_house_number_shown"]').text(
+            $("#satnav_business_address_house_number_shown").text(
                 value === "" || value === "0" ? "No number" : value);
         } // case
         break;
@@ -2729,27 +2796,64 @@ function handleItemChange(item, value)
             // showing
         } // case
         break;
-/*
-        //case "satnav_to_mfd_response":
-        case "mfd_to_satnav_request":
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // "City ce"? Yes, that is the text in this button when entering a street
-            if (value === "Enter street") $("#satnav_enter_characters_change_or_city_center_button").text("City Ce");
-            else $("#satnav_enter_characters_change_or_city_center_button").text("Change");
+        case "satnav_private_address_entry":
+        {
+            $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+
+            // The "Rename" button is disabled if the value ends with "&#x24E7;" (X)
+            if (value.match(/&#x24E7;$/))
+            {
+                $("#satnav_manage_private_address_rename_button").addClass("buttonDisabled");
+                $("#satnav_manage_private_address_rename_button").removeClass("buttonSelected");
+                $("#satnav_manage_private_address_delete_button").addClass("buttonSelected");
+            }
+            else
+            {
+                $("#satnav_manage_private_address_rename_button").removeClass("buttonDisabled");
+                $("#satnav_manage_private_address_rename_button").addClass("buttonSelected");
+                $("#satnav_manage_private_address_delete_button").removeClass("buttonSelected");
+            } // if
         } // case
         break;
-*/
+
+        case "satnav_business_address_entry":
+        {
+            // Only if the "satnav_rename_entry_in_directory" screen is visible
+            if (! $("#satnav_rename_entry_in_directory").is(":visible")) break;
+
+            $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+
+            // The "Rename" button is disabled if the value ends with "&#x24E7;" (X)
+            if (value.match(/&#x24E7;$/))
+            {
+                $("#satnav_manage_business_address_rename_button").addClass("buttonDisabled");
+                $("#satnav_manage_business_address_rename_button").removeClass("buttonSelected");
+                $("#satnav_manage_business_address_delete_button").addClass("buttonSelected");
+            }
+            else
+            {
+                $("#satnav_manage_business_address_rename_button").removeClass("buttonDisabled");
+                $("#satnav_manage_business_address_rename_button").addClass("buttonSelected");
+                $("#satnav_manage_business_address_delete_button").removeClass("buttonSelected");
+            } // if
+        } // case
+        break;
+
         case "mfd_to_satnav_enter_character":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             if (value === "" || value === "?")
             {
-                handleItemChange.lastEnteredSatnavLetter = null;
+                satnavLastEnteredChar = null;
                 break;
             } // if
+
+            // Save for later; the same character can be repeated by the user pressing the "Val" button on the
+            // IR remote control. In that case we do not get another "mfd_to_satnav_enter_character" value.
+            // See code at 'case "mfd_to_satnav_instruction"'.
+            satnavLastEnteredChar = value;
 
             if (value === "Esc")
             {
@@ -2760,20 +2864,7 @@ function handleItemChange(item, value)
 
             satnavRollingBackEntryByCharacter = false;
 
-            // Save for later; the same character can be repeated by the user pressing the "Val" button on the
-            // IR remote control. In that case we do not get another "mfd_to_satnav_enter_character" value.
-            // See code at 'case "mfd_to_satnav_instruction"'.
-            handleItemChange.lastEnteredSatnavLetter = value;
-
             satnavEnterByLetterMode();
-        } // case
-        break;
-
-        case "mfd_to_satnav_selection":
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
-            //if ($("#satnav_enter_house_number").is(":visible")) satnavEnterDigit(value);
         } // case
         break;
 
@@ -2799,27 +2890,49 @@ function handleItemChange(item, value)
                 break;
             }
 
-            if (value === "satnav_enter_city_characters" || value === "satnav_enter_street_characters")
+            if (value === "satnav_enter_city_characters")
             {
-                // Clear the character-by-character entry string
-                //$("#satnav_entered_string").text("");
-                //handleItemChange.lastEnteredSatnavLetter = null;
+                // Switching (back) into the "satnav_enter_city_characters" screen
 
-                // If the "Esc" button of the remote control was pressed inside the list screen, the last entered
-                // character must be removed
-                //satnavRemoveEnteredCharacter();
+                if (currentMenu === "satnav_current_destination_house_number") exitMenu();
 
-                gotoMenu(value);
+                if (currentMenu === "satnav_enter_street_characters") exitMenu();
+                else gotoMenu(value);
+
+                break;
+            }
+
+            if (value === "satnav_enter_street_characters")
+            {
+                // Switching (back) into the "satnav_enter_street_characters" screen
+
+                if (currentMenu === "satnav_current_destination_house_number") exitMenu();
+                else gotoMenu(value);
+
                 break;
             }
 
             if (value === "satnav_current_destination_house_number")
             {
-                handleItemChange.lastEnteredSatnavLetter = null;
+                satnavLastEnteredChar = null;
 
                 // Clear the entered house number
                 satnavClearEnteredNumber();
 
+                gotoMenu(value);
+                break;
+            } // if
+
+            if (value === "satnav_show_current_destination")
+            {
+                gotoMenu(value);
+                break;
+            } // if
+
+            if (value === "satnav_show_private_address"
+                || value === "satnav_show_business_address"
+                || value === "satnav_show_place_of_interest_address")
+            {
                 gotoMenu(value);
                 break;
             } // if
@@ -2880,37 +2993,41 @@ function handleItemChange(item, value)
 
             if (! $("#satnav_show_place_of_interest_address").is(":visible")) break;
 
-            var selectedEntry = +value + 1;
-            $("#satnav_place_of_interest_address_entry_number").text(selectedEntry);
+            // var selectedEntry = +value + 1;
+            // $("#satnav_place_of_interest_address_entry_number").text(selectedEntry);
 
-            // Enable the "previous" and "next" buttons, except if at first resp. last entry
-            var lastEntry = + $("#satnav_to_mfd_list_size").text();
+            // // Enable the "previous" and "next" buttons, except if at first resp. last entry
+            // var lastEntry = + $("#satnav_to_mfd_list_size").text();
 
-            $("#satnav_place_of_interest_address_previous_button").toggleClass("buttonDisabled", selectedEntry === 1);
-            $("#satnav_place_of_interest_address_next_button").toggleClass("buttonDisabled", selectedEntry === lastEntry);
+            // $("#satnav_place_of_interest_address_previous_button").toggleClass("buttonDisabled", selectedEntry === 1);
+            // $("#satnav_place_of_interest_address_next_button").toggleClass("buttonDisabled", selectedEntry === lastEntry);
 
-            // If a selected button becomes disabled, select another
-            if (selectedEntry === 1)
-            {
-                $("#satnav_place_of_interest_address_previous_button").removeClass("buttonSelected");
-            }
-            if (selectedEntry === lastEntry)
-            {
-                $("#satnav_place_of_interest_address_next_button").removeClass("buttonSelected");
-            } // if
+            // // If a selected button becomes disabled, select another
+            // if (selectedEntry === 1)
+            // {
+                // $("#satnav_place_of_interest_address_previous_button").removeClass("buttonSelected");
+            // }
+            // if (selectedEntry === lastEntry)
+            // {
+                // $("#satnav_place_of_interest_address_next_button").removeClass("buttonSelected");
+            // } // if
 
-            if (selectedEntry === 1 && selectedEntry === lastEntry)
-            {
-                $("#satnav_place_of_interest_address_validate_button").addClass("buttonSelected");
-            }
-            else if (selectedEntry === 1)
-            {
-                $("#satnav_place_of_interest_address_next_button").addClass("buttonSelected");
-            }
-            else if (selectedEntry === lastEntry)
-            {
-                $("#satnav_place_of_interest_address_previous_button").addClass("buttonSelected");
-            } // if
+            // if (selectedEntry === 1 && selectedEntry === lastEntry)
+            // {
+                // $("#satnav_place_of_interest_address_validate_button").addClass("buttonSelected");
+            // }
+            // else if (selectedEntry === 1)
+            // {
+                // $("#satnav_place_of_interest_address_validate_button").removeClass("buttonSelected");
+                // $("#satnav_place_of_interest_address_next_button").addClass("buttonSelected");
+            // }
+            // else if (selectedEntry === lastEntry)
+            // {
+                // $("#satnav_place_of_interest_address_validate_button").removeClass("buttonSelected");
+                // $("#satnav_place_of_interest_address_previous_button").addClass("buttonSelected");
+            // } // if
+
+            satnavPlaceOfInterestAddressSetButtons(+value + 1);
 
         } // case
         break;
@@ -2996,6 +3113,13 @@ function handleItemChange(item, value)
 
         case "mfd_to_satnav_instruction":
         {
+            if (value === "Selected_city_from_list")
+            {
+                // Clear the character-by-character entry string
+                $("#satnav_entered_string").text("");
+                satnavLastEnteredChar = null;
+            } //if
+
             if (value !== "Val") break;
 
             if (satnavRollingBackEntryByCharacter)
@@ -3005,50 +3129,81 @@ function handleItemChange(item, value)
             }
             else
             {
-                if (handleItemChange.lastEnteredSatnavLetter == null) break;
+                if (satnavLastEnteredChar == null) break;
 
                 // The user is pressing "Val" on the remote control, to enter the chosen letter
 
                 // Append the entered character
-                $("#satnav_entered_string").append(handleItemChange.lastEnteredSatnavLetter);
+                $("#satnav_entered_string").append(satnavLastEnteredChar);
 
                 // Enable the "Correction" button
                 $("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");
 
                 // Disable the "Validate" button
                 $("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
+
+                // Forget the selected line in the "satnav_list" screen
+                highlightFirstLine("satnav_list");
             } // if
         } // case
         break;
 
         case "satnav_to_mfd_show_characters":
         {
+            if (value === "") break;
+
             //console.log("Item '" + item + "' set to '" + value + "'");
-
-            if (value.length === 1)
-            {
-                // Save for later; this character can be automatically selected by the MFD without the user explicitly
-                // pressing the "Val" button on the remote control. See code at 'case "mfd_to_satnav_instruction"'.
-                handleItemChange.lastEnteredSatnavLetter = value;
-            } // if
-
-            // "Character roll-back" mode ends when there is more than one character to choose from
-            if (value.length > 1) satnavRollingBackEntryByCharacter = false;
 
             // On the original MFD, there is only room for 24 characters. If there are more characters, spill over
             // to the next line.
-            $("#satnav_to_mfd_show_characters_line_1").text(value.substr(0, 24));
-            var spill = value.substr(24);
-            $("#satnav_to_mfd_show_characters_line_2").text(spill);
+            var line_1 = value.substr(0, 24);
+            var line_2 = value.substr(24);
 
-            // Enable the second line only if it contains something
-            $("#satnav_to_mfd_show_characters_line_2").toggleClass("buttonDisabled", spill.length === 0);
-
-            // When a new list of available characters comes in, the highlight always moves back to the first character
-            if ($("#satnav_to_mfd_show_characters_line_1").hasClass("buttonSelected")
-                || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected"))
+            if ($("#satnav_rename_entry_in_directory_entry").is(":visible"))
             {
-                satnavSelectFirstAvailableCharacter();
+                $("#satnav_rename_entry_in_directory_characters_line_1").text(line_1);
+                $("#satnav_rename_entry_in_directory_characters_line_2").text(line_2);
+
+                // Enable the second line only if it contains something
+                $("#satnav_rename_entry_in_directory_characters_line_2").toggleClass("buttonDisabled", line_2.length === 0);
+
+                // This data coming in indicates that the last chosen character has been entered
+                satnavDirectoryEntryEnterCharacter("satnav_rename_entry_in_directory", satnavLastEnteredChar);
+            }
+            else if ($("#satnav_archive_in_directory_entry").is(":visible"))
+            {
+                $("#satnav_archive_in_directory_characters_line_1").text(line_1);
+                $("#satnav_archive_in_directory_characters_line_2").text(line_2);
+
+                // Enable the second line only if it contains something
+                $("#satnav_archive_in_directory_characters_line_2").toggleClass("buttonDisabled", line_2.length === 0);
+
+                // This data coming in indicates that the last chosen character has been entered
+                satnavDirectoryEntryEnterCharacter("satnav_archive_in_directory", satnavLastEnteredChar);
+            }
+            else
+            {
+                $("#satnav_to_mfd_show_characters_line_1").text(line_1);
+                $("#satnav_to_mfd_show_characters_line_2").text(line_2);
+
+                // Enable the second line only if it contains something
+                $("#satnav_to_mfd_show_characters_line_2").toggleClass("buttonDisabled", line_2.length === 0);
+
+                // When a new list of available characters comes in, the highlight always moves back to the first
+                // character.
+                // TODO - always? Or only if the list changes?
+                if ($("#satnav_to_mfd_show_characters_line_1").hasClass("buttonSelected")
+                    || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected"))
+                {
+                    satnavSelectFirstAvailableCharacter();
+                } // if
+            } // if
+
+            if (value.length === 1)
+            {
+                // Save for later: this character can be automatically selected by the MFD without the user explicitly
+                // pressing the "Val" button on the remote control. See code at 'case "mfd_to_satnav_instruction"'.
+                satnavLastEnteredChar = value;
             } // if
         } // case
         break;
@@ -3058,10 +3213,10 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // Store the lowest and highest number
-            lowestHouseNumberInRange = value.replace(/From (.*) to .*/, "$1");
-            highestHouseNumberInRange = value.replace(/From .* to (.*)/, "$1");
+            lowestHouseNumberInRange = parseInt(value.replace(/From (.*) to .*/, "$1"));
+            highestHouseNumberInRange = parseInt(value.replace(/From .* to (.*)/, "$1"));
 
-            if (+lowestHouseNumberInRange == 0 && +highestHouseNumberInRange == 0)
+            if (lowestHouseNumberInRange == 0 && highestHouseNumberInRange == 0)
             {
                 // No house number can be entered: go directly to next screen 
                 gotoMenu("satnav_show_current_destination");
@@ -3089,30 +3244,8 @@ function handleItemChange(item, value)
             //if (satnavMode === "CALCULATING_ROUTE" && value.style.display === "block") satnavSwitchToGuidanceScreen();
         } // case
         break;
-/*
-        case "mfd_to_satnav_request_type":
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // TODO - if disclaimer screen is visible, this will change screen again
-            if (value === "REQ_LIST_LENGTH") changeLargeScreenTo("satnav_enter_characters")
-            else if (value === "REQ_LIST") changeLargeScreenTo("satnav_choose_from_list");
-
-        } // case
-        break;
-
-        case "satnav_heading_to_dest":  // Any guidance data (as given by the 9CE packets): show guidance screen
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
-            changeLargeScreenTo("satnav_guidance");
-
-            // TODO - if the user changes to another screen (e.g. "tuner"), make the current guidance icon(s)
-            // visible in the small screen
-        } // case
-        break;
-*/
-        // TODO - this does not work. Find a suitable button.
+        // TODO - the following does not work. Find a suitable button.
         case "left_stalk_button":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
@@ -3129,13 +3262,6 @@ function handleItemChange(item, value)
 
         case "right_stalk_button":
         {
-            /*
-            if (typeof handleItemChange.rightStalkButtonTimer == 'undefined')
-            {
-                handleItemChange.rightStalkButtonTimer = null;
-            } // if
-            */
-
             // Has anything changed?
             if (value === handleItemChange.rightStalkButton) break;
             handleItemChange.rightStalkButton = value;
@@ -3155,7 +3281,7 @@ function handleItemChange(item, value)
                         // flimsy remote control from the glove compartment while driving, keeping your head up
                         // in an awkward position desparately attempting to keep an eye on the road ahead.
                         //
-                        // TODO - long-pressing the right-hand stalk button *also* resets the trip counter...
+                        // TODO - long-pressing the right-hand stalk button *also* resets the trip counter :-(
                         nextLargeScreen();
                         handleItemChange.rightStalkButtonTimer = null;
                     },
@@ -3203,7 +3329,6 @@ function handleItemChange(item, value)
             // Ignore same button press within 200 ms
             if (value === handleItemChange.lastIrCode && Date.now() - handleItemChange.lastIrCodeProcessed < 200)
             {
-                //console.log("mfd_remote_control - too quick");
                 break;
             } // if
 
@@ -3223,13 +3348,13 @@ function handleItemChange(item, value)
             else if (value === "ESC_BUTTON")
             {
                 // If a status popup is showing, hide it and break
-                //if (hidePopup()) break;
                 if (hidePopup("status_popup")) break;
 
                 // Also close these, if shown
                 if (hidePopup("satnav_initializing_popup")) break;
-                if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break
-                if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break
+                if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
+                if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
+                if (hidePopup("satnav_delete_item_popup")) break;
 
                 // Hiding this popup might make the underlying "Computing route in progress" popup visible
                 if (hidePopup("satnav_guidance_preference_popup")) break;
@@ -3258,7 +3383,6 @@ function handleItemChange(item, value)
             else if (value === "ENTER_BUTTON")
             {
                 // If a status popup is showing, hide it and break
-                //if (hidePopup()) break;
                 if (hidePopup("status_popup")) break;
 
                 // Also close these, if shown
@@ -3276,9 +3400,9 @@ function handleItemChange(item, value)
                     break;
                 } // if
 
+
                 // In sat nav guidance mode, show the "Guidance tools" menu
                 if ($("#satnav_guidance").is(":visible")) gotoTopLevelMenu("satnav_guidance_tools_menu");
-                //else if ($("#satnav_list").is(":visible")) changeLargeScreenTo("satnav_enter_street_characters");
                 else buttonClicked();
             } // if
         } // case
@@ -3444,7 +3568,7 @@ function demoMode()
     $("#satnav_current_destination_city").text("Amsterdam");
     $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
     $("#satnav_enter_characters_validate_button").addClass("buttonSelected");
-    $('[gid="satnav_to_mfd_list_size"]').text("7214");
+    $('[gid="satnav_to_mfd_list_size"]').text("35");
     $("#satnav_current_destination_street").text("Keizersgracht");
 
     // Sat nav choose destination street from list
@@ -3485,27 +3609,27 @@ function demoMode()
 
     // Sat nav private address entry
     $("#satnav_private_address_entry").text("HOME");
-    $('[gid="satnav_private_address_city"]').text("AMSTELVEEN");
-    $('[gid="satnav_private_address_street"]').text("SPORTLAAN");
-    $('[gid="satnav_private_address_house_number_shown"]').text("23");
+    $("#satnav_private_address_city").text("AMSTELVEEN");
+    $("#satnav_private_address_street_shown").text("SPORTLAAN");
+    $("#satnav_private_address_house_number_shown").text("23");
 
     // Sat nav business address entry
     $("#satnav_business_address_entry").text("WORK");
-    $('[gid="satnav_business_address_city"]').text("Schiphol");
-    $('[gid="satnav_business_address_street"]').text("Westzijde");
-    $('[gid="satnav_business_address_house_number_shown"]').text("1118");
+    $("#satnav_business_address_city").text("Schiphol");
+    $("#satnav_business_address_street_shown").text("Westzijde");
+    $("#satnav_business_address_house_number_shown").text("1118");
 
     // Sat nav place of interest address entry
     $("#satnav_place_of_interest_address_entry").text("P1 Short-term parking");
-    $('[gid="satnav_place_of_interest_address_city"]').text("Schiphol");
-    $('[gid="satnav_place_of_interest_address_street"]').text("Boulevard");
+    $("#satnav_place_of_interest_address_city").text("Schiphol");
+    $("#satnav_place_of_interest_address_street").text("Boulevard");
     $("#satnav_place_of_interest_address_distance_km").text("17");
     $("#satnav_place_of_interest_address_entry_number").text("3");
     $("#satnav_to_mfd_list_size").text("17");
 
     // Sat nav programmed (current) destination
     $('[gid="satnav_current_destination_city"]').text("Amsterdam");
-    $('[gid="satnav_current_destination_street"]').text("Keizersgracht");
+    $("#satnav_current_destination_street_shown").text("Keizersgracht");
     $("#satnav_current_destination_house_number_shown").text("609");
 
     // Sat nav last destination
@@ -3529,7 +3653,7 @@ function demoMode()
     $("#satnav_curr_turn_icon_leg_157_5").show();
     $("#satnav_curr_turn_icon_leg_202_5").show();
 
-    // Current turn is a junction four legs; display the legs not to take
+    // Next turn is a junction four legs; display the legs not to take
     $("#satnav_next_turn_icon_leg_112_5").show();
     $("#satnav_next_turn_icon_leg_202_5").show();
 
@@ -3570,30 +3694,6 @@ function demoMode()
 } // demoMode
 
 // TODO - remove all this below
-
-// Show some legs
-/*
-document.getElementById("satnav_curr_turn_icon_leg_90_0").style.display = "block";
-document.getElementById("satnav_curr_turn_icon_leg_157_5").style.display = "block";
-document.getElementById("satnav_curr_turn_icon_leg_202_5").style.display = "block";
-
-document.getElementById("satnav_next_turn_icon_leg_112_5").style.display = "block";
-document.getElementById("satnav_next_turn_icon_leg_180_0").style.display = "block";
-document.getElementById("satnav_next_turn_icon_leg_225_0").style.display = "block";
-
-// Show some "no entry" icons
-document.getElementById("satnav_curr_turn_icon_no_entry_157_5").style.display = "block";
-
-document.getElementById("satnav_next_turn_icon_no_entry_180_0").style.display = "block";
-
-var currTurnAngle = 247.5;
-document.getElementById("satnav_curr_turn_icon_direction").style.transform = "rotate("+currTurnAngle+"deg)";
-document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute("d", describeArc(150, 150, 30, currTurnAngle - 180, 180));
-
-var nextTurnAngle = 295.0;
-document.getElementById("satnav_next_turn_icon_direction").style.transform = "rotate("+nextTurnAngle+"deg)";
-document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute("d", describeArc(150, 150, 30, nextTurnAngle - 180, 180));
-*/
 
 /*
 // Update heading to destination
