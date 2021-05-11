@@ -697,13 +697,6 @@ function gotoMenu(menu)
     var nextIdx = 0;
 
     // Skip disabled buttons
-    // var isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
-    // while (! isButtonEnabled)
-    // {
-        // nextIdx = (nextIdx + 1) % buttons.length;
-        // if (nextIdx === 0) break;  // Went all the way round?
-        // isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
-    // } // while
     do
     {
         isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
@@ -916,7 +909,7 @@ function toggleTick(id)
 } // toggleTick
 
 // Handle an arrow key press in a screen with buttons
-function navigateButtons(keyPressed)
+function keyPressed(key)
 {
     // Retrieve the currently selected button 
     var selected = findSelectedButton();
@@ -926,11 +919,28 @@ function navigateButtons(keyPressed)
     var currentButton = selected.button;
 
     // Retrieve the specified action, like e.g. on_left_button="doSomething();"
-    var action = currentButton.attr("on_" + keyPressed.toLowerCase());
-    if (action) eval(action);
+    var action = currentButton.attr("on_" + key.toLowerCase());
+    if (action)
+    {
+        eval(action);
+        return;
+    } // if
+
+    navigateButtons(key);
+} // keyPressed
+
+// Handle an arrow key press in a screen with buttons
+function navigateButtons(key)
+{
+    // Retrieve the currently selected button 
+    var selected = findSelectedButton();
+    if (selected === undefined) return;
+
+    var screen = selected.screen;
+    var currentButton = selected.button;
 
     // Retrieve the attribute that matches the pressed key ("UP_BUTTON", "DOWN_BUTTON", "LEFT_BUTTON", "RIGHT_BUTTON")
-    var gotoButtonId = currentButton.attr(keyPressed);
+    var gotoButtonId = currentButton.attr(key);
 
     // Nothing specified for the pressed key?
     if (! gotoButtonId)
@@ -939,7 +949,7 @@ function navigateButtons(keyPressed)
         var buttonForNext = buttonOrientation === "horizontal" ? "RIGHT_BUTTON" : "DOWN_BUTTON";
         var buttonForPrevious = buttonOrientation === "horizontal" ? "LEFT_BUTTON" : "UP_BUTTON";
 
-        if (keyPressed !== buttonForNext && keyPressed !== buttonForPrevious) return;
+        if (key !== buttonForNext && key !== buttonForPrevious) return;
 
         // Depending on the orientation of the buttons, the "DOWN_BUTTON"/"UP_BUTTON" resp.
         // "RIGHT_BUTTON"/"LEFT_BUTTON" simply walks the list, i.e. selects the next resp. previous button
@@ -952,24 +962,9 @@ function navigateButtons(keyPressed)
         var nextIdx = currIdx;
 
         // Select the next button, thereby skipping disabled or invisible buttons
-        // TODO - ugly code, nicer to use "if (...) break;" statements
-        // do
-        // {
-            // nextIdx = (nextIdx + (keyPressed === buttonForNext ? 1 : nButtons - 1)) % nButtons;
-        // }
-        // while
-          // (
-            // (
-              // $(allButtons[nextIdx]).hasClass("buttonDisabled")
-              // ||
-              // ! $(allButtons[nextIdx]).is(":visible")
-            // )
-            // && nextIdx !== currIdx
-          // );
-
         do
         {
-            nextIdx = (nextIdx + (keyPressed === buttonForNext ? 1 : nButtons - 1)) % nButtons;
+            nextIdx = (nextIdx + (key === buttonForNext ? 1 : nButtons - 1)) % nButtons;
             if (nextIdx === currIdx) break;
 
             var isButtonEnabled =
@@ -1006,19 +1001,19 @@ function navigateButtons(keyPressed)
         var allButtons = screen.find(".button");
         var nButtons = allButtons.length;
 
-        var gotoNext = keyPressed === "DOWN_BUTTON" || keyPressed === "RIGHT_BUTTON";
+        var gotoNext = key === "DOWN_BUTTON" || key === "RIGHT_BUTTON";
 
         // Skip disabled buttons, following the orientation of the buttons
         while ($("#" + gotoButtonId).hasClass("buttonDisabled"))
         {
             checkedButtons[gotoButtonId] = true;
 
-            var buttonForNext = keyPressed;
+            var buttonForNext = key;
             var buttonOrientation = $("#" + gotoButtonId).parent().attr("button_orientation");
             if (buttonOrientation === "horizontal")
             {
                 buttonForNext =
-                    keyPressed === "DOWN_BUTTON" || keyPressed === "RIGHT_BUTTON"
+                    key === "DOWN_BUTTON" || key === "RIGHT_BUTTON"
                         ? "RIGHT_BUTTON"
                         : "LEFT_BUTTON";
             } // if
@@ -1197,12 +1192,12 @@ function unhighlightLine(id)
     // Nothing to unhighlight?
     if (lines.length === 0) return;
     if (highlightIndexes[id] === undefined) return;
+    if (lines[highlightIndexes[id]] === undefined) return;
 
     // Remove the class from the highlighed line
     lines[highlightIndexes[id]] = lines[highlightIndexes[id]].replace(/<[^>]*>/g, '');
 
     $("#" + id).html(lines.join('<br />'));
-
 /*
     // Resize box such that a whole number of lines is shown
     var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
@@ -1486,6 +1481,16 @@ function satnavGotoMainMenu()
 
 function satnavGotoListScreen()
 {
+    // List screens are never stacked in the menu. So check if there is an existing list screen in the current
+    // menu stack and, if so, go back to it.
+    var idx = menuStack.indexOf("satnav_choose_from_list");
+
+    if (idx >= 0)
+    {
+        menuStack.length = idx;  // Remove trailing elements
+        currentMenu = null;
+    } // if
+
     gotoMenu("satnav_choose_from_list");
 
     satnavLastEnteredChar = null;
@@ -1644,7 +1649,7 @@ function satnavCheckIfCityCenterMustBeAdded()
     if (
         $("#satnav_choose_from_list").is(":visible")
         && $("#mfd_to_satnav_request").text() === "Enter street"  // TODO - other language?
-        && $("#satnav_entered_string").text() === ""
+        //&& $("#satnav_entered_string").text() === ""
         && ! userHadOpportunityToEnterStreet
        )
     {
@@ -1654,13 +1659,16 @@ function satnavCheckIfCityCenterMustBeAdded()
 
 function satnavListItemClicked()
 {
+    // Clear the character-by-character entry string
+    $("#satnav_entered_string").text("");
+
     // When choosing a city or street from the list, hide the current destination house number, so that the
     // entry format ("_ _ _") will be shown. If however, the current city and street are confirmed, then
     // the current destination house number must be shown, so that it can also be confirmed.
     $("#satnav_current_destination_house_number").text("");
 
     //if (menuStack[menuStack.length-1] !== "satnav_directory_management_menu")
-    var comingFromMenu = menuStack[menuStack.length-1];
+    var comingFromMenu = menuStack[menuStack.length - 1];
     if (comingFromMenu === "satnav_enter_city_characters" || comingFromMenu === "satnav_enter_street_characters")
     {
         // Pop away this screen, so that escaping from the next screen leads to the previous
@@ -1689,7 +1697,7 @@ function satnavEnterDigit(enteredNumber)
     // If the maximum number of digits is entered, then directly jump down to the "Validate" button
     s = s.replace(/[\s_]/g, "");  // Strip the entry formatting: remove spaces and underscores
     var nDigitsEntered = s.toString().length;
-    if (nDigitsEntered === highestHouseNumberInRange.toString().length) navigateButtons("DOWN_BUTTON");
+    if (nDigitsEntered === highestHouseNumberInRange.toString().length) keyPressed("DOWN_BUTTON");
 } // satnavEnterDigit
 
 function satnavConfirmHouseNumber()
@@ -1737,7 +1745,7 @@ function satnavHouseNumberEntryMode()
     $("#satnav_entered_number").show();
 
     // Navigate back up to the list of numbers and highlight the first
-    navigateButtons("UP_BUTTON");
+    keyPressed("UP_BUTTON");
 
     //highlightFirstLetter("satnav_house_number_show_characters");  // This is already done in "on_enter"
     $("#satnav_house_number_show_characters").addClass("buttonSelected");
@@ -1904,12 +1912,12 @@ function satnavEnterRenameDirectoryEntryScreen()
 } // satnavEnterRenameDirectoryEntryScreen
 
 // A new character is entered in the "satnav_rename_entry_in_directory" or "satnav_archive_in_directory" screen
-function satnavDirectoryEntryEnterCharacter(screenId, entered)
+function satnavDirectoryEntryEnterCharacter(screenId)
 {
     var screenSelector = "#" + screenId;
     var entrySelector = screenSelector + "_entry";
 
-    if (entered === "Esc")
+    if (satnavLastEnteredChar === "Esc")
     {
         // Remove the last character and replace it by "-"
         var s = $(entrySelector).text();
@@ -1926,11 +1934,11 @@ function satnavDirectoryEntryEnterCharacter(screenId, entered)
     }
     else
     {
-        if (entered != null)
+        if (satnavLastEnteredChar != null)
         {
             // Replace the '-' characters one by one, left to right
             var s = $(entrySelector).text();
-            s = s.replace("-", entered);
+            s = s.replace("-", satnavLastEnteredChar);
             $(entrySelector).text(s);
         } // if
 
@@ -1942,6 +1950,24 @@ function satnavDirectoryEntryEnterCharacter(screenId, entered)
     // Enable or disable buttons, depending on if there is anything in the entry field
     $(screenSelector).find(".button").toggleClass("buttonDisabled", $(entrySelector).text()[0] === "-");
 } // satnavDirectoryEntryEnterCharacter
+
+// Handles pressing the "UP" on the "Correction" button in the sat nav directory entry screens
+function satnavDirectoryEntryMoveUpFromCorrectionButton(screenId)
+{
+    var line2id = screenId + "_characters_line_2";
+
+    if (typeof highlightIndexes[line2id] == "undefined")
+    {
+        // In this case, "UP" moves the cursor to the first letter of in the first line
+        satnavSelectFirstLineOfDirectoryEntryScreen(screenId);
+        $("#" + screenId + "_correction_button").removeClass('buttonSelected');
+    }
+    else
+    {
+        // In this case, "UP" simply moves back to the second line
+        navigateButtons('UP_BUTTON');
+    } // if
+} // satnavDirectoryEntryMoveUpFromCorrectionButton
 
 // Find the ticked button and select it
 function satnavGuidancePreferenceSelectTickedButton()
@@ -2197,10 +2223,10 @@ function handleItemChange(item, value)
                 if ($(selector).hasClass("ledOn")) break;
 
                 // Show "NO CD X" text for a few seconds
-                $("cd_changer_current_disc").hide();
-                $("cd_changer_disc_not_present").show();
-                $("cd_changer_selected_disc").text(value);
-                $("cd_changer_selected_disc").show();
+                $("#cd_changer_current_disc").hide();
+                $("#cd_changer_disc_not_present").show();
+                $("#cd_changer_selected_disc").text(value);
+                $("#cd_changer_selected_disc").show();
 
                 clearInterval(handleItemChange.noCdPresentTimer);
                 handleItemChange.noCdPresentTimer = setTimeout
@@ -2799,7 +2825,11 @@ function handleItemChange(item, value)
 
         case "satnav_private_address_entry":
         {
+            // Only if the "satnav_private_address_manage_buttons" are visible
+            if (! $("#satnav_private_address_manage_buttons").is(":visible")) break;
+
             $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+            $("#satnav_delete_directory_entry_in_popup").text(value);
 
             // The "Rename" button is disabled if the value ends with "&#x24E7;" (X)
             if (value.match(/&#x24E7;$/))
@@ -2819,10 +2849,11 @@ function handleItemChange(item, value)
 
         case "satnav_business_address_entry":
         {
-            // Only if the "satnav_rename_entry_in_directory" screen is visible
-            if (! $("#satnav_rename_entry_in_directory").is(":visible")) break;
+            // Only if the "satnav_business_address_manage_buttons" are visible
+            if (! $("#satnav_business_address_manage_buttons").is(":visible")) break;
 
             $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+            $("#satnav_delete_directory_entry_in_popup").text(value);
 
             // The "Rename" button is disabled if the value ends with "&#x24E7;" (X)
             if (value.match(/&#x24E7;$/))
@@ -2879,6 +2910,13 @@ function handleItemChange(item, value)
 
             if (value === "satnav_choose_from_list")
             {
+                // TODO - remove this?
+                if ($("#satnav_enter_street_characters").is(":visible")
+                    && $("#satnav_enter_characters_list_button").hasClass("buttonSelected"))
+                {
+                    userHadOpportunityToEnterStreet = true;
+                } // if
+
                 // Clear the list box
                 $("#satnav_list").text("");
 
@@ -3154,6 +3192,14 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
+            // New set of available characters coming in means: reset all highlight positions
+            highlightIndexes["satnav_rename_entry_in_directory_characters_line_1"] = 0;
+            highlightIndexes["satnav_rename_entry_in_directory_characters_line_2"] = undefined;
+            highlightIndexes["satnav_archive_in_directory_characters_line_1"] = 0;
+            highlightIndexes["satnav_archive_in_directory_characters_line_2"] = undefined;
+            highlightIndexes["satnav_to_mfd_show_characters_line_1"] = 0;
+            highlightIndexes["satnav_to_mfd_show_characters_line_2"] = undefined;
+
             // On the original MFD, there is only room for 24 characters. If there are more characters, spill over
             // to the next line.
             var line_1 = value.substr(0, 24);
@@ -3167,8 +3213,8 @@ function handleItemChange(item, value)
                 // Enable the second line only if it contains something
                 $("#satnav_rename_entry_in_directory_characters_line_2").toggleClass("buttonDisabled", line_2.length === 0);
 
-                // This data coming in indicates that the last chosen character has been entered
-                satnavDirectoryEntryEnterCharacter("satnav_rename_entry_in_directory", satnavLastEnteredChar);
+                // New set of available characters coming in indicates that the last chosen character has been entered
+                satnavDirectoryEntryEnterCharacter("satnav_rename_entry_in_directory");
             }
             else if ($("#satnav_archive_in_directory_entry").is(":visible"))
             {
@@ -3178,8 +3224,8 @@ function handleItemChange(item, value)
                 // Enable the second line only if it contains something
                 $("#satnav_archive_in_directory_characters_line_2").toggleClass("buttonDisabled", line_2.length === 0);
 
-                // This data coming in indicates that the last chosen character has been entered
-                satnavDirectoryEntryEnterCharacter("satnav_archive_in_directory", satnavLastEnteredChar);
+                // New set of available characters coming in indicates that the last chosen character has been entered
+                satnavDirectoryEntryEnterCharacter("satnav_archive_in_directory");
             }
             else
             {
@@ -3191,12 +3237,21 @@ function handleItemChange(item, value)
 
                 // When a new list of available characters comes in, the highlight always moves back to the first
                 // character.
-                // TODO - always? Or only if the list changes?
                 if ($("#satnav_to_mfd_show_characters_line_1").hasClass("buttonSelected")
-                    || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected"))
+                    || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected")
+                    || $("#satnav_enter_characters_list_button").hasClass("buttonSelected"))
                 {
                     satnavSelectFirstAvailableCharacter();
+                }
+                else if ($("#satnav_enter_characters_correction_button").hasClass("buttonSelected"))
+                {
+                    if ($("#satnav_entered_string").text() === "")
+                    {
+                        // All entered characters have been removed
+                        satnavSelectFirstAvailableCharacter();
+                    } // if
                 } // if
+
             } // if
 
             if (value.length === 1)
@@ -3364,21 +3419,18 @@ function handleItemChange(item, value)
 
                 exitMenu();
             }
-            else if (value === "UP_BUTTON")
+            else if (value === "UP_BUTTON"
+                    || value === "DOWN_BUTTON"
+                    || value === "LEFT_BUTTON"
+                    || value === "RIGHT_BUTTON")
             {
-                navigateButtons(value);
-            }
-            else if (value === "DOWN_BUTTON")
-            {
-                navigateButtons(value);
-            }
-            else if (value === "LEFT_BUTTON")
-            {
-                navigateButtons(value);
-            }
-            else if (value == "RIGHT_BUTTON")
-            {
-                navigateButtons(value);
+                // Entering a character in the "satnav_enter_street_characters" screen?
+                if ($("#satnav_enter_street_characters").is(":visible"))
+                {
+                    userHadOpportunityToEnterStreet = true;
+                } // if
+
+                keyPressed(value);
             }
             else if (value === "ENTER_BUTTON")
             {
@@ -3400,6 +3452,17 @@ function handleItemChange(item, value)
                     break;
                 } // if
 
+                // Entering a character in the "satnav_enter_street_characters" screen?
+                if ($("#satnav_enter_street_characters").is(":visible")
+                    // &&
+                    // (
+                        // $("#satnav_to_mfd_show_characters_line_1").hasClass("buttonSelected")
+                        // || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected")
+                    // )
+                   )
+                {
+                    userHadOpportunityToEnterStreet = true;
+                } // if
 
                 // In sat nav guidance mode, show the "Guidance tools" menu
                 if ($("#satnav_guidance").is(":visible")) gotoTopLevelMenu("satnav_guidance_tools_menu");

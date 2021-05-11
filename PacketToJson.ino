@@ -392,8 +392,8 @@ enum SatNavRequest_t
     SR_PRIVATE_ADDRESS = 0x11,
     SR_BUSINESS_ADDRESS = 0x12,
     SR_SOFTWARE_MODULE_VERSIONS = 0x13,
-    SR_PRIVATE_ADDRESS_LIST = 0x1B,
-    SR_BUSINESS_ADDRESS_LIST = 0x1C,
+    SR_PRIVATE_ADDRESS_LIST = 0x1B,  // TODO - rename to SR_PERSONAL_ADDRESS_LIST
+    SR_BUSINESS_ADDRESS_LIST = 0x1C,  // TODO - rename to SR_PROFESSIONAL_ADDRESS_LIST
     SR_DESTINATION = 0x1D
 }; // enum SatNavRequest_t
 
@@ -2383,9 +2383,9 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus1Pkt
 
-// Saved equipment status
-const char* satnav_status_2 = emptyStr;
-bool satnav_disc_present = false; 
+// Saved equipment status (volatile)
+const char* satnavStatus2 = emptyStr;
+bool satnavDiscPresent = false;
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
 {
@@ -2394,13 +2394,17 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
 
     const uint8_t* data = pkt.Data();
 
-    satnav_status_2 =
+    satnavStatus2 =
         (data[1] & 0x0F) == 0x00 ? PSTR("INITIALIZING") : // TODO - change to "IDLE"
         (data[1] & 0x0F) == 0x01 ? PSTR("IDLE") : // TODO - change to "READY"
         (data[1] & 0x0F) == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
         ToHexStr((uint8_t)(data[1] & 0x0F));
 
-    satnav_disc_present = (data[2] & 0x70) == 0x30;
+    // The follinwg data is stored in non-volatile storage
+    //getStore()->satnavGuidanceActive = (data[1] & 0x0F) == 0x05;
+    //getStore()->satnavDiscPresent = (data[2] & 0x70) == 0x30;
+    //saveStore();
+    satnavDiscPresent = (data[2] & 0x70) == 0x30;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2422,7 +2426,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
 
         data[1] & 0x20 ? noStr : yesStr,
 
-        satnav_status_2,
+        satnavStatus2,
 
         data[1] & 0x10 ? yesStr : noStr,
         data[1] & 0x40 ? noStr : yesStr,
@@ -2535,6 +2539,9 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
             data[1] == 0x02 ? PSTR("COMPROMISE_FAST_SHORT") :
             notApplicable3Str
         );
+
+        // Save also in non-volatile storage
+        //getStore()->satnavGuidancePreference = data[1];
     }
     else if (dataLen == 17 && data[0] == 0x20)
     {
@@ -3197,10 +3204,23 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                         i == 0 ? emptyStr : commaStr,
                         records[i][0].c_str()
                     );
+/*
+                // Save directory entries also in non-volatile storage
+                if (report == SR_PRIVATE_ADDRESS_LIST)
+                {
+                    getStore()->personalDirectoryEntries[i] = records[i][0];
+                }
+                else if (report == SR_BUSINESS_ADDRESS_LIST)
+                {
+                    getStore()->professionalDirectoryEntries[i] = records[i][0];
+                } // if
+*/
             } // for
 
             at += at >= JSON_BUFFER_SIZE ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
+
+            // if (report == SR_PRIVATE_ADDRESS_LIST || report == SR_BUSINESS_ADDRESS_LIST) saveStore();
         }
         break;
 
@@ -4103,7 +4123,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToHeadUnitPkt
 
-// Dump equipment status data, e.g. presence of sat nav and other devices
+// Dump equipment status data, e.g. presence of sat nav and other devices.
 // Some data is not regularly sent over the VAN bus. If a websocket client connects, we want to give a direct
 // update of this data as received thus far, instead of having to wait for this data to appear on the bus.
 const char* EquipmentStatusDataToJson()
@@ -4123,8 +4143,9 @@ const char* EquipmentStatusDataToJson()
 
     int at = snprintf_P(jsonBuffer, ESP_DATA_JSON_BUFFER_SIZE, jsonFormatter,
 
-        satnav_disc_present ? yesStr : noStr,
-        satnav_status_2
+        //getStore()->satnavDiscPresent ? yesStr : noStr,
+        satnavDiscPresent ? yesStr : noStr,
+        satnavStatus2
     );
 
     // JSON buffer overflow?

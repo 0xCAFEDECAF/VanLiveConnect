@@ -55,13 +55,28 @@ IPAddress apIP(AP_IP);
 // Encourage the compiler to use the a newer (C++11 ?) standard. If this is removed, it doesn't compile!
 char dummy_var_to_use_cpp11[] PROGMEM = R"==(")==";
 
+// Persistent storage, defined in Store.ino
+void saveStore();
+struct StoredData
+{
+    bool satnavGuidanceActive;
+    bool satnavDiscPresent;
+    uint8_t satnavGuidancePreference;
+/*
+    #define MAX_DIRECTORY_ENTRIES 100
+    String personalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
+    String professionalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
+*/
+};
+StoredData* getStore();
+
 ESP8266WebServer webServer;
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Defined in Esp.ino
 extern const String md5Checksum;
 
-// Returns true if the actual Etag is equal to the received Etag in If-None-Match header field.
+// Returns true if the actual Etag is equal to the received Etag in an 'If-None-Match' header field.
 // Shamelessly copied from: https://werner.rothschopf.net/microcontroller/202011_arduino_webserver_caching_en.htm .
 bool checkETag(const String& etag)
 {
@@ -362,6 +377,18 @@ void setup()
     Serial.println(F("Starting VAN bus \"Live Connect\" server"));
 
     PrintSystemSpecs();
+
+/*
+    // TODO - this can be removed
+    getStore()->personalDirectoryEntries[0] = "HOME";
+    getStore()->personalDirectoryEntries[1] = "HOME_TEST";
+    getStore()->professionalDirectoryEntries[0] = "WORK";
+    saveStore();
+    Serial.printf_P(
+        PSTR("Sat nav guidance was active? %S\n"),
+        getStore()->satnavGuidanceActive ? PSTR("YES") : PSTR("NO")
+    );
+*/
 
     setupWifi();
 

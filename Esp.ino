@@ -33,20 +33,20 @@ void PrintSystemSpecs()
     Serial.print(F("Software image MD5 checksum: "));
     Serial.println(md5Checksum);
 
-    // Might need this later
-    Serial.print(F("Starting SPI Flash File System (SPIFFS)...."));
-    bool res = SPIFFS.begin();
-    Serial.println(res ? F(" OK") : F(" FAIL"));
-    if (res)
-    {
-        FSInfo fs_info;
-        SPIFFS.info(fs_info);
-        Serial.printf_P
-        (
-            PSTR("fs_info.totalBytes = %s MByes\n"),
-            FloatToStr(floatBuf, fs_info.totalBytes / 1024.0 / 1024.0, 2)
-        );
-    } // if
+    // // Might need this later
+    // Serial.print(F("Starting SPI Flash File System (SPIFFS)...."));
+    // bool res = SPIFFS.begin();
+    // Serial.println(res ? F(" OK") : F(" FAIL"));
+    // if (res)
+    // {
+        // FSInfo fs_info;
+        // SPIFFS.info(fs_info);
+        // Serial.printf_P
+        // (
+            // PSTR("fs_info.totalBytes = %s MByes\n"),
+            // FloatToStr(floatBuf, fs_info.totalBytes / 1024.0 / 1024.0, 2)
+        // );
+    // } // if
 } // PrintSystemSpecs
 
 const char* EspDataToJson()
