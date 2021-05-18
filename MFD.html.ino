@@ -343,8 +343,10 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="rds_text" gid="rds_text" class="dseg14" style="font-size:120px; left:10px; top:150px; width:815px; text-align:right;"></div>
 
             <div class="tag" style="left:20px; top:300px; width:150px;">PTY</div>
-            <div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:60px; left:20px; top:295px; width:150px;">PTY</div>
+            <div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:60px; left:20px; top:295px; width:150px; height: 55px;">PTY</div>
+            <div id="pty_selection_menu" class="led ledOn" style="display:none; font-size:60px; left:20px; top:295px; width:150px; height: 55px;">SEL</div>
             <div id="pty_16" class="dots" style="left:190px; top:295px; width:750px;"></div>
+            <div id="selected_pty_16" class="dots" style="display:none; left:190px; top:295px; width:750px;"></div>
 
             <div class="tag" style="left:20px; top:360px; width:150px;">PI</div>
             <div gid="pi_country" class="dots" style="left:190px; top:355px; width:150px;">--</div>
@@ -371,7 +373,6 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="media" style="display:none;">
 
           <div class="tag" style="left:50px; top:50px; width:200px;">Source</div>
-          <!--<div id="audio_source" gid="audio_source" class="dots" style="left:270px; top:45px; width:450px;"></div>-->
 
           <!-- Tape -->
 
@@ -862,14 +863,18 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="sat_nav" style="display:none;">
 
-        <!-- Top line shows navigation data we always want to see, whether in guidance mode, setting a destination,
-             or just viewing current location -->
+        <!--
+          Top line shows navigation data we always want to see, whether in guidance mode, setting a destination,
+          or just viewing current location
+        -->
 
         <!-- Status LEDs -->
 
         <div id="satnav_disc_present" class="iconSmall led ledOff" style="left:870px; top:30px;">
           <div class="centerAligned fas fa-compact-disc"></div>
         </div>
+
+        <!-- TODO - other set of icons, currently is not clear -->
         <div id="satnav_gps_scanning" class="iconSmall led ledOff" style="display:none; left:770px; top:30px;">
           <div class="centerAligned fas fa-satellite-dish"></div>
         </div>
@@ -937,6 +942,7 @@ char mfd_html[] PROGMEM = R"=====(
           class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Navigation / Guidance<br style="line-height:100px;" />
 
+          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
           <div class="button" goto_id="satnav_show_last_destination">Select a service</div>
@@ -954,9 +960,13 @@ char mfd_html[] PROGMEM = R"=====(
 
         <div id="satnav_select_from_memory_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Select from memory<br style="line-height:100px;" />
+
+          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected"
             on_click="highlightFirstLine('satnav_list');"
             goto_id="satnav_choose_from_list">Personal directory</div>
+
+          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button"
             on_click="highlightFirstLine('satnav_list');"
             goto_id="satnav_choose_from_list">Professional directory</div>
@@ -978,9 +988,13 @@ char mfd_html[] PROGMEM = R"=====(
 
         <div id="satnav_directory_management_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Directory management<br style="line-height:100px;" />
+
+          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected"
             on_click="highlightFirstLine('satnav_list');"
             goto_id="satnav_choose_from_list">Personal directory</div>
+
+          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button"
             on_click="highlightFirstLine('satnav_list');"
             goto_id="satnav_choose_from_list">Professional directory</div>
@@ -1035,8 +1049,10 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- TODO - also show the volume as a linear gauge -->
           <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:115px; width:200px;">-</div>
 
-          <!-- on_click: when the "Validate" button is pressed, all menus are exited up to top level.
-               IMHO that is a bug in the MFD. -->
+          <!--
+            on_click: when the "Validate" button is pressed, all menus are exited up to top level.
+            IMHO that is a bug in the MFD.
+          -->
           <div
             class="button buttonSelected"
             on_click="exitMenu(); exitMenu(); exitMenu(); exitMenu();"
@@ -1056,9 +1072,10 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div class="tag" style="left:20px; top:240px; width:550px; text-align:left;">Choose next letter</div>
 
-            <!-- On the original MFD, there is only room for 24 characters. If there are more characters to choose
-                 from, they spill over to the next line -->
-            <!-- on_down_button="highlightLetter('satnav_to_mfd_show_characters_line_2', highlightIndexes['satnav_to_mfd_show_characters_line_1']); navigateButtons('DOWN_BUTTON');" -->
+            <!--
+              On the original MFD, there is only room for 24 characters. If there are more characters to choose
+              from, they spill over to the next line
+            -->
             <div id="satnav_to_mfd_show_characters_line_1"
               UP_BUTTON="satnav_to_mfd_show_characters_line_1"
               DOWN_BUTTON="satnav_to_mfd_show_characters_line_2"
@@ -1071,7 +1088,6 @@ char mfd_html[] PROGMEM = R"=====(
               style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
                 background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
-            <!-- on_up_button="highlightLetter('satnav_to_mfd_show_characters_line_1', highlightIndexes['satnav_to_mfd_show_characters_line_2']); navigateButtons('UP_BUTTON');" -->
             <div id="satnav_to_mfd_show_characters_line_2"
               UP_BUTTON="satnav_to_mfd_show_characters_line_1"
               DOWN_BUTTON="satnav_enter_characters_validate_button"
@@ -1088,6 +1104,7 @@ char mfd_html[] PROGMEM = R"=====(
               button_orientation="horizontal"
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
+              <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_validate_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 on_click="satnavGotoEnterStreetOrNumber();"
@@ -1104,6 +1121,7 @@ char mfd_html[] PROGMEM = R"=====(
                 Correction
               </div>
 
+              <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_list_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 on_click="satnavGotoListScreen();"
@@ -1112,6 +1130,7 @@ char mfd_html[] PROGMEM = R"=====(
                 List <span gid="satnav_to_mfd_list_size"></span>
               </div>
 
+              <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_change_or_city_center_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 on_click="satnavEnterCharactersChangeOrCityCenterButtonPress();"
@@ -1127,8 +1146,10 @@ char mfd_html[] PROGMEM = R"=====(
 
               <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>
 
-              <!-- The following div will disappear as soon as the user starts choosing letters, which will then
-                   appear one by one in "satnav_entered_string" -->
+              <!--
+                The following div will disappear as soon as the user starts choosing letters, which will then
+                appear one by one in "satnav_entered_string"
+              -->
               <div id="satnav_current_destination_city"
                 class="dots" style="left:25px; top:160px; width:925px; font-size:50px;"></div>
             </div>
@@ -1140,8 +1161,10 @@ char mfd_html[] PROGMEM = R"=====(
 
               <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter street</div>
 
-              <!-- The following div will disappear as soon as the user starts choosing letters, which will then
-                   appear one by one in "satnav_entered_string" -->
+              <!--
+                The following div will disappear as soon as the user starts choosing letters, which will then
+                appear one by one in "satnav_entered_string"
+              -->
               <div id="satnav_current_destination_street"
                 class="dots" style="left:25px; top:160px; width:925px; font-size:50px;"></div>
             </div>
@@ -1150,14 +1173,11 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- ...or choosing entry from list... -->
 
-          <div id="satnav_choose_from_list"
-            style="display:none;">
+          <div id="satnav_choose_from_list" style="display:none;">
 
             <!-- What is being entered? (city, street) -->
-            <!--<div id="satnav_report" class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>-->
             <div id="mfd_to_satnav_request" class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>
 
-            <!-- <div class="tag" style="left:600px; top:480px; width:200px; text-align:left;">List</div> -->
             <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:100px; width:218px; text-align:right;">-</div>
 
             <!-- TODO - id="satnav_software_modules_list": show this? -->
@@ -1188,8 +1208,10 @@ char mfd_html[] PROGMEM = R"=====(
             <!-- The number that has been entered thus far -->
             <div id="satnav_entered_number" class="dots" style="left:25px; top:160px; width:930px;"></div>
 
-            <!-- The following div will disappear as soon as the user starts choosing numbers, which will then
-                 appear one by one in "satnav_entered_number" -->
+            <!--
+              The following div will disappear as soon as the user starts choosing numbers, which will then
+              appear one by one in "satnav_entered_number"
+            -->
             <div id="satnav_current_destination_house_number"
               on_enter="satnavConfirmHouseNumber();"
               on_esc="satnavConfirmStreetMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
@@ -1251,7 +1273,7 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div id="satnav_private_address_validate_buttons" style="display:block">
               <div id="satnav_show_private_address_validate_button"
-                on_click="showPopup('satnav_guidance_preference_popup', 10000);"
+                on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button buttonSelected"
                 style="left:25px; top:450px; width:180px; height:40px;">
                 Validate
@@ -1262,7 +1284,6 @@ char mfd_html[] PROGMEM = R"=====(
               <div button_orientation="horizontal"
                 style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-                <!-- on_click="satnavRenamePrivateAddressEntry();" -->
                 <div id="satnav_manage_private_address_rename_button"
                   goto_id="satnav_rename_entry_in_directory_entry"
                   class="icon button"
@@ -1298,7 +1319,7 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div id="satnav_business_address_validate_buttons" style="display:block">
               <div id="satnav_show_business_address_validate_button"
-                on_click="showPopup('satnav_guidance_preference_popup', 10000);"
+                on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button buttonSelected"
                 style="left:25px; top:450px; width:180px; height:40px;">
                 Validate
@@ -1309,7 +1330,6 @@ char mfd_html[] PROGMEM = R"=====(
               <div button_orientation="horizontal"
                 style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-                <!-- on_click="satnavRenameBusinessAddressEntry();" -->
                 <div id="satnav_manage_business_address_rename_button"
                   goto_id="satnav_rename_entry_in_directory_entry"
                   class="icon button"
@@ -1327,7 +1347,6 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
           </div>  <!-- "satnav_show_business_address" -->
 
-          <!-- on_enter="selectButton('satnav_place_of_interest_address_next_button');" -->
           <div id="satnav_show_place_of_interest_address"
             style="display:none;">
 
@@ -1352,7 +1371,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div button_orientation="horizontal" style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
               <div id="satnav_place_of_interest_address_validate_button"
-                on_click="showPopup('satnav_guidance_preference_popup', 10000);"
+                on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button"
                 style="left:0px; top:0px; width:180px; height:40px;">
                 Validate
@@ -1391,7 +1410,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div button_orientation="horizontal" style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
               <div 
-                on_click="showPopup('satnav_guidance_preference_popup', 10000);"
+                on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button buttonSelected"
                 style="left:0px; top:0px; width:180px; height:40px;">
                 Validate
@@ -1472,11 +1491,14 @@ char mfd_html[] PROGMEM = R"=====(
                 Validate
               </div>
               <div
-                on_click="satnavGotoEnterCity();"
+                on_click="satnavEnterCity();"
                 class="icon button" style="left:210px; top:0px; width:230px; height:40px;">
                 Change
               </div>
+
+              <!-- on_click="exitMenu(); highlightFirstLine('satnav_list');" -->
               <div
+                on_click="highlightFirstLine('satnav_list');"
                 class="icon button" style="left:470px; top:0px; width:340px; height:40px;">
                 Current location
               </div>
@@ -1497,7 +1519,6 @@ char mfd_html[] PROGMEM = R"=====(
             style="left:210px; top:195px; width:720px; height:90px; white-space:normal;"
           >----------------</div>
 
-          <!-- on_down_button="highlightLetter('satnav_archive_in_directory_characters_line_2', highlightIndexes['satnav_archive_in_directory_characters_line_1']); navigateButtons('DOWN_BUTTON');" -->
           <div id="satnav_archive_in_directory_characters_line_1"
             UP_BUTTON="satnav_archive_in_directory_characters_line_1"
             DOWN_BUTTON="satnav_archive_in_directory_characters_line_2"
@@ -1510,7 +1531,6 @@ char mfd_html[] PROGMEM = R"=====(
             style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
               background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
-          <!-- on_up_button="highlightLetter('satnav_archive_in_directory_characters_line_1', highlightIndexes['satnav_archive_in_directory_characters_line_2']); navigateButtons('UP_BUTTON');" -->
           <div id="satnav_archive_in_directory_characters_line_2"
             UP_BUTTON="satnav_archive_in_directory_characters_line_1"
             DOWN_BUTTON="satnav_archive_in_directory_correction_button"
@@ -1566,7 +1586,6 @@ char mfd_html[] PROGMEM = R"=====(
             style="left:210px; top:195px; width:720px; height:90px; white-space:normal;"
           >----------------</div>
 
-          <!-- on_down_button="highlightLetter('satnav_rename_entry_in_directory_characters_line_2', highlightIndexes['satnav_rename_entry_in_directory_characters_line_1']); navigateButtons('DOWN_BUTTON');" -->
           <div id="satnav_rename_entry_in_directory_characters_line_1"
             UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
             DOWN_BUTTON="satnav_rename_entry_in_directory_characters_line_2"
@@ -1579,7 +1598,6 @@ char mfd_html[] PROGMEM = R"=====(
             style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
               background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
-          <!-- on_up_button="highlightLetter('satnav_rename_entry_in_directory_characters_line_1', highlightIndexes['satnav_rename_entry_in_directory_characters_line_2']); navigateButtons('UP_BUTTON');" -->
           <div id="satnav_rename_entry_in_directory_characters_line_2"
             UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
             DOWN_BUTTON="satnav_rename_entry_in_directory_validate_button"
@@ -1628,7 +1646,10 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div style="position:absolute; left:780px; top:400px; width:200px; height:150px;">
 
-            <!-- Rotating round an abstract transform-origin like 'center' is better supported for a <div> than an <svg> element -->
+            <!--
+              Rotating round an abstract transform-origin like 'center' is better supported for a <div>
+              than an <svg> element
+            -->
             <div id="satnav_heading_to_dest" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
               <svg>
                 <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
@@ -1660,9 +1681,12 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <!-- "Not on map" icon -->
-            <div id="satnav_not_on_map_icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
+            <div id="satnav_not_on_map_icon" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
 
-              <!-- Rotating round an abstract transform-origin like 'center' is better supported for a <div> than an <svg> element -->
+              <!--
+                Rotating round an abstract transform-origin like 'center' is better supported for a <div>
+                than an <svg> element
+              -->
               <div id="satnav_not_on_map_follow_heading" style="position:absolute; left:60px; top:20px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
                 <svg>
                   <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
@@ -1671,7 +1695,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>  <!-- "satnav_not_on_map_icon" -->
 
             <!-- "Follow road" icon(s) -->
-            <div id="satnav_follow_road_icon" style="display:none; position:absolute; left:50px; top:0px; width:200px; height:300px;">
+            <div id="satnav_follow_road_icon" class="icon" style="display:none; position:absolute; left:50px; top:0px; width:200px; height:300px;">
 
               <!-- The small "next instruction" icons on top -->
 
@@ -1702,7 +1726,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>  <!-- "satnav_follow_road_icon" -->
 
             <!-- "Turn around" icon -->
-            <div id="satnav_turn_around_if_possible_icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
+            <div id="satnav_turn_around_if_possible_icon" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
               <svg style="width:200px; height:200px;">
                 <line class="satNavInstructionIcon" x1="140" y1="80" x2="140" y2="140"></line>
                 <line class="satNavInstructionIcon" x1="60" y1="80" x2="60" y2="140"></line>
@@ -1718,7 +1742,7 @@ char mfd_html[] PROGMEM = R"=====(
 
             <!-- Fork icons -->
 
-            <div id="satnav_fork_icon_keep_right" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
+            <div id="satnav_fork_icon_keep_right" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
               <svg style="width:200px; height:200px;">
                 <line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
                 <line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="60" y2="80"></line>
@@ -1730,7 +1754,7 @@ char mfd_html[] PROGMEM = R"=====(
               </svg>
             </div>  <!-- "satnav_fork_icon_keep_right" -->
 
-            <div id="satnav_fork_icon_keep_left" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
+            <div id="satnav_fork_icon_keep_left" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
               <svg style="width:200px; height:200px;">
                 <line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
                 <line class="satNavInstructionIcon" x1="100" y1="120" x2="60" y2="80"></line>
@@ -1744,7 +1768,7 @@ char mfd_html[] PROGMEM = R"=====(
 
             <!-- Take exit icons -->
 
-            <div id="satnav_fork_icon_take_right_exit" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
+            <div id="satnav_fork_icon_take_right_exit" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
               <svg style="width:200px; height:200px;">
                 <line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
                 <line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="100" y2="20"></line>
@@ -1755,7 +1779,7 @@ char mfd_html[] PROGMEM = R"=====(
               </svg>
             </div>  <!-- "satnav_fork_icon_take_right_exit" -->
 
-            <div id="satnav_fork_icon_take_left_exit" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
+            <div id="satnav_fork_icon_take_left_exit" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
               <svg style="width:200px; height:200px;">
                 <line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
                 <line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="100" y2="20"></line>
@@ -1767,7 +1791,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>  <!-- "satnav_fork_icon_take_left_exit" -->
 
             <!-- Current turn icon -->
-            <div id="satnav_curr_turn_icon" style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
+            <div id="satnav_curr_turn_icon" class="icon" style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
 
               <!-- "To" direction as arrow -->
               <!-- Show in a separate div, for easy rotation around 'top center' -->
@@ -1857,7 +1881,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>  <!-- "satnav_curr_turn_icon" -->
 
             <!-- Next turn icon -->
-            <div id="satnav_next_turn_icon" style="display:none; position:absolute; left:160px; top:0px; width:180px; height:180px;">
+            <div id="satnav_next_turn_icon" class="icon" style="display:none; position:absolute; left:160px; top:0px; width:180px; height:180px;">
 
               <!-- "To" direction as arrow -->
               <div id="satnav_next_turn_icon_direction" style="z-index:-1; position:absolute; left:60px; top:90px; width:60px; height:110px; transform-origin:top center;">
@@ -2079,12 +2103,11 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
       </div>  <!-- "satnav_calculating_route_popup" -->
 
-      <!-- Sat nav popup with question: Keep criteria "Fastest route?" (Yes/No) 
-           Note: this popup can be placed on top of the "satnav_calculating_route_popup"
-        -->
+      <!--
+        Sat nav popup with question: Keep criteria "Fastest route?" (Yes/No) .
+        Note: this popup can be placed on top of the "satnav_calculating_route_popup"
+      -->
 
-      <!-- on_exit="satnavSwitchToGuidanceScreen();" -->
-      <!-- on_esc="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) showPopup('satnav_calculating_route_popup');" -->
       <div id="satnav_guidance_preference_popup"
         on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
@@ -2092,7 +2115,6 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- TODO - show current navigation criteria -->
           Keep criteria "<span id="satnav_guidance_current_preference_text">Fastest route</span>"?
 
-          <!-- on_click="hidePopup('satnav_guidance_preference_popup'); showPopup('satnav_calculating_route_popup');" -->
           <div button_orientation="horizontal">
             <div id="satnav_guidance_preference_popup_yes_button"
               class="icon button"

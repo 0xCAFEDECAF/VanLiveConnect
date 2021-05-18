@@ -62,11 +62,11 @@ struct StoredData
     bool satnavGuidanceActive;
     bool satnavDiscPresent;
     uint8_t satnavGuidancePreference;
-/*
-    #define MAX_DIRECTORY_ENTRIES 100
+
+    // TODO - increase to 100 (causes crash at boot time)
+    #define MAX_DIRECTORY_ENTRIES 30
     String personalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
     String professionalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
-*/
 };
 StoredData* getStore();
 
@@ -378,7 +378,6 @@ void setup()
 
     PrintSystemSpecs();
 
-/*
     // TODO - this can be removed
     getStore()->personalDirectoryEntries[0] = "HOME";
     getStore()->personalDirectoryEntries[1] = "HOME_TEST";
@@ -388,7 +387,6 @@ void setup()
         PSTR("Sat nav guidance was active? %S\n"),
         getStore()->satnavGuidanceActive ? PSTR("YES") : PSTR("NO")
     );
-*/
 
     setupWifi();
 
