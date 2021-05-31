@@ -56,7 +56,8 @@ IPAddress apIP(AP_IP);
 char dummy_var_to_use_cpp11[] PROGMEM = R"==(")==";
 
 // Persistent storage, defined in Store.ino
-void saveStore();
+void MarkStoreDirty();
+void LoopStore();
 struct StoredData
 {
     bool satnavGuidanceActive;
@@ -378,11 +379,7 @@ void setup()
 
     PrintSystemSpecs();
 
-    // TODO - this can be removed
-    getStore()->personalDirectoryEntries[0] = "HOME";
-    getStore()->personalDirectoryEntries[1] = "HOME_TEST";
-    getStore()->professionalDirectoryEntries[0] = "WORK";
-    saveStore();
+    // TODO - just for testing; this can be removed later
     Serial.printf_P(
         PSTR("Sat nav guidance was active? %S\n"),
         getStore()->satnavGuidanceActive ? PSTR("YES") : PSTR("NO")
@@ -500,4 +497,6 @@ void loop()
         lastUpdate = millis();
         VanBusRx.DumpStats(Serial);
     } // if
+
+    LoopStore();
 } // loop

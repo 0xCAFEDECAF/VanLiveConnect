@@ -79,8 +79,8 @@ char mfd_html[] PROGMEM = R"=====(
            |  | | | `- div id="satnav_enter_city_characters"
            |  | | | `- div id="satnav_enter_street_characters"
            |  | | `- div id="satnav_choose_from_list"
-           |  |   `- div id="satnav_enter_house_number"
-           |  |     `- div id="satnav_current_destination_house_number"
+           |  | | `- div id="satnav_enter_house_number"
+           |  | |   `- div id="satnav_current_destination_house_number"
            |  | `- div id="satnav_show_address"
            |  | | `- div id="satnav_show_private_address"
            |  | | `- div id="satnav_show_business_address"
@@ -93,16 +93,16 @@ char mfd_html[] PROGMEM = R"=====(
            |  |
            |  |  # Popups in the "large" information panel
            |  `- div id="notification_popup"  # Popup window with warning or information icon
-           |  `- div id="status_popup"  # Simple popup without icon
            |  `- div id="door_open_popup"  # Door open popup
            |  `- div id="audio_settings_popup"  # Audio settings popup
            |  `- div id="satnav_initializing_popup"  # Sat nav initializing popup
            |  `- div id="satnav_input_stored_in_personal_dir_popup"
            |  `- div id="satnav_input_stored_in_professional_dir_popup"
            |  `- div id="satnav_delete_item_popup"
-           |  `- div id="satnav_calculating_route_popup"  # Sat nav calculating route popup
+           |  `- div id="satnav_calculating_route_popup"  # Sat nav computing route popup
            |  `- div id="satnav_guidance_preference_popup"  # Change navigation preference popup
            |  `- div id="satnav_delete_directory_data_popup"  # Delete sat nav directory data popup
+           |  `- div id="status_popup"  # Simple popup without icon
            |
            |  # Full-screen popups
            `- div id="tuner_presets_popup" 
@@ -323,9 +323,6 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="fm_band_2" class="led ledOff" style="left:180px; top:83px; width:60px;">2</div>
           <div id="fm_band_ast" class="led ledOff" style="left:250px; top:83px; width:110px;">AST</div>
 
-          <div id="scan_direction_up" class="led ledOff fa fa-caret-up" style="left:375px; top:40px; width:40px; height:37px;"></div>
-          <div id="scan_direction_down" class="led ledOff fa fa-caret-down" style="left:375px; top:83px; width:40px; height:37px;"></div>
-
           <div id="frequency_data_small" style="display:block;">
             <div gid="frequency" class="dseg7" style="font-size:80px; left:385px; top:40px; width:260px;"></div>
             <div gid="frequency_h" class="dseg7" style="font-size:50px; left:630px; top:40px; width:60px;"></div>
@@ -339,25 +336,28 @@ char mfd_html[] PROGMEM = R"=====(
             <div gid="frequency_unit" class="dseg14" style="font-size:120px; left:540px; top:150px; width:280px; text-align:right;">MHz</div>
           </div>
 
+          <!-- Icons involved in station searching -->
+          <div id="search_manual" class="led ledOff" style="left:400px; top:290px; width:120px;">MAN</div>
+          <div id="search_sensitivity_dx" class="led ledOff" style="left:530px; top:290px; width:80px;">Dx</div>
+          <div id="search_sensitivity_lo" class="led ledOff" style="left:620px; top:290px; width:80px;">Lo</div>
+          <div id="search_direction_up" class="led ledOff fa fa-caret-up" style="left:730px; top:290px; width:40px; height:37px;"></div>
+          <div id="search_direction_down" class="led ledOff fa fa-caret-down" style="left:780px; top:290px; width:40px; height:37px;"></div>
+
           <div id="fm_tuner_data" style="display:block;">
             <div id="rds_text" gid="rds_text" class="dseg14" style="font-size:120px; left:10px; top:150px; width:815px; text-align:right;"></div>
 
-            <div class="tag" style="left:20px; top:300px; width:150px;">PTY</div>
-            <div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:60px; left:20px; top:295px; width:150px; height: 55px;">PTY</div>
-            <div id="pty_selection_menu" class="led ledOn" style="display:none; font-size:60px; left:20px; top:295px; width:150px; height: 55px;">SEL</div>
-            <div id="pty_16" class="dots" style="left:190px; top:295px; width:750px;"></div>
-            <div id="selected_pty_16" class="dots" style="display:none; left:190px; top:295px; width:750px;"></div>
+            <div class="tag" style="left:20px; top:360px; width:150px;">PTY</div>
+            <div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:60px; left:20px; top:355px; width:150px; height: 55px;">PTY</div>
+            <div id="pty_selection_menu" class="led ledOn" style="display:none; font-size:60px; left:20px; top:355px; width:150px; height: 55px;">SEL</div>
+            <div id="pty_16" class="dots" style="left:190px; top:357px; width:750px;"></div>
+            <div id="selected_pty_16" class="dots" style="display:none; left:190px; top:357px; width:750px;"></div>
 
-            <div class="tag" style="left:20px; top:360px; width:150px;">PI</div>
-            <div gid="pi_country" class="dots" style="left:190px; top:355px; width:150px;">--</div>
+            <div class="tag" style="left:20px; top:420px; width:150px;">PI</div>
+            <div gid="pi_country" class="dots" style="left:190px; top:415px; width:150px;">--</div>
           </div>
 
-          <div class="tag" style="left:20px; top:420px; width:150px;">Tuner</div>
-          <div id="scan_sensitivity_dx" class="led ledOff" style="left:190px; top:430px; width:80px;">Dx</div>
-          <div id="scan_sensitivity_lo" class="led ledOff" style="left:280px; top:430px; width:80px;">Lo</div>
-
           <div class="tag" style="left:690px; top:420px; width:160px;">Signal</div>
-          <div id="signal_strength" class="dots" style=" left:870px; top:415px;">--</div>
+          <div id="signal_strength" class="dots" style=" left:870px; top:417px;">--</div>
 
           <div id="regional" class="led ledOn" style="left:510px; top:490px; width:140px;">REG</div>
           <div id="rds_selected" class="led ledOff" style="left:795px; top:490px; width:140px;">RDS</div>
@@ -405,6 +405,7 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="centerAligned fas fa-fast-backward"></div>
             </div>
 
+            <div gid="loudness" class="led ledOff" style="left:795px; top:490px; width:140px;">LOUD</div>
           </div>  <!-- "tape" -->
 
           <div id="cd_player" style="display:none;">
@@ -440,6 +441,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="tag" style="left:810px; top:320px; width:50px;">/</div>
             <div id="cd_total_tracks" class="dots" style="left:850px; top:315px; width:100px; text-align:right;">--</div>
 
+            <div gid="loudness" class="led ledOff" style="left:795px; top:490px; width:140px;">LOUD</div>
           </div>  <!-- "cd_player" -->
 
           <div id="cd_changer" style="display:none;">
@@ -494,6 +496,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="cd_changer_disc_5_present" class="led ledOff" style="left:660px; top:410px; width:130px;">5</div>
             <div id="cd_changer_disc_6_present" class="led ledOff" style="left:810px; top:410px; width:130px;">6</div>
 
+            <div gid="loudness" class="led ledOff" style="left:795px; top:490px; width:140px;">LOUD</div>
           </div>  <!-- "cd_changer" -->
         </div>  <!-- Removable media -->
       </div>  <!-- Audio equipment -->
@@ -890,9 +893,9 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="centerAligned fas fa-map-marker-alt"></div>
         </div>
 
-        <!-- Current compass heading -->
+        <!-- Current heading, shown as compass needle -->
 
-        <div id="satnav_curr_heading" style="position:absolute; left:570px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:570px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
           <svg>
             <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
           </svg>
@@ -945,7 +948,13 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
-          <div class="button" goto_id="satnav_show_last_destination">Select a service</div>
+          <!--
+            This button is disabled until a {"satnav_to_mfd_response":"Service","satnav_to_mfd_list_size":"38"} packet
+            is received
+          -->
+          <div id="satnav_main_menu_select_a_service_button"
+            class="button buttonDisabled"
+            goto_id="satnav_show_last_destination">Select a service</div>
 
           <div class="button"
             on_click="satnavSetDirectoryAddressScreenMode('SELECT');"
@@ -981,7 +990,10 @@ char mfd_html[] PROGMEM = R"=====(
             goto_id="satnav_directory_management_menu">Directory management</div>
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volme</div>
           <div class="button">Delete directories</div>
+
+          <!-- TODO - "Stop" must be "Resume" if sat nav is not in guidance mode -->
           <div class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Stop guidance</div>
+
         </div>  <!-- "satnav_navigation_options_menu" -->
 
         <!-- Sat nav directory management menu -->
@@ -1000,7 +1012,7 @@ char mfd_html[] PROGMEM = R"=====(
             goto_id="satnav_choose_from_list">Professional directory</div>
         </div>  <!-- "satnav_directory_management_menu" -->
 
-        <!-- Sat nav guidance tools menu -->
+        <!-- Sat nav guidance tools (context) menu -->
 
         <div id="satnav_guidance_tools_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Guidance tools<br style="line-height:100px;" />
@@ -1021,12 +1033,16 @@ char mfd_html[] PROGMEM = R"=====(
           on_esc="satnavSwitchToGuidanceScreen();"
           style="position:absolute; display:none; left:60px; top:140px; width:920px; height:410px;">
 
-          <span id="satnav_guidance_preference_fastest" class="tickBox button"
-            on_click="toggleTick(); keyPressed('UP_BUTTON');"></span> Fastest route<br style="line-height:70px;" />
-          <span id="satnav_guidance_preference_shortest" class="tickBox button buttonSelected"
+          <!-- As long we don't know the "satnav_guidance_preference" value, "Fastest route" will be ticked -->
+          <span id="satnav_guidance_preference_fastest" class="tickBox button buttonSelected"
+            on_click="toggleTick(); keyPressed('UP_BUTTON');"><b>&#10004;</b></span> Fastest route<br style="line-height:70px;" />
+
+          <span id="satnav_guidance_preference_shortest" class="tickBox button"
             on_click="toggleTick(); keyPressed('UP_BUTTON'); keyPressed('UP_BUTTON');"></span> Shortest route<br style="line-height:70px;" />
+
           <span id="satnav_guidance_preference_avoid_highway" class="tickBox button"
             on_click="toggleTick(); keyPressed('DOWN_BUTTON'); keyPressed('DOWN_BUTTON');"></span> Avoid highway route<br style="line-height:70px;" />
+
           <span id="satnav_guidance_preference_compromise" class="tickBox button"
             on_click="toggleTick(); keyPressed('DOWN_BUTTON');"></span> Fast/short compromise route<br style="line-height:70px;" />
 
@@ -1072,6 +1088,12 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div class="tag" style="left:20px; top:240px; width:550px; text-align:left;">Choose next letter</div>
 
+            <!-- Show spinning disc as long as no data has come in -->
+            <div id="satnav_to_mfd_show_characters_spinning_disc"
+              style="display:none; position:absolute; left:400px; top:320px; transform:scaleX(2);">
+              <div class="fas fa-compact-disc" style="font-size:100px;"></div>
+            </div>
+
             <!--
               On the original MFD, there is only room for 24 characters. If there are more characters to choose
               from, they spill over to the next line
@@ -1098,7 +1120,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_exit="unhighlightLetter();"
               class="dots"
               style="left:25px; top:360px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-                background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ'_</div>
+                background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ'</div>
 
             <div
               button_orientation="horizontal"
@@ -1141,7 +1163,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div id="satnav_enter_city_characters"
-              on_enter="highlightFirstLine('satnav_list');"
+              on_enter="highlightFirstLine('satnav_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
               style="display:none;">
 
               <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>
@@ -1155,7 +1177,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div id="satnav_enter_street_characters"
-              on_enter="highlightFirstLine('satnav_list');"
+              on_enter="highlightFirstLine('satnav_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
               on_esc="satnavConfirmCityMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
               style="display:none;">
 
@@ -1638,9 +1660,17 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- Distance to destination -->
 
           <div class="tag" style="left:350px; top:460px; width:180px;">To dest</div>
-          <div id="satnav_distance_to_dest_via_road" class="dots" style=" left:530px; top:457px; width:170px; text-align:right;">-</div>
-          <div id="satnav_distance_to_dest_via_road_km" class="led ledOn" style="left:710px; top:472px; width:35px;">k</div>
-          <div class="led ledOn" style="left:745px; top:472px; width:40px;">m</div>
+
+          <div id="satnav_distance_to_dest_via_road_visible">
+            <div id="satnav_distance_to_dest_via_road_number" class="dots" style="left:540px; top:457px; width:200px; text-align:right;">-</div>
+            <div id="satnav_distance_to_dest_via_road_unit" class="dots" style="font-size:30px; left:750px; top:480px;"></div>
+          </div>
+
+          <!-- This one is shown instead of the above, in case "Destination is not accessible by road" -->
+          <div id="satnav_distance_to_dest_via_straight_line_visible" style="display:none">
+            <div id="satnav_distance_to_dest_via_straight_line_number" class="dots" style="left:540px; top:457px; width:200px; text-align:right;">-</div>
+            <div id="satnav_distance_to_dest_via_straight_line_unit" class="dots" style="font-size:30px; left:750px; top:480px;"></div>
+          </div>
 
           <!-- Heading to destination -->
 
@@ -1650,7 +1680,7 @@ char mfd_html[] PROGMEM = R"=====(
               Rotating round an abstract transform-origin like 'center' is better supported for a <div>
               than an <svg> element
             -->
-            <div id="satnav_heading_to_dest" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
+            <div id="satnav_heading_to_dest_pointer" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
               <svg>
                 <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
               </svg>
@@ -1661,11 +1691,11 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- Current and next street name -->
 
           <div style="border:5px solid #dfe7f2; border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:590px; height:140px;">
-            <div gid="satnav_next_street" class="centerAligned" style="font-size:40px; white-space:normal;">
+            <div id="satnav_guidance_next_street" class="centerAligned" style="font-size:40px; white-space:normal;">
             </div>
           </div>
           <div style="border:5px solid #dfe7f2; border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:590px; height:140px;">
-            <div gid="satnav_curr_street" class="centerAligned" style="font-size:40px; white-space:normal;">
+            <div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:40px; white-space:normal;">
             </div>
           </div>
 
@@ -1675,9 +1705,8 @@ char mfd_html[] PROGMEM = R"=====(
 
             <!-- "Turn at" indication -->
             <div id="satnav_turn_at_indication" style="display:block;">
-              <div id="satnav_turn_at" class="dots" style=" left:5px; top:285px; width:170px; text-align:right;">-</div>
-              <div id="satnav_turn_at_km" class="led ledOn" style="left:180px; top:300px; width:35px;">k</div>
-              <div class="led ledOn" style="left:215px; top:300px; width:40px;">m</div>
+              <div id="satnav_turn_at_number" class="dots" style="left:0px; top:285px; width:200px; text-align:right;">-</div>
+              <div id="satnav_turn_at_unit" class="dots" style="font-size:30px; left:210px; top:310px;"></div>
             </div>
 
             <!-- "Not on map" icon -->
@@ -1970,13 +1999,6 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
       </div>
 
-      <!-- Status popup (without icon) -->
-
-      <div id="status_popup" class="icon notificationPopup" style="display:none;">
-        <div id="status_popup_text" class="centerAligned" style="position:absolute; left:100px; width:610px;">
-        </div>
-      </div>  <!-- "status_popup" -->
-
       <!-- Door open popup -->
 
       <div id="door_open_popup" class="icon notificationPopup" style="display:none;">
@@ -2022,7 +2044,7 @@ char mfd_html[] PROGMEM = R"=====(
         <div class="tag" style="left:50px; top:280px; width:200px;">Treble</div>
         <div id="treble" class="dots" style="left:260px; top:275px; width:100px; text-align:right;">-</div>
 
-        <div id="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
+        <div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
 
         <div class="tag" style="left:430px; top:220px; width:200px;">Fader</div>
         <div id="fader" class="dots" style="left:640px; top:215px; width:100px; text-align:right;">-</div>
@@ -2124,7 +2146,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
             <div id="satnav_guidance_preference_popup_no_button"
               class="icon button"
-              on_click="hidePopup('satnav_guidance_preference_popup'); hidePopup('satnav_calculating_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu');"
+              on_click="hidePopup('satnav_guidance_preference_popup'); hidePopup('satnav_calculating_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu'); satnavGuidancePreferenceSelectTickedButton();"
               style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>
@@ -2152,6 +2174,13 @@ char mfd_html[] PROGMEM = R"=====(
           </div>
         </div>
       </div>  <!-- "satnav_delete_directory_data_popup" -->
+
+      <!-- Status popup (without icon) -->
+
+      <div id="status_popup" class="icon notificationPopup" style="display:none;">
+        <div id="status_popup_text" class="centerAligned" style="position:absolute; left:100px; width:610px;">
+        </div>
+      </div>  <!-- "status_popup" -->
 
       <!--
         Invisible "div" covering entire screen, handling "gorilla-style" taps that trigger a change to the

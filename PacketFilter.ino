@@ -117,7 +117,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
             // || iden == HEAD_UNIT_STALK_IDEN
             || iden == LIGHTS_STATUS_IDEN
             // || iden == DEVICE_REPORT
-            // || iden == CAR_STATUS1_IDEN // TODO uncomment
+            || iden == CAR_STATUS1_IDEN
             || iden == CAR_STATUS2_IDEN
             || iden == DASHBOARD_IDEN
             || iden == DASHBOARD_BUTTONS_IDEN

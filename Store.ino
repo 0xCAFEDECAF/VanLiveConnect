@@ -18,19 +18,16 @@ StoredData* _store = NULL;
 //#define JSON_BUFFER_SIZE (JSON_OBJECT_SIZE(10))
 const char STORE_FILE_NAME[] = "/store.json";
 
-unsigned long _lastSaved = 0;
+bool _storeDirty = false;
 
-void saveStore()
+void _saveStore()
 {
-    File storeFile = SPIFFS.open(STORE_FILE_NAME, "w");
-    if (! storeFile) return;
-
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
 
     root["satnavGuidanceActive"] = _store->satnavGuidanceActive;
-    root["satnavDiscPresent"] = _store->satnavDiscPresent; 
-    root["satnavGuidancePreference"] = _store->satnavGuidancePreference; 
+    root["satnavDiscPresent"] = _store->satnavDiscPresent;
+    root["satnavGuidancePreference"] = _store->satnavGuidancePreference;
 
     int i = 0;
     JsonArray& personalDirectoryEntries = root.createNestedArray("personalDirectoryEntries");
@@ -50,24 +47,38 @@ void saveStore()
 
     Serial.printf_P(PSTR("Writing to '%s' ..."), STORE_FILE_NAME);
 
+    VanBusRx.Disable();
+    File storeFile = SPIFFS.open(STORE_FILE_NAME, "w");
+    if (! storeFile)
+    {
+        VanBusRx.Enable();
+        Serial.println(F(" FAILED!"));
+        return;
+    } // if
+
     size_t nWritten = root.printTo(storeFile);
     size_t size = storeFile.size();
-    if (nWritten == size) Serial.printf_P(PSTR(" %lu bytes written OK\n"), nWritten);
-    else Serial.println(F(" FAILED!"));
-
     storeFile.close();
+    VanBusRx.Enable();
 
-    _lastSaved = millis();
-} // saveStore
+    if (nWritten != size)
+    {
+        Serial.println(F(" FAILED!"));
+        return;
+    } // if
+
+    Serial.printf_P(PSTR(" %lu bytes written OK\n"), nWritten);
+    _storeDirty = false;
+} // _saveStore
 
 void _readStore()
 {
     File storeFile = SPIFFS.open(STORE_FILE_NAME, "r");
 
     // If the file does not exist or is invalid, try to create one with initial values
-    if (! storeFile) return saveStore();
+    if (! storeFile) return _saveStore();
     size_t size = storeFile.size();
-    if (size > 4096) return saveStore();
+    if (size > 4096) return _saveStore();
 
     // Allocate a buffer to store contents of the file
     std::unique_ptr<char[]> buf(new char[size + 1]);
@@ -83,7 +94,7 @@ void _readStore()
 
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(buf.get());
-    if (!root.success()) return saveStore();
+    if (!root.success()) return _saveStore();
 
     if (root.containsKey("satnavGuidanceActive")) _store->satnavGuidanceActive = root["satnavGuidanceActive"];
     if (root.containsKey("satnavDiscPresent")) _store->satnavDiscPresent = root["satnavDiscPresent"];
@@ -96,7 +107,7 @@ void _readStore()
         for (JsonArray::iterator it = arr.begin(); it != arr.end(); ++it)
         {
             if (i >= MAX_DIRECTORY_ENTRIES) break;
-            Serial.println(it->as<char*>());
+            //Serial.println(it->as<char*>());
             _store->personalDirectoryEntries[i++] = it->as<String>();
         } // for
     } // if
@@ -107,7 +118,7 @@ void _readStore()
         for (JsonArray::iterator it = arr.begin(); it != arr.end(); ++it)
         {
             if (i >= MAX_DIRECTORY_ENTRIES) break;
-            Serial.println(it->as<char*>());
+            //Serial.println(it->as<char*>());
             _store->professionalDirectoryEntries[i++] = it->as<String>();
         } // for
     } // if
@@ -160,7 +171,7 @@ void _setupStore()
     } // while
 
     _readStore();
-} // setupStore
+} // _setupStore
 
 StoredData* getStore()
 {
@@ -174,3 +185,15 @@ StoredData* getStore()
 
     return _store;
 } // getStore
+
+void MarkStoreDirty()
+{
+    _storeDirty = true;
+} // MarkStoreDirty
+
+void LoopStore()
+{
+    if (! _storeDirty) return;
+
+    _saveStore();
+} // LoopStore
