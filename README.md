@@ -202,7 +202,7 @@ If you have no experience in compiling and uploading, have a look at this excell
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
-* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.1 .
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2 .
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3 and 2.3.4 .
 * [ArduinoJson Library by Benoît Blanchon](https://github.com/bblanchon/ArduinoJson) - Tested with version 5.11.1 .

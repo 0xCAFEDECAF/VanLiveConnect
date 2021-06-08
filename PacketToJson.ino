@@ -7,7 +7,6 @@
  */
 
 // TODO - reduce size of large JSON packets like the ones containing guidance instruction icons
-//#define JSON_BUFFER_SIZE 2048
 #define JSON_BUFFER_SIZE 4096
 char jsonBuffer[JSON_BUFFER_SIZE];
 
@@ -21,10 +20,10 @@ enum VanPacketParseResult_t
     VAN_PACKET_PARSE_UNRECOGNIZED_IDEN = -3,  // Packet had unrecognized IDEN field
     VAN_PACKET_PARSE_TO_BE_DECODED = -4,  // IDEN recognized but the correct parsing of this packet is not yet known
     VAN_PACKET_PARSE_JSON_TOO_LONG = -5,  // IDEN recognized but the parsing onto JSON overflows 'jsonBuffer'
-    VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least on fragment of a multi-fragmet message
+    VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least on fragment of a multi-fragment message
 }; // enum VanPacketParseResult_t
 
-typedef VanPacketParseResult_t (*TPacketParser)(const char*, TVanPacketRxDesc&, char*, int);
+typedef VanPacketParseResult_t (*TPacketParser)(const char*, TVanPacketRxDesc&, char*, const int);
 
 struct IdenHandler_t
 {
@@ -488,7 +487,7 @@ const char* SatNavGuidancePreferenceStr(uint8_t data)
 // * 6   : always 0x00 ??
 // * 7   : always 0x00 ??
 //
-void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], char* buf, int& at, int n)
+void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], char* buf, int& at, const int n)
 {
     // Show all the legs in the junction
 
@@ -496,7 +495,7 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
     for (int legBit = 1; legBit < 16; legBit++)
     {
         uint16_t degrees10 = legBit * 225;
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"%S_leg_%u_%u\": \"%S\""),
                 iconName,
                 degrees10 / 10,
@@ -511,7 +510,7 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
     for (int noEntryBit = 1; noEntryBit < 16; noEntryBit++)
     {
         uint16_t degrees10 = noEntryBit * 225;
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"%S_no_entry_%u_%u\": \"%S\""),
                 iconName,
                 degrees10 / 10,
@@ -535,7 +534,7 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
             "}\n"
         "}";
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, jsonFormatter,
             iconName,
             direction / 10,
@@ -563,7 +562,7 @@ const char* PacketRawToStr(TVanPacketRxDesc& pkt)
 } // PacketRawToStr
 
 // Dump the raw packet data into a JSON object
-VanPacketParseResult_t DefaultPacketParser(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t DefaultPacketParser(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -577,14 +576,14 @@ VanPacketParseResult_t DefaultPacketParser(const char* idenStr, TVanPacketRxDesc
     int at = snprintf_P(buf, n, jsonFormatter, idenStr, PacketRawToStr(pkt));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // DefaultPacketParser
 
 #endif
 
-VanPacketParseResult_t ParseVinPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseVinPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#E24
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#E24
@@ -601,12 +600,12 @@ VanPacketParseResult_t ParseVinPkt(const char* idenStr, TVanPacketRxDesc& pkt, c
     int at = snprintf_P(buf, n, jsonFormatter, pkt.Data());
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseVinPkt
 
-VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8A4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8A4
@@ -675,12 +674,12 @@ VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseEnginePkt
 
-VanPacketParseResult_t ParseHeadUnitStalkPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseHeadUnitStalkPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#9C4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#9C4
@@ -715,12 +714,12 @@ VanPacketParseResult_t ParseHeadUnitStalkPkt(const char* idenStr, TVanPacketRxDe
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitStalkPkt
 
-VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4FC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4FC_1
@@ -781,7 +780,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
 
     if (data[5] & 0x02)
     {
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at,
                 PSTR(",\n\"auto_gearbox\": \"%S%S%S%S\""),
                 (data[4] & 0x70) == 0x00 ? PSTR("P") :
@@ -802,20 +801,20 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
 
     if (data[6] != 0xFF)
     {
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"oil_temperature\": \"%d\""), (int)data[6] - 40);  // Never seen this
     } // if
 
     if (data[7] != 0xFF)
     {
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"fuel_level\": \"%u\""), data[7]);  // Never seen this
     } // if
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, PSTR(",\n\"oil_level_raw\": \"%u\""), data[8]);
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at,
             ",\n"
             "\"oil_level_raw_perc\":\n"
@@ -833,7 +832,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
                 FloatToStr(floatBuf, (float)data[8] / MAX_OIL_LEVEL, 2)
         );
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, PSTR(",\n\"oil_level_dash\": \"%S\""),
             data[8] <= 0x0B ? PSTR("------") :
             data[8] <= 0x19 ? PSTR("O-----") :
@@ -847,7 +846,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
     if (data[10] != 0xFF)
     {
         // Never seen this; I don't have LPG
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"lpg_fuel_level\": \"%S\""),
                 data[10] <= 0x08 ? PSTR("1") :
                 data[10] <= 0x11 ? PSTR("2") :
@@ -865,7 +864,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
 
         // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4FC_2
 
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"cruise_control\": \"%S\""),
                 data[11] == 0x41 ? offStr :
                 data[11] == 0x49 ? PSTR("Cruise") :
@@ -875,19 +874,19 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
                 ToHexStr(data[11])
             );
 
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"cruise_control_speed\": \"%u\""), data[12]);
     } // if
 
-    at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseLightsStatusPkt
 
-VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8C4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8C4
@@ -934,7 +933,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
         // Button-press announcement?
         if ((data[1] & 0x0F) == 0x02)
         {
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at,
                     PSTR(",\n\"head_unit_button_pressed\": \"%S%S\""),
 
@@ -963,7 +962,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
                 );
         } // if
 
-        at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
     }
     else if (data[0] == 0x96)
     {
@@ -1082,12 +1081,12 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
     } // if
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseDeviceReportPkt
 
-VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#564
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#564
@@ -1169,7 +1168,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         "}\n"
     "}\n";
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, jsonFormatter2,
             avgSpeedTrip2,
             distanceTrip2 == 0xFFFF ? notApplicable2Str : ToStr(distanceTrip2),
@@ -1177,12 +1176,12 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseCarStatus1Pkt
 
-VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#524
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#524
@@ -1192,163 +1191,165 @@ VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc&
     int dataLen = pkt.DataLen();
     if (dataLen != 14 && dataLen != 16) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
-    // All known notifications.
+    // All known notifications, as literally retrieved from my vehicle (406 year 2003, DAM number 9586; your vehicle
+    // may have other texts). Retrieving was done with VanBus/examples/DisplayNotifications/DisplayNotifications.ino .
+
     // By convention, the first two bytes are either "! " for warnings or "i " (or just "  ") for information.
     // TODO - translate into all languages
 
-    // Byte 0
-    static const char msg_0_0[] PROGMEM = "! Tyre pressure low";
-    static const char msg_0_1[] PROGMEM = "  Door open";
-    static const char msg_0_2[] PROGMEM = "! Auto gearbox temperature too high";
-    static const char msg_0_3[] PROGMEM = "! Brake system fault"; // and exclamation mark on instrument cluster
-    static const char msg_0_4[] PROGMEM = "! Hydraulic suspension fault";
-    static const char msg_0_5[] PROGMEM = "! Suspension fault";
+    // Byte 0, 0x00...0x07
+    static const char msg_0_0[] PROGMEM = "! Tyre pressure too low";
+    static const char msg_0_1[] PROGMEM = "";
+    static const char msg_0_2[] PROGMEM = "! Automatic gearbox temperature too high";
+    static const char msg_0_3[] PROGMEM = "! Brake fluid level low"; // and exclamation mark on instrument cluster
+    static const char msg_0_4[] PROGMEM = "! Hydraulic suspension pressure defective";
+    static const char msg_0_5[] PROGMEM = "! Suspension defective";
     static const char msg_0_6[] PROGMEM = "! Engine oil temperature too high"; // and oil can on instrument cluster
-    static const char msg_0_7[] PROGMEM = "! Water temperature too high";
+    static const char msg_0_7[] PROGMEM = "! Engine temperature too high";
 
-    // Byte 1
-    static const char msg_1_0[] PROGMEM = "  Unblock diesel filter"; // and mil icon on instrument cluster
-    static const char msg_1_1[] PROGMEM = "! Stop car icon";
-    static const char msg_1_2[] PROGMEM = "! Diesel additive too low";
+    // Byte 1, 0x08...0x0F
+    static const char msg_1_0[] PROGMEM = "  Clear diesel filter (FAP) URGENT"; // and mil icon on instrument cluster
+    static const char msg_1_1[] PROGMEM = "";
+    static const char msg_1_2[] PROGMEM = "! Min level additive gasoil";
     static const char msg_1_3[] PROGMEM = "! Fuel cap open";
-    static const char msg_1_4[] PROGMEM = "! Tyres punctured";
-    static const char msg_1_5[] PROGMEM = "! Coolant level low"; // and icon on instrument cluster
-    static const char msg_1_6[] PROGMEM = "! Oil pressure too low";
-    static const char msg_1_7[] PROGMEM = "! Oil level too low";
+    static const char msg_1_4[] PROGMEM = "! Puncture(s) detected";
+    static const char msg_1_5[] PROGMEM = "! Cooling circuit level too low"; // and icon on instrument cluster
+    static const char msg_1_6[] PROGMEM = "! Oil pressure insufficient";
+    static const char msg_1_7[] PROGMEM = "! Engine oil level too low";
 
-    // Byte 2
-    static const char msg_2_0[] PROGMEM = "! Antipollution fault";
+    // Byte 2, 0x10...0x17
+    static const char msg_2_0[] PROGMEM = "! Engine antipollution system defective";
     static const char msg_2_1[] PROGMEM = "! Brake pads worn";
-    static const char msg_2_2[] PROGMEM = "  Diagnosis ok";
-    static const char msg_2_3[] PROGMEM = "! Auto gearbox faulty";
-    static const char msg_2_4[] PROGMEM = "! ESP"; // and icon on instrument cluster
-    static const char msg_2_5[] PROGMEM = "! ABS";
-    static const char msg_2_6[] PROGMEM = "! Suspension or steering fault";
-    static const char msg_2_7[] PROGMEM = "! Braking system faulty";
+    static const char msg_2_2[] PROGMEM = "  Check Control OK";  // Wow... bad translation
+    static const char msg_2_3[] PROGMEM = "! Automatic gearbox defective";
+    static const char msg_2_4[] PROGMEM = "! ASR / ESP system defective"; // and icon on instrument cluster
+    static const char msg_2_5[] PROGMEM = "! ABS brake system defective";
+    static const char msg_2_6[] PROGMEM = "! Suspension and power steering defective";
+    static const char msg_2_7[] PROGMEM = "! Brake system defective";
 
-    // Byte 3
-    static const char msg_3_0[] PROGMEM = "! Side airbag faulty";
-    static const char msg_3_1[] PROGMEM = "! Airbags faulty";
-    static const char msg_3_2[] PROGMEM = "! Cruise control faulty";
-    static const char msg_3_3[] PROGMEM = "! Engine temperature too high";
-    static const char msg_3_4[] PROGMEM = "! Fault: Load shedding in progress"; // RT3 mono
-    static const char msg_3_5[] PROGMEM = "! Ambient brightness sensor fault";
-    static const char msg_3_6[] PROGMEM = "! Rain sensor fault";
-    static const char msg_3_7[] PROGMEM = "  Water in diesel fuel filter"; // and icon on instrument cluster
+    // Byte 3, 0x18...0x1F
+    static const char msg_3_0[] PROGMEM = "! Airbag defective";
+    static const char msg_3_1[] PROGMEM = "! Airbag defective";
+    static const char msg_3_2[] PROGMEM = "";
+    static const char msg_3_3[] PROGMEM = "! Engine temperature high";
+    static const char msg_3_4[] PROGMEM = "";
+    static const char msg_3_5[] PROGMEM = "";
+    static const char msg_3_6[] PROGMEM = "";
+    static const char msg_3_7[] PROGMEM = "  Water in Diesel fuel filter"; // and icon on instrument cluster
 
-    // Byte 4
-    static const char msg_4_0[] PROGMEM = "! Left rear sliding door faulty";
-    static const char msg_4_1[] PROGMEM = "! Headlight corrector fault";
-    static const char msg_4_2[] PROGMEM = "! Right rear sliding door faulty";
-    static const char msg_4_3[] PROGMEM = "  No broken lamp"; // RT3 mono
-    static const char msg_4_4[] PROGMEM = "! Battery low";
-    static const char msg_4_5[] PROGMEM = "! Battery charge fault"; // and battery icon on instrument cluster
-    static const char msg_4_6[] PROGMEM = "! Diesel particle filter faulty";
-    static const char msg_4_7[] PROGMEM = "! Catalytic converter fault"; // MIL icon flashing on instrument cluster
+    // Byte 4, 0x20...0x27
+    static const char msg_4_0[] PROGMEM = "";
+    static const char msg_4_1[] PROGMEM = "! Automatic beam adjustment defective";
+    static const char msg_4_2[] PROGMEM = "";
+    static const char msg_4_3[] PROGMEM = "";
+    static const char msg_4_4[] PROGMEM = "! Service battery charge low";
+    static const char msg_4_5[] PROGMEM = "! Battery charge low"; // and battery icon on instrument cluster
+    static const char msg_4_6[] PROGMEM = "! Diesel antipollution system (FAP) defective";
+    static const char msg_4_7[] PROGMEM = "! Engine antipollution system inoperative"; // MIL icon flashing on instrument cluster
 
-    // Byte 5
+    // Byte 5, 0x28...0x2F
     static const char msg_5_0[] PROGMEM = "! Handbrake on";
-    static const char msg_5_1[] PROGMEM = "! Seatbelt warning";
-    static const char msg_5_2[] PROGMEM = "  Passenger airbag deactivated"; // and icon on instrument cluster
-    static const char msg_5_3[] PROGMEM = "  Screen washer liquid level too low";
+    static const char msg_5_1[] PROGMEM = "! Safety belt not fastened";
+    static const char msg_5_2[] PROGMEM = "  Passenger airbag neutralized"; // and icon on instrument cluster
+    static const char msg_5_3[] PROGMEM = "  Windshield liquid level too low";
     static const char msg_5_4[] PROGMEM = "  Current speed too high";
-    static const char msg_5_5[] PROGMEM = "  Ignition key left in";
-    static const char msg_5_6[] PROGMEM = "  Sidelights left on";
-    static const char msg_5_7[] PROGMEM = "  Hill holder active"; // On RT3 mono: Driver's seatbelt not fastened
+    static const char msg_5_5[] PROGMEM = "  Ignition key still inserted";
+    static const char msg_5_6[] PROGMEM = "  Lights not on";
+    static const char msg_5_7[] PROGMEM = "";
 
-    // Byte 6
-    static const char msg_6_0[] PROGMEM = "  Shock sensor faulty";
-    static const char msg_6_1[] PROGMEM = "  Seatbelt warning"; // not sure; there is no message with 0x31 so could not check
-    static const char msg_6_2[] PROGMEM = "  Check and re-init tyre pressure";
-    static const char msg_6_3[] PROGMEM = "  Remote control battery low";
-    static const char msg_6_4[] PROGMEM = "  Left stick button pressed";
-    static const char msg_6_5[] PROGMEM = "  Put automatic gearbox in P position";
-    static const char msg_6_6[] PROGMEM = "  Stop lights test: brake gently";
+    // Byte 6, 0x30...0x37
+    static const char msg_6_0[] PROGMEM = "  Impact sensor defective";
+    static const char msg_6_1[] PROGMEM = "";
+    static const char msg_6_2[] PROGMEM = "  Tyre pressure sensor battery low";
+    static const char msg_6_3[] PROGMEM = "  Plip remote control battery low";
+    static const char msg_6_4[] PROGMEM = "";
+    static const char msg_6_5[] PROGMEM = "  Place automatic gearbox in P position";
+    static const char msg_6_6[] PROGMEM = "  Testing stop lamps : brake gently";
     static const char msg_6_7[] PROGMEM = "! Fuel level low";
 
-    // Byte 7
-    static const char msg_7_0[] PROGMEM = "  Automatic headlamp lighting deactivated";
-    static const char msg_7_1[] PROGMEM = "  Rear LH passenger seatbelt not fastened";
-    static const char msg_7_2[] PROGMEM = "  Rear RH passenger seatbelt not fastened";
-    static const char msg_7_3[] PROGMEM = "  Front passenger seatbelt not fastened";
-    static const char msg_7_4[] PROGMEM = "  Driving school pedals indication";
-    static const char msg_7_5[] PROGMEM = "! Tyre pressure monitor sensors X missing";
-    static const char msg_7_6[] PROGMEM = "! Tyre pressure monitor sensors Y missing";
-    static const char msg_7_7[] PROGMEM = "! Tyre pressure monitor sensors Z missing";
+    // Byte 7, 0x38...0x3F
+    static const char msg_7_0[] PROGMEM = "  Automatic headlight activation system disabled";
+    static const char msg_7_1[] PROGMEM = "! Turn-headlight defective";
+    static const char msg_7_2[] PROGMEM = "  Turn-headlight disable";
+    static const char msg_7_3[] PROGMEM = "  Turn-headlight enable";
+    static const char msg_7_4[] PROGMEM = "";
+    static const char msg_7_5[] PROGMEM = "! 7 tyre pressure sensors missing";
+    static const char msg_7_6[] PROGMEM = "! 7 tyre pressure sensors missing";
+    static const char msg_7_7[] PROGMEM = "! 7 tyre pressure sensors missing";
 
-    // Byte 8
+    // Byte 8, 0x40...0x47
     static const char msg_8_0[] PROGMEM = "  Doors locked";
-    static const char msg_8_1[] PROGMEM = "  ESP/ASR deactivated";
-    static const char msg_8_2[] PROGMEM = "  Child safety activated";
-    static const char msg_8_3[] PROGMEM = "  Deadlocking active";
-    static const char msg_8_4[] PROGMEM = "  Automatic lighting active";
-    static const char msg_8_5[] PROGMEM = "  Automatic wiping active";
-    static const char msg_8_6[] PROGMEM = "  Engine immobiliser fault";
-    static const char msg_8_7[] PROGMEM = "  Sport suspension mode active";
+    static const char msg_8_1[] PROGMEM = "  ASR / ESP system disabled";
+    static const char msg_8_2[] PROGMEM = "  Child safety lock enabled";
+    static const char msg_8_3[] PROGMEM = "  Door self locking system enabled";
+    static const char msg_8_4[] PROGMEM = "  Automatic headlight activation system enabled";
+    static const char msg_8_5[] PROGMEM = "  Automatic wiper system enabled";
+    static const char msg_8_6[] PROGMEM = "  Electronic anti-theft system defective";
+    static const char msg_8_7[] PROGMEM = "  Sport suspension mode enabled";
 
     // Byte 9 is the index of the current message
 
-    // Byte 10
-    static const char msg_10_0[] PROGMEM = "  Unknown";
-    static const char msg_10_1[] PROGMEM = "  Unknown";
-    static const char msg_10_2[] PROGMEM = "  Unknown";
-    static const char msg_10_3[] PROGMEM = "  Change of fuel used in progress";
-    static const char msg_10_4[] PROGMEM = "  LPG fuel refused";
-    static const char msg_10_5[] PROGMEM = "! LPG system faulty";
-    static const char msg_10_6[] PROGMEM = "  LPG in use";
-    static const char msg_10_7[] PROGMEM = "  Min level LPG";
+    // Byte 10, 0x50...0x57
+    static const char msg_10_0[] PROGMEM = "";
+    static const char msg_10_1[] PROGMEM = "";
+    static const char msg_10_2[] PROGMEM = "";
+    static const char msg_10_3[] PROGMEM = "";
+    static const char msg_10_4[] PROGMEM = "";
+    static const char msg_10_5[] PROGMEM = "";
+    static const char msg_10_6[] PROGMEM = "";
+    static const char msg_10_7[] PROGMEM = "";
 
-    // Byte 11
-    static const char msg_11_0[] PROGMEM = "! ADIN fault";
-    static const char msg_11_1[] PROGMEM = "  User stop & start";
-    static const char msg_11_2[] PROGMEM = "  Stop & start available";
-    static const char msg_11_3[] PROGMEM = "  Stop & start activated";
-    static const char msg_11_4[] PROGMEM = "  Stop & start deactivated";
-    static const char msg_11_5[] PROGMEM = "  Stop & start deferred";
-    static const char msg_11_6[] PROGMEM = "  XSARA DYNALTO";
-    static const char msg_11_7[] PROGMEM = "  307 DYNALTO";
+    // Byte 11, 0x58...0x5F
+    static const char msg_11_0[] PROGMEM = "";
+    static const char msg_11_1[] PROGMEM = "";
+    static const char msg_11_2[] PROGMEM = "";
+    static const char msg_11_3[] PROGMEM = "";
+    static const char msg_11_4[] PROGMEM = "";
+    static const char msg_11_5[] PROGMEM = "";
+    static const char msg_11_6[] PROGMEM = "";
+    static const char msg_11_7[] PROGMEM = "";
 
-    // Byte 12
-    static const char msg_12_0[] PROGMEM = "  Unknown";
-    static const char msg_12_1[] PROGMEM = "  Unknown";
-    static const char msg_12_2[] PROGMEM = "  Unknown";
-    static const char msg_12_3[] PROGMEM = "  Unknown";
-    static const char msg_12_4[] PROGMEM = "  Unknown";
-    static const char msg_12_5[] PROGMEM = "  Unknown";
-    static const char msg_12_6[] PROGMEM = "  Unknown";
-    static const char msg_12_7[] PROGMEM = "  Change to neutral";
+    // Byte 12, 0x60...0x67
+    static const char msg_12_0[] PROGMEM = "";
+    static const char msg_12_1[] PROGMEM = "";
+    static const char msg_12_2[] PROGMEM = "";
+    static const char msg_12_3[] PROGMEM = "";
+    static const char msg_12_4[] PROGMEM = "";
+    static const char msg_12_5[] PROGMEM = "";
+    static const char msg_12_6[] PROGMEM = "";
+    static const char msg_12_7[] PROGMEM = "";
 
-    // Byte 13
-    static const char msg_13_0[] PROGMEM = "  Unknown";
-    static const char msg_13_1[] PROGMEM = "  Unknown";
-    static const char msg_13_2[] PROGMEM = "  Unknown";
-    static const char msg_13_3[] PROGMEM = "  Unknown";
-    static const char msg_13_4[] PROGMEM = "  Unknown";
-    static const char msg_13_5[] PROGMEM = "  Unknown";
-    static const char msg_13_6[] PROGMEM = "  Unknown";
-    static const char msg_13_7[] PROGMEM = "  Unknown";
+    // Byte 13, 0x68...0x6F
+    static const char msg_13_0[] PROGMEM = "";
+    static const char msg_13_1[] PROGMEM = "";
+    static const char msg_13_2[] PROGMEM = "";
+    static const char msg_13_3[] PROGMEM = "";
+    static const char msg_13_4[] PROGMEM = "";
+    static const char msg_13_5[] PROGMEM = "";
+    static const char msg_13_6[] PROGMEM = "";
+    static const char msg_13_7[] PROGMEM = "";
 
     // On vehicles made after 2004
 
-    // Byte 14
-    static const char msg_14_0[] PROGMEM = "  Roof operation complete";
-    static const char msg_14_1[] PROGMEM = "  Operation impossible screen not in place";
-    static const char msg_14_2[] PROGMEM = "! Roof mechanism not locked!";
-    static const char msg_14_3[] PROGMEM = "! Operation impossible boot open";
-    static const char msg_14_4[] PROGMEM = "! Operation impossible speed too high";
-    static const char msg_14_5[] PROGMEM = "! Operation impossible ext temp too low";
-    static const char msg_14_6[] PROGMEM = "! Roof mechanism faulty";
-    static const char msg_14_7[] PROGMEM = "! Boot mechanism not locked!";
+    // Byte 14, 0x70...0x77
+    static const char msg_14_0[] PROGMEM = "";
+    static const char msg_14_1[] PROGMEM = "";
+    static const char msg_14_2[] PROGMEM = "";
+    static const char msg_14_3[] PROGMEM = "";
+    static const char msg_14_4[] PROGMEM = "";
+    static const char msg_14_5[] PROGMEM = "";
+    static const char msg_14_6[] PROGMEM = "";
+    static const char msg_14_7[] PROGMEM = "";
 
-    // Byte 15
-    static const char msg_15_0[] PROGMEM = "  Unknown";
-    static const char msg_15_1[] PROGMEM = "  Unknown";
-    static const char msg_15_2[] PROGMEM = "  Unknown";
-    static const char msg_15_3[] PROGMEM = "  Unknown";
-    static const char msg_15_4[] PROGMEM = "! Bow fault";
-    static const char msg_15_5[] PROGMEM = "  Operation impossible roof not unlocked";
-    static const char msg_15_6[] PROGMEM = "  Unknown";
-    static const char msg_15_7[] PROGMEM = "! Roof operation incomplete";
+    // Byte 15, 0x78...0x7F
+    static const char msg_15_0[] PROGMEM = "";
+    static const char msg_15_1[] PROGMEM = "";
+    static const char msg_15_2[] PROGMEM = "";
+    static const char msg_15_3[] PROGMEM = "";
+    static const char msg_15_4[] PROGMEM = "";
+    static const char msg_15_5[] PROGMEM = "";
+    static const char msg_15_6[] PROGMEM = "";
+    static const char msg_15_7[] PROGMEM = "";
 
     // To save precious RAM, we use a PROGMEM array of PROGMEM strings
     // See also: https://arduino-esp8266.readthedocs.io/en/latest/PROGMEM.html
@@ -1395,31 +1396,35 @@ VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc&
                 char alarmText[80];  // Make sure this is large enough for the largest string it must hold; see above
                 strncpy_P(alarmText, (char *)pgm_read_dword(&(msgTable[byte * 8 + bit])), sizeof(alarmText) - 1);
                 alarmText[sizeof(alarmText) - 1] = 0;
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+
+                // TODO - with lots of alarms set, this packet could become very large and overflow the JSON buffer
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, PSTR("%S\n\"%s\""), first ? emptyStr : commaStr, alarmText);
                 first = false;
             } // if
         } // for
     } // for
 
-    at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n]"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n]"));
 
     uint8_t currentMsg = data[9];
-    at += at >= JSON_BUFFER_SIZE ? 0 :
-        snprintf_P(buf + at, n - at, PSTR(",\n\"message_displayed_on_mfd\": \"%S\""),
-            currentMsg == 0xFF ? emptyStr : msgTable[currentMsg]);
 
-    at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+    // Relying on short-circuit boolean evaluation
+    if (currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0)
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"notification_message_on_mfd\": \"%S\""), msgTable[currentMsg]);
+    } // if
 
-    // TODO - this packet could become very large and overflow the JSON buffer, causing corrupt JSON data to be sent
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseCarStatus2Pkt
 
-VanPacketParseResult_t ParseDashboardPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseDashboardPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#824
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#824
@@ -1466,12 +1471,12 @@ VanPacketParseResult_t ParseDashboardPkt(const char* idenStr, TVanPacketRxDesc& 
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseDashboardPkt
 
-VanPacketParseResult_t ParseDashboardButtonsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseDashboardButtonsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#664
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#664
@@ -1524,12 +1529,12 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(const char* idenStr, TVanPacketR
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseDashboardButtonsPkt
 
-VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#554
 
@@ -1554,7 +1559,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
     {
         case INFO_TYPE_TUNER:
         {
-            // Message when the HeadUnit is in "tuner" (radio) mode
+            // Message when the head unit is in "tuner" (radio) mode
 
             // http://pinterpeti.hu/psavanbus/PSA-VAN.html#554_1
 
@@ -1571,13 +1576,36 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             bool ptyStandbyMode = data[3] & 0x04;
 
             uint8_t searchMode = data[3] >> 3 & 0x07;
-            bool searchDirectionUp = data[3] & 0x80;
             bool anySearchBusy = searchMode != TS_NOT_SEARCHING;
             bool automaticSearchBusy = anySearchBusy && searchMode != TS_MANUAL;  // Any search except manual
 
             // data[4] and data[5]: frequency being scanned or tuned in to
             uint16_t frequency = (uint16_t)data[5] << 8 | data[4];
             static uint16_t prevFrequency = 0x07FF;  // To detect change during manual search
+
+            // Special processing of search direction bit
+
+            enum TunerSearchDirection_t
+            {
+                TSD_NONE,
+                TSD_UP,
+                TSD_DOWN
+            }; // enum TunerSearchDirection_t
+
+            TunerSearchDirection_t searchDirection = data[3] & 0x80 ? TSD_UP : TSD_DOWN;
+            static TunerSearchDirection_t prevSearchDirection = TSD_NONE;
+
+            // In manual search mode, change the reported direction only if the frequency actually changed.
+            if (searchMode == TS_MANUAL && (frequency == prevFrequency || prevFrequency == 0x07FF))
+            {
+                // Search mode is "manual" and no change in frequency? Then report same value as previously.
+                searchDirection = prevSearchDirection;
+            } // if
+
+            if (searchMode == TS_NOT_SEARCHING) prevSearchDirection = TSD_NONE;
+            else prevSearchDirection = searchDirection;
+
+            prevFrequency = frequency;
 
             // data[6] - Reception status? Like: receiving station? Stereo? RDS bits like MS, TP, TA, AF?
             // & 0xF0:
@@ -1663,15 +1691,11 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                 ! automaticSearchBusy ? offStr : dxSensitivity ? offStr : onStr,
                 ! automaticSearchBusy ? offStr : dxSensitivity ? onStr : offStr,
 
-                // Special handling of "manual" search: 'searchDirectionUp' (data[3] & 0x80) remains 'true' even if
-                // the "UP" search button is no longer pressed. So for that case, look at the actual change in the
-                // frequency.
-                ! anySearchBusy || (searchMode == TS_MANUAL && frequency == prevFrequency) ?
+                ! anySearchBusy || searchDirection == TSD_NONE ?
                     emptyStr :
-                    searchDirectionUp ? PSTR("UP") : PSTR("DOWN"),
-                (automaticSearchBusy && searchDirectionUp) || (searchMode == TS_MANUAL && frequency > prevFrequency) ?
-                    onStr : offStr,
-                anySearchBusy && ! searchDirectionUp ? onStr : offStr
+                    searchDirection == TSD_UP ? PSTR("UP") : PSTR("DOWN"),
+                anySearchBusy && searchDirection == TSD_UP ? onStr : offStr,
+                anySearchBusy && searchDirection == TSD_DOWN ? onStr : offStr
             );
 
             if (band != TB_AM)
@@ -1736,7 +1760,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                     "\"rds_text\": \"%s\",\n"
                     "\"info_traffic\": \"%S\"";
 
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatterFmBand,
                         ptySelectionMenu ? onStr : offStr,
 
@@ -1765,9 +1789,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                     );
             } // if
 
-            at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
-
-            prevFrequency = frequency;
+            at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
         }
         break;
 
@@ -1893,7 +1915,8 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                     "\"cd_track_time\": \"%S\",\n"
                     "\"cd_current_track\": \"%X\",\n"
                     "\"cd_total_tracks\": \"%S\",\n"
-                    "\"cd_total_time\": \"%S\"\n"
+                    "\"cd_total_time\": \"%S\",\n"
+                    "\"cd_random\": \"%S\"\n"
                 "}\n"
             "}\n";
 
@@ -1920,7 +1943,9 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
 
                 data[7],
                 totalTracksInvalid ? notApplicable2Str : totalTracksStr,
-                totalTimeInvalid ? PSTR("--:--") : totalTimeStr
+                totalTimeInvalid ? PSTR("--:--") : totalTimeStr,
+
+                data[2] & 0x01 ? onStr : offStr
             );
         }
         break;
@@ -1939,12 +1964,12 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
     } // switch
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitPkt
 
-VanPacketParseResult_t ParseTimePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseTimePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#984
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#984
@@ -1972,12 +1997,12 @@ VanPacketParseResult_t ParseTimePkt(const char* idenStr, TVanPacketRxDesc& pkt, 
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseTimePkt
 
-VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4D4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4D4
@@ -2071,12 +2096,12 @@ VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDe
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseAudioSettingsPkt
 
-VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#5E4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#5E4
@@ -2105,12 +2130,12 @@ VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& 
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdStatusPkt
 
-VanPacketParseResult_t ParseAirCon1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseAirCon1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#464
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#464
@@ -2222,12 +2247,12 @@ VanPacketParseResult_t ParseAirCon1Pkt(const char* idenStr, TVanPacketRxDesc& pk
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseAirCon1Pkt
 
-VanPacketParseResult_t ParseAirCon2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseAirCon2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4DC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4DC
@@ -2283,12 +2308,15 @@ VanPacketParseResult_t ParseAirCon2Pkt(const char* idenStr, TVanPacketRxDesc& pk
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseAirCon2Pkt
 
-VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+// Saved equipment status (volatile)
+bool cdChangerCartridgePresent = false;
+
+VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4EC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4EC
@@ -2301,6 +2329,8 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
     const uint8_t* data = pkt.Data();
 
     bool searching = data[2] & 0x10;
+
+    cdChangerCartridgePresent = data[3] == 0x16; // "not present" is 0x06
 
     uint8_t trackTimeMin = data[4];
     uint8_t trackTimeSec = data[5];
@@ -2372,9 +2402,7 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
         (data[2] & 0x07) == 0x04 ? onStr : offStr,
         (data[2] & 0x07) == 0x05 ? onStr : offStr,
 
-        data[3] == 0x16 ? yesStr :
-        data[3] == 0x06 ? noStr :
-        ToHexStr(data[3]),
+        cdChangerCartridgePresent ? yesStr : noStr,
 
         trackTimeInvalid ? PSTR("--:--") : trackTimeStr,
 
@@ -2403,12 +2431,12 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseCdChangerPkt
 
-VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#54E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#54E
@@ -2460,7 +2488,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDe
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus1Pkt
@@ -2468,7 +2496,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDe
 // Saved equipment status (volatile)
 const char* satnavStatus2Str = emptyStr;
 
-VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#7CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#7CE
@@ -2531,12 +2559,12 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
     uint16_t zzz = (uint16_t)data[9] << 8 | data[10];
     if (zzz != 0x00)
     {
-        at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_zzz\": \"%u\""), zzz);
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_zzz\": \"%u\""), zzz);
     } // if
 
     if (data[17] != 0x00)
     {
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_guidance_status\": \"%S%S%S%S%S%S%S\""),
 
                 data[17] & 0x01 ? PSTR("LOADING_AUDIO_FRAGMENT ") : emptyStr,
@@ -2549,15 +2577,15 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
             );
     } // if
 
-    at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus2Pkt
 
-VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8CE
@@ -2644,22 +2672,22 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
         {
             strncpy(txt, (const char*) data + at2, dataLen - at2);
             txt[dataLen - at2] = 0;
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("%S\n\"%s\""), first ? emptyStr : commaStr, txt);
             at2 += strlen(txt) + 1;
             first = false;
         } // while
 
-        at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n]\n}\n}\n"));
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n]\n}\n}\n"));
     } // if
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus3Pkt
 
-VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#9CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#9CE
@@ -2730,12 +2758,12 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacke
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavGuidanceDataPkt
 
-VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#64E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#64E
@@ -2822,7 +2850,7 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxD
             "\"satnav_follow_road_straight_ahead\": \"%S\",\n"
             "\"satnav_follow_road_retrieving_next_instruction\": \"%S\"";
 
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, jsonFormatter,
 
                 data[2] == 0x01 ? onStr : offStr,
@@ -2849,7 +2877,7 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxD
                 "}\n"
             "}";
 
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, jsonFormatter,
 
                 direction / 10,
@@ -2859,15 +2887,15 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxD
             );
     } // if
 
-    at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavGuidancePkt
 
-VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#6CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#6CE
@@ -3033,7 +3061,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     ",\n"
                     "\"%S\": \"\"";
 
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatter,
                         report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street")
                     );
@@ -3047,7 +3075,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
 
             // Current/next street is in first (and only) record. Copy only city [3], district [4] (if any) and
             // street [5, 6]; skip the other strings.
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
@@ -3077,7 +3105,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
 
             // Address is in first (and only) record. Copy at least only city [3], district [4] (if any), street [5, 6] and
             // house number [7]; skip the other strings.
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     report == SR_DESTINATION ?
@@ -3139,7 +3167,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
 
             // Chosen address is in first (and only) record. Copy at least city [3], district [4] (if any), street [5, 6]
             // house number [7] and entry name [8]; skip the other strings.
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     report == SR_PERSONAL_ADDRESS ?
@@ -3209,7 +3237,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
 
             // Chosen place of interest address is in first (and only) record. Copy at least city [3], district [4]
             // (if any), street [5, 6], entry name [9] and distance [11]; skip the other strings.
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     // Name of the place of interest
@@ -3248,13 +3276,13 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 "\"satnav_list\":\n"
                 "[";
 
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter);
 
             // Each item in the list is a single string in a separate record
             for (int i = 0; i < currentRecord; i++)
             {
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at,
                         PSTR("%S\n\"%s\""),
                         i == 0 ? emptyStr : commaStr,
@@ -3262,21 +3290,20 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     );
 
                 // Save directory entries also in non-volatile storage
-                if (report == SR_PERSONAL_ADDRESS_LIST)
+                if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST)
                 {
-                    getStore()->personalDirectoryEntries[i] = records[i][0];
+                    // Remove possibly trailing special characters and spaces.
+                    // The special characters that can occur are listed in the above 'while' loop (around line 2985).
+                    records[i][0].replace("?", "");
+                    records[i][0].replace("&#x24E7;", "");
+                    records[i][0].trim();
 
-                    // TODO - remove possibly trailing special characters and spaces
-                }
-                else if (report == SR_PROFESSIONAL_ADDRESS_LIST)
-                {
-                    getStore()->professionalDirectoryEntries[i] = records[i][0];
-
-                    // TODO - remove possibly trailing special characters and spaces
+                    if (report == SR_PERSONAL_ADDRESS_LIST) getStore()->personalDirectoryEntries[i] = records[i][0];
+                    else getStore()->professionalDirectoryEntries[i] = records[i][0];
                 } // if
             } // for
 
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
 
             if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST) MarkStoreDirty();
@@ -3293,7 +3320,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
             // highest number is in the second string.
             // Note: "0...0" means: not applicable. MFD will follow through directly to showing the address (without a
             //   house number).
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     records[0][0].c_str(),
@@ -3309,13 +3336,13 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 "\"satnav_list\":\n"
                 "[";
 
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter);
 
             // Each "category" in the list is a single string in a separate record
             for (int i = 0; i < currentRecord; i++)
             {
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at,
                         PSTR("%S\n\"%s\""),
                         i == 0 ? emptyStr : commaStr,
@@ -3323,7 +3350,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     );
             } // for
 
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
         }
         break;
@@ -3335,14 +3362,14 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 "\"satnav_software_modules_list\":\n"
                 "[";
 
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter);
 
             // Each "module" in the list is a triplet of strings ('module_name', then 'version' and 'date' in a rather
             // free format) in a separate record
             for (int i = 0; i < currentRecord; i++)
             {
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at,
                         PSTR("%S\n\"%s - %s - %s\""),
                         i == 0 ? emptyStr : commaStr,
@@ -3352,14 +3379,14 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     );
             } // for
 
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
         } // if
         break;
 
     } // switch
 
-    at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // Reset
     report = INVALID_SATNAV_REPORT;
@@ -3375,12 +3402,12 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
     currentString = 0;
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavReportPkt
 
-VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#94E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#94E
@@ -3615,7 +3642,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
 
     if (strlen_P(goToScreen) > 0)
     {
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR
                 (
                     ",\n"
@@ -3631,7 +3658,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         char buffer[2];
         sprintf_P(buffer, PSTR("%c"), data[3]);
 
-        at += at >= JSON_BUFFER_SIZE ? 0 :
+        at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR
                 (
                     ",\n"
@@ -3653,7 +3680,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //if (selectionOrOffset > 0 && length > 0)
         if (length > 0)
         {
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR
                     (
                         ",\n"
@@ -3667,7 +3694,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //else if (selectionOrOffset > 0)
         else
         {
-            at += at >= JSON_BUFFER_SIZE ? 0 :
+            at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR
                     (
                         ",\n"
@@ -3678,16 +3705,16 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         } // if
     } // if
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToSatNavPkt
 
-VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#74E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#74E
@@ -3717,7 +3744,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
         {
             if (data[byte + 17] >> bit & 0x01)
             {
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, PSTR("%c"), 65 + 8 * byte + bit);
             } // if
         } // for
@@ -3726,7 +3753,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
     if (data[21] >> 6 & 0x01)
     {
         // Special character: single quote (')
-        at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\'"));
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\'"));
     } // if
 
     // Available numbers are bit-coded in bytes 20...21, starting with '0' at bit 2 of byte 20, ending
@@ -3737,7 +3764,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
         {
             if (data[byte + 20] >> bit & 0x01)
             {
-                at += at >= JSON_BUFFER_SIZE ? 0 :
+                at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, PSTR("%c"), 48 + 8 * byte + bit - 2);
             } // if
         } // for
@@ -3746,19 +3773,19 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
     if (data[22] >> 1 & 0x01)
     {
         // <Space>, will be shown as '_'
-        at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("_"));
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("_"));
     } // if
 
-    at += at >= JSON_BUFFER_SIZE ? 0 :
+    at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, PSTR("\"\n}\n}\n"));
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavToMfdPkt
 
-VanPacketParseResult_t ParseWheelSpeedPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseWheelSpeedPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#744
 
@@ -3786,12 +3813,12 @@ VanPacketParseResult_t ParseWheelSpeedPkt(const char* idenStr, TVanPacketRxDesc&
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseWheelSpeedPkt
 
-VanPacketParseResult_t ParseOdometerPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseOdometerPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8FC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8FC
@@ -3814,12 +3841,12 @@ VanPacketParseResult_t ParseOdometerPkt(const char* idenStr, TVanPacketRxDesc& p
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseOdometerPkt
 
-VanPacketParseResult_t ParseCom2000Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseCom2000Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#450
 
@@ -3892,12 +3919,12 @@ VanPacketParseResult_t ParseCom2000Pkt(const char* idenStr, TVanPacketRxDesc& pk
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseCom2000Pkt
 
-VanPacketParseResult_t ParseCdChangerCmdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseCdChangerCmdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8EC
 
@@ -3933,12 +3960,12 @@ VanPacketParseResult_t ParseCdChangerCmdPkt(const char* idenStr, TVanPacketRxDes
     );
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseCdChangerCmdPkt
 
-VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, int n)
+VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8D4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8D4
@@ -4014,7 +4041,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
                 "\"head_unit_update_bass\": \"%d%S\",\n"
                 "\"head_unit_update_treble\": \"%d%S\"";
 
-            at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, jsonFormatter2,
+            at += at >= n ? 0 : snprintf_P(buf + at, n - at, jsonFormatter2,
 
                 data[2] & 0x01 ? onStr : offStr,
 
@@ -4043,7 +4070,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
             );
         } // if
 
-        at += at >= JSON_BUFFER_SIZE ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
     }
     else if (data[0] == 0x13)
     {
@@ -4190,7 +4217,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
     } // if
 
     // JSON buffer overflow?
-    if (at >= JSON_BUFFER_SIZE) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToHeadUnitPkt
@@ -4198,40 +4225,72 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
 // Dump equipment status data, e.g. presence of sat nav and other devices.
 // Some data is not regularly sent over the VAN bus. If a websocket client connects, we want to give a direct
 // update of this data as received thus far, instead of having to wait for this data to appear on the bus.
-const char* EquipmentStatusDataToJson()
+const char* EquipmentStatusDataToJson(char* buf, const int n)
 {
-    #define EQPT_STATUS_DATA_JSON_BUFFER_SIZE 256
-    static char jsonBuffer[EQPT_STATUS_DATA_JSON_BUFFER_SIZE];
-
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"cd_changer_cartridge_present\": \"%S\",\n"
             "\"satnav_disc_present\": \"%S\",\n"
             "\"satnav_status_2\": \"%S\",\n"
-            "\"satnav_guidance_preference\": \"%S\"\n"
-        "}\n"
-    "}\n";
+            "\"satnav_guidance_preference\": \"%S\"";
 
-    int at = snprintf_P(jsonBuffer, ESP_DATA_JSON_BUFFER_SIZE, jsonFormatter,
+    int at = snprintf_P(buf, n, jsonFormatter,
 
+        cdChangerCartridgePresent ? yesStr : noStr,
         getStore()->satnavDiscPresent ? yesStr : noStr,
         satnavStatus2Str,
         SatNavGuidancePreferenceStr(getStore()->satnavGuidancePreference)        
     );
 
+    // The names of the directory entries are match against while entering new entries or renaming existing ones.
+    // When the user tries to create an entry with an existing name, the "Validate" button becomes grayed out.
+    String* entryLists[2] = { getStore()->personalDirectoryEntries, getStore()->professionalDirectoryEntries };
+    for (int i = 0; i < 2; i++)
+    {
+        String* entryList = entryLists[i];
+
+        if (entryList[0].length() > 0)
+        {
+            at += at >= n ? 0 :
+                snprintf_P(buf + at, n - at,
+                    ",\n"
+                    "\"satnav_%S_directory_entries\":\n"
+                    "[",
+
+                    i == 0 ? PSTR("personal") : PSTR("professional")
+                );
+
+            int j = 0;
+            while (j < MAX_DIRECTORY_ENTRIES && entryList[j].length() > 0)
+            {
+                at += at >= n ? 0 :
+                    snprintf_P(buf + at, n - at, PSTR("%S\n\"%s\""),
+                        j == 0 ? emptyStr : commaStr,
+                        entryList[j++].c_str()
+                    );
+            } // while
+
+            at += at >= n ? 0 :
+                snprintf_P(buf + at, n - at, PSTR("\n]"));
+        } // if
+    } // for
+
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+
     // JSON buffer overflow?
-    if (at >= EQPT_STATUS_DATA_JSON_BUFFER_SIZE) return "";
+    if (at >= n) return "";
 
     #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
 
     Serial.print(F("Equipment status data as JSON object:\n"));
-    PrintJsonText(jsonBuffer);
+    PrintJsonText(buf);
 
     #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
-    return jsonBuffer;
+    return buf;
 } // EquipmentStatusDataToJson
 
 // Check if the new packet data differs from the previous.
@@ -4377,37 +4436,36 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
     while (handler != handlers_end && handler->iden != iden) handler++;
 
     // Hander found?
-    if (handler != handlers_end)
+    if (handler == handlers_end) return ""; // Unrecognized IDEN value
+
+    if (handler->dataLen >= 0 && dataLen != handler->dataLen) return ""; // Unexpected packet length
+
+    // Only process if packet content differs from previous packet
+    // TODO - specify handling modes for duplicate packets in handlers table: not all duplicate packets should
+    //   be ignored.
+    if (IsPacketDataDuplicate(pkt, handler)) return "";
+
+    int result = handler->parser(handler->idenStr, pkt, jsonBuffer, JSON_BUFFER_SIZE);
+
+    if (result == VAN_PACKET_PARSE_JSON_TOO_LONG)
     {
-        if (handler->dataLen >= 0 && dataLen != handler->dataLen) return ""; // Unexpected packet length
+        Serial.print(F("--> WARNING: JSON BUFFER OVERFLOW!\n"));
 
-        // Only process if packet content differs from previous packet
-        // TODO - specify handling modes for duplicate packets in handlers table: not all duplicate packets should
-        //   be ignored.
-        if (IsPacketDataDuplicate(pkt, handler)) return "";
-
-        int result = handler->parser(handler->idenStr, pkt, jsonBuffer, JSON_BUFFER_SIZE);
-
-        if (result == VAN_PACKET_PARSE_JSON_TOO_LONG)
-        {
-            Serial.print(F("--> WARNING: JSON BUFFER OVERFLOW!\n"));
-            // No use to return the JSON buffer; it is invalid
-        }
-        else if (result == VAN_PACKET_PARSE_OK)
-        {
-            #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-
-            if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
-            {
-                Serial.print(F("Parsed to JSON object:\n"));
-                PrintJsonText(jsonBuffer);
-            } // if
-
-            #endif // PRINT_JSON_BUFFERS_ON_SERIAL
-
-            return jsonBuffer;
-        } // if
+        // No use to return the JSON buffer; it is invalid
+        return ""; // result != VAN_PACKET_PARSE_OK
     } // if
 
-    return ""; // Unrecognized IDEN value or result != VAN_PACKET_PARSE_OK
+    if (result != VAN_PACKET_PARSE_OK) return ""; // Parsing result not OK
+
+    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+
+    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
+    {
+        Serial.print(F("Parsed to JSON object:\n"));
+        PrintJsonText(jsonBuffer);
+    } // if
+
+    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
+    return jsonBuffer;
 } // ParseVanPacketToJson

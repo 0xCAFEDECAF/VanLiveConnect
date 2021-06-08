@@ -13,8 +13,7 @@
  * See the 'README.md' file.
  */
 
-// Uncomment to see JSON buffers printed on the Serial port.
-// Note: printing the JSON buffers takes pretty long, so it leads to more Rx queue overruns.
+// Uncomment to see JSON buffers printed on the Serial port
 #define PRINT_JSON_BUFFERS_ON_SERIAL
 
 #include <ESP8266WiFi.h>
@@ -30,16 +29,6 @@
 
 #include "Config.h"
 
-// Over-the-air (OTA) update
-void setupOta();
-void loopOta();
-
-#if defined ARDUINO_ESP8266_GENERIC || defined ARDUINO_ESP8266_ESP01
-// For ESP-01 board we use GPIO 2 (internal pull-up, keep disconnected or high at boot time)
-#define D2 (2)
-#define LED_BUILTIN (13)
-#endif
-
 int RX_PIN = D2; // Set to GPIO pin connected to VAN bus transceiver output
 
 #include <DNSServer.h>
@@ -54,6 +43,10 @@ IPAddress apIP(AP_IP);
 
 // Encourage the compiler to use the a newer (C++11 ?) standard. If this is removed, it doesn't compile!
 char dummy_var_to_use_cpp11[] PROGMEM = R"==(")==";
+
+// Over-the-air (OTA) update, defined in BasicOTA.ino
+void setupOta();
+void loopOta();
 
 // Persistent storage, defined in Store.ino
 void MarkStoreDirty();
@@ -76,9 +69,11 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Defined in Esp.ino
 extern const String md5Checksum;
+void PrintSystemSpecs();
+const char* EspDataToJson();
 
 // Returns true if the actual Etag is equal to the received Etag in an 'If-None-Match' header field.
-// Shamelessly copied from: https://werner.rothschopf.net/microcontroller/202011_arduino_webserver_caching_en.htm .
+// Shameless copy from: https://werner.rothschopf.net/microcontroller/202011_arduino_webserver_caching_en.htm .
 bool checkETag(const String& etag)
 {
     for (int i = 0; i < webServer.headers(); i++)
@@ -156,6 +151,7 @@ void handleDumpFilter()
             F("OK: filtering JSON data"));
 } // handleDumpFilter
 
+// -----
 // Fonts
 
 // Defined in ArialRoundedMTbold.woff.ino
@@ -178,19 +174,18 @@ extern unsigned int DSEG14Classic_BoldItalic_woff_len;
 extern char webfonts_fa_solid_900_woff[];
 extern unsigned int webfonts_fa_solid_900_woff_len;
 
-// Defined in fa-regular-400.woff.ino
-//extern char webfonts_fa_regular_400_woff[];
-//extern unsigned int webfonts_fa_regular_400_woff_len;
-
 extern char jQuery_js[];  // Defined in jquery-3.5.1.min.js.ino
 extern char mfd_js[];  // Defined in MFD.js.ino
 
+// -----
 // Cascading style sheet files
+
 extern char faAll_css[];  // Defined in fa-all.css.ino
-//extern char faSolid_css[];  // Defined in fa-solid.css.ino
 extern char carInfo_css[];  // Defined in CarInfo.css.ino
 
+// -----
 // HTML files
+
 extern char mfd_html[];  // Defined in MFD.html.ino
 
 // Print all HTTP request details on Serial
@@ -227,7 +222,7 @@ void serveFont(const char* urlPath, const char* content, unsigned int content_le
     unsigned long start = millis();
 
     // Cache 10 seconds
-    // TODO - does this header have any effect?
+    // TODO - does this header have any effect? Implementation of font caching seems pretty weird in various browsers...
     //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
 
     webServer.send_P(200, fontWoffStr, content, content_len);  
@@ -303,15 +298,12 @@ void irSetup();
 const char* parseIrPacketToJson(TIrPacket& pkt);
 bool irReceive(TIrPacket& irPacket);
 
-// Defined in Esp.ino
-void PrintSystemSpecs();
-const char* EspDataToJson();
-
 // Defined in PacketToJson.ino
 const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
-const char* EquipmentStatusDataToJson();
+const char* EquipmentStatusDataToJson(char* buf, const int n);
 void PrintJsonText(const char* jsonBuffer);
 
+// Broadcast a (JSON) message to all the clients on the websocket
 void BroadcastJsonText(const char* json)
 {
     if (strlen(json) <= 0) return;
@@ -362,7 +354,9 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             BroadcastJsonText(WifiDataToJson(clientIp));
 
             // Dump equipment status data, e.g. presence of sat nav and other devices
-            BroadcastJsonText(EquipmentStatusDataToJson());
+            #define EQPT_STATUS_DATA_JSON_BUFFER_SIZE 2048
+            char jsonBuffer[EQPT_STATUS_DATA_JSON_BUFFER_SIZE];
+            BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, EQPT_STATUS_DATA_JSON_BUFFER_SIZE));
         }
         break;
     } // switch
@@ -379,12 +373,6 @@ void setup()
 
     PrintSystemSpecs();
 
-    // TODO - just for testing; this can be removed later
-    Serial.printf_P(
-        PSTR("Sat nav guidance was active? %S\n"),
-        getStore()->satnavGuidanceActive ? PSTR("YES") : PSTR("NO")
-    );
-
     setupWifi();
 
 #ifdef WIFI_AP_MODE
@@ -392,7 +380,7 @@ void setup()
     dnsServer.start(DNS_PORT, "*", apIP);
 #endif // WIFI_AP_MODE
 
-    // Setup Over-The-Air update
+    // Setup "Over The Air" (OTA) update
     setupOta();
 
     // Setup HTML server
@@ -413,9 +401,6 @@ void setup()
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
         serveFont(PSTR("/webfonts/fa-solid-900.woff"), webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });
-    // webServer.on(F("/webfonts/fa-regular-400.woff"), [](){
-        // serveFont(PSTR("/webfonts/fa-regular-400.woff"), webfonts_fa_regular_400_woff, webfonts_fa_regular_400_woff_len);
-    // });
 
     // Javascript files
     webServer.on(F("/jquery-3.5.1.min.js"), [](){
@@ -429,9 +414,6 @@ void setup()
     webServer.on(F("/css/all.css"), [](){
         servePage(PSTR("/css/all.css"), textCssStr, faAll_css);
     });
-    // webServer.on(F("/css/solid.css"), [](){
-        // servePage(PSTR("/css/solid.css"), textCssStr, faSolid_css);
-    // });
     webServer.on(F("/CarInfo.css"), [](){
         servePage(PSTR("/CarInfo.css"), textCssStr, carInfo_css);
     });
@@ -498,5 +480,6 @@ void loop()
         VanBusRx.DumpStats(Serial);
     } // if
 
+    // Handle persistent storage
     LoopStore();
 } // loop

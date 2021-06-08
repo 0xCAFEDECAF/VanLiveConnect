@@ -65,23 +65,12 @@ setInterval(updateDateTime, 1000);
 function showViewportSizes()
 {
     $("#viewport_width").text($(window).width()); // width of browser viewport
-    //$("#screen_width").text(screen.width);
     $("#screen_width").text(window.screen.width);
     $("#window_width").text(window.innerWidth);
 
     $("#viewport_height").text($(window).height());  // height of browser viewport
-    //$("#screen_height").text(screen.height);
     $("#screen_height").text(window.screen.height);
     $("#window_height").text(window.innerHeight);
-/*
-    var win = window,
-        doc = document,
-        docElem = doc.documentElement,
-        body = doc.getElementsByTagName('body')[0],
-        x = win.innerWidth || docElem.clientWidth || body.clientWidth,
-        y = win.innerHeight|| docElem.clientHeight|| body.clientHeight;
-    //alert(x + ' × ' + y);
-*/
 } // showViewportSizes
 
 showViewportSizes();
@@ -130,7 +119,8 @@ var websocketServerHost = window.location.hostname;
 if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(/^172\.217\.28/))
 {
     //websocketServerHost = "VanLiveConnect.lan";
-    websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
+    //websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
+    websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
 } // if
 
 console.log("Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
@@ -146,14 +136,14 @@ var fixFieldsOnDemo =
     "vin",
 
     // During demo, don't show where we are
-    "satnav_curr_street",
+    "satnav_curr_street_shown",
     "satnav_guidance_curr_street",
     "satnav_guidance_next_street",
     "satnav_distance_to_dest_via_road_number",
     "satnav_distance_to_dest_via_road_unit"
 ];
 
-var wait = true;
+//var wait = true;
 
 function writeToDom(jsonObj)
 {
@@ -272,7 +262,7 @@ function writeToDom(jsonObj)
             {
                 if ($(selector).hasClass("led"))
                 {
-                    // Handling of "led" class objects: no text copy, just turn ON or OFF
+                    // Handle "led" class objects: no text copy, just turn ON or OFF
                     var on = jsonObj[item].toUpperCase() === "ON" || jsonObj[item].toUpperCase() === "YES";
 
                     $(selector).toggleClass("ledOn", on);
@@ -280,13 +270,13 @@ function writeToDom(jsonObj)
                 }
                 else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
                 {
-                    // Handling of "icon" class objects: no text copy, just show or hide.
+                    // Handle SVG elements and "icon" class objects: no text copy, just show or hide.
                     // From https://stackoverflow.com/questions/27950151/hide-show-element-with-a-boolean :
                     $(selector).toggle(jsonObj[item].toUpperCase() === "ON" || jsonObj[item].toUpperCase() === "YES");
                 }
                 else
                 {
-                    // Handling of simple "text" objects
+                    // Handle simple "text" objects
                     $(selector).html(jsonObj[item]);
                 } // if
             } // if
@@ -416,7 +406,7 @@ function selectDefaultScreen(audioSource)
 
     if (selectedScreen === "")
     {
-        if ($("#satnav_curr_street").text() !== "") selectedScreen = "satnav_current_location";
+        if (satnavCurrentStreet !== "") selectedScreen = "satnav_current_location";
     } // if
 
     // Fall back to instrument screen if engine is running
@@ -543,20 +533,22 @@ function nextLargeScreen()
             nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
         } // if
 
+        // Skip the "instruments" screen if the engine is not running
+        if (nextLargeScreen.idIndex === screenIds.indexOf("instruments"))
+        {
+            if (engineRunning !== "YES") nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+        } // if
+
         // Skip the "satnav_current_location" screen if in guidance mode, or if the current street is empty
         if (nextLargeScreen.idIndex === screenIds.indexOf("satnav_current_location"))
         {
-            //if (satnavMode === "IN_GUIDANCE_MODE" && satnavRouteComputed)
             if (satnavMode === "IN_GUIDANCE_MODE")
             {
                 nextLargeScreen.idIndex = screenIds.indexOf("satnav_guidance");
             }
             else
             {
-                if ($("#satnav_curr_street").text() === "")
-                {
-                    nextLargeScreen.idIndex = 0;  // Go back to the "clock" screen
-                } // if
+                if (satnavCurrentStreet === "") nextLargeScreen.idIndex = 0;  // Go back to the "clock" screen
             } // if
         } // if
 
@@ -594,9 +586,15 @@ function nextSmallScreen()
         var audioSource = $("#audio_source").text();
 
         // Skip the "tuner_small" screen if the radio is not the current source
-        if (nextSmallScreen.idIndex == 1)
+        if (nextSmallScreen.idIndex == screenIds.indexOf("tuner_small"))
         {
             if (audioSource !== "TUNER") nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
+        } // if
+
+        // Skip the "instrument_small" screen if the engine is not running
+        if (nextSmallScreen.idIndex === screenIds.indexOf("instrument_small"))
+        {
+            if (engineRunning !== "YES") nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
         } // if
     } // if
 
@@ -680,7 +678,7 @@ function showNotificationPopup(message, msec, isWarning)
     $("#notification_icon_warning").toggle(isWarning);
 
     // Set the notification text
-    $("#last_message_displayed_on_mfd").html(message);
+    $("#last_notification_message_on_mfd").html(message);
 
     // Show the notification popup
     showPopup("notification_popup", msec);
@@ -862,11 +860,7 @@ function findSelectedButton()
 function buttonClicked()
 {
     var selected = findSelectedButton();
-    if (selected === undefined)
-    {
-        //console.log("buttonClicked - NO BUTTON!");
-        return;
-    } // if
+    if (selected === undefined) return;
 
     var currentButton = selected.button;
 
@@ -876,10 +870,7 @@ function buttonClicked()
         // currentButton.parent().parent().parent().attr("id")) + "'");
 
     var onClick = currentButton.attr("on_click");
-    if (onClick)
-    {
-        eval (onClick);
-    } // if
+    if (onClick) eval (onClick);
 
     var goto_id = currentButton.attr("goto_id");
     if (! goto_id) return;
@@ -1378,11 +1369,10 @@ function describeArc(x, y, radius, startAngle, endAngle)
 // Audio settings and tuner presets popups
 
 var updatingAudioVolume = false;
-
 var isAudioMenuVisible = false;
 var audioSettingsPopupTimer = null;
-
 var cdChangerCurrentDisc;
+var tunerSearchMode = "";
 
 function hideAudioSettingsPopup()
 {
@@ -1483,6 +1473,10 @@ var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
 var satnavStatus1 = "";
+var satnavDestinationNotAccessibleByRoadPopupShown = false;  // Show this popup only once at start of guidance
+var satnavCurrentStreet = "";
+var satnavPersonalDirectoryEntries = [];
+var satnavProfessionalDirectoryEntries = [];
 
 function satnavShowDisclaimer()
 {
@@ -1756,22 +1750,14 @@ function satnavEnterDigit(enteredNumber)
 
 function satnavConfirmHouseNumber()
 {
-    if ($("#satnav_current_destination_house_number").text() === "")
-    {
-        $("#satnav_current_destination_house_number").hide();
-        $("#satnav_entered_number").show();
+    var haveHouseNumber = $("#satnav_current_destination_house_number").text() !== "";
 
-        // Disable the "Change" button
-        $("#satnav_enter_house_number_change_button").addClass("buttonDisabled");
-    }
-    else
-    {
-        $("#satnav_current_destination_house_number").show();
-        $("#satnav_entered_number").hide();
+    $("#satnav_current_destination_house_number").toggle(haveHouseNumber);
+    $("#satnav_entered_number").toggle(! haveHouseNumber);
 
-        // Showing current destination house number, so enable the "Change" button ("Validate is always enabled)
-        $("#satnav_enter_house_number_change_button").removeClass("buttonDisabled");
-    } // if
+    // Enable or disable the "Change" button
+    // Note: "Validate" button is always enabled
+    $("#satnav_enter_house_number_change_button").toggleClass("buttonDisabled", ! haveHouseNumber);
 
     // Highlight the first number ("1")
     $("#satnav_house_number_show_characters").addClass("buttonSelected");
@@ -2014,6 +2000,19 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 
     // Enable or disable buttons, depending on if there is anything in the entry field
     $(screenSelector).find(".button").toggleClass("buttonDisabled", $(entrySelector).text()[0] === "-");
+
+    // Enable or disable "Personal dir", "Professional d" and Validate" button if currently
+    // entered entry name is already listed
+    var enteredEntryName = $(entrySelector).text().replace(/-+$/, "");
+    var personalEntryExists = satnavPersonalDirectoryEntries.indexOf(enteredEntryName) >= 0;
+    var professionalEntryExists = satnavProfessionalDirectoryEntries.indexOf(enteredEntryName) >= 0;
+    var entryExists = personalEntryExists || professionalEntryExists;
+
+    $("#satnav_rename_entry_in_directory_validate_button").toggleClass("buttonDisabled", entryExists);
+    $("#satnav_archive_in_directory_personal_button").toggleClass("buttonDisabled", entryExists);
+    $("#satnav_archive_in_directory_professional_button").toggleClass("buttonDisabled", entryExists);
+    $("#satnav_rename_entry_in_directory_entry_exists").toggle(entryExists);
+    $("#satnav_archive_in_directory_entry_exists").toggle(entryExists);
 } // satnavDirectoryEntryEnterCharacter
 
 // Handles pressing the "UP" on the "Correction" button in the sat nav directory entry screens
@@ -2086,8 +2085,11 @@ function satnavSwitchToGuidanceScreen()
 // Format a string like "45 km" or "7000 m" or "60 m". Return an array [distance, unit]
 function satnavFormatDistance(distanceStr)
 {
-    var distance, unit;
-    [distance, unit] = distanceStr.split(" ");
+    // Want compatibility with IE11 so cannot assign result array directly to variables
+    var parts = distanceStr.split(" ");
+    var distance = parts[0];
+    var unit = parts [1];
+
     if (unit === "m" && +distance >= 1000)
     {
         // Reported in metres, and 1000 metres or more: show in kilometres, with decimal notation.
@@ -2101,6 +2103,27 @@ function satnavFormatDistance(distanceStr)
     } // if
 } // satnavFormatDistance
 
+function satnavValidateVocalSynthesisLevel()
+{
+
+    var comingFromMenu = menuStack[menuStack.length - 1];
+    if (comingFromMenu === "satnav_guidance_tools_menu")
+    {
+        // In nav guidance tools (context) menu: go back to guidance screen
+        selectDefaultScreen();        
+    }
+    else
+    {
+        // In main menu
+
+        // When the "Validate" button is pressed, all menus are exited up to top level. IMHO that is a bug in the MFD.
+        exitMenu();
+        exitMenu();
+        exitMenu();
+        exitMenu();
+    } // if
+} // satnavValidateVocalSynthesisLevel
+
 // -----
 // Handling of 'system' screen
 
@@ -2109,6 +2132,14 @@ function gearIconAreaClicked()
     if ($("#clock").is(":visible")) changeLargeScreenTo("system");
     else changeLargeScreenTo("clock");
 } // gearIconAreaClicked
+
+// -----
+// Handling of doors and boot status
+
+// Associative array, using the door ID as key mapping to true (open) or false (closed)
+var isDoorOpen = {};
+
+var isBootOpen = false;
 
 // -----
 // Handling of changed items
@@ -2159,13 +2190,12 @@ function handleItemChange(item, value)
 
             if (value !== "CLOSED") break;
 
-            // Bug: if source is cd-changer, audio_menu is always "OPEN"... so ignore for now
+            // Bug: if source is cd-changer, audio_menu is always "OPEN"... So ignore for now.
 
             // Ignore when audio volume is being set
             if (updatingAudioVolume) break;
 
-            // Hide the audio popup
-            //console.log("Closing audio popup (forced)");
+            // Hide the audio popup now
             hideAudioSettingsPopup();
         } // case
         break;
@@ -2275,7 +2305,6 @@ function handleItemChange(item, value)
             } // if
             */
 
-            // TODO - Also hide if an audio source button is pressed but the audio source is in fact not changed?
             if (! value.match(/^[1-6]/)) hideTunerPresetsPopup();
 
             // Check for audio source button press
@@ -2330,6 +2359,16 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "tape_status":
+        {
+            // Has anything changed?
+            if (value === handleItemChange.tapeStatus) break;
+            handleItemChange.tapeStatus = value;
+
+            hideAudioSettingsPopup();
+        } // case
+        break;
+
         case "tuner_band":
         {
             // Has anything changed?
@@ -2345,8 +2384,7 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // FM tuner data must be visible only if FM band is selected
-            document.getElementById("fm_tuner_data").style.display =
+            // FM tuner data is visible only if FM band is selected
             $("#fm_tuner_data").toggle(value === "ON");
             $("#fm_tuner_data_small").toggle(value === "ON");
         } // case
@@ -2376,8 +2414,16 @@ function handleItemChange(item, value)
 
         case "am_band":
         {
+            // Has anything changed?
+            if (value === handleItemChange.amBand) break;
+            handleItemChange.amBand = value;
+
             //console.log("Item '" + item + "' set to '" + value + "'");
             $("#presets_am").toggle(value === "ON");
+
+            // In "AM" mode show frequency data large
+            $("#frequency_data_large").toggle(value === "ON");
+            $("#frequency_data_small").toggle(value !== "ON");
         } // case
         break;
 
@@ -2432,19 +2478,19 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // If no RDS text, show frequency data large
-            $("#frequency_data_large").toggle(value === "");
+            $("#frequency_data_large").toggle(value === "" || tunerSearchMode === "MANUAL_TUNING");
 
             // If RDS text, show frequency data small, and RDS text large
-            $("#frequency_data_small").toggle(value !== "");
-            $("#rds_text").toggle(value !== "");
+            $("#frequency_data_small").toggle(value !== "" && tunerSearchMode !== "MANUAL_TUNING");
+            $("#rds_text").toggle(value !== "" && tunerSearchMode !== "MANUAL_TUNING");
         } // case
         break;
 
         case "search_mode":
         {
             // Has anything changed?
-            if (value === handleItemChange.searchMode) break;
-            handleItemChange.searchMode = value;
+            if (value === tunerSearchMode) break;
+            tunerSearchMode = value;
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
@@ -2452,7 +2498,7 @@ function handleItemChange(item, value)
             hideTunerPresetsPopup();
 
             var rdsText = $("#rds_text").text();
-            var showRdsText = (rdsText !== "" && value !== "MANUAL_TUNING");
+            var showRdsText = $("#fm_band").hasClass("ledOn") && rdsText !== "" && value !== "MANUAL_TUNING";
 
             // If there is RDS text, and no manual frequency search is busy, show frequency data small,
             // and RDS text large
@@ -2491,6 +2537,7 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
+            // Don't pop up when user is browsing the menus
             if (value === "YES" && ! currentMenu) showNotificationPopup("Info Traffic!", 120000);  // At most 2 minutes
             else hidePopup("notification_popup");
         } // case
@@ -2636,7 +2683,15 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // Show or hide the "door open" popup
-            if (value === "YES") showPopup("door_open_popup", 8000); else hidePopup("door_open_popup");
+            if (value === "YES")
+            {
+                $("#door_open_popup_text").text("Door open");
+                showPopup("door_open_popup", 8000);
+            }
+            else
+            {
+                hidePopup("door_open_popup");
+            } // if
         } // case
         break;
 
@@ -2648,12 +2703,36 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // Show or hide the door svg element
+            // Show or hide the door SVG element
             document.getElementById(item).style.display = value === "OPEN" ? "block" : "none";
 
-            if (value !== "OPEN") break;
+            var isOpen = value === "OPEN";
 
-            // Show the "door open" popup
+            if (item === "door_boot") isBootOpen = isOpen;
+            else isDoorOpen[item] = isOpen;
+
+            var nDoorsOpen = 0;
+            for (var id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
+
+            // All closed?
+            if (! isBootOpen && nDoorsOpen == 0)
+            {
+                hidePopup("door_open_popup");
+                break;
+            } // if
+
+            // Compose popup text
+            var popupText = " open";
+            if (isBootOpen) popupText = "boot" + popupText;
+            if (isBootOpen && nDoorsOpen > 0) popupText = " and " + popupText;
+            if (nDoorsOpen > 1) popupText = "s" + popupText;
+            if (nDoorsOpen > 0) popupText = "door" + popupText;
+
+            // Capitalize first letter
+            popupText = popupText.charAt(0).toUpperCase() + popupText.slice(1);
+
+            // Set the correct text and show the "door open" popup
+            $("#door_open_popup_text").text(popupText);
             showPopup("door_open_popup", 8000);
         } // case
         break;
@@ -2705,7 +2784,7 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "message_displayed_on_mfd":
+        case "notification_message_on_mfd":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
@@ -2726,6 +2805,14 @@ function handleItemChange(item, value)
         {
             satnavStatus1 = value;
 
+            if (satnavStatus1.match(/AUDIO/))
+            {
+                // Turn on or off "satnav_audio" LED 
+                var playingAudio = satnavStatus1.match(/START/);
+                $("#satnav_audio").toggleClass("ledOn", playingAudio);
+                $("#satnav_audio").toggleClass("ledOff", ! playingAudio);
+            } // if
+
             // Show one or the other
             $("#satnav_distance_to_dest_via_road_visible").toggle(satnavStatus1 !== "DESTINATION_NOT_ON_MAP");
             $("#satnav_distance_to_dest_via_straight_line_visible").toggle(satnavStatus1 === "DESTINATION_NOT_ON_MAP");
@@ -2734,22 +2821,21 @@ function handleItemChange(item, value)
             {
                 if ($("#satnav_guidance").is(":visible") && $(".notificationPopup:visible").length === 0)
                 {
-                    showStatusPopup("Destination is not<br />accessible by road", 8000);
+                    if (! satnavDestinationNotAccessibleByRoadPopupShown)
+                    {
+                        // Show only at start of navigation
+                        showStatusPopup("Destination is not<br />accessible by road", 8000);
+                        satnavDestinationNotAccessibleByRoadPopupShown = true;
+                    } // if
                 } // if
             }
             else if (satnavStatus1.match(/NO_DISC/))
             {
-                //if ($(".notificationPopup:visible").length === 0)
-                //{
-                    showStatusPopup("Navigation CD-ROM is<br />missing", 5000);
-                //} // if
+                showStatusPopup("Navigation CD-ROM is<br />missing", 5000);
             } // if
             else if (satnavStatus1.match(/DISC_UNREADABLE/))
             {
-                //if ($(".notificationPopup:visible").length === 0)
-                //{
-                    showStatusPopup("Navigation CD-ROM<br />is unreadable", 5000);
-                //} // if
+                showStatusPopup("Navigation CD-ROM<br />is unreadable", 5000);
             } // if
         } // case
         break;
@@ -2761,9 +2847,13 @@ function handleItemChange(item, value)
 
             // TODO - also show an icon indicating the sat nav mode?
 
-            // As soon as we hear anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
+            // As soon as we receive anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
             // TODO - if this actually enables the button, also select it?
             $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
+
+            // Button text
+            $("#satnav_navigation_options_menu_stop_guidance_button").text(
+                value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
 
             // Has anything changed?
             if (value === satnavMode) break;
@@ -2773,10 +2863,8 @@ function handleItemChange(item, value)
             if (value === "IN_GUIDANCE_MODE")
             {
                 // Just entered guidance mode
-
-                // TODO - only switch to guidance screen from specific list of screens?
+                $("#satnav_navigation_options_menu_stop_guidance_button").text("Stop guidance");
                 if ($("#satnav_guidance_preference_menu").is(":visible")) break;
-
                 satnavSwitchToGuidanceScreen();
                 break;
             }
@@ -2812,6 +2900,8 @@ function handleItemChange(item, value)
 
         case "satnav_status_3":
         {
+            if (value === "STOPPING_NAVIGATION") satnavDestinationNotAccessibleByRoadPopupShown = false;
+
             if (value === "POWERING_OFF")
             {
                 $("#main_menu_goto_satnav_button").addClass("buttonDisabled");
@@ -2949,13 +3039,22 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
+            satnavCurrentStreet = value;
+
             if (satnavMode === "IN_GUIDANCE_MODE")
             {
                 $("#satnav_guidance_curr_street").text(value !== "" ? value : "Street not listed");
-                break;
             } // if
 
-            if (value === "") break;
+            if (value === "")
+            {
+                $("#satnav_curr_street_shown").text("Not on map"); // TODO - find exact text
+                break;
+            }
+            else
+            {
+                $("#satnav_curr_street_shown").text(value);
+            } // if
 
             // Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
             if (! $("#clock").is(":visible")) break;
@@ -2970,8 +3069,42 @@ function handleItemChange(item, value)
 
         case "satnav_next_street":
         {
-            // No data means: stay on current street
-            $("#satnav_guidance_next_street").text(value !== "" ? value : $("#satnav_guidance_curr_street").text());
+            // No data means: stay on current street.
+            // But if current street is empty (""), then just keep the current text.
+            if (value !== "") $("#satnav_guidance_next_street").text(value)
+            else if (satnavCurrentStreet !== "") $("#satnav_guidance_next_street").text(satnavCurrentStreet);
+        } // case
+        break;
+
+        case "satnav_personal_directory_entries":
+        {
+            // Store the list of entries. When the user tries to create an entry with an existing name,
+            // the "Validate" button must be grayed out.
+            satnavPersonalDirectoryEntries = value;
+
+            // Remove invalid characters
+            satnavPersonalDirectoryEntries = satnavPersonalDirectoryEntries.map(function(entry) {
+                entry = entry.replace(/&.*?;/g, "");
+                entry = entry.replace(/\?/g, "");
+                entry = entry.trim();
+                return entry;
+            });
+        } // case
+        break;
+
+        case "satnav_professional_directory_entries":
+        {
+            // Store the list of entries. When the user tries to create an entry with an existing name,
+            // the "Validate" button must be grayed out.
+            satnavProfessionalDirectoryEntries = value;
+
+            // Remove invalid characters
+            satnavProfessionalDirectoryEntries = satnavProfessionalDirectoryEntries.map(function(entry) {
+                entry = entry.replace(/&.*?;/g, "");
+                entry = entry.replace(/\?/g, "");
+                entry = entry.trim();
+                return entry;
+            });
         } // case
         break;
 
@@ -2983,19 +3116,12 @@ function handleItemChange(item, value)
             $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
             $("#satnav_delete_directory_entry_in_popup").text(value);
 
-            // The "Rename" button is disabled if the value ends with "&#x24E7;" (X)
-            if (value.match(/&#x24E7;$/))
-            {
-                $("#satnav_manage_private_address_rename_button").addClass("buttonDisabled");
-                $("#satnav_manage_private_address_rename_button").removeClass("buttonSelected");
-                $("#satnav_manage_private_address_delete_button").addClass("buttonSelected");
-            }
-            else
-            {
-                $("#satnav_manage_private_address_rename_button").removeClass("buttonDisabled");
-                $("#satnav_manage_private_address_rename_button").addClass("buttonSelected");
-                $("#satnav_manage_private_address_delete_button").removeClass("buttonSelected");
-            } // if
+            // The "Rename" button is disabled if the entry is not on the current disc (value ends with "&#x24E7;" (X))
+            var entryNotOnDisc = value.match(/&#x24E7;$/);
+
+            $("#satnav_manage_private_address_rename_button").toggleClass("buttonDisabled", entryNotOnDisc);
+            $("#satnav_manage_private_address_rename_button").toggleClass("buttonSelected", ! entryNotOnDisc);
+            $("#satnav_manage_private_address_delete_button").toggleClass("buttonSelected", entryNotOnDisc);
         } // case
         break;
 
@@ -3007,19 +3133,12 @@ function handleItemChange(item, value)
             $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
             $("#satnav_delete_directory_entry_in_popup").text(value);
 
-            // The "Rename" button is disabled if the value ends with "&#x24E7;" (X)
-            if (value.match(/&#x24E7;$/))
-            {
-                $("#satnav_manage_business_address_rename_button").addClass("buttonDisabled");
-                $("#satnav_manage_business_address_rename_button").removeClass("buttonSelected");
-                $("#satnav_manage_business_address_delete_button").addClass("buttonSelected");
-            }
-            else
-            {
-                $("#satnav_manage_business_address_rename_button").removeClass("buttonDisabled");
-                $("#satnav_manage_business_address_rename_button").addClass("buttonSelected");
-                $("#satnav_manage_business_address_delete_button").removeClass("buttonSelected");
-            } // if
+            // The "Rename" button is disabled if the entry is not on the current disc (value ends with "&#x24E7;" (X))
+            var entryNotOnDisc = value.match(/&#x24E7;$/);
+
+            $("#satnav_manage_business_address_rename_button").toggleClass("buttonDisabled", entryNotOnDisc);
+            $("#satnav_manage_business_address_rename_button").toggleClass("buttonSelected", ! entryNotOnDisc);
+            $("#satnav_manage_business_address_delete_button").toggleClass("buttonSelected", entryNotOnDisc);
         } // case
         break;
 
@@ -3053,6 +3172,8 @@ function handleItemChange(item, value)
 
         case "mfd_to_satnav_go_to_screen":
         {
+            // A VAN packet indicates we must switch to a specific screen
+
             if (value === "") break;
 
             // Has anything changed?
@@ -3062,7 +3183,6 @@ function handleItemChange(item, value)
 
             if (value === "satnav_choose_from_list")
             {
-                // TODO - remove this?
                 if ($("#satnav_enter_street_characters").is(":visible")
                     && $("#satnav_enter_characters_list_button").hasClass("buttonSelected"))
                 {
@@ -3227,8 +3347,6 @@ function handleItemChange(item, value)
 
             // Highlight the current line (or the first, if no line is currently highlighted)
             highlightLine("satnav_list");
-
-            //if (value === "") break;
 
             // TODO - make this work
             // Make the list box visible so that the spinning disk icon disappears behind it
@@ -3425,13 +3543,9 @@ function handleItemChange(item, value)
                 }
                 else if ($("#satnav_enter_characters_correction_button").hasClass("buttonSelected"))
                 {
-                    if ($("#satnav_entered_string").text() === "")
-                    {
-                        // All entered characters have been removed
-                        satnavSelectFirstAvailableCharacter();
-                    } // if
+                    // All entered characters have been removed?
+                    if ($("#satnav_entered_string").text() === "") satnavSelectFirstAvailableCharacter();
                 } // if
-
             } // if
 
             if (value.length === 1)
@@ -3476,7 +3590,7 @@ function handleItemChange(item, value)
         case "satnav_curr_turn_icon":
         case "satnav_next_turn_icon":
         {
-            // Any of these icons becoming visible means hiding the "Computing route in progress" popup
+            // Any of these icons becoming visible means we can hide the "Computing route in progress" popup
             if (value === "ON") hidePopup('satnav_calculating_route_popup');
         } // case
         break;
@@ -3485,17 +3599,14 @@ function handleItemChange(item, value)
         {
             if (value === "ON")
             {
-                // This icon becoming visible means hiding the "Computing route in progress" popup
+                // Hide the "Computing route in progress" popup, if showing
                 hidePopup("satnav_calculating_route_popup");
 
                 $("#satnav_guidance_next_street").text("Follow the heading");
                 $("#satnav_guidance_curr_street").text("Not digitized area");
-                $("#satnav_turn_at_indication").hide();
-            }
-            else
-            {
-                $("#satnav_turn_at_indication").show();
             } // if
+
+            $("#satnav_turn_at_indication").toggle(value !== "ON");
         } // case
         break;
 
@@ -3832,11 +3943,12 @@ function demoMode()
     $("#satnav_gps_speed").text("0");
 
     // Sat nav current location
-    $("#satnav_curr_street").text("Keizersgracht 609 (Amsterdam)");
+    $("#satnav_curr_street_shown").text("Keizersgracht 609 (Amsterdam)");
 
     // Sat nav guidance preference
     $("#satnav_guidance_preference_fastest").html("");
     $("#satnav_guidance_preference_shortest").html("<b>&#10004;</b>");
+    satnavGuidancePreferenceSelectTickedButton();
 
     // Sat nav enter destination city
     $("#satnav_current_destination_city").text("Amsterdam");
@@ -3952,7 +4064,7 @@ function demoMode()
     // Popup warning or information
     $("#notification_icon_warning").show();
     $("#notification_icon_info").hide();
-    $("#last_message_displayed_on_mfd").text("Oil pressure too low");
+    $("#last_notification_message_on_mfd").text("Oil pressure too low");
 
     // Door open popup
     $("#door_front_left").show();

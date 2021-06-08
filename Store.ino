@@ -19,6 +19,7 @@ StoredData* _store = NULL;
 const char STORE_FILE_NAME[] = "/store.json";
 
 bool _storeDirty = false;
+unsigned long _lastMarked = 0;
 
 void _saveStore()
 {
@@ -188,12 +189,20 @@ StoredData* getStore()
 
 void MarkStoreDirty()
 {
+    if (_storeDirty) return;
     _storeDirty = true;
+    _lastMarked = millis();
 } // MarkStoreDirty
 
 void LoopStore()
 {
     if (! _storeDirty) return;
+
+    // Flush to file after so many seconds
+    #define FLUSH_AFTER_SEC (3)
+
+    // Arithmetic has safe roll-over
+    if (millis() - _lastMarked < FLUSH_AFTER_SEC * MILLIS_PER_SEC) return;
 
     _saveStore();
 } // LoopStore

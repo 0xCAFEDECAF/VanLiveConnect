@@ -297,7 +297,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="centerAligned fas fa-vr-cardboard"></div>
         </div>
         <div id="cd_changer_cartridge_present" class="iconSmall led ledOff" style="left:870px; top:235px;">
-          <div class="centerAligned fas fa-compact-disc"></div>
+          <div class="centerAligned fas fa-archive"></div>
         </div>
 
         <div id="info_traffic" class="led ledOff" style="left:30px; top:490px; width:140px;">INFO</div>
@@ -337,7 +337,7 @@ char mfd_html[] PROGMEM = R"=====(
           </div>
 
           <!-- Icons involved in station searching -->
-          <div id="search_manual" class="led ledOff" style="left:400px; top:290px; width:120px;">MAN</div>
+          <div id="search_manual" class="led ledOff" style="left:380px; top:290px; width:120px;">MAN</div>
           <div id="search_sensitivity_dx" class="led ledOff" style="left:530px; top:290px; width:80px;">Dx</div>
           <div id="search_sensitivity_lo" class="led ledOff" style="left:620px; top:290px; width:80px;">Lo</div>
           <div id="search_direction_up" class="led ledOff fa fa-caret-up" style="left:730px; top:290px; width:40px; height:37px;"></div>
@@ -433,13 +433,17 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
 
-            <div class="tag" style="left:50px; top:320px; width:200px;">Total</div>
-            <div id="cd_total_time" class="dots" style="left:250px; top:315px; width:200px; text-align:right;">--:--</div>
+            <div class="tag" style="left:0px; top:320px; width:180px;">Total</div>
+            <div id="cd_total_time" class="dots" style="left:180px; top:315px; width:200px; text-align:right;">--:--</div>
 
-            <div class="tag" style="left:540px; top:320px; width:200px;">Track</div>
-            <div id="cd_current_track" class="dots" style="left:730px; top:315px; width:100px; text-align:right;">--</div>
-            <div class="tag" style="left:810px; top:320px; width:50px;">/</div>
-            <div id="cd_total_tracks" class="dots" style="left:850px; top:315px; width:100px; text-align:right;">--</div>
+            <div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
+            <div id="cd_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
+            <div class="tag" style="left:625px; top:320px; width:50px;">/</div>
+            <div id="cd_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
+
+            <div id="cd_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
+              <div class="centerAligned fas fa-random"></div>
+            </div>
 
             <div gid="loudness" class="led ledOff" style="left:795px; top:490px; width:140px;">LOUD</div>
           </div>  <!-- "cd_player" -->
@@ -479,22 +483,26 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
             -->
 
-            <div id="cd_changer_disc_not_present" class="tag" style="display:none; left:150px; top:320px; width:200px;">No</div>
-            <div class="tag" style="left:240px; top:320px; width:200px;">CD</div>
-            <div id="cd_changer_selected_disc" class="dots" style="display:none; left:440px; top:315px; width:90px; text-align:right;">-</div>
-            <div id="cd_changer_current_disc" class="dots" style="left:440px; top:315px; width:90px; text-align:right;">-</div>
-            <div class="tag" style="left:540px; top:320px; width:200px;">Track</div>
-            <div id="cd_changer_current_track" class="dots" style="left:740px; top:315px; width:90px; text-align:right;">--</div>
-            <div class="tag" style="left:800px; top:320px; width:50px;">/</div>
-            <div id="cd_changer_total_tracks" class="dots" style="left:860px; top:315px; width:90px; text-align:right;">--</div>
+            <div id="cd_changer_disc_not_present" class="tag" style="display:none; left:0px; top:320px; width:170px;">No</div>
+            <div class="tag" style="left:65px; top:320px; width:200px;">CD</div>
+            <div id="cd_changer_selected_disc" class="dots" style="display:none; left:265px; top:315px; width:90px; text-align:right;">-</div>
+            <div id="cd_changer_current_disc" class="dots" style="left:265px; top:315px; width:90px; text-align:right;">-</div>
+            <div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
+            <div id="cd_changer_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
+            <div class="tag" style="left:625px; top:320px; width:50px;">/</div>
+            <div id="cd_changer_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
+
+            <div id="cd_changer_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
+              <div class="centerAligned fas fa-random"></div>
+            </div>
 
             <!-- JSON data item "cd_changer_current_disc" is also parsed to apply class "ledActive" to the appropriate LED -->
-            <div id="cd_changer_disc_1_present" class="led ledOff" style="left:60px; top:410px; width:130px;">1</div>
-            <div id="cd_changer_disc_2_present" class="led ledOff" style="left:210px; top:410px; width:130px;">2</div>
-            <div id="cd_changer_disc_3_present" class="led ledOff" style="left:360px; top:410px; width:130px;">3</div>
-            <div id="cd_changer_disc_4_present" class="led ledOff" style="left:510px; top:410px; width:130px;">4</div>
-            <div id="cd_changer_disc_5_present" class="led ledOff" style="left:660px; top:410px; width:130px;">5</div>
-            <div id="cd_changer_disc_6_present" class="led ledOff" style="left:810px; top:410px; width:130px;">6</div>
+            <div id="cd_changer_disc_1_present" class="led ledOff" style="left:30px; top:410px; width:135px;">1</div>
+            <div id="cd_changer_disc_2_present" class="led ledOff" style="left:185px; top:410px; width:135px;">2</div>
+            <div id="cd_changer_disc_3_present" class="led ledOff" style="left:340px; top:410px; width:135px;">3</div>
+            <div id="cd_changer_disc_4_present" class="led ledOff" style="left:495px; top:410px; width:135px;">4</div>
+            <div id="cd_changer_disc_5_present" class="led ledOff" style="left:650px; top:410px; width:135px;">5</div>
+            <div id="cd_changer_disc_6_present" class="led ledOff" style="left:805px; top:410px; width:135px;">6</div>
 
             <div gid="loudness" class="led ledOff" style="left:795px; top:490px; width:140px;">LOUD</div>
           </div>  <!-- "cd_changer" -->
@@ -873,29 +881,30 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Status LEDs -->
 
-        <div id="satnav_disc_present" class="iconSmall led ledOff" style="left:870px; top:30px;">
+        <div id="satnav_disc_present" class="iconSmall led ledOff" style="left:350px; top:30px;">
           <div class="centerAligned fas fa-compact-disc"></div>
         </div>
 
-        <!-- TODO - other set of icons, currently is not clear -->
-        <div id="satnav_gps_scanning" class="iconSmall led ledOff" style="display:none; left:770px; top:30px;">
+        <div id="satnav_gps_scanning" class="iconSmall led ledOff" style="left:450px; top:30px;">
+          <div class="centerAligned fas fa-search-location"></div>
+        </div>
+
+        <div id="satnav_gps_fix" class="iconSmall led ledOff" style="left:550px; top:30px;">
           <div class="centerAligned fas fa-satellite-dish"></div>
         </div>
-        <div id="satnav_gps_fix_lost" class="iconSmall led ledOff" style="display:block; left:770px; top:30px;">
-          <div class="centerAligned fas fa-satellite-dish"></div>
-          <div style="position:absolute; left:0px; top:0px; width:80px;">
-            <svg>
-              <line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="10" x2="70" y2="48"></line>
-            </svg>
-          </div>
+
+        <div id="satnav_gps_fix_lost" class="iconSmall led ledOff" style="display:block; left:650px; top:30px;">
+          <!--<div class="centerAligned fas fa-low-vision"></div>-->
+          <div class="centerAligned fas fa-smog"></div>
         </div>
-        <div id="satnav_gps_fix" class="iconSmall led ledOff" style="left:670px; top:30px;">
-          <div class="centerAligned fas fa-map-marker-alt"></div>
+
+        <div id="satnav_audio" class="iconSmall led ledOff" style="left:750px; top:30px;">
+          <div class="centerAligned fas fa-volume-up"></div>
         </div>
 
         <!-- Current heading, shown as compass needle -->
 
-        <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:570px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
           <svg>
             <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
           </svg>
@@ -903,8 +912,8 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Current GPS speed -->
 
-        <div id="satnav_gps_speed" class="dots" style=" left:240px; top:36px; width:160px; text-align:right;">--</div>
-        <div class="tag" style="left:410px; top:40px; width:120px;">km/h</div>
+        <div id="satnav_gps_speed" class="dots" style=" left:40px; top:36px; width:160px; text-align:right;">--</div>
+        <div class="tag" style="left:210px; top:40px; width:120px;">km/h</div>
 
         <!-- Current location -->
 
@@ -912,12 +921,7 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- Current street and city -->
           <div class="icon iconBorder" style="left:20px; top:150px; width:930px; height:250px;">
-
-            <!--
-              Make sure that the innerText is completely empty, i.e. the </div> directly follows the <div ...>.
-              The innerText is retrieved in function selectDefaultScreen() to determine which screen to show.
-            -->
-            <div id="satnav_curr_street" class="centerAligned" style="font-size:60px; white-space:normal;"></div>
+            <div id="satnav_curr_street_shown" class="centerAligned" style="font-size:60px; white-space:normal;"></div>
           </div>
 
         </div>  <!-- "satnav_current_location" -->
@@ -967,7 +971,8 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav select from memory menu -->
 
-        <div id="satnav_select_from_memory_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
+        <div id="satnav_select_from_memory_menu" class="tag menuTitle"
+          style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Select from memory<br style="line-height:100px;" />
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
@@ -983,7 +988,8 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav navigation options menu -->
 
-        <div id="satnav_navigation_options_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
+        <div id="satnav_navigation_options_menu" class="tag menuTitle"
+          style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Navigation options<br style="line-height:100px;" />
           <div class="button buttonSelected"
             on_click="satnavSetDirectoryAddressScreenMode('MANAGE');"
@@ -991,14 +997,15 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volme</div>
           <div class="button">Delete directories</div>
 
-          <!-- TODO - "Stop" must be "Resume" if sat nav is not in guidance mode -->
-          <div class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Stop guidance</div>
+          <div id="satnav_navigation_options_menu_stop_guidance_button"
+            class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Resume guidance</div>
 
         </div>  <!-- "satnav_navigation_options_menu" -->
 
         <!-- Sat nav directory management menu -->
 
-        <div id="satnav_directory_management_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
+        <div id="satnav_directory_management_menu" class="tag menuTitle"
+          style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Directory management<br style="line-height:100px;" />
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
@@ -1014,7 +1021,8 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav guidance tools (context) menu -->
 
-        <div id="satnav_guidance_tools_menu" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
+        <div id="satnav_guidance_tools_menu" class="tag menuTitle"
+          style="display:none; left:30px; top:140px; width:920px; height:410px;">
           Guidance tools<br style="line-height:100px;" />
 
           <div class="button buttonSelected" goto_id="satnav_guidance_preference_menu">Guidance criteria</div>
@@ -1065,13 +1073,9 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- TODO - also show the volume as a linear gauge -->
           <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:115px; width:200px;">-</div>
 
-          <!--
-            on_click: when the "Validate" button is pressed, all menus are exited up to top level.
-            IMHO that is a bug in the MFD.
-          -->
           <div
             class="button buttonSelected"
-            on_click="exitMenu(); exitMenu(); exitMenu(); exitMenu();"
+            on_click="satnavValidateVocalSynthesisLevel();"
             style="position:absolute; left:0px; top:300px; width:180px; height:40px;">Validate</div>
         </div>  <!-- "satnav_vocal_synthesis_level" -->
 
@@ -1533,6 +1537,11 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Archive in directory</div>
 
+          <div id="satnav_archive_in_directory_entry_exists"
+            class="tag" style="display:none; left:210px; top:255px; text-align:left; font-size:40px;">
+            This entry already exists
+          </div>
+
           <div class="tag" style="left:25px; top:205px; width:190px; text-align:left; font-size:40px;">Name</div>
           <div id="satnav_archive_in_directory_entry"
             on_enter="satnavEnterArchiveInDirectoryScreen();"
@@ -1550,7 +1559,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
             class="dots buttonSelected"
-            style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
+            style="left:25px; top:310px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
               background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
           <div id="satnav_archive_in_directory_characters_line_2"
@@ -1562,7 +1571,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
             class="dots"
-            style="left:25px; top:360px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
+            style="left:25px; top:380px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
               background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ0123456789_</div>
 
           <div button_orientation="horizontal"
@@ -1600,6 +1609,11 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="tag" style="left:25px; top:205px; width:190px; text-align:left; font-size:40px;">Name</div>
 
+          <div id="satnav_rename_entry_in_directory_entry_exists"
+            class="tag" style="display:none; left:210px; top:255px; text-align:left; font-size:40px;">
+            This entry already exists
+          </div>
+
           <!-- on_esc: this goes back to the "List" screen -->
           <div id="satnav_rename_entry_in_directory_entry"
             on_enter="satnavEnterRenameDirectoryEntryScreen();"
@@ -1617,7 +1631,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
             class="dots buttonSelected"
-            style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
+            style="left:25px; top:310px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
               background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
           <div id="satnav_rename_entry_in_directory_characters_line_2"
@@ -1629,7 +1643,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
             class="dots"
-            style="left:25px; top:360px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
+            style="left:25px; top:380px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
               background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ0123456789</div>
 
           <div button_orientation="horizontal"
@@ -1995,7 +2009,7 @@ char mfd_html[] PROGMEM = R"=====(
           style="display:none; position:absolute; left:30px; line-height: 1.2;"></div>
         <div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
           style="display:block; position:absolute; left:30px; line-height: 1.2;"></div>
-        <div id="last_message_displayed_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
+        <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
         </div>
       </div>
 
@@ -2024,7 +2038,7 @@ char mfd_html[] PROGMEM = R"=====(
             <line id="door_boot" stroke="#dfe7f2" stroke-width="14" stroke-linecap="round" x1="50" y1="165" x2="105" y2="165" style="display:none;"></line>
           </svg>
         </div>
-        <div class="centerAligned" style="position:absolute; left:250px; width:400px;">
+        <div id="door_open_popup_text" class="centerAligned" style="position:absolute; left:250px; width:400px;">
           Door open!
         </div>
       </div>  <!-- "door_open_popup" -->
