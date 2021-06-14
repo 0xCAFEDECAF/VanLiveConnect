@@ -15,6 +15,7 @@
 - [Limitations, Caveats](#limits)
 - [Work to be Done](#todo)
 - [Frequently Asked Questions](#faq)
+- [References](#extref)
 - [License](#license)
 
 ## 📟 Screen Shots<a name = "screenshots"></a>
@@ -96,6 +97,30 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 
 Of course you can modify the SSID and choose your own password by editing the ``Config.h`` file.
 
+## 🕹️ MFD functions supported
+
+* Clock with exterior temperature
+* Instruments (speed, RPM, fuel level, engine temperature)
+* "Pre-flight" checks (oil and fuel level, engine temperature)
+* Odometer and trip counters
+* Live fuel data (consumption, remaining distance)
+* Radio (Tuner)
+* Cassette tape player (well... even CD is vintage these days 😉)
+* Head unit internal CD player
+* CD changer unit
+* Notifications and warnings
+* Satellite Navigation (maps are out of date but it's a nice gimmick 😇)
+
+Note: availability will depend on your vehicle's configuration.
+
+Not yet supported:
+* Multiple languages; currently only English
+* Setting brightness and contrast
+* Setting format and units (currently only degrees Celsius and kilometres)
+
+Will not support:
+* Setting date and time: your smartphone already knows...
+
 ## ⚙️ Technical Details<a name = "details"></a>
 
 In the beginning of 2000's the PSA group (Peugeot and Citroen) used VAN bus as a communication protocol
@@ -106,8 +131,6 @@ The application will tap in on the vehicle's VAN bus and visualize the captured 
 smart phone, tablet, laptop or any other device that runs a web browser. The application will run on any
 ESP8266 / ESP8285 based board, e.g. [Wemos/Lolin D1 mini](https://www.wemos.cc/en/latest/d1/d1_mini.html)
 is supported.
-
-[ TODO - list a few other devices ]
 
 The application will host a HTML web page on standard port 80. It will also host a websocket server on
 standard port 81. The served web page comes with some JavaScript that connects to this websocket server
@@ -258,7 +281,15 @@ As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peug
 communication protocol between the various comfort-related equipment. Later, around 2005, they started to
 replace this protocol in their newer cars with the CAN bus protocol.
 
-## 📖 License <a name = "license"></a>
+## 📘 References<a name = "extref"></a>
+
+For background reading:
+
+- [Vehicle Information Service Specification](https://www.w3.org/TR/vehicle-information-service/) - defines
+a WebSocket based API for a Vehicle Information Service (VIS) to enable client applications to get, set,
+subscribe and unsubscribe to vehicle signals and data attributes.
+
+## 📖 License<a name = "license"></a>
 
 This application is open-source and licensed under the [MIT license](http://opensource.org/licenses/MIT).
 
