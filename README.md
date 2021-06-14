@@ -99,6 +99,8 @@ Of course you can modify the SSID and choose your own password by editing the ``
 
 ## 🕹️ MFD functions supported
 
+See also the [Screen Shots](#screenshots) above.
+
 * Clock with exterior temperature
 * Instruments (speed, RPM, fuel level, engine temperature)
 * "Pre-flight" checks (oil and fuel level, engine temperature)
