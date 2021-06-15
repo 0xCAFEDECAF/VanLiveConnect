@@ -3,14 +3,11 @@
  *
  * Written by Erik Tromp
  *
- * Version 0.0.1 - March, 2021
+ * Version 0.0.1 - June, 2021
  *
  * MIT license, all text above must be included in any redistribution.
  *
- * -----
- * Documentation, details
- *
- * See the 'README.md' file.
+ * Documentation, details: see the 'README.md' file.
  */
 
 // Uncomment to see JSON buffers printed on the Serial port
@@ -45,10 +42,11 @@ IPAddress apIP(AP_IP);
 char dummy_var_to_use_cpp11[] PROGMEM = R"==(")==";
 
 // Over-the-air (OTA) update, defined in BasicOTA.ino
-void setupOta();
-void loopOta();
+void SetupOta();
+void LoopOta();
 
 // Persistent storage, defined in Store.ino
+void SetupStore();
 void MarkStoreDirty();
 void LoopStore();
 struct StoredData
@@ -58,7 +56,7 @@ struct StoredData
     uint8_t satnavGuidancePreference;
 
     // TODO - increase to 100 (causes crash at boot time)
-    #define MAX_DIRECTORY_ENTRIES 30
+    #define MAX_DIRECTORY_ENTRIES 40
     String personalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
     String professionalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
 };
@@ -290,7 +288,7 @@ typedef struct
 } TIrPacket;
 
 // Defined in Wifi.ino
-void setupWifi();
+void SetupWifi();
 const char* WifiDataToJson(IPAddress& client);
 
 // Defined in IRrecv.ino
@@ -373,7 +371,10 @@ void setup()
 
     PrintSystemSpecs();
 
-    setupWifi();
+    // Setup non-volatile storage on SPIFFS
+    SetupStore();
+
+    SetupWifi();
 
 #ifdef WIFI_AP_MODE
     // If DNSServer is started with "*" for domain name, it will reply with provided IP to all DNS request
@@ -381,7 +382,7 @@ void setup()
 #endif // WIFI_AP_MODE
 
     // Setup "Over The Air" (OTA) update
-    setupOta();
+    SetupOta();
 
     // Setup HTML server
 
@@ -457,7 +458,7 @@ void loop()
     dnsServer.processNextRequest();
 #endif // WIFI_AP_MODE
 
-    loopOta(); 
+    LoopOta(); 
 
     webSocket.loop();
     webServer.handleClient();

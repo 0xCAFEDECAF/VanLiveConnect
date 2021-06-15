@@ -1,12 +1,12 @@
 
 #include "Config.h"
 
-const char* getHostname()
+const char* GetHostname()
 {
     return "VanLiveConnect";
-} // getHostname
+} // GetHostname
 
-void setupWifi()
+void SetupWifi()
 {
 #ifdef WIFI_AP_MODE
 
@@ -55,7 +55,7 @@ void setupWifi()
 
     Serial.println(F(" OK"));
 
-    WiFi.hostname(getHostname());
+    WiFi.hostname(GetHostname());
 
     Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
 
@@ -64,7 +64,7 @@ void setupWifi()
     wifi_set_sleep_type(NONE_SLEEP_T);
 
     delay(1);
-} // setupWifi
+} // SetupWifi
 
 const char* WifiDataToJson(IPAddress& client)
 {

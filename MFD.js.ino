@@ -115,15 +115,15 @@ var FancyWebSocket = function(url)
 
 var websocketServerHost = window.location.hostname;
 
-// TODO - hard coded "172.217.28", better to use AP_IP from Config.h.
+// TODO - hard coded "172.217.28", better to use AP_IP from Config.h
 if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(/^172\.217\.28/))
 {
     //websocketServerHost = "VanLiveConnect.lan";
-    //websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
-    websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
+    websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
+    //websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
 } // if
 
-console.log("Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
+console.log("// Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
 
 var socket = new FancyWebSocket("ws://" + websocketServerHost + ":81/");
 
@@ -288,13 +288,7 @@ function writeToDom(jsonObj)
 } // writeToDom
 
 // Bind to server events
-socket.bind(
-    'display',
-    function(data)
-    {
-        writeToDom(data);
-    } // function
-);
+socket.bind('display', function(data) { writeToDom(data); });
 
 // -----
 // Functions for navigating the screens and their subscreens/elements
@@ -339,7 +333,7 @@ function changeLargeScreenTo(id)
     // Has anything changed?
     if (id === currentLargeScreenId) return;
 
-    console.log("// changeLargeScreenTo('" + id + "')");
+    //console.log("// changeLargeScreenTo('" + id + "')");
 
     // Perform screen's "on_exit" action, if specified
     var onExit = $("#" + currentLargeScreenId).attr("on_exit");
@@ -374,9 +368,6 @@ function selectDefaultScreen(audioSource)
     // Explicitly passed a value for 'audioSource'?
     if (typeof audioSource !== "undefined")
     {
-        //console.log("selectDefaultScreen(): audioSource = '" + audioSource + "'");
-        //console.log(new Error().stack);
-
         // TODO - do we ever get audioSource "INTERNAL_CD_OR_TAPE"?
         selectedScreen =
             audioSource === "TUNER" ? "tuner" :
@@ -388,7 +379,6 @@ function selectDefaultScreen(audioSource)
 
     if (selectedScreen === "")
     {
-        //if (satnavMode === "IN_GUIDANCE_MODE" && satnavRouteComputed) selectedScreen = "satnav_guidance";
         if (satnavMode === "IN_GUIDANCE_MODE") selectedScreen = "satnav_guidance";
     } // if
 
@@ -486,9 +476,7 @@ function nextLargeScreen()
     } // if
 
     // Get the ID of the next screen in the sequence
-    //console.log(nextLargeScreen.idIndex);
     nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
-    //console.log(nextLargeScreen.idIndex);
 
     // In "demo mode" we can cycle through all the screens, otherwise to a limited set of screens
     if (inDemoMode)
@@ -625,7 +613,7 @@ function goFullScreen()
 // Show the specified popup, with an optional timeout
 function showPopup(id, msec)
 {
-    console.log("// showPopup('" + id + "'," + msec + ")");
+    //console.log("// showPopup('" + id + "'," + msec + ")");
 
     var popup = $("#" + id);
     popup.show();
@@ -653,7 +641,7 @@ function hidePopup(id)
     if (popup.length === 0) return false;
     if (! popup.is(":visible")) return false;
 
-    console.log("// hidePopup('" + (id ? id : popup.text()) + "')");
+    //console.log("// hidePopup('" + id + "')");
 
     popup.hide();
 
@@ -1157,8 +1145,9 @@ function highlightPreviousLetter(id)
     id = getFocusId(id);
     if (id === undefined) return;
 
-    if (highlightIndexes[id] === undefined) highlightIndexes[id] = $("#" + id).text().length - 1; else highlightIndexes[id]--;
-    if (highlightIndexes[id] < 0) highlightIndexes[id] = $("#" + id).text().length - 1;  // Roll over
+    var last = $("#" + id).text().length - 1;
+    if (highlightIndexes[id] === undefined) highlightIndexes[id] = last; else highlightIndexes[id]--;
+    if (highlightIndexes[id] < 0) highlightIndexes[id] = last;  // Roll over
     highlightLetter(id);
 } // highlightPreviousLetter
 
@@ -1370,13 +1359,15 @@ function describeArc(x, y, radius, startAngle, endAngle)
 
 var updatingAudioVolume = false;
 var isAudioMenuVisible = false;
-var audioSettingsPopupTimer = null;
+var audioSettingsPopupHideTimer = null;
+var audioSettingsPopupShowTimer = null;
 var cdChangerCurrentDisc;
 var tunerSearchMode = "";
 
 function hideAudioSettingsPopup()
 {
-    clearInterval(audioSettingsPopupTimer);
+    clearInterval(audioSettingsPopupShowTimer);
+    clearInterval(audioSettingsPopupHideTimer);
     $("#audio_settings_popup").hide();
     updatingAudioVolume = false;
     isAudioMenuVisible = false;
@@ -1385,8 +1376,8 @@ function hideAudioSettingsPopup()
 function hideAudioSettingsPopupAfter(msec)
 {
     // (Re-)arm the timer to hide the popup after the specified number of milliseconds
-    clearInterval(audioSettingsPopupTimer);
-    audioSettingsPopupTimer = setTimeout(function () { hideAudioSettingsPopup(); }, msec);
+    clearInterval(audioSettingsPopupHideTimer);
+    audioSettingsPopupHideTimer = setTimeout(function () { hideAudioSettingsPopup(); }, msec);
 } // hideAudioSettingsPopupAfter
 
 // The IDs of the audio settings highlight boxes ("divs") to be cycled through
@@ -1407,7 +1398,6 @@ function highlightAudioSetting(goToFirst)
     if (goToFirst === undefined) goToFirst = false;
 
     // Hide the current box
-    //console.log("Hiding box '" + highlightIds[audioSettingHighlightIndex] + "'");
     $("#" + highlightIds[audioSettingHighlightIndex]).hide();
 
     // Either reset to the first ID, or get the ID of the next box
@@ -1425,7 +1415,6 @@ function highlightAudioSetting(goToFirst)
     } // if
 
     // Show the next highlight box
-    //console.log("Showing box '" + highlightIds[audioSettingHighlightIndex] + "'");
     $("#" + highlightIds[audioSettingHighlightIndex]).show();
 } // highlightAudioSetting
 
@@ -1444,8 +1433,8 @@ function showAudioSettingsPopup()
     if (! isAudioMenuVisible) highlightAudioSetting(true);
 
     // Show the audio settings popup
-    //console.log("Showing audio popup to display audio settings");
     $("#audio_settings_popup").show();
+
     updatingAudioVolume = false;
     isAudioMenuVisible = true;
 
@@ -2176,7 +2165,20 @@ function handleItemChange(item, value)
 
             // Show the audio settings popup to display the current volume
             $("#" + highlightIds[audioSettingHighlightIndex]).hide();
-            $("#audio_settings_popup").show();
+
+            // Show the audio settings popup 
+            if ($("#contact_key_position").text() != "" && $("#contact_key_position").text() !== "OFF")
+            {
+                $("#audio_settings_popup").show();
+            }
+            else
+            {
+                // With no contact key in place, we get a spurious "volume_update" message when turning off the
+                // head unit. To prevent the audio settings popup to flash up and disappear, show it only after
+                // 100 msec in this specific situation.
+                clearInterval(audioSettingsPopupShowTimer);
+                audioSettingsPopupShowTimer = setTimeout(function () { $("#audio_settings_popup").show(); }, 100);
+            } // if
             updatingAudioVolume = true;
 
             // Hide popup after 4 seconds
@@ -2222,12 +2224,12 @@ function handleItemChange(item, value)
                 break;
             } // if
 
-            // Any other button than "AUDIO" or one of its variants like "AUDIO (released)"
+            // Any other button than "AUDIO" or a variant like "CD_CHANGER (released)"
             if (updatingAudioVolume) hideAudioSettingsPopup();
 
             var audioSource = $("#audio_source").text();
 
-            // If "audio_source" changed to "CD", we directly show the "searching CD" icon
+            // If "audio_source" changed to "CD", directly show the "searching CD" icon
             if (audioSource !== "CD" && value === "CD")
             {
                 if (! $("#cd_present").hasClass("ledOn"))
@@ -2239,22 +2241,30 @@ function handleItemChange(item, value)
                 } // if
 
                 // Show the "searching" icon
-                $("#cd_status_inserted").show();
+                $("#cd_status_searching").show();
                 $("#cd_status_pause").hide();
                 $("#cd_status_play").hide();
                 $("#cd_status_fast_forward").hide();
                 $("#cd_status_rewind").hide();
             }
 
-            // If "audio_source" changed to "CD_CHANGER", we directly show the "searching CD" icon
+            // If "audio_source" changed to "CD_CHANGER", directly show the "searching CD" icon
             else if (audioSource !== "CD_CHANGER" && value === "CD_CHANGER")
             {
-                if (
-                    // Cartridge is not present?
-                    ! $("#cd_changer_cartridge_present").hasClass("ledOn") ||
+                // Cartridge is not present?
+                if (! $("#cd_changer_cartridge_present").hasClass("ledOn"))
+                {
+                    // Show "No CD" popup for a few seconds
+                    showStatusPopup("No CD", 3000);
+                    break;
+                } // if
 
-                    // Cartridge is present but contains no discs?
-                    cdChangerCurrentDisc == null || ! cdChangerCurrentDisc.match(/^[1-6]$/)
+                // Cartridge is present
+
+                // Not busy loading, and cartridge contains no discs?
+                if (
+                     $("#cd_changer_status_loading").css("display") !== "block"
+                     && (cdChangerCurrentDisc == null || ! cdChangerCurrentDisc.match(/^[1-6]$/))
                    )
                 {
                     // Show "No CD" popup for a few seconds
@@ -2263,11 +2273,10 @@ function handleItemChange(item, value)
                     break;
                 } // if
 
-                // Show the "searching" icon
+                // Show the "loading" icon
                 $("#cd_changer_status_pause").hide();
                 $("#cd_changer_status_play").hide();
-                //$("#cd_changer_status_spinning").show();
-                $("#cd_changer_status_searching").show();
+                $("#cd_changer_status_loading").show();
                 $("#cd_changer_status_fast_forward").hide();
                 $("#cd_changer_status_rewind").hide();
                 //$("#cd_changer_status_next_track").hide();
@@ -2286,7 +2295,6 @@ function handleItemChange(item, value)
                 {
                     $("#cd_changer_status_pause").hide();
                     $("#cd_changer_status_play").hide();
-                    $("#cd_changer_status_spinning").hide();
                     $("#cd_changer_status_fast_forward").hide();
                     $("#cd_changer_status_rewind").hide();
                     $("#cd_changer_status_next_track").show();
@@ -2296,7 +2304,6 @@ function handleItemChange(item, value)
                 {
                     $("#cd_changer_status_pause").hide();
                     $("#cd_changer_status_play").hide();
-                    $("#cd_changer_status_spinning").hide();
                     $("#cd_changer_status_fast_forward").hide();
                     $("#cd_changer_status_rewind").hide();
                     $("#cd_changer_status_next_track").hide();
@@ -2375,15 +2382,14 @@ function handleItemChange(item, value)
             if (value === handleItemChange.tunerBand) break;
             handleItemChange.tunerBand = value;
 
-            // Hide the tuner presets popup when changing band
+            // Hide the audio and tuner presets popup when changing band
             hideTunerPresetsPopup();
+            hideAudioSettingsPopup();
         } // case
         break;
 
         case "fm_band":
         {
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
             // FM tuner data is visible only if FM band is selected
             $("#fm_tuner_data").toggle(value === "ON");
             $("#fm_tuner_data_small").toggle(value === "ON");
@@ -2393,21 +2399,18 @@ function handleItemChange(item, value)
         // Switch the "tuner_presets_popup" to display the correct tuner band
         case "fm_band_1":
         {
-            //console.log("Item '" + item + "' set to '" + value + "'");
             $("#presets_fm_1").toggle(value === "ON");
         } // case
         break;
 
         case "fm_band_2":
         {
-            //console.log("Item '" + item + "' set to '" + value + "'");
             $("#presets_fm_2").toggle(value === "ON");
         } // case
         break;
 
         case "fm_band_ast":
         {
-            //console.log("Item '" + item + "' set to '" + value + "'");
             $("#presets_fm_ast").toggle(value === "ON");
         } // case
         break;
@@ -2418,7 +2421,6 @@ function handleItemChange(item, value)
             if (value === handleItemChange.amBand) break;
             handleItemChange.amBand = value;
 
-            //console.log("Item '" + item + "' set to '" + value + "'");
             $("#presets_am").toggle(value === "ON");
 
             // In "AM" mode show frequency data large
@@ -2435,7 +2437,7 @@ function handleItemChange(item, value)
             // Switch to head unit display if applicable
             if ($("#clock").is(":visible")) selectDefaultScreen();
 
-            // Check if anything actually changed
+            // Has anything changed?
             if (value === handleItemChange.currentTunerPresetMemoryValue) break;
 
             //console.log("Item '" + item + "' set to '" + value + "'");
@@ -2477,12 +2479,14 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // If no RDS text, show frequency data large
-            $("#frequency_data_large").toggle(value === "" || tunerSearchMode === "MANUAL_TUNING");
+            var showRdsText = value !== "" && tunerSearchMode !== "MANUAL_TUNING";
 
             // If RDS text, show frequency data small, and RDS text large
-            $("#frequency_data_small").toggle(value !== "" && tunerSearchMode !== "MANUAL_TUNING");
-            $("#rds_text").toggle(value !== "" && tunerSearchMode !== "MANUAL_TUNING");
+            $("#frequency_data_small").toggle(showRdsText);
+            $("#rds_text").toggle(showRdsText);
+
+            // If no RDS text, show frequency data large
+            $("#frequency_data_large").toggle(! showRdsText);
         } // case
         break;
 
@@ -2537,9 +2541,24 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
+            if (typeof handleItemChange.infoTraffic === "undefined") handleItemChange.infoTraffic = "NO";
+
             // Don't pop up when user is browsing the menus
-            if (value === "YES" && ! currentMenu) showNotificationPopup("Info Traffic!", 120000);  // At most 2 minutes
+            if (currentMenu) break;
+
+            // Has anything changed?
+            if (value === handleItemChange.infoTraffic) break;
+            handleItemChange.infoTraffic = value;
+
+            if (value === "YES") showNotificationPopup("Info Traffic!", 120000);  // At most 2 minutes
             else hidePopup("notification_popup");
+        } // case
+        break;
+
+        case "cd_status":
+        {
+            $("#cd_status_error").toggle(value === "ERROR");
+            if (value === "ERROR") showNotificationPopup("Disc unreadable<br />(Upside down?)", 6000)
         } // case
         break;
 
@@ -2547,38 +2566,17 @@ function handleItemChange(item, value)
         case "cd_status_rewind":
         case "cd_status_searching":
         {
-            if (value == "ON") hideAudioSettingsPopup();
+            if (value === "ON") hideAudioSettingsPopup();
         } // case
         break;
-/*
-        case "cd_changer_status_searching":
+
+        case "cd_changer_status":
         {
-            if (value !== "ON") break;
-
-            if (! $("#cd_changer_status_next_track").is(":visible")) break;
-            if (! $("#cd_changer_status_previous_track").is(":visible")) break;
-
-            $("#cd_changer_status_spinning").show();
+            if (value === "ERROR") showNotificationPopup("Disc unreadable<br />(Wrong side?)", 6000)
+            $("#cd_changer_status_error").toggle(value === "ERROR");
         } // case
         break;
 
-        case "cd_changer_status_pause":
-        case "cd_changer_status_play":
-        case "cd_changer_status_fast_forward":
-        case "cd_changer_status_rewind":
-        {
-            if (value !== "ON") break;
-
-            // These icons are triggered by head unit button press
-            $("#cd_changer_status_next_track").hide();
-            $("#cd_changer_status_previous_track").hide();
-
-            // This icon is shown conditionally
-            $("#cd_changer_status_spinning").hide();
-
-        } // case
-        break;
-*/
         case "cd_changer_current_disc":
         {
             // Has anything changed?
@@ -2632,8 +2630,7 @@ function handleItemChange(item, value)
 
             if (value === "CD")
             {
-                // Show the "searching" icon
-                $("#cd_status_inserted").show();
+                // Hide all icons except "searching" or "loading"
                 $("#cd_status_pause").hide();
                 $("#cd_status_play").hide();
                 $("#cd_status_fast_forward").hide();
@@ -2641,11 +2638,10 @@ function handleItemChange(item, value)
             }
             else if (value === "CD_CHANGER")
             {
-                // Show the "searching" icon
+                // Show the "loading" icon
                 $("#cd_changer_status_pause").hide();
                 $("#cd_changer_status_play").hide();
-                //$("#cd_changer_status_spinning").show();
-                $("#cd_changer_status_searching").show();
+                $("#cd_changer_status_loading").show();
                 $("#cd_changer_status_fast_forward").hide();
                 $("#cd_changer_status_rewind").hide();
                 //$("#cd_changer_status_next_track").hide();
@@ -2708,8 +2704,20 @@ function handleItemChange(item, value)
 
             var isOpen = value === "OPEN";
 
-            if (item === "door_boot") isBootOpen = isOpen;
-            else isDoorOpen[item] = isOpen;
+            var change = false;
+            if (item === "door_boot")
+            {
+                if (isBootOpen !== isOpen) change = true;
+                isBootOpen = isOpen;
+            }
+            else
+            {
+                if (isDoorOpen[item] !== isOpen) change = true;
+                isDoorOpen[item] = isOpen;
+            } // if
+
+            // Only continue if anything changed
+            if (! change) break;
 
             var nDoorsOpen = 0;
             for (var id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
@@ -2742,8 +2750,6 @@ function handleItemChange(item, value)
             // Has anything changed?
             if (value === engineRunning) break;
             engineRunning = value;
-
-            //console.log("Item '" + item + "' set to '" + value + "'");
 
             // If engine just started, and currently in "pre_flight" screen, then switch to "instruments"
             if (engineRunning === "YES" && $("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
@@ -2823,7 +2829,7 @@ function handleItemChange(item, value)
                 {
                     if (! satnavDestinationNotAccessibleByRoadPopupShown)
                     {
-                        // Show only at start of navigation
+                        // Show only at start of guidance
                         showStatusPopup("Destination is not<br />accessible by road", 8000);
                         satnavDestinationNotAccessibleByRoadPopupShown = true;
                     } // if
@@ -2844,8 +2850,6 @@ function handleItemChange(item, value)
         {
             // Only if not empty
             if (value === "") break;
-
-            // TODO - also show an icon indicating the sat nav mode?
 
             // As soon as we receive anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
             // TODO - if this actually enables the button, also select it?
@@ -2874,8 +2878,6 @@ function handleItemChange(item, value)
                 // Just left guidance mode
                 if ($("#satnav_guidance").is(":visible")) selectDefaultScreen();
             } // if
-
-            //console.log("Item '" + item + "' set to '" + value + "'");
 
             if (value === "IDLE")
             {
@@ -2990,42 +2992,24 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "satnav_current_destination_house_number":
-        {
-            $("#satnav_current_destination_house_number_shown").text(
-                value === "" || value === "0" ? "No number" : value);
-        } // case
-        break;
-
         case "satnav_private_address_street":
-        {
-            $("#satnav_private_address_street_shown").text(value === "" ? "City centre" : value);
-        } // case
-        break;
-
-        case "satnav_private_address_house_number":
-        {
-            $("#satnav_private_address_house_number_shown").text(
-                value === "" || value === "0" ? "No number" : value);
-        } // case
-        break;
-
         case "satnav_business_address_street":
         {
-            $("#satnav_business_address_street_shown").text(value === "" ? "City centre" : value);
-        } // case
-        break;
-
-        case "satnav_business_address_house_number":
-        {
-            $("#satnav_business_address_house_number_shown").text(
-                value === "" || value === "0" ? "No number" : value);
+            $("#" + item + "_shown").text(value === "" ? "City centre" : value);
         } // case
         break;
 
         case "satnav_last_destination_street":
         {
             $('[gid="satnav_last_destination_street_shown"]').text(value === "" ? "City centre" : value);
+        } // case
+        break;
+
+        case "satnav_current_destination_house_number":
+        case "satnav_private_address_house_number":
+        case "satnav_business_address_house_number":
+        {
+            $("#" + item + "_shown").text(value === "" || value === "0" ? "No number" : value);
         } // case
         break;
 
@@ -3061,9 +3045,6 @@ function handleItemChange(item, value)
 
             // Show the current location (street and city)
             changeLargeScreenTo("satnav_current_location");
-
-            // TODO - maybe other criteria, might be preferred to switch even if an audio screen is currently
-            // showing
         } // case
         break;
 
@@ -3083,7 +3064,8 @@ function handleItemChange(item, value)
             satnavPersonalDirectoryEntries = value;
 
             // Remove invalid characters
-            satnavPersonalDirectoryEntries = satnavPersonalDirectoryEntries.map(function(entry) {
+            satnavPersonalDirectoryEntries = satnavPersonalDirectoryEntries.map(function(entry)
+            {
                 entry = entry.replace(/&.*?;/g, "");
                 entry = entry.replace(/\?/g, "");
                 entry = entry.trim();
@@ -3099,7 +3081,8 @@ function handleItemChange(item, value)
             satnavProfessionalDirectoryEntries = value;
 
             // Remove invalid characters
-            satnavProfessionalDirectoryEntries = satnavProfessionalDirectoryEntries.map(function(entry) {
+            satnavProfessionalDirectoryEntries = satnavProfessionalDirectoryEntries.map(function(entry)
+            {
                 entry = entry.replace(/&.*?;/g, "");
                 entry = entry.replace(/\?/g, "");
                 entry = entry.trim();
@@ -3368,24 +3351,16 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "satnav_place_of_interest_address_distance":
-        {
-            if (value === "") break;
-
-            $("#satnav_place_of_interest_address_distance_km").text(value / 1000);
-        } // case
-        break;
-
         case "satnav_guidance_preference":
         {
             // Set the correct text in the sat nav guidance preference popup
-            var satnavGuidancePreference =
+            var satnavGuidancePreferenceText =
                 value === "FASTEST_ROUTE" ? "Fastest route" :
                 value === "SHORTEST_DISTANCE" ? "Shortest route" :
                 value === "AVOID_HIGHWAY" ? "Avoid highway route" :
                 value === "COMPROMISE_FAST_SHORT" ? "Fast/short compromise route" :
                 "";
-            $("#satnav_guidance_current_preference_text").text(satnavGuidancePreference);
+            $("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText);
 
             // Also set the correct tick box in the sat nav guidance preference menu
             var satnavGuidancePreferenceTickBoxId =
@@ -3398,6 +3373,7 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_place_of_interest_address_distance":
         case "satnav_distance_to_dest_via_road":
         case "satnav_distance_to_dest_via_straight_line":
         case "satnav_turn_at":
@@ -3610,6 +3586,30 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_curr_heading_compass_needle_rotation":
+        {
+            // Place the "N" just in front of the arrow point
+            $("#satnav_curr_heading_compass_tag").css(
+                "transform",
+                "translate(" +
+                    42 * Math.sin(value * Math.PI / 180) + "px," +
+                    -42 * Math.cos(value * Math.PI / 180) + "px)"
+                );
+        } // case
+        break;
+
+        case "satnav_heading_to_dest_pointer_rotation":
+        {
+            // Place the "D" just in front of the arrow point
+            $("#satnav_heading_to_dest_tag").css(
+                "transform",
+                "translate(" +
+                    70 * Math.sin(value * Math.PI / 180) + "px," +
+                    -70 * Math.cos(value * Math.PI / 180) + "px)"
+                );
+        } // case
+        break;
+
         // TODO - the following does not work. Find a suitable button.
         case "left_stalk_button":
         {
@@ -3791,294 +3791,14 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "mfd_status":
+        {
+            if (value === "MFD_SCREEN_OFF") hidePopup();
+        } // case
+        break;
+
         default:
         break;
     } // switch
 } // handleItemChange
-
-// -----
-// Functions for demo
-
-// Set "demo mode" on to prevent certain fields from being overwritten; fill DOM elements with demo values
-function demoMode()
-{
-    inDemoMode = true;
-
-    // Small information panel (left)
-    $("#trip_1_button").addClass("active");
-    $("#trip_2_button").removeClass("active");
-    $("#trip_1").show();
-    $("#trip_2").hide();
-    $("#avg_consumption_lt_100_1").text("5.7");
-    $("#avg_speed_1").text("63");
-    $("#distance_1").text("2370");
-    $("#avg_consumption_lt_100_2").text("6.3");
-    $("#avg_speed_2").text("72");
-    $("#distance_2").text("1325");
-
-    // Large information panel (right)
-
-    // Multimedia
-    $("#power").removeClass("ledOff");
-    $("#power").addClass("ledOn");
-    $("#cd_present").removeClass("ledOff");
-    $("#cd_present").addClass("ledOn");
-    $("#tape_present").removeClass("ledOn");
-    $("#tape_present").addClass("ledOff");
-    $("#cd_changer_cartridge_present").removeClass("ledOff");
-    $("#cd_changer_cartridge_present").addClass("ledOn");
-
-    $("#info_traffic").removeClass("ledOn");
-    $("#info_traffic").addClass("ledOff");
-    $("#ext_mute").removeClass("ledOn");
-    $("#ext_mute").addClass("ledOff");
-    $("#mute").removeClass("ledOn");
-    $("#mute").addClass("ledOff");
-
-    // Tuner
-    $("#ta_selected").removeClass("ledOff");
-    $("#ta_selected").addClass("ledOn");
-    $("#ta_not_available").hide();
-    $("#tuner_band").text("FM1");
-    $('[gid="tuner_memory"]').text("5");
-    $('[gid="frequency"]').text("102.1");
-    $('[gid="frequency_h"]').text("0");
-    $('[gid="frequency_mhz"]').removeClass("ledOff");
-    $('[gid="frequency_mhz"]').addClass("ledOn");
-    $('[gid="rds_text"]').text("RADIO 538");
-    $("#pty_16").text("Pop Music");
-    $('[gid="pi_country"]').text("NL");
-    $("#search_sensitivity_dx").removeClass("ledOff");
-    $("#search_sensitivity_dx").addClass("ledOn");
-    $("#signal_strength").text("12");
-    $("#regional").removeClass("ledOff");
-    $("#regional").addClass("ledOn");
-    $("#rds_selected").removeClass("ledOff");
-    $("#rds_selected").addClass("ledOn");
-    $("#rds_not_available").hide();
-
-    // Audio settings popup
-    $('[gid="volume"]').text("12");
-    $("#bass").text("+4");
-    $("#treble").text("+3");
-    $("#fader").text("-1");
-    $("#balance").text("0");
-    $("#loudness").removeClass("ledOn");
-    $("#loudness").addClass("ledOff");
-    $("#auto_volume").removeClass("ledOff");
-    $("#auto_volume").addClass("ledOn");
-    $("#bass_select").show();
-
-    // Tape player
-    $("#tape_side").text("2");
-    $("#tape_status_play").show();
-
-    // Internal CD player
-    $('[gid="audio_source"]').text("CD");
-    $("#cd_track_time").text("2:17");
-    $("#cd_status_play").show();
-    $("#cd_total_time").text("43:16");
-    $("#cd_current_track").text("3");
-    $("#cd_total_tracks").text("15");
-
-    // CD changer
-    $("#cd_changer_track_time").text("4:51");
-    $("#cd_changer_status_play").show();
-    $("#cd_changer_current_disc").text("3");
-    $("#cd_changer_current_track").text("6");
-    $("#cd_changer_total_tracks").text("11");
-    $("#cd_changer_disc_1_present").removeClass("ledOff");
-    $("#cd_changer_disc_1_present").addClass("ledOn");
-    $("#cd_changer_disc_2_present").removeClass("ledOff");
-    $("#cd_changer_disc_2_present").addClass("ledOn");
-    $("#cd_changer_disc_3_present").removeClass("ledOff");
-    $("#cd_changer_disc_3_present").addClass("ledOn");
-    $("#cd_changer_disc_4_present").removeClass("ledOff");
-    $("#cd_changer_disc_4_present").addClass("ledOn");
-    $("#cd_changer_disc_5_present").removeClass("ledOn");
-    $("#cd_changer_disc_5_present").addClass("ledOff");
-    $("#cd_changer_disc_6_present").removeClass("ledOn");
-    $("#cd_changer_disc_6_present").addClass("ledOff");
-    $("#cd_changer_disc_3_present").addClass("ledActive");
-    $("#cd_changer_disc_3_present").css({marginTop: '-=25px'});
-
-    // Status bar
-    $("#inst_consumption_lt_100").text("6.6");
-    $("#distance_to_empty").text("750");
-    $('[gid="exterior_temperature"]').html("12.5 &deg;C");
-
-    // Pre-flight checks
-    $('[gid="fuel_level_filtered"]').text("51.6");
-    $('[gid="fuel_level_filtered_perc"]').css("transform", "scaleX(0.645)");
-    $('[gid="water_temp"]').text("65.0");
-    $('[gid="water_temp_perc"]').css("transform", "scaleX(0.5)");
-    $("#oil_level_raw").text("80");
-    $("#oil_level_raw_perc").css("transform", "scaleX(0.94)");
-    $("#remaining_km_to_service").text("27 500");
-    $("#remaining_km_to_service_perc").css("transform", "scaleX(0.917)");
-    $("#contact_key_position").text("START");
-    $("#dashboard_programmed_brightness").text("14");
-    $("#diesel_glow_plugs").addClass("ledOn");
-    $("#diesel_glow_plugs").removeClass("ledOff");
-    $("#vin").text("VF38FRHZF80371XXX");
-
-    // Instrument cluster
-    $('[gid="vehicle_speed"]').text("0");
-    $('[gid="engine_rpm"]').text("873");
-    $("#odometer_1").text("65 803.2");
-
-    // Sat nav
-    $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
-    $("#main_menu_goto_satnav_button").addClass("buttonSelected");
-    $("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
-    $("#satnav_disc_present").addClass("ledOn");
-    $("#satnav_disc_present").removeClass("ledOff");
-    $("#satnav_gps_scanning").addClass("ledOff");
-    $("#satnav_gps_scanning").removeClass("ledOn");
-    $("#satnav_gps_fix_lost").addClass("ledOff");
-    $("#satnav_gps_fix_lost").removeClass("ledOn");
-    $("#satnav_gps_fix").addClass("ledOn");
-    $("#satnav_gps_fix").removeClass("ledOff");
-    $("#satnav_curr_heading_compass_needle").css("transform", "rotate(135deg)");
-    $("#satnav_gps_speed").text("0");
-
-    // Sat nav current location
-    $("#satnav_curr_street_shown").text("Keizersgracht 609 (Amsterdam)");
-
-    // Sat nav guidance preference
-    $("#satnav_guidance_preference_fastest").html("");
-    $("#satnav_guidance_preference_shortest").html("<b>&#10004;</b>");
-    satnavGuidancePreferenceSelectTickedButton();
-
-    // Sat nav enter destination city
-    $("#satnav_current_destination_city").text("Amsterdam");
-    $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
-    $("#satnav_enter_characters_validate_button").addClass("buttonSelected");
-    $('[gid="satnav_to_mfd_list_size"]').text("35");
-    $("#satnav_current_destination_street").text("Keizersgracht");
-
-    // Sat nav choose destination street from list
-    $("#mfd_to_satnav_request").text("Enter street");
-    var lines =
-    [
-        "AADIJK -ALMELO- -AADORP-",
-        "AADORPWEG -ALMELO- -AADORP-",
-        "ACACIALAAN -ALMELO- -AADORP-",
-        "ALBARDASTRAAT -ALMELO- -AADORP-",
-        "ALMELOSEWEG -ALMELO- -AADORP-",
-        "BEDRIJVENPARKSINGEL -ALMELO- -AADORP-",
-        "BEDRIJVENPARK TWENTE -ALMELO- -AADORP-",
-        "BERKENLAAN -ALMELO- -AADORP-",
-        "BEUKENLAAN -ALMELO- -AADORP-",
-        "BRUGLAAN -ALMELO- -AADORP-",
-        "DENNENLAAN -ALMELO- -AADORP-",
-        "SCHOUT DODDESTRAAT -ALMELO- -AADORP-",
-        "EIKENLAAN -ALMELO- -AADORP-",
-        "GRAVENWEG -ALMELO- -AADORP-",
-        "HEUVELTJESLAAN -ALMELO- -AADORP-",
-        "IEPENWEG NOORD -ALMELO- -AADORP-",
-        "IEPENWEG ZUID -ALMELO- -AADORP-",
-        "KANAALWEG ZUID -ALMELO- -AADORP-",
-        "KASTANJELAAN -ALMELO- -AADORP-",
-        "KERKWEG -ALMELO- -AADORP-"
-    ];
-    $("#satnav_list").html(lines.join('<br />'));
-    highlightFirstLine("satnav_list");
-    highlightNextLine("satnav_list");
-
-    // Sat nav enter destination house number
-    $("#satnav_house_number_range").text("From 1 to 812");
-    $("#satnav_entered_number").text("6 0 9 ");
-    highlightFirstLetter("satnav_house_number_show_characters");
-    highlightPreviousLetter("satnav_house_number_show_characters");
-    highlightPreviousLetter("satnav_house_number_show_characters");
-
-    // Sat nav private address entry
-    $("#satnav_private_address_entry").text("HOME");
-    $("#satnav_private_address_city").text("AMSTELVEEN");
-    $("#satnav_private_address_street_shown").text("SPORTLAAN");
-    $("#satnav_private_address_house_number_shown").text("23");
-
-    // Sat nav business address entry
-    $("#satnav_business_address_entry").text("WORK");
-    $("#satnav_business_address_city").text("Schiphol");
-    $("#satnav_business_address_street_shown").text("Westzijde");
-    $("#satnav_business_address_house_number_shown").text("1118");
-
-    // Sat nav place of interest address entry
-    $("#satnav_place_of_interest_address_entry").text("P1 Short-term parking");
-    $("#satnav_place_of_interest_address_city").text("Schiphol");
-    $("#satnav_place_of_interest_address_street").text("Boulevard");
-    $("#satnav_place_of_interest_address_distance_km").text("17");
-    $("#satnav_place_of_interest_address_entry_number").text("3");
-    $("#satnav_to_mfd_list_size").text("17");
-
-    // Sat nav programmed (current) destination
-    $('[gid="satnav_current_destination_city"]').text("Amsterdam");
-    $("#satnav_current_destination_street_shown").text("Keizersgracht");
-    $("#satnav_current_destination_house_number_shown").text("609");
-
-    // Sat nav last destination
-    $('[gid="satnav_last_destination_city"]').text("Schiphol");
-    $('[gid="satnav_last_destination_street_shown"]').text("Evert van de Beekstraat");
-    $('[gid="satnav_last_destination_house_number_shown"]').text("31");
-
-    // Sat nav guidance
-    $("#satnav_distance_to_dest_via_road_number").text("45");
-    $("#satnav_distance_to_dest_via_road_unit").text("km");
-
-    $("#satnav_heading_to_dest_pointer").css("transform", "rotate(292.5deg)");
-    $("#satnav_guidance_curr_street").text("Evert van de Beekstraat");
-    $("#satnav_guidance_next_street").text("Handelskade");
-    $("#satnav_turn_at_number").text("200");
-    $("#satnav_turn_at_unit").text("m");
-    $("#satnav_next_turn_icon").show();
-
-    // Current turn is a roundabout with five legs; display the legs not to take
-    $("#satnav_curr_turn_icon").show();
-    $("#satnav_curr_turn_roundabout").show();
-    $("#satnav_curr_turn_icon_leg_90_0").show();
-    $("#satnav_curr_turn_icon_leg_157_5").show();
-    $("#satnav_curr_turn_icon_leg_202_5").show();
-
-    // Next turn is a junction four legs; display the legs not to take
-    $("#satnav_next_turn_icon_leg_112_5").show();
-    $("#satnav_next_turn_icon_leg_202_5").show();
-
-    // Show some "no entry" icons
-    $("#satnav_curr_turn_icon_no_entry_157_5").show();
-    $("#satnav_next_turn_icon_no_entry_202_5").show();
-
-    // Set the "direction" arrows
-    var currTurnAngle = 247.5;
-    document.getElementById("satnav_curr_turn_icon_direction").style.transform = "rotate(" + currTurnAngle + "deg)";
-    document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute(
-        "d", describeArc(150, 150, 30, currTurnAngle - 180, 180)
-    );
-    var nextTurnAngle = 292.5;
-    document.getElementById("satnav_next_turn_icon_direction").style.transform = "rotate(" + nextTurnAngle + "deg)";
-    document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute(
-        "d", describeArc(150, 150, 30, nextTurnAngle - 180, 180)
-    );
-
-    // Popup warning or information
-    $("#notification_icon_warning").show();
-    $("#notification_icon_info").hide();
-    $("#last_notification_message_on_mfd").text("Oil pressure too low");
-
-    // Door open popup
-    $("#door_front_left").show();
-    $("#door_front_right").show();
-
-    // Tuner presets popup
-    $("#presets_fm_1").show();
-    $("#radio_preset_FM1_1").text("NPO 1");
-    $("#radio_preset_FM1_2").text("Classic NL");
-    $("#radio_preset_FM1_3").text("3FM");
-    $("#radio_preset_FM1_4").text("BNR");
-    $("#radio_preset_FM1_5").text("Radio 538");
-    $("#radio_preset_FM1_6").text("Veronica");
-    $("#presets_memory_5_select").show();
-} // demoMode
-
 )=====";

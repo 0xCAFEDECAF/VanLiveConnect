@@ -159,6 +159,7 @@ textarea
   font-size:100px;
   width:160px;
   height:140px;
+  line-height:1;
 }
 .iconVeryLarge
 {

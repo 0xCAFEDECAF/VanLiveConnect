@@ -1,17 +1,17 @@
 #include <ArduinoOTA.h>
 
 // Wifi
-const char* getHostname();
+const char* GetHostname();
 
-void setupOta()
+void SetupOta()
 {
     Serial.print(F("Enabling over-the-air (OTA) update ..."));
 
     // Port defaults to 8266
     // ArduinoOTA.setPort(8266);
 
-    // Hostname defaults to esp8266-[ChipID]
-    ArduinoOTA.setHostname(getHostname());
+    // Hostname defaults to esp8266-[ChipID]; overrule here
+    ArduinoOTA.setHostname(GetHostname());
 
     // No authentication by default
     // ArduinoOTA.setPassword((const char *)"123");
@@ -49,7 +49,7 @@ void setupOta()
     Serial.println(F(" OK"));
 } // setupOta
 
-void loopOta()
+void LoopOta()
 {
     ArduinoOTA.handle();
 } // loopOta

@@ -19,7 +19,7 @@ enum VanPacketParseResult_t
     VAN_PACKET_PARSE_UNEXPECTED_LENGTH = -2,  // Packet had unexpected length
     VAN_PACKET_PARSE_UNRECOGNIZED_IDEN = -3,  // Packet had unrecognized IDEN field
     VAN_PACKET_PARSE_TO_BE_DECODED = -4,  // IDEN recognized but the correct parsing of this packet is not yet known
-    VAN_PACKET_PARSE_JSON_TOO_LONG = -5,  // IDEN recognized but the parsing onto JSON overflows 'jsonBuffer'
+    VAN_PACKET_PARSE_JSON_TOO_LONG = -5,  // IDEN recognized but the parsing into JSON overflows 'jsonBuffer'
     VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least on fragment of a multi-fragment message
 }; // enum VanPacketParseResult_t
 
@@ -1883,7 +1883,12 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             char trackTimeStr[7];
             sprintf_P(trackTimeStr, PSTR("%X:%02X"), data[5], data[6]);
 
+            static bool loading = false;
             bool searching = data[3] & 0x10;
+
+            // Keep on reporting "loading" until no longer "searching"
+            if ((data[3] & 0x0F) == 0x01) loading = true;
+            if (! searching) loading = false;
 
             uint8_t totalTracks = data[8];
             bool totalTracksInvalid = totalTracks == 0xFF;
@@ -1906,7 +1911,8 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                 "\"data\":\n"
                 "{\n"
                     "\"cd_status\": \"%S\",\n"
-                    "\"cd_status_inserted\": \"%S\",\n"
+                    "\"cd_status_loading\": \"%S\",\n"
+                    "\"cd_status_eject\": \"%S\",\n"
                     "\"cd_status_pause\": \"%S\",\n"
                     "\"cd_status_play\": \"%S\",\n"
                     "\"cd_status_fast_forward\": \"%S\",\n"
@@ -1922,7 +1928,9 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
 
             at = snprintf_P(buf, n, jsonFormatter,
 
-                data[3] == 0x11 ? PSTR("INSERTED") :
+                data[3] == 0x00 ? PSTR("EJECT") :
+                data[3] == 0x10 ? PSTR("ERROR") :  // E.g. disc inserted upside down
+                data[3] == 0x11 ? PSTR("LOADING") :
                 data[3] == 0x12 ? PSTR("PAUSE-SEARCHING") :
                 data[3] == 0x13 ? PSTR("PLAY-SEARCHING") :
                 data[3] == 0x02 ? PSTR("PAUSE") :
@@ -1931,13 +1939,14 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                 data[3] == 0x05 ? PSTR("REWIND") :
                 ToHexStr(data[3]),
 
-                (data[3] & 0x0F) == 0x01 ? onStr : offStr,
+                loading ? onStr : offStr,
+                data[3] == 0x00 ? onStr : offStr,
                 (data[3] & 0x0F) == 0x02 && ! searching ? onStr : offStr,
                 (data[3] & 0x0F) == 0x03 && ! searching ? onStr : offStr,
                 (data[3] & 0x0F) == 0x04 ? onStr : offStr,
                 (data[3] & 0x0F) == 0x05 ? onStr : offStr,
 
-                searching ? onStr : offStr,
+                (data[3] == 0x12 || data[3] == 0x13) && ! loading ? onStr : offStr,
 
                 searching ? PSTR("--:--") : trackTimeStr,
 
@@ -2002,6 +2011,9 @@ VanPacketParseResult_t ParseTimePkt(const char* idenStr, TVanPacketRxDesc& pkt, 
     return VAN_PACKET_PARSE_OK;
 } // ParseTimePkt
 
+static bool seenTapePresence = false;
+static bool seenCdPresence = false;
+
 VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4D4
@@ -2010,6 +2022,10 @@ VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDe
 
     const uint8_t* data = pkt.Data();
     uint8_t volume = data[5] & 0x7F;
+    bool tapePresent = data[4] & 0x20;
+    bool cdPresent = data[4] & 0x40;
+    seenTapePresence = seenTapePresence || tapePresent;
+    seenCdPresence = seenCdPresence || cdPresent;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2049,14 +2065,14 @@ VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDe
 
     int at = snprintf_P(buf, n, jsonFormatter,
         data[2] & 0x01 ? onStr : offStr,  // Power
-        data[4] & 0x20 ? yesStr : noStr,  // Tape present
-        data[4] & 0x40 ? yesStr : noStr,  // CD present
+        tapePresent ? yesStr : noStr,  // Tape present
+        cdPresent ? yesStr : noStr,  // CD present
 
         (data[4] & 0x0F) == 0x00 ? noneStr :  // Source of audio
         (data[4] & 0x0F) == 0x01 ? PSTR("TUNER") :
         (data[4] & 0x0F) == 0x02 ?
-            data[4] & 0x20 ? PSTR("TAPE") :
-            data[4] & 0x40 ? PSTR("CD") :
+            seenTapePresence ? PSTR("TAPE") :
+            seenCdPresence ? PSTR("CD") :
             PSTR("INTERNAL_CD_OR_TAPE") :
         (data[4] & 0x0F) == 0x03 ? PSTR("CD_CHANGER") :
 
@@ -2329,6 +2345,8 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
     const uint8_t* data = pkt.Data();
 
     bool searching = data[2] & 0x10;
+    bool loading = data[2] & 0x08;
+    bool ejecting = data[2] == 0xC1 && data[10] == 0;  // Ejecting cartridge
 
     cdChangerCartridgePresent = data[3] == 0x16; // "not present" is 0x06
 
@@ -2352,8 +2370,9 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
         "\"data\":\n"
         "{\n"
             "\"cd_changer_present\": \"%S\",\n"
-            "\"cd_changer_loading\": \"%S\",\n"
-            "\"cd_changer_operational\": \"%S\",\n"
+            "\"cd_changer_status_loading\": \"%S\",\n"
+            "\"cd_changer_status_eject\": \"%S\",\n"
+            "\"cd_changer_status_operational\": \"%S\",\n"
             "\"cd_changer_status_searching\": \"%S\",\n"
             "\"cd_changer_status\": \"%S\",\n"
             "\"cd_changer_status_pause\": \"%S\",\n"
@@ -2378,29 +2397,36 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
     int at = snprintf_P(buf, n, jsonFormatter,
 
         data[2] & 0x40 ? yesStr : noStr,  // CD changer device present
-        data[2] & 0x08 ? yesStr : noStr,  // Loading disc? Not sure
+        loading ? yesStr : noStr,  // Loading disc
+        ejecting ? yesStr : noStr,  // Ejecting cartridge
 
         // Head unit powered on; CD changer operational (either standby or selected as audio source)
         data[2] & 0x80 ? yesStr : noStr,
 
         searching ? onStr : offStr,
 
-        // TODO - remove this field?
         data[2] == 0x40 ? PSTR("POWER_OFF") :  // Not sure
         data[2] == 0x41 ? PSTR("POWER_ON") : // Not sure
-        data[2] == 0x49 ? PSTR("INITIALIZE") :  // Not sure
+        data[2] == 0x49 ? PSTR("INITIALIZE") : // Not sure
+        data[2] == 0x4B ? PSTR("LOADING") :
         data[2] == 0xC0 ? PSTR("POWER_ON_READY") :  // Not sure
-        data[2] == 0xC1 ? PSTR("PAUSE") :
+        data[2] == 0xC1 ? 
+            data[10] == 0 ? PSTR("EJECT") :
+            PSTR("PAUSE") :
         data[2] == 0xC3 ? PSTR("PLAY") :
         data[2] == 0xC4 ? PSTR("FAST_FORWARD") :
         data[2] == 0xC5 ? PSTR("REWIND") :
-        data[2] == 0xD3 ? PSTR("PLAY-SEARCHING") :
+        data[2] == 0xD3 ?
+            // "PLAY-SEARCHING" (data[2] == 0xD3) with discs found (data[10] > 0) and invalid values for currentDisc/
+            // currentTrack seems to indicate an error condition, e.g. disc inserted wrong way round.
+            data[10] >= 0 && currentDisc == 0xFF && currentTrack == 0xFF ? PSTR("ERROR") :
+            PSTR("PLAY-SEARCHING") :
         ToHexStr(data[2]),
 
-        (data[2] & 0x07) == 0x01 ? onStr : offStr,
-        (data[2] & 0x07) == 0x03 && ! searching ? onStr : offStr,
-        (data[2] & 0x07) == 0x04 ? onStr : offStr,
-        (data[2] & 0x07) == 0x05 ? onStr : offStr,
+        (data[2] & 0x07) == 0x01 && ! ejecting && ! loading ? onStr : offStr,  // Pause
+        (data[2] & 0x07) == 0x03 && ! searching && ! loading ? onStr : offStr,  // Play
+        (data[2] & 0x07) == 0x04 ? onStr : offStr,  // Fast forward
+        (data[2] & 0x07) == 0x05 ? onStr : offStr,  // Rewind
 
         cdChangerCartridgePresent ? yesStr : noStr,
 
@@ -2512,9 +2538,16 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
         ToHexStr(satnavStatus2);
 
     // The following data is stored in non-volatile storage
-    getStore()->satnavGuidanceActive = satnavStatus2 == 0x05;
-    getStore()->satnavDiscPresent = (data[2] & 0x70) == 0x30;
-    MarkStoreDirty();
+
+    bool satnavGuidanceActive = satnavStatus2 == 0x05;
+    bool isChanged = getStore()->satnavGuidanceActive != satnavGuidanceActive;
+    getStore()->satnavGuidanceActive = satnavGuidanceActive;
+
+    bool satnavDiscPresent = (data[2] & 0x70) == 0x30;
+    isChanged = isChanged || getStore()->satnavDiscPresent != satnavDiscPresent;
+    getStore()->satnavDiscPresent = satnavDiscPresent;
+
+    if (isChanged) MarkStoreDirty();
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2647,8 +2680,9 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
         at = snprintf_P(buf, n, jsonFormatter, SatNavGuidancePreferenceStr(preference));
 
         // Save also in non-volatile storage
+        bool isChanged = getStore()->satnavGuidancePreference != preference;
         getStore()->satnavGuidancePreference = preference;
-        MarkStoreDirty();
+        if (isChanged) MarkStoreDirty();
     }
     else if (dataLen == 17 && data[0] == 0x20)
     {
@@ -2704,7 +2738,7 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacke
     bool distanceToNextTurnInKms = data[9] & 0x80;
     uint16_t headingOnRoundabout = (uint16_t)data[11] << 8 | data[12];
 
-    // TODO - Not sure, just guessing. could also be number of instructions still to be done
+    // TODO - Not sure, just guessing. Could also be number of instructions still to be done.
     uint16_t minutesToTravel = (uint16_t)data[13] << 8 | data[14];
 
     const static char jsonFormatter[] PROGMEM =
@@ -2712,6 +2746,7 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacke
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"satnav_curr_heading_compass_needle_rotation\": \"%u\",\n"
             "\"satnav_curr_heading_compass_needle\":\n"
             "{\n"
                 "\"style\":\n"
@@ -2720,6 +2755,7 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacke
                 "}\n"
             "},\n"
             "\"satnav_curr_heading\": \"%u\",\n"  // degrees
+            "\"satnav_heading_to_dest_pointer_rotation\": \"%u\",\n"
             "\"satnav_heading_to_dest_pointer\":\n"
             "{\n"
                 "\"style\":\n"
@@ -2740,8 +2776,10 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacke
     int at = snprintf_P(buf, n, jsonFormatter,
 
         360 - currHeading, // Compass needle direction is current heading, mirrored over a vertical line
+        360 - currHeading,
         currHeading,
         (360 - currHeading + headingToDestination) % 360, // To show pointer indicating direction relative to current heading
+        (360 - currHeading + headingToDestination) % 360,
         headingToDestination,
 
         FloatToStr(floatBuf[0], roadDistanceToDestination, 0),
@@ -3233,7 +3271,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 "\"satnav_place_of_interest_address_province\": \"%s\",\n"
                 "\"satnav_place_of_interest_address_city\": \"%s%S%s\",\n"
                 "\"satnav_place_of_interest_address_street\": \"%s%s\",\n"
-                "\"satnav_place_of_interest_address_distance\": \"%s\"";
+                "\"satnav_place_of_interest_address_distance\": \"%s m\"";
 
             // Chosen place of interest address is in first (and only) record. Copy at least city [3], district [4]
             // (if any), street [5, 6], entry name [9] and distance [11]; skip the other strings.
@@ -3260,7 +3298,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     records[0][5].c_str() + 1,  // Skip the fixed first letter ('G' or 'I')
                     records[0][6].c_str(),
 
-                    // Distance (in meters) to the place of interest
+                    // Distance (in metres) to the place of interest
                     records[0][11].c_str()
                 );
         }
@@ -3298,15 +3336,25 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     records[i][0].replace("&#x24E7;", "");
                     records[i][0].trim();
 
-                    if (report == SR_PERSONAL_ADDRESS_LIST) getStore()->personalDirectoryEntries[i] = records[i][0];
-                    else getStore()->professionalDirectoryEntries[i] = records[i][0];
+                    bool isChanged = false;
+
+                    if (report == SR_PERSONAL_ADDRESS_LIST)
+                    {
+                        isChanged = getStore()->personalDirectoryEntries[i] != records[i][0];
+                        if (isChanged) getStore()->personalDirectoryEntries[i] = records[i][0];
+                    }
+                    else
+                    {
+                        isChanged = getStore()->professionalDirectoryEntries[i] != records[i][0];
+                        if (isChanged) getStore()->professionalDirectoryEntries[i] = records[i][0];
+                    } // if
+
+                    if (isChanged) MarkStoreDirty();
                 } // if
             } // for
 
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
-
-            if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST) MarkStoreDirty();
         }
         break;
 
@@ -3714,12 +3762,17 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToSatNavPkt
 
+// Saved equipment status (volatile)
+sint16_t satnavServiceListSize = -1;
+
 VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#74E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#74E
 
     const uint8_t* data = pkt.Data();
+    uint8_t request = data[1];
+    sint16_t listSize = (sint16_t)(data[4] << 8 | data[5]);
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -3730,10 +3783,11 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
             "\"satnav_to_mfd_list_size\": \"%d\",\n"
             "\"satnav_to_mfd_show_characters\": \"";  // TODO - rename to "satnav_to_mfd_available_characters"
 
-    int at = snprintf_P(buf, n, jsonFormatter,
-        SatNavRequestStr(data[1]),
-        (sint16_t)(data[4] << 8 | data[5])
-    );
+    int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request), listSize);
+
+    // Store number of services; it must be reported to the websocket client upon connection, so that it can
+    // enable the "Select a service" menu item
+    if (request == SR_SERVICE_LIST && listSize > 0) satnavServiceListSize = listSize;
 
     // TODO - handle SR_ARCHIVE_IN_DIRECTORY
 
@@ -4245,7 +4299,22 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         SatNavGuidancePreferenceStr(getStore()->satnavGuidancePreference)        
     );
 
-    // The names of the directory entries are match against while entering new entries or renaming existing ones.
+    if (satnavServiceListSize > 0)
+    {
+        // Report also the number of services, so that the websocket client can enable the "Select a service" menu item
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR
+                (
+                    ",\n"
+                    "\"satnav_to_mfd_response\": \"%S\",\n"
+                    "\"satnav_to_mfd_list_size\": \"%d\""
+                ),
+                SatNavRequestStr(SR_SERVICE_LIST),
+                satnavServiceListSize
+            );
+    } // if
+
+    // The names of the directory entries are matched against while entering new entries or renaming existing ones.
     // When the user tries to create an entry with an existing name, the "Validate" button becomes grayed out.
     String* entryLists[2] = { getStore()->personalDirectoryEntries, getStore()->professionalDirectoryEntries };
     for (int i = 0; i < 2; i++)
@@ -4255,11 +4324,12 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         if (entryList[0].length() > 0)
         {
             at += at >= n ? 0 :
-                snprintf_P(buf + at, n - at,
-                    ",\n"
-                    "\"satnav_%S_directory_entries\":\n"
-                    "[",
-
+                snprintf_P(buf + at, n - at, PSTR
+                    (
+                        ",\n"
+                        "\"satnav_%S_directory_entries\":\n"
+                        "["
+                    ),
                     i == 0 ? PSTR("personal") : PSTR("professional")
                 );
 
@@ -4371,39 +4441,38 @@ static IdenHandler_t handlers[] =
 {
     // Columns:
     // IDEN value, IDEN string, number of expected bytes (or -1 if varying/unknown), handler function
-    // TODO - use defines from VanIden.h
-    { 0xE24, "vin", 17, &ParseVinPkt },
-    { 0x8A4, "engine", 7, &ParseEnginePkt },
-    { 0x9C4, "head_unit_stalk", 2, &ParseHeadUnitStalkPkt },
-    { 0x4FC, "lights_status", -1, &ParseLightsStatusPkt },
-    { 0x8C4, "device_report", -1, &ParseDeviceReportPkt },
-    { 0x564, "car_status_1", 27, &ParseCarStatus1Pkt },
-    { 0x524, "car_status_2", -1, &ParseCarStatus2Pkt },
-    { 0x824, "dashboard", 7, &ParseDashboardPkt },
-    { 0x664, "dashboard_buttons", -1, &ParseDashboardButtonsPkt },
-    { 0x554, "head_unit", -1, &ParseHeadUnitPkt },
-    { 0x984, "time", 5, &ParseTimePkt },
-    { 0x4D4, "audio_settings", 11, &ParseAudioSettingsPkt },
-    { 0x5E4, "mfd_status", 2, &ParseMfdStatusPkt },
-    { 0x464, "aircon_1", 5, &ParseAirCon1Pkt },
-    { 0x4DC, "aircon_2", 7, &ParseAirCon2Pkt },
-    { 0x4EC, "cd_changer", -1, &ParseCdChangerPkt },
-    { 0x54E, "satnav_status_1", 6, &ParseSatNavStatus1Pkt },
-    { 0x7CE, "satnav_status_2", 20, &ParseSatNavStatus2Pkt },
-    { 0x8CE, "satnav_status_3", -1, &ParseSatNavStatus3Pkt },
-    { 0x9CE, "satnav_guidance_data", 16, &ParseSatNavGuidanceDataPkt },
-    { 0x64E, "satnav_guidance", -1, &ParseSatNavGuidancePkt },
-    { 0x6CE, "satnav_report", -1, &ParseSatNavReportPkt },
-    { 0x94E, "mfd_to_satnav", -1, &ParseMfdToSatNavPkt },
-    { 0x74E, "satnav_to_mfd", 27, &ParseSatNavToMfdPkt },
-    { 0x744, "wheel_speed", 5, &ParseWheelSpeedPkt },
-    { 0x8FC, "odometer", 5, &ParseOdometerPkt },
-    { 0x450, "com2000", 10, &ParseCom2000Pkt },
-    { 0x8EC, "cd_changer_command", 2, &ParseCdChangerCmdPkt },
-    { 0x8D4, "display_to_head_unit", -1, &ParseMfdToHeadUnitPkt },
+    { VIN_IDEN, "vin", 17, &ParseVinPkt },
+    { ENGINE_IDEN, "engine", 7, &ParseEnginePkt },
+    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, &ParseHeadUnitStalkPkt },
+    { LIGHTS_STATUS_IDEN, "lights_status", -1, &ParseLightsStatusPkt },
+    { DEVICE_REPORT, "device_report", -1, &ParseDeviceReportPkt },
+    { CAR_STATUS1_IDEN, "car_status_1", 27, &ParseCarStatus1Pkt },
+    { CAR_STATUS2_IDEN, "car_status_2", -1, &ParseCarStatus2Pkt },
+    { DASHBOARD_IDEN, "dashboard", 7, &ParseDashboardPkt },
+    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, &ParseDashboardButtonsPkt },
+    { HEAD_UNIT_IDEN, "head_unit", -1, &ParseHeadUnitPkt },
+    { TIME_IDEN, "time", 5, &ParseTimePkt },
+    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, &ParseAudioSettingsPkt },
+    { MFD_STATUS_IDEN, "mfd_status", 2, &ParseMfdStatusPkt },
+    { AIRCON1_IDEN, "aircon_1", 5, &ParseAirCon1Pkt },
+    { AIRCON2_IDEN, "aircon_2", 7, &ParseAirCon2Pkt },
+    { CDCHANGER_IDEN, "cd_changer", -1, &ParseCdChangerPkt },
+    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, &ParseSatNavStatus1Pkt },
+    { SATNAV_STATUS_2_IDEN, "satnav_status_2", 20, &ParseSatNavStatus2Pkt },
+    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, &ParseSatNavStatus3Pkt },
+    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, &ParseSatNavGuidanceDataPkt },
+    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, &ParseSatNavGuidancePkt },
+    { SATNAV_REPORT_IDEN, "satnav_report", -1, &ParseSatNavReportPkt },
+    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, &ParseMfdToSatNavPkt },
+    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, &ParseSatNavToMfdPkt },
+    { WHEEL_SPEED_IDEN, "wheel_speed", 5, &ParseWheelSpeedPkt },
+    { ODOMETER_IDEN, "odometer", 5, &ParseOdometerPkt },
+    { COM2000_IDEN, "com2000", 10, &ParseCom2000Pkt },
+    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, &ParseCdChangerCmdPkt },
+    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, &ParseMfdToHeadUnitPkt },
 #if 0
-    { 0xADC, "aircon_diag", -1, &DefaultPacketParser },
-    { 0xA5C, "aircon_diag_command", -1, &DefaultPacketParser },
+    { AIR_CONDITIONER_DIAG_IDEN, "aircon_diag", -1, &DefaultPacketParser },
+    { AIR_CONDITIONER_DIAG_COMMAND_IDEN, "aircon_diag_command", -1, &DefaultPacketParser },
 #endif
 }; // handlers
 

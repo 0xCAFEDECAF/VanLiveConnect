@@ -2,7 +2,8 @@
 
 ---
 
-<p align="center">Live data from your PSA vehicle on your smartphone or tablet, directly from the VAN bus.</p>
+<p align="center">Live data from your PSA vehicle (Peugeot, Citroen) on your smartphone or tablet, directly from
+the VAN bus.</p>
 
 ## 📝 Table of Contents
 
@@ -106,7 +107,7 @@ See also the [Screen Shots](#screenshots) above.
 * "Pre-flight" checks (oil and fuel level, engine temperature)
 * Odometer and trip counters
 * Live fuel data (consumption, remaining distance)
-* Radio (Tuner)
+* Radio (tuner)
 * Cassette tape player (well... even CD is vintage these days 😉)
 * Head unit internal CD player
 * CD changer unit
@@ -116,7 +117,7 @@ See also the [Screen Shots](#screenshots) above.
 Note: availability will depend on your vehicle's configuration.
 
 Not yet supported:
-* Multiple languages; currently only English
+* Multiple languages (currently only English)
 * Setting brightness and contrast
 * Setting format and units (currently only degrees Celsius and kilometres)
 
@@ -283,7 +284,7 @@ As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peug
 communication protocol between the various comfort-related equipment. Later, around 2005, they started to
 replace this protocol in their newer cars with the CAN bus protocol.
 
-## 📘 References<a name = "extref"></a>
+## 📜 References<a name = "extref"></a>
 
 For background reading:
 

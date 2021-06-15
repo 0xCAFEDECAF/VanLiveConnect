@@ -387,7 +387,7 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="centerAligned fas fa-stop"></div>
             </div>
             <div id="tape_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
-              <div class="centerAligned fas fa-eject"></div>
+              <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
             <div id="tape_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-play"></div>
@@ -429,8 +429,11 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="cd_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
-            <div id="cd_status_inserted" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
-              <div class="centerAligned fas fa-compact-disc"></div>
+            <div id="cd_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+              <div class="centerAligned fas fa-sign-in-alt"></div>
+            </div>
+            <div id="cd_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+              <div class="centerAligned fas fa-eject"></div>
             </div>
 
             <div class="tag" style="left:0px; top:320px; width:180px;">Total</div>
@@ -440,6 +443,8 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="cd_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
             <div class="tag" style="left:625px; top:320px; width:50px;">/</div>
             <div id="cd_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
+
+            <div id="cd_status_error" class="tag" style="display:none; left:60px; top:400px; width:700px; text-align:left;">DISC ERROR</div>
 
             <div id="cd_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
               <div class="centerAligned fas fa-random"></div>
@@ -457,14 +462,9 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="cd_changer_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-pause"></div>
             </div>
-            <div id="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div id="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px; line-height:1;">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <!--
-            <div id="cd_changer_status_spinning" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
-              <div class="centerAligned fas fa-compact-disc"></div>
-            </div>
-            -->
             <div id="cd_changer_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
@@ -482,15 +482,23 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="centerAligned fas fa-fast-backward"></div>
             </div>
             -->
+            <div id="cd_changer_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+              <div class="centerAligned fas fa-sign-in-alt"></div>
+            </div>
+            <div id="cd_changer_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+              <div class="centerAligned fas fa-eject"></div>
+            </div>
 
-            <div id="cd_changer_disc_not_present" class="tag" style="display:none; left:0px; top:320px; width:170px;">No</div>
-            <div class="tag" style="left:65px; top:320px; width:200px;">CD</div>
-            <div id="cd_changer_selected_disc" class="dots" style="display:none; left:265px; top:315px; width:90px; text-align:right;">-</div>
-            <div id="cd_changer_current_disc" class="dots" style="left:265px; top:315px; width:90px; text-align:right;">-</div>
+            <div id="cd_changer_disc_not_present" class="tag" style="display:none; left:0px; top:320px; width:205px;">No</div>
+            <div class="tag" style="left:65px; top:320px; width:235px;">CD</div>
+            <div id="cd_changer_selected_disc" class="dots" style="display:none; left:300px; top:315px; width:90px; text-align:right;">-</div>
+            <div id="cd_changer_current_disc" class="dots" style="left:300px; top:315px; width:90px; text-align:right;">-</div>
             <div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
             <div id="cd_changer_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
             <div class="tag" style="left:625px; top:320px; width:50px;">/</div>
             <div id="cd_changer_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
+
+            <div id="cd_changer_status_error" class="tag" style="display:none; left:0px; top:320px; width:205px;">ERROR</div>
 
             <div id="cd_changer_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
               <div class="centerAligned fas fa-random"></div>
@@ -907,6 +915,13 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
           <svg>
             <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
+          </svg>
+        </div>
+
+        <!-- Small "N" at end of arrow, indicating "North" -->
+        <div id="satnav_curr_heading_compass_tag" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:translate(0px,-42px); transform-origin:center;">
+          <svg>
+            <text x="24" y="36" fill="#dfe7f2" font-size="20px" dominant-baseline="middle" text-anchor="middle">N</text>
           </svg>
         </div>
 
@@ -1386,8 +1401,8 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_place_of_interest_address_street" class="dots" style="left:210px; top:285px; width:750px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
-            <div id="satnav_place_of_interest_address_distance_km" class="dots" style=" left:25px; top:376px; width:180px; text-align:right;">-</div>
-            <div class="tag" style="left:165px; top:380px; width:120px;">km</div>
+            <div id="satnav_place_of_interest_address_distance_number" class="dots" style=" left:25px; top:376px; width:180px; text-align:right;">-</div>
+            <div id="satnav_place_of_interest_address_distance_unit" class="dots" style="font-size:30px; left:210px; top:400px;"></div>
 
             <!-- Show also the entry number and the total number of entries found -->
             <div id="satnav_place_of_interest_address_entry_number" class="dots" style=" left:600px; top:376px; width:160px; text-align:right;">-</div>
@@ -1697,6 +1712,13 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_heading_to_dest_pointer" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
               <svg>
                 <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
+              </svg>
+            </div>
+
+            <!-- Small "D" at end of arrow, indicating "Destination" -->
+            <div id="satnav_heading_to_dest_tag" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:translate(0px,-70px); transform-origin:center;">
+              <svg>
+                <text x="40" y="60" fill="#dfe7f2" font-size="30px" dominant-baseline="middle" text-anchor="middle">D</text>
               </svg>
             </div>
 

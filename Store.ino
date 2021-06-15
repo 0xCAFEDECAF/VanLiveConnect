@@ -15,7 +15,7 @@ StoredData* _store = NULL;
 
 // Make sure the number is greater than or equal to the number of entries in StoredData
 #define JSON_BUFFER_SIZE (JSON_OBJECT_SIZE(10 + 2 * MAX_DIRECTORY_ENTRIES))
-//#define JSON_BUFFER_SIZE (JSON_OBJECT_SIZE(10))
+//#define JSON_BUFFER_SIZE (JSON_OBJECT_SIZE(20))
 const char STORE_FILE_NAME[] = "/store.json";
 
 bool _storeDirty = false;
@@ -74,12 +74,13 @@ void _saveStore()
 
 void _readStore()
 {
+    VanBusRx.Disable();
     File storeFile = SPIFFS.open(STORE_FILE_NAME, "r");
 
     // If the file does not exist or is invalid, try to create one with initial values
-    if (! storeFile) return _saveStore();
+    if (! storeFile) return _saveStore();  // Will also re-enable the VanBusRx
     size_t size = storeFile.size();
-    if (size > 4096) return _saveStore();
+    if (size > 4096) return _saveStore();  // Will also re-enable the VanBusRx
 
     // Allocate a buffer to store contents of the file
     std::unique_ptr<char[]> buf(new char[size + 1]);
@@ -88,12 +89,22 @@ void _readStore()
     // buffer to be mutable. If you don't use ArduinoJson, you may as well
     // use storeFile.readString(...) instead.
     storeFile.readBytes(buf.get(), size);
+
+    storeFile.close();
+    VanBusRx.Enable();
+
     *(buf.get() + size) = 0;
 
     Serial.printf_P(PSTR("Contents of '%s':\n"), STORE_FILE_NAME);
     Serial.println(buf.get());
 
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+
+    // TODO - remove
+    //JsonObject& root = jsonBuffer.parseObject("{\"satnavGuidanceActive\":false,\"satnavDiscPresent\":true,\"satnavGuidancePreference\":1,\"personalDirectoryEntries\":[\"ASSEN\",\"BEBA\",\"BETTINA\",\"BIRKELT\",\"CAMP NOU\",\"CAMPING\",\"CAMPING2017\",\"CAMPING2018\",\"EELDE HFDWG 58F\",\"FUUSSEKAU\",\"FUUSSEKAUL\",\"GRENS SPANJE\",\"HOTEL\",\"HOTEL 1\",\"HOTEL HEEN\",\"HOTEL TERUG\",\"IICHENHAUSEN\",\"LIDL\",\"OVERNACHT2018\",\"OVERNACHTING\",\"PEDALORAIL\",\"PETITE MENTO..\",\"PRAKTIJK B S..\",\"RIGELSTRAAT\",\"SKI 2019\",\"SPORHAL BERGUM\",\"W\"],\"professionalDirectoryEntries\":[\"ASML\"]}");
+    //JsonObject& root = jsonBuffer.parseObject("{\"satnavGuidanceActive\":false}");
+    //JsonObject& root = jsonBuffer.parseObject("{\"satnavGuidanceActive\":false,\"satnavDiscPresent\":true,\"satnavGuidancePreference\":1,\"personalDirectoryEntries\":[\"ASSEN\",\"BEBA\",\"BETTINA\",\"BIRKELT\",\"CAMP NOU\",\"CAMPING\",\"CAMPING2017\",\"CAMPING2018\",\"EELDE HFDWG 58F\",\"FUUSSEKAU\",\"FUUSSEKAUL\",\"GRENS SPANJE\",\"HOTEL\",\"HOTEL 1\",\"HOTEL HEEN\",\"HOTEL TERUG\",\"IICHENHAUSEN\",\"LIDL\",\"OVERNACHT2018\",\"OVERNACHTING\",\"PEDALORAIL\",\"PETITE MENTO..\",\"PRAKTIJK B S..\",\"RIGELSTRAAT\",\"SKI 2019\",\"SPORHAL BERGUM\",\"W\"],\"professionalDirectoryEntries\":[\"ASML\"]}");
+
     JsonObject& root = jsonBuffer.parseObject(buf.get());
     if (!root.success()) return _saveStore();
 
@@ -123,8 +134,6 @@ void _readStore()
             _store->professionalDirectoryEntries[i++] = it->as<String>();
         } // for
     } // if
-
-    storeFile.close();
 } // _readStore
 
 String _formatBytes(size_t bytes)
@@ -135,8 +144,12 @@ String _formatBytes(size_t bytes)
     else return String(bytes/1024.0/1024.0/1024.0)+" GBytes";
 } // _formatBytes
 
-void _setupStore()
+void SetupStore()
 {
+    // Allocate and fill with initial data
+    _store = new StoredData;
+    *_store = _initialStore;
+
     Serial.print(F("Mounting SPI Flash File System (SPIFFS) ..."));
 
     // Make sure the file system is formatted and mounted
@@ -172,18 +185,14 @@ void _setupStore()
     } // while
 
     _readStore();
-} // _setupStore
+} // SetupStore
 
+// Must have called SetupStore() first.
+// Note: 'lazy initialization' within this function (and anywhere else) just doesn't work. If this function is e.g.
+// invoked from inside a callback function, the initialization just takes too long, or the stack overflows, or whatever,
+// and the system becomes unstable.
 StoredData* getStore()
 {
-    if (_store) return _store;
-
-    // Allocate and fill with initial data
-    _store = new StoredData;
-    *_store = _initialStore;
-
-    _setupStore();
-
     return _store;
 } // getStore
 
@@ -199,7 +208,7 @@ void LoopStore()
     if (! _storeDirty) return;
 
     // Flush to file after so many seconds
-    #define FLUSH_AFTER_SEC (3)
+    #define FLUSH_AFTER_SEC (5)
 
     // Arithmetic has safe roll-over
     if (millis() - _lastMarked < FLUSH_AFTER_SEC * MILLIS_PER_SEC) return;
