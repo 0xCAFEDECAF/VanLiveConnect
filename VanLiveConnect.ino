@@ -51,6 +51,7 @@ void MarkStoreDirty();
 void LoopStore();
 struct StoredData
 {
+    uint8_t smallScreenIndex;  // SmallScreen_t
     bool satnavGuidanceActive;
     bool satnavDiscPresent;
     uint8_t satnavGuidancePreference;
@@ -104,6 +105,7 @@ enum VanPacketFilter_t
     VAN_PACKETS_NONE_EXCEPT,
     VAN_PACKETS_HEAD_UNIT,
     VAN_PACKETS_AIRCON,
+    VAN_PACKETS_COM2000_ETC,
     VAN_PACKETS_SAT_NAV
 }; // enum VanPacketFilter_t
 

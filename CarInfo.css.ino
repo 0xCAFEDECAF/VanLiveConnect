@@ -153,6 +153,7 @@ textarea
 {
   font-size:80px;
   width:100px;
+  height:104px;
 }
 .iconLarge
 {

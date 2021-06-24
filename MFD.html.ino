@@ -37,7 +37,7 @@ char mfd_html[] PROGMEM = R"=====(
            |
            `- "Small" informaton panel (left)
            |  `- div id="trip_info"
-           |  `- div id="tuner_small"
+           |  `- div id="gps_info"
            |  `- div id="instrument_small"
            |
            `- Vertical separator line
@@ -197,26 +197,34 @@ char mfd_html[] PROGMEM = R"=====(
 
       </div>  <!-- Trip info -->
 
-      <!-- Tuner (small) -->
+      <!-- GPS info: compass, GPS fix icon and current street -->
 
-      <div id="tuner_small" style="display:none;">
+      <div id="gps_info" style="display:none;">
 
-        <div id="tuner_band" class="dots" style="left:30px; top:70px; width:250px;">---</div>
-
-        <div id="tuner_memory" gid="tuner_memory" class="dseg7" style="font-size:80px; left:310px; top:40px;">-</div>
-
-        <div gid="frequency" class="dseg7" style="font-size:70px; left:-20px; top:160px; width:240px;"></div>
-        <div gid="frequency_h" class="dseg7" style="font-size:40px; left:195px; top:160px; width:60px;"></div>
-        <div gid="frequency_khz" class="led ledOff" style="left:275px; top:160px; width:100px;">KHz</div>
-        <div gid="frequency_mhz" class="led ledOff" style="left:275px; top:203px; width:100px;">MHz</div>
-
-        <div id="fm_tuner_data_small" style="display:block;">
-          <div gid="rds_text" class="dseg14" style="font-size:55px; left:10px; top:280px; width:370px; text-align:right;"></div>
-
-          <div id="pty_8" class="dots" style="left:10px; top:370px; width:370px; text-align:right;"></div>
-
-          <div gid="pi_country" class="dots" style="left:10px; top:460px; width:370px; text-align:right;">--</div>
+        <div gid="satnav_gps_fix" class="iconSmall led ledOff" style="left:300px; top:20px;">
+          <div class="centerAligned fas fa-satellite-dish"></div>
         </div>
+
+        <!-- Current heading, shown as compass needle -->
+
+        <div gid="satnav_curr_heading_compass_needle" style="position:absolute; left:135px; top:135px; width:120px; height:180px; transform:rotate(0deg); transform-origin:center;">
+          <svg style="height:240px;">
+            <path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(1.5)"></path>
+          </svg>
+        </div>
+
+        <!-- Small "N" at end of arrow, indicating "North" -->
+        <div id="satnav_curr_heading_compass_tag_2" style="position:absolute; left:135px; top:135px; width:120px; height:180px; transform:translate(0px,-105px); transform-origin:center;">
+          <svg>
+            <text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="60" y="90" font-size="60px">N</text>
+          </svg>
+        </div>
+
+        <!-- Current street and city -->
+        <div class="icon" style="left:00px; top:350px; width:390px; height:200px;">
+          <div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
+        </div>
+
       </div>
 
       <!-- Instrument panel -->
@@ -239,6 +247,28 @@ char mfd_html[] PROGMEM = R"=====(
         <div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
         <div class="tag" style="text-align:left; left:280px; top:345px; width:140px;">lt</div>
 
+      </div>
+
+      <!-- Tuner info (small) -->
+
+      <div id="tuner_small" style="display:none;">
+
+        <div id="tuner_band" class="dots" style="left:30px; top:160px; width:250px;">---</div>
+
+        <div id="tuner_memory" gid="tuner_memory" class="dseg7" style="font-size:80px; left:310px; top:130px;">-</div>
+
+        <div gid="frequency" class="dseg7" style="font-size:70px; left:-20px; top:230px; width:240px;"></div>
+        <div gid="frequency_h" class="dseg7" style="font-size:40px; left:195px; top:230px; width:60px;"></div>
+        <div gid="frequency_khz" class="led ledOff" style="left:275px; top:230px; width:100px;">KHz</div>
+        <div gid="frequency_mhz" class="led ledOff" style="left:275px; top:273px; width:100px;">MHz</div>
+
+        <div id="fm_tuner_data_small" style="display:block;">
+          <div gid="rds_text" class="dseg14" style="font-size:55px; left:10px; top:330px; width:370px; text-align:right;"></div>
+
+          <div id="pty_8" class="dots" style="left:10px; top:410px; width:370px; text-align:right;"></div>
+
+          <div gid="pi_country" class="dots" style="left:10px; top:480px; width:370px; text-align:right;">--</div>
+        </div>
       </div>
 
       <!--
@@ -523,7 +553,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Fuel level, both as number (in litres) and as linear gauge -->
 
-        <div class="icon iconMedium" style="left:20px; top:25px; height:104px;">
+        <div class="icon iconMedium" style="left:20px; top:25px;">
           <div class="centerAligned fas fa-gas-pump"></div>
         </div>
 
@@ -545,7 +575,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Engine coolant temperature, both as number (in degrees Celsius) and as linear gauge -->
 
-        <div class="icon iconMedium" style="left:600px; top:25px; height:104px;">
+        <div class="icon iconMedium" style="left:600px; top:25px;">
           <div class="centerAligned fas fa-thermometer-half"></div>
         </div>
 
@@ -567,7 +597,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Oil level, both as number and as linear gauge -->
 
-        <div class="icon iconMedium" style="left:20px; top:190px; height:104px;">
+        <div class="icon iconMedium" style="left:20px; top:190px;">
           <div class="centerAligned fas fa-oil-can"></div>
         </div>
 
@@ -590,7 +620,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <div class="icon iconMedium" style="left:460px; top:195px;">...</div>
 
-        <div class="icon iconMedium" style="left:540px; top:180px; height:104px;">
+        <div class="icon iconMedium" style="left:540px; top:180px;">
           <div class="centerAligned fas fa-tools"></div>
         </div>
 
@@ -646,7 +676,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Fuel level, both as number (in litres) and as linear gauge -->
 
-        <div class="icon iconMedium" style="left:20px; top:25px; height:104px;">
+        <div class="icon iconMedium" style="left:20px; top:25px;">
           <div class="centerAligned fas fa-gas-pump"></div>
         </div>
 
@@ -668,7 +698,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Engine coolant temperature, both as number (in degrees Celsius) and as linear gauge -->
 
-        <div class="icon iconMedium" style="left:600px; top:25px; height:104px;">
+        <div class="icon iconMedium" style="left:600px; top:25px;">
           <div class="centerAligned fas fa-thermometer-half"></div>
         </div>
 
@@ -897,7 +927,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="centerAligned fas fa-search-location"></div>
         </div>
 
-        <div id="satnav_gps_fix" class="iconSmall led ledOff" style="left:550px; top:30px;">
+        <div gid="satnav_gps_fix" class="iconSmall led ledOff" style="left:550px; top:30px;">
           <div class="centerAligned fas fa-satellite-dish"></div>
         </div>
 
@@ -912,16 +942,16 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Current heading, shown as compass needle -->
 
-        <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
+        <div gid="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
           <svg>
-            <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
+            <path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
           </svg>
         </div>
 
         <!-- Small "N" at end of arrow, indicating "North" -->
-        <div id="satnav_curr_heading_compass_tag" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:translate(0px,-42px); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_tag_0_6" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:translate(0px,-42px); transform-origin:center;">
           <svg>
-            <text x="24" y="36" fill="#dfe7f2" font-size="20px" dominant-baseline="middle" text-anchor="middle">N</text>
+            <text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="24" y="36" font-size="20px">N</text>
           </svg>
         </div>
 
@@ -936,7 +966,7 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- Current street and city -->
           <div class="icon iconBorder" style="left:20px; top:150px; width:930px; height:250px;">
-            <div id="satnav_curr_street_shown" class="centerAligned" style="font-size:60px; white-space:normal;"></div>
+            <div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:60px; white-space:normal;"></div>
           </div>
 
         </div>  <!-- "satnav_current_location" -->
@@ -1711,14 +1741,14 @@ char mfd_html[] PROGMEM = R"=====(
             -->
             <div id="satnav_heading_to_dest_pointer" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
               <svg>
-                <path class="satNavInstructionIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
+                <path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
               </svg>
             </div>
 
             <!-- Small "D" at end of arrow, indicating "Destination" -->
             <div id="satnav_heading_to_dest_tag" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:translate(0px,-70px); transform-origin:center;">
               <svg>
-                <text x="40" y="60" fill="#dfe7f2" font-size="30px" dominant-baseline="middle" text-anchor="middle">D</text>
+                <text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="40" y="60" font-size="30px">D</text>
               </svg>
             </div>
 

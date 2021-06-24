@@ -146,6 +146,30 @@ void AsciiToHtml(String& in)
     } // for
 } // ToHtml
 
+// Index of small screen
+enum SmallScreen_t
+{
+    // Same order as the original MFD goes through as the driver short-presses the right stalk button
+
+    SMALL_SCREEN_TRIP_INFO_1, // When the original MFD is plugged in, this is what it starts with
+    SMALL_SCREEN_TRIP_INFO_2,
+    SMALL_SCREEN_GPS_INFO, // Skipped when in guidance mode
+    SMALL_SCREEN_FUEL_CONSUMPTION,
+
+    N_SMALL_SCREENS
+}; // enum SmallScreen_t
+
+// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+const char* SmallScreenStr(uint8_t data)
+{
+    return
+        data == SMALL_SCREEN_TRIP_INFO_1 ? PSTR("TRIP_INFO_1") :
+        data == SMALL_SCREEN_TRIP_INFO_2 ? PSTR("TRIP_INFO_2") :
+        data == SMALL_SCREEN_GPS_INFO ? PSTR("GPS_INFO") :
+        data == SMALL_SCREEN_FUEL_CONSUMPTION ? PSTR("FUEL_CONSUMPTION") :
+        ToHexStr(data);
+} // SmallScreenStr
+
 // Tuner band
 enum TunerBand_t
 {
@@ -670,7 +694,7 @@ VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt
                 FloatToStr(floatBuf[0], (float)waterTemp / MAX_COOLANT_TEMP, 2),
 
         FloatToStr(floatBuf[1], ((uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5]) / 10.0, 1),
-        FloatToStr(floatBuf[2], (data[6] - 0x50) / 2.0, 1)
+        FloatToStr(floatBuf[2], (data[6] - 80) / 2.0, 1)
     );
 
     // JSON buffer overflow?
@@ -825,8 +849,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
                 "}\n"
             "}",
 
-            // 0x55 = 85
-            #define MAX_OIL_LEVEL (0x55)
+            #define MAX_OIL_LEVEL (85)
             data[8] >= MAX_OIL_LEVEL ?
                 PSTR("1") :
                 FloatToStr(floatBuf, (float)data[8] / MAX_OIL_LEVEL, 2)
@@ -834,12 +857,12 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
 
     at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, PSTR(",\n\"oil_level_dash\": \"%S\""),
-            data[8] <= 0x0B ? PSTR("------") :
-            data[8] <= 0x19 ? PSTR("O-----") :
-            data[8] <= 0x27 ? PSTR("OO----") :
-            data[8] <= 0x35 ? PSTR("OOO---") :
-            data[8] <= 0x43 ? PSTR("OOOO--") :
-            data[8] <= 0x51 ? PSTR("OOOOO-") :
+            data[8] <= 11 ? PSTR("------") :
+            data[8] <= 25 ? PSTR("O-----") :
+            data[8] <= 39 ? PSTR("OO----") :
+            data[8] <= 53 ? PSTR("OOO---") :
+            data[8] <= 67 ? PSTR("OOOO--") :
+            data[8] <= 81 ? PSTR("OOOOO-") :
             PSTR("OOOOOO")
         );
 
@@ -848,12 +871,12 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
         // Never seen this; I don't have LPG
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"lpg_fuel_level\": \"%S\""),
-                data[10] <= 0x08 ? PSTR("1") :
-                data[10] <= 0x11 ? PSTR("2") :
-                data[10] <= 0x21 ? PSTR("3") :
-                data[10] <= 0x32 ? PSTR("4") :
-                data[10] <= 0x43 ? PSTR("5") :
-                data[10] <= 0x53 ? PSTR("6") :
+                data[10] <= 8 ? PSTR("1") :
+                data[10] <= 23   ? PSTR("2") :
+                data[10] <= 33 ? PSTR("3") :
+                data[10] <= 50 ? PSTR("4") :
+                data[10] <= 67 ? PSTR("5") :
+                data[10] <= 83 ? PSTR("6") :
                 PSTR("7")
             );
     } // if
@@ -917,6 +940,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
             data[1] == 0x28 ? PSTR("TAPE_PRESENCE_ANNOUNCEMENT") :
             data[1] == 0x30 ? PSTR("CD_PRESENT") :
             data[1] == 0x40 ? PSTR("TUNER_PRESETS_REPLY") :
+            data[1] == 0x42 ? PSTR("TUNER_PRESET_MEMORIZE_BUTTON_PRESS_ANNOUNCE") :
             data[1] == 0x60 ? PSTR("TAPE_INFO_REPLY") :
             data[1] == 0x61 ? PSTR("TAPE_PLAYING_AUDIO_SETTINGS_ANNOUNCE") :
             data[1] == 0x62 ? PSTR("TAPE_PLAYING_BUTTON_PRESS_ANNOUNCE") :
@@ -1036,7 +1060,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
             code == 0x0001 ? PSTR("Accept") :
 
             // Always follows 0x1000
-            code == 0x0100 ? PSTR("End-of-button-press") :
+            code == 0x0100 ? PSTR("End_of_button_press") :
 
             // User selects street from list
             // TODO - also when user selects category from list of services
@@ -1072,6 +1096,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
         // Found combinations:
         //
         // 52-08
+        // 52-20
         //
         return VAN_PACKET_PARSE_TO_BE_DECODED;
     }
@@ -1094,15 +1119,82 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
     const uint8_t* data = pkt.Data();
     int dataLen = pkt.DataLen();
 
-    /*
-    // Process only if not duplicate of previous packet; ignore different sequence numbers
+    // Keep track when the stalk was pressed, so that we can distinguish between short press and long press
 
-    // 2021-02-21 - No, don't skip
+    static unsigned long stalkLastPressed;
+    static bool stalkWasPressed = false;
 
-    static uint8_t packetData[VAN_MAX_DATA_BYTES] = "";  // Previous packet data
-    if (memcmp(data + 1, packetData, dataLen - 2) == 0) return VAN_PACKET_DUPLICATE;
-    memcpy(packetData, data + 1, dataLen - 2);
-    */
+    bool stalkIsPressed = data[10] & 0x01;
+
+    // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset) happens
+    // on the correct trip counter
+    do
+    {
+        // Just pressed?
+        if (! stalkWasPressed && stalkIsPressed)
+        {
+            stalkLastPressed = millis();
+            break;
+        } // if
+
+        // Only continue if just released
+        if (! stalkWasPressed || stalkIsPressed) break;
+
+        // Only continue if short-press
+        // Note: short-press = switch screen; long-press = reset trip counter currently shown (if any)
+        if (millis() - stalkLastPressed >= 1000) break; // TODO - exact time
+
+        // Not in sat nav guidance mode?
+        if (! getStore()->satnavGuidanceActive)
+        {
+            // Short-press of right stalk button selects next small screen
+            getStore()->smallScreenIndex++;
+            getStore()->smallScreenIndex %= N_SMALL_SCREENS;
+
+            MarkStoreDirty();
+            break;
+        } // if
+
+        // In sat nav guidance mode:
+        // - First short-press does not switch screen but simply triggers the popup
+        // - As long as the popup is visible, the next short-press leads to next screen...
+        // - ...but skips the SMALL_SCREEN_GPS_INFO screen
+
+        static unsigned long popupLastAppeared;
+
+        // Arithmetic has safe roll-over
+        if (millis() - popupLastAppeared > 6000)  // TODO - check exact popup timeout
+        {
+            // The popup is not visible: short-press simply triggers the popup. Stay in the current small screen.
+        }
+        else
+        {
+            // As long as the popup is visible, short-press cycles through the 2 trip counters and the
+            // fuel consumption screen
+
+            getStore()->smallScreenIndex++;
+
+            // Skip GPS info screen
+            if (getStore()->smallScreenIndex == SMALL_SCREEN_GPS_INFO) getStore()->smallScreenIndex++;
+
+            getStore()->smallScreenIndex %= N_SMALL_SCREENS;
+
+            MarkStoreDirty();
+        } // if
+
+        popupLastAppeared = millis();
+    }
+    while (false);
+
+    stalkWasPressed = stalkIsPressed;
+
+    uint8_t avgSpeedTrip1 = data[11];
+    uint8_t avgSpeedTrip2 = data[12];
+    uint16_t distanceTrip1 = (uint16_t)data[14] << 8 | data[15];
+    uint16_t avgConsumptionLt100Trip1 = (uint16_t)data[16] << 8 | data[17];
+    uint16_t distanceTrip2 = (uint16_t)data[18] << 8 | data[19];
+    uint16_t avgConsumptionLt100Trip2 = (uint16_t)data[20] << 8 | data[21];
+    uint16_t instConsumptionLt100 = (uint16_t)data[22] << 8 | data[23];
 
     const static char jsonFormatter1[] PROGMEM =
     "{\n"
@@ -1115,20 +1207,13 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
             "\"door_rear_left\": \"%S\",\n"
             "\"door_boot\": \"%S\",\n"
             "\"right_stalk_button\": \"%S\",\n"
+            "\"small_screen\": \"%S\",\n"
             "\"exp_moving_avg_speed\": \"%u\",\n"
             "\"inst_consumption_lt_100\": \"%S\",\n"
             "\"distance_to_empty\": \"%u\",\n"
             "\"avg_speed_1\": \"%u\",\n"
             "\"distance_1\": \"%S\",\n"
             "\"avg_consumption_lt_100_1\": \"%S\"";
-
-    uint8_t avgSpeedTrip1 = data[11];
-    uint8_t avgSpeedTrip2 = data[12];
-    uint16_t distanceTrip1 = (uint16_t)data[14] << 8 | data[15];
-    uint16_t avgConsumptionLt100Trip1 = (uint16_t)data[16] << 8 | data[17];
-    uint16_t distanceTrip2 = (uint16_t)data[18] << 8 | data[19];
-    uint16_t avgConsumptionLt100Trip2 = (uint16_t)data[20] << 8 | data[21];
-    uint16_t instConsumptionLt100 = (uint16_t)data[22] << 8 | data[23];
 
     char floatBuf[2][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter1,
@@ -1137,7 +1222,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         data[7] & 0x20 ? openStr : closedStr,
         data[7] & 0x10 ? openStr : closedStr,
         data[7] & 0x08 ? openStr : closedStr,
-        data[10] & 0x01 ? PSTR("PRESSED") : PSTR("RELEASED"),
+        stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
+        SmallScreenStr(getStore()->smallScreenIndex),
 
         // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
         // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.
@@ -1386,9 +1472,11 @@ VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc&
     const uint8_t* data = pkt.Data();
 
     bool first = true;
-    for (int byte = 0; byte < 16; byte++)
+    for (int byte = 0; byte < dataLen; byte++)
     {
+        // Skip byte 9; it is the index of the current message
         if (byte == 9) byte++;
+
         for (int bit = 0; bit < 8; bit++)
         {
             if (data[byte] >> bit & 0x01)
@@ -1540,15 +1628,15 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
 
     // These packets are sent by the head unit
 
-    // Head Unit info types
-    enum HeatUnitInfoType_t
+    // Head unit info types
+    enum HeadUnitInfoType_t
     {
         INFO_TYPE_TUNER = 0xD1,
         INFO_TYPE_TAPE,
         INFO_TYPE_PRESET,
         INFO_TYPE_CDCHANGER = 0xD5, // TODO - Not sure
         INFO_TYPE_CD,
-    }; // enum HeatUnitInfoType_t
+    }; // enum HeadUnitInfoType_t
 
     const uint8_t* data = pkt.Data();
     uint8_t infoType = data[1];
@@ -1562,6 +1650,11 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             // Message when the head unit is in "tuner" (radio) mode
 
             // http://pinterpeti.hu/psavanbus/PSA-VAN.html#554_1
+
+            // Note: all packets as received from the following head units:
+            // - Clarion RM2-00 - PU-1633A(E) - Cassette tape
+            // - Clarion RD3-01 - PU-2473A(K) - CD player
+            // Other head units may have different packets.
 
             if (dataLen != 22) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
@@ -1582,6 +1675,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             // data[4] and data[5]: frequency being scanned or tuned in to
             uint16_t frequency = (uint16_t)data[5] << 8 | data[4];
             static uint16_t prevFrequency = 0x07FF;  // To detect change during manual search
+            if (prevFrequency == 0x07FF) prevFrequency = frequency;
 
             // Special processing of search direction bit
 
@@ -1596,7 +1690,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             static TunerSearchDirection_t prevSearchDirection = TSD_NONE;
 
             // In manual search mode, change the reported direction only if the frequency actually changed.
-            if (searchMode == TS_MANUAL && (frequency == prevFrequency || prevFrequency == 0x07FF))
+            if (searchMode == TS_MANUAL && frequency == prevFrequency)
             {
                 // Search mode is "manual" and no change in frequency? Then report same value as previously.
                 searchDirection = prevSearchDirection;
@@ -1608,6 +1702,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             prevFrequency = frequency;
 
             // data[6] - Reception status? Like: receiving station? Stereo? RDS bits like MS, TP, TA, AF?
+            //
             // & 0xF0:
             //   - Usually 0x00 when tuned in to a "normal" station.
             //   - One or more bits stay '1' when tuned in to a "crappy" station (e.g. pirate).
@@ -1618,10 +1713,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             //   - Music/Speech (MS) bit
             //   - No AF (Alternative Frequencies) available
             //   - Number (0..15) indicating the quality of the RDS stream
-            //   & 0x10:
-            //   & 0x20:
-            //   & 0x40:
-            //   & 0x80:
             //
             // & 0x0F = signal strength: increases with antenna plugged in and decreases with antenna plugged
             //          out. Updated when a station is being tuned in to, or when the MAN button is pressed.
@@ -1720,7 +1811,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                 uint16_t piCode = (uint16_t)data[8] << 8 | data[9];
                 uint8_t countryCode = piCode >> 12 & 0x0F;
                 uint8_t coverageCode = piCode >> 8 & 0x0F;
-                char piBuffer[40];
+                char piBuffer[5];
                 sprintf_P(piBuffer, PSTR("%04X"), piCode);
 
                 // data[10]: for PTY-based search mode
@@ -1891,18 +1982,18 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
             if (! searching) loading = false;
 
             uint8_t totalTracks = data[8];
-            bool totalTracksInvalid = totalTracks == 0xFF;
+            bool totalTracksValid = totalTracks != 0xFF;
             char totalTracksStr[3];
-            if (! totalTracksInvalid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
+            if (totalTracksValid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
 
             char totalTimeStr[7];
-            bool totalTimeInvalid = dataLen < 12;
-            if (! totalTimeInvalid)
+            bool totalTimeValid = dataLen >= 12;
+            if (totalTimeValid)
             {
                 uint8_t totalTimeMin = data[9];
                 uint8_t totalTimeSec = data[10];
-                totalTimeInvalid = totalTimeMin == 0xFF || totalTimeSec == 0xFF;
-                if (! totalTimeInvalid) sprintf_P(totalTimeStr, PSTR("%X:%02X"), totalTimeMin, totalTimeSec);
+                totalTimeValid = totalTimeMin != 0xFF && totalTimeSec != 0xFF;
+                if (totalTimeValid) sprintf_P(totalTimeStr, PSTR("%X:%02X"), totalTimeMin, totalTimeSec);
             } // if
 
             const static char jsonFormatter[] PROGMEM =
@@ -1951,10 +2042,10 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
                 searching ? PSTR("--:--") : trackTimeStr,
 
                 data[7],
-                totalTracksInvalid ? notApplicable2Str : totalTracksStr,
-                totalTimeInvalid ? PSTR("--:--") : totalTimeStr,
+                totalTracksValid ? totalTracksStr : notApplicable2Str,
+                totalTimeValid ? totalTimeStr : PSTR("--:--"),
 
-                data[2] & 0x01 ? onStr : offStr
+                data[2] & 0x01 ? onStr : offStr  // CD track shuffle: long-press "CD" button
             );
         }
         break;
@@ -2130,20 +2221,41 @@ VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& 
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"mfd_status\": \"MFD_SCREEN_%S\"\n"
-        "}\n"
-    "}\n";
+            "\"mfd_status\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
 
         // hmmm... MFD can also be ON if this is reported; this happens e.g. in the "minimal VAN network" test
         // setup with only the head unit (radio) and MFD. Maybe this is a status report: the MFD shows if has
         // received any packets that show connectivity to e.g. the BSI?
-        data[0] == 0x00 && data[1] == 0xFF ? offStr :
+        mfdStatus == 0x00FF ? PSTR("MFD_SCREEN_OFF") :
 
-        data[0] == 0x20 && data[1] == 0xFF ? onStr :
+        mfdStatus == 0x20FF ? PSTR("MFD_SCREEN_ON") :
+        mfdStatus == 0xA0FF ? PSTR("TRIP_COUTER_1_RESET") :
+        mfdStatus == 0x60FF ? PSTR("TRIP_COUTER_2_RESET") :
         ToHexStr(mfdStatus)
     );
+
+    if (mfdStatus == 0xA0FF || mfdStatus == 0x60FF)
+    {
+        // Force change to the appropriate small screen (left hand side of the display)
+
+        uint8_t smallScreenIdx = mfdStatus == 0xA0FF ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
+        bool isChanged = getStore()->smallScreenIndex != smallScreenIdx;
+        getStore()->smallScreenIndex = smallScreenIdx;
+        if (isChanged) MarkStoreDirty();
+
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR
+                (
+                    ",\n"
+                    "\"small_screen\": \"%S\""
+                ),
+                SmallScreenStr(smallScreenIdx)
+            );
+    } // if
+
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
@@ -2352,14 +2464,14 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
 
     uint8_t trackTimeMin = data[4];
     uint8_t trackTimeSec = data[5];
-    bool trackTimeInvalid = trackTimeMin == 0xFF || trackTimeSec == 0xFF;
+    bool trackTimeValid = trackTimeMin != 0xFF && trackTimeSec != 0xFF;
     char trackTimeStr[7];
-    if (! trackTimeInvalid) sprintf_P(trackTimeStr, PSTR("%X:%02X"), trackTimeMin, trackTimeSec);
+    if (trackTimeValid) sprintf_P(trackTimeStr, PSTR("%X:%02X"), trackTimeMin, trackTimeSec);
 
     uint8_t totalTracks = data[8];
-    bool totalTracksInvalid = totalTracks == 0xFF;
+    bool totalTracksValid = totalTracks != 0xFF;
     char totalTracksStr[3];
-    if (! totalTracksInvalid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
+    if (totalTracksValid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
 
     uint8_t currentTrack = data[6];
     uint8_t currentDisc = data[7];
@@ -2406,8 +2518,8 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
         searching ? onStr : offStr,
 
         data[2] == 0x40 ? PSTR("POWER_OFF") :  // Not sure
-        data[2] == 0x41 ? PSTR("POWER_ON") : // Not sure
-        data[2] == 0x49 ? PSTR("INITIALIZE") : // Not sure
+        data[2] == 0x41 ? PSTR("POWER_ON") :  // Not sure
+        data[2] == 0x49 ? PSTR("INITIALIZE") :  // Not sure
         data[2] == 0x4B ? PSTR("LOADING") :
         data[2] == 0xC0 ? PSTR("POWER_ON_READY") :  // Not sure
         data[2] == 0xC1 ? 
@@ -2430,10 +2542,10 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
 
         cdChangerCartridgePresent ? yesStr : noStr,
 
-        trackTimeInvalid ? PSTR("--:--") : trackTimeStr,
+        trackTimeValid ? trackTimeStr : PSTR("--:--"),
 
         currentTrack == 0xFF ? notApplicable2Str : ToBcdStr(currentTrack),
-        totalTracksInvalid ? notApplicable2Str : totalTracksStr,
+        totalTracksValid ? totalTracksStr : notApplicable2Str,
 
         data[10] & 0x01 ? yesStr : noStr,
         data[10] & 0x02 ? yesStr : noStr,
@@ -3043,11 +3155,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 records[currentRecord][currentString] = buffer;
 
                 // The last character can be:
-                // - 0x80: indicates that the entry cannot be selected because the current disk cannot be read.
-                //   This is shown as a "?".
-                // - 0x81: indicates that the entry cannot be selected because the current disk is for a different
-                //   country/region.
-                //   This is shown on the MFD as an circle with a bar "(-)"; here we use a circle with a cross "(X)".
+                // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
+                //   read. This is shown as a "?".
+                // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
+                //   different country/region. This is shown on the MFD as an circle with a bar "(-)"; here we use a
+                //   circle with a cross "(X)".
                 records[currentRecord][currentString].replace("\x80", "?");
                 records[currentRecord][currentString].replace("\x81", "&#x24E7;");
 
@@ -4286,12 +4398,16 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"small_screen\": \"%S\",\n"
             "\"cd_changer_cartridge_present\": \"%S\",\n"
             "\"satnav_disc_present\": \"%S\",\n"
             "\"satnav_status_2\": \"%S\",\n"
             "\"satnav_guidance_preference\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
+
+        // Small screen (left hand side of the display) to start with
+        SmallScreenStr(getStore()->smallScreenIndex),
 
         cdChangerCartridgePresent ? yesStr : noStr,
         getStore()->satnavDiscPresent ? yesStr : noStr,

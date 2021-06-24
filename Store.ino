@@ -6,6 +6,7 @@
 
 StoredData _initialStore =
 {
+    .smallScreenIndex = SMALL_SCREEN_TRIP_INFO_1, // When the original MFD is plugged in, this is what it starts with
     .satnavGuidanceActive = false,
     .satnavDiscPresent = false,
     .satnavGuidancePreference = 0x00,
@@ -26,23 +27,22 @@ void _saveStore()
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
 
+    root["smallScreenIndex"] = _store->smallScreenIndex;
     root["satnavGuidanceActive"] = _store->satnavGuidanceActive;
     root["satnavDiscPresent"] = _store->satnavDiscPresent;
     root["satnavGuidancePreference"] = _store->satnavGuidancePreference;
 
     int i = 0;
     JsonArray& personalDirectoryEntries = root.createNestedArray("personalDirectoryEntries");
-    while (true)
+    while (i < MAX_DIRECTORY_ENTRIES && _store->personalDirectoryEntries[i].length() > 0)
     {
-        if (i >= MAX_DIRECTORY_ENTRIES || _store->personalDirectoryEntries[i].length() == 0) break;
         personalDirectoryEntries.add(_store->personalDirectoryEntries[i++]);
     } // while
 
     i = 0;
     JsonArray& professionalDirectoryEntries = root.createNestedArray("professionalDirectoryEntries");
-    while (true)
+    while (i < MAX_DIRECTORY_ENTRIES && _store->professionalDirectoryEntries[i].length() > 0)
     {
-        if (i >= MAX_DIRECTORY_ENTRIES || _store->professionalDirectoryEntries[i].length() == 0) break;
         professionalDirectoryEntries.add(_store->professionalDirectoryEntries[i++]);
     } // while
 
@@ -100,14 +100,10 @@ void _readStore()
 
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
 
-    // TODO - remove
-    //JsonObject& root = jsonBuffer.parseObject("{\"satnavGuidanceActive\":false,\"satnavDiscPresent\":true,\"satnavGuidancePreference\":1,\"personalDirectoryEntries\":[\"ASSEN\",\"BEBA\",\"BETTINA\",\"BIRKELT\",\"CAMP NOU\",\"CAMPING\",\"CAMPING2017\",\"CAMPING2018\",\"EELDE HFDWG 58F\",\"FUUSSEKAU\",\"FUUSSEKAUL\",\"GRENS SPANJE\",\"HOTEL\",\"HOTEL 1\",\"HOTEL HEEN\",\"HOTEL TERUG\",\"IICHENHAUSEN\",\"LIDL\",\"OVERNACHT2018\",\"OVERNACHTING\",\"PEDALORAIL\",\"PETITE MENTO..\",\"PRAKTIJK B S..\",\"RIGELSTRAAT\",\"SKI 2019\",\"SPORHAL BERGUM\",\"W\"],\"professionalDirectoryEntries\":[\"ASML\"]}");
-    //JsonObject& root = jsonBuffer.parseObject("{\"satnavGuidanceActive\":false}");
-    //JsonObject& root = jsonBuffer.parseObject("{\"satnavGuidanceActive\":false,\"satnavDiscPresent\":true,\"satnavGuidancePreference\":1,\"personalDirectoryEntries\":[\"ASSEN\",\"BEBA\",\"BETTINA\",\"BIRKELT\",\"CAMP NOU\",\"CAMPING\",\"CAMPING2017\",\"CAMPING2018\",\"EELDE HFDWG 58F\",\"FUUSSEKAU\",\"FUUSSEKAUL\",\"GRENS SPANJE\",\"HOTEL\",\"HOTEL 1\",\"HOTEL HEEN\",\"HOTEL TERUG\",\"IICHENHAUSEN\",\"LIDL\",\"OVERNACHT2018\",\"OVERNACHTING\",\"PEDALORAIL\",\"PETITE MENTO..\",\"PRAKTIJK B S..\",\"RIGELSTRAAT\",\"SKI 2019\",\"SPORHAL BERGUM\",\"W\"],\"professionalDirectoryEntries\":[\"ASML\"]}");
-
     JsonObject& root = jsonBuffer.parseObject(buf.get());
     if (!root.success()) return _saveStore();
 
+    if (root.containsKey("smallScreenIndex")) _store->smallScreenIndex = root["smallScreenIndex"];
     if (root.containsKey("satnavGuidanceActive")) _store->satnavGuidanceActive = root["satnavGuidanceActive"];
     if (root.containsKey("satnavDiscPresent")) _store->satnavDiscPresent = root["satnavDiscPresent"];
     if (root.containsKey("satnavGuidancePreference")) _store->satnavGuidancePreference = root["satnavGuidancePreference"];

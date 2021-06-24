@@ -26,7 +26,7 @@ function updateDateTime()
             month: 'short'
         }
     );
-    date = date.replace(/,[^0]*0/, ", ");  // IE11 incorrectly shows leading "0"
+    date = date.replace(/,\s*0/, ", ");  // IE11 incorrectly shows leading "0"
     $("#date_small").text(date);
 
     var date = new Date().toLocaleDateString
@@ -411,9 +411,11 @@ function selectDefaultScreen(audioSource)
 // Keep track of currently shown small screen
 var currentSmallScreenId = "trip_info";  // Make sure this is the first screen visible
 
-// Switch to a specific screen on the right hand side of the display
+// Switch to a specific screen on the left hand side of the display
 function changeSmallScreenTo(id)
 {
+    if (currentSmallScreenId === id) return;
+
     setVisibilityOfElementAndParents(currentSmallScreenId, "none");
     setVisibilityOfElementAndParents(id, "block");
     currentSmallScreenId = id;
@@ -556,37 +558,78 @@ function nextLargeScreen()
     changeLargeScreenTo(screenIds[nextLargeScreen.idIndex]);
 } // nextLargeScreen
 
+function changeToTripCounter(id)
+{
+    // Simulate a "tab click" event
+    var event =
+    {
+        currentTarget: document.getElementById(id + "_button")
+    };
+    openTab(event, id);
+} // changeToTripCounter
+
+function gotoSmallScreen(smallScreenName)
+{
+    switch(smallScreenName)
+    {
+        case "TRIP_INFO_1":
+        {
+            changeSmallScreenTo("trip_info");
+            changeToTripCounter("trip_1");
+        } // case
+        break;
+
+        case "TRIP_INFO_2":
+        {
+            changeSmallScreenTo("trip_info");
+            changeToTripCounter("trip_2");
+        } // case
+        break;
+
+        case "GPS_INFO":
+        {
+            changeSmallScreenTo("gps_info");
+        } // case
+        break;
+
+        case "FUEL_CONSUMPTION":
+        {
+            changeSmallScreenTo("instrument_small");
+        } // case
+        break;
+
+        default:
+        break;
+    } // switch
+} // gotoSmallScreen
+
 // Cycle through the small screens on the left hand side of the display
 function nextSmallScreen()
 {
     // The IDs of the screens ("divs") that will be cycled through
-    var screenIds = ["trip_info", "tuner_small", "instrument_small"]; 
+    var screenIds = ["trip_info", "gps_info", "instrument_small"]; 
 
     // Create and initialize static variable (that survives invocations of this function)
     if (typeof nextSmallScreen.idIndex === "undefined") nextSmallScreen.idIndex = 0;
 
-    // Get the ID of the next screen in the sequence
-    nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
-
-    // In "demo mode" we can cycle through all the screens, otherwise to a limited set of screens
-    if (! inDemoMode)
+    if (nextSmallScreen.idIndex == screenIds.indexOf("trip_info") && $("#trip_1").is(":visible"))
     {
-        var audioSource = $("#audio_source").text();
-
-        // Skip the "tuner_small" screen if the radio is not the current source
-        if (nextSmallScreen.idIndex == screenIds.indexOf("tuner_small"))
+        // Change to the second trip counter
+        changeToTripCounter("trip_2");
+    }
+    else
+    {
+        if (nextSmallScreen.idIndex == screenIds.indexOf("instrument_small"))
         {
-            if (audioSource !== "TUNER") nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
+            // Change to the first trip counter
+            changeToTripCounter("trip_1");
         } // if
 
-        // Skip the "instrument_small" screen if the engine is not running
-        if (nextSmallScreen.idIndex === screenIds.indexOf("instrument_small"))
-        {
-            if (engineRunning !== "YES") nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
-        } // if
+        // Get the ID of the next screen in the sequence
+        nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
+
+        changeSmallScreenTo(screenIds[nextSmallScreen.idIndex]);
     } // if
-
-    changeSmallScreenTo(screenIds[nextSmallScreen.idIndex]);
 } // nextSmallScreen
 
 // Go full-screen
@@ -2209,9 +2252,6 @@ function handleItemChange(item, value)
             // Check for audio button press or release
             if (value.substring(0, 5) === "AUDIO")
             {
-                // Only if audio is playing
-                if (! $("#audio").is(":visible")) break;
-
                 // Don't do anything on "AUDIO (released)" or any other variant
                 if (value !== "AUDIO") break;
 
@@ -3032,12 +3072,12 @@ function handleItemChange(item, value)
 
             if (value === "")
             {
-                $("#satnav_curr_street_shown").text("Not on map"); // TODO - find exact text
+                $('[gid="satnav_curr_street_shown"]').text("Not on map"); // TODO - find exact text
                 break;
             }
             else
             {
-                $("#satnav_curr_street_shown").text(value);
+                $('[gid="satnav_curr_street_shown"]').text(value);
             } // if
 
             // Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
@@ -3588,13 +3628,46 @@ function handleItemChange(item, value)
 
         case "satnav_curr_heading_compass_needle_rotation":
         {
-            // Place the "N" just in front of the arrow point
-            $("#satnav_curr_heading_compass_tag").css(
+            // Place the "N" just in front of the arrow point in both compasses
+            $("#satnav_curr_heading_compass_tag_0_6").css(
                 "transform",
                 "translate(" +
                     42 * Math.sin(value * Math.PI / 180) + "px," +
                     -42 * Math.cos(value * Math.PI / 180) + "px)"
                 );
+
+            $("#satnav_curr_heading_compass_tag_2").css(
+                "transform",
+                "translate(" +
+                    105 * Math.sin(value * Math.PI / 180) + "px," +
+                    -105 * Math.cos(value * Math.PI / 180) + "px)"
+                );
+
+            // Enable elements as soon as a value is received
+            $("[id^=satnav_curr_heading_compass_tag]").find("*").removeClass('satNavInstructionDisabledIconText');
+            $('[gid="satnav_curr_heading_compass_needle"]').find("*").removeClass('satNavInstructionDisabledIcon');
+
+            // var scale = $("#satnav_curr_heading_compass_needle_svg").attr("transform")
+            // $('[gid="satnav_curr_heading_compass_tag"] svg').each(function (){ console.log ( $("#satnav_curr_heading_compass_needle_svg").attr("transform") )})
+            /*
+            $("path[id='satnav_curr_heading_compass_needle_svg']").each(
+                function()
+                {
+                    var scaleStr = $(this).attr("transform");
+                    var scale = parseFloat(scaleStr.replace( /[^\d\.]+/g, ''));
+                    console.log(scale);
+                }
+            );
+
+            $("path[id='satnav_curr_heading_compass_needle_svg']").each(
+                function()
+                {
+                    var scaleStr = $(this).attr("transform");
+                    var scale = parseFloat(scaleStr.replace( /[^\d\.]+/g, ''));
+                    console.log($(this).parent().parent().attr("gid"));
+                }
+            );
+            */
         } // case
         break;
 
@@ -3607,6 +3680,10 @@ function handleItemChange(item, value)
                     70 * Math.sin(value * Math.PI / 180) + "px," +
                     -70 * Math.cos(value * Math.PI / 180) + "px)"
                 );
+
+            // Enable elements as soon as a value is received
+            $("#satnav_heading_to_dest_tag").find("*").removeClass('satNavInstructionDisabledIconText');
+            $("#satnav_heading_to_dest_pointer").find("*").removeClass('satNavInstructionDisabledIcon');
         } // case
         break;
 
@@ -3665,17 +3742,20 @@ function handleItemChange(item, value)
             clearInterval(handleItemChange.rightStalkButtonTimer);
             handleItemChange.rightStalkButtonTimer = null;
 
-            // "Short-press" changes to the other trip counter
+            // "Short-press" changes to the next small screen on the left hand side of the display
+            //nextSmallScreen(); - TODO - remove; set by value of item "small_screen"
+        } // case
+        break;
 
-            // Which trip counter is currently visible?
-            var trip1visible = document.getElementById("trip_1").style.display === "block";
+        case "small_screen":
+        {
+            //console.log("Item '" + item + "' set to '" + value + "'");
 
-            // Simulate a "tab click" event
-            var event =
-            {
-                currentTarget: document.getElementById(trip1visible ? "trip_2_button" : "trip_1_button")
-            };
-            openTab(event, trip1visible ? "trip_2" : "trip_1");
+            // Has anything changed?
+            if (value === handleItemChange.smallScreen) break;
+            handleItemChange.smallScreen = value;
+
+            gotoSmallScreen(value);
         } // case
         break;
 
@@ -3685,7 +3765,7 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // Use (short) press of the left-hand stalk end-button to cycle through the small screens
-            nextSmallScreen();
+            //nextSmallScreen();
         } // case
         break;
 
@@ -3793,7 +3873,20 @@ function handleItemChange(item, value)
 
         case "mfd_status":
         {
-            if (value === "MFD_SCREEN_OFF") hidePopup();
+            if (value === "MFD_SCREEN_OFF")
+            {
+                hidePopup();
+            }
+            else if (value === "TRIP_COUTER_1_RESET")
+            {
+                changeSmallScreenTo("trip_info");
+                changeToTripCounter("trip_1");
+            }
+            else if (value === "TRIP_COUTER_2_RESET") 
+            {
+                changeSmallScreenTo("trip_info");
+                changeToTripCounter("trip_2");
+            }
         } // case
         break;
 
