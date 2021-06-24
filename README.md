@@ -1,8 +1,8 @@
-<h3 align="center">PSA VAN bus Live Connect</h3>
+<h3 align="center">PSA (Peugeot, Citroën) VAN bus Live Connect</h3>
 
 ---
 
-<p align="center">Live data from your PSA vehicle (Peugeot, Citroen) on your smartphone or tablet, directly from
+<p align="center">Live data from your PSA vehicle (Peugeot, Citroën) on your smartphone or tablet, directly from
 the VAN bus.</p>
 
 ## 📝 Table of Contents
@@ -160,11 +160,17 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20MCP2551_bb.png)
 
+   👉 Note: CANH of the transciever is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+      it turns out this works best.
+
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    The SN65HVD230 transceiver already has 3.3V logic, so it is possible to directly connect the CRX / RXD / R pin of
    the transceiver to a GPIO pin of your ESP8266 board.
 
 ![schema](extras/schematics/Schematic%20using%20SN65HVD230_bb.png)
+
+   👉 Note: CANH of the transciever is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+      it turns out this works best.
    
 3. The simplest schematic is not to use a transceiver at all, but connect the VAN DATA line to GrouND using
    two 4.7 kOhm resistors. Connect the GPIO pin of your ESP8266 board to the 1:2 [voltage divider] that is thus
@@ -219,8 +225,17 @@ will allow uploading via Wi-Fi using a "network port" in the Arduino IDE. See
 [this documentation](https://arduino-esp8266.readthedocs.io/en/latest/ota_updates/readme.html) for help on using the
 OTA feature of the arduino-esp8266.
 
+To have a correctly initialized SPI Flash File System (SPIFFS), the first upload onto a fresh Wemos D1 must be
+done by selecting the Arduino menu "Tools" --> "Erase Flash" --> "All Flash Contents". Note: uploading will take a
+little bit longer than usual. After that, select "Only Sketch".
+
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
+
+### First Run
+
+When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
+the SPI Flash File System (SPIFFS).
 
 ## 📚 Used Libraries<a name = "libraries"></a>
 
