@@ -470,23 +470,19 @@ function nextLargeScreen()
         "system"  // Only in demo mode
     ]; 
 
-    // Create and initialize static variable (that survives invocations of this function)
-    if (typeof nextLargeScreen.idIndex === "undefined")
-    {
-        // Will become -1 if not found
-        nextLargeScreen.idIndex = screenIds.indexOf(currentLargeScreenId);
-    } // if
+    // Will become -1 if not found
+    var idIndex = screenIds.indexOf(currentLargeScreenId);
 
     // Get the ID of the next screen in the sequence
-    nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+    idIndex = (idIndex + 1) % screenIds.length;
 
     // In "demo mode" we can cycle through all the screens, otherwise to a limited set of screens
     if (inDemoMode)
     {
-        if (nextLargeScreen.idIndex === screenIds.indexOf("satnav_guidance"))
+        if (idIndex === screenIds.indexOf("satnav_guidance"))
         {
             // Select the "satnav_curr_turn_icon" which will be shown in the "satnav_guidance" screen
-            nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            idIndex = (idIndex + 1) % screenIds.length;
         } // if
     }
     else
@@ -494,68 +490,68 @@ function nextLargeScreen()
         var audioSource = $("#audio_source").text();
 
         // Skip the "tuner" screen if the radio is not the current source
-        if (nextLargeScreen.idIndex === screenIds.indexOf("tuner"))
+        if (idIndex === screenIds.indexOf("tuner"))
         {
-            if (audioSource !== "TUNER") nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            if (audioSource !== "TUNER") idIndex = (idIndex + 1) % screenIds.length;
         } // if
 
         // Skip the "tape" screen if the cassette player is not the current source
-        if (nextLargeScreen.idIndex === screenIds.indexOf("tape"))
+        if (idIndex === screenIds.indexOf("tape"))
         {
-            if (audioSource !== "TAPE") nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            if (audioSource !== "TAPE") idIndex = (idIndex + 1) % screenIds.length;
         } // if
 
         // Skip the "cd_player" screen if the CD player is not the current source
-        if (nextLargeScreen.idIndex === screenIds.indexOf("cd_player"))
+        if (idIndex === screenIds.indexOf("cd_player"))
         {
-            if (audioSource !== "CD") nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            if (audioSource !== "CD") idIndex = (idIndex + 1) % screenIds.length;
         } // if
 
         // Skip the "cd_changer" screen if the CD changer is not the current source
-        if (nextLargeScreen.idIndex === screenIds.indexOf("cd_changer"))
+        if (idIndex === screenIds.indexOf("cd_changer"))
         {
-            if (audioSource !== "CD_CHANGER") nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            if (audioSource !== "CD_CHANGER") idIndex = (idIndex + 1) % screenIds.length;
         } // if
 
         // Skip the "pre_flight" screen; it is only visible at engine start
-        if (nextLargeScreen.idIndex === screenIds.indexOf("pre_flight"))
+        if (idIndex === screenIds.indexOf("pre_flight"))
         {
-            nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            idIndex = (idIndex + 1) % screenIds.length;
         } // if
 
         // Skip the "instruments" screen if the engine is not running
-        if (nextLargeScreen.idIndex === screenIds.indexOf("instruments"))
+        if (idIndex === screenIds.indexOf("instruments"))
         {
-            if (engineRunning !== "YES") nextLargeScreen.idIndex = (nextLargeScreen.idIndex + 1) % screenIds.length;
+            if (engineRunning !== "YES") idIndex = (idIndex + 1) % screenIds.length;
         } // if
 
         // Skip the "satnav_current_location" screen if in guidance mode, or if the current street is empty
-        if (nextLargeScreen.idIndex === screenIds.indexOf("satnav_current_location"))
+        if (idIndex === screenIds.indexOf("satnav_current_location"))
         {
             if (satnavMode === "IN_GUIDANCE_MODE")
             {
-                nextLargeScreen.idIndex = screenIds.indexOf("satnav_guidance");
+                idIndex = screenIds.indexOf("satnav_guidance");
             }
             else
             {
-                if (satnavCurrentStreet === "") nextLargeScreen.idIndex = 0;  // Go back to the "clock" screen
+                if (satnavCurrentStreet === "") idIndex = 0;  // Go back to the "clock" screen
             } // if
         } // if
 
         // After the "satnav_current_location" screen, go back to the "clock" screen
-        if (nextLargeScreen.idIndex === screenIds.indexOf("satnav_current_location") + 1)
+        if (idIndex === screenIds.indexOf("satnav_current_location") + 1)
         {
-            nextLargeScreen.idIndex = 0;  // Go back to the "clock" screen
+            idIndex = 0;  // Go back to the "clock" screen
         } // if
 
         // After the "satnav_guidance" screen, go back to the "clock" screen
-        if (nextLargeScreen.idIndex === screenIds.indexOf("satnav_guidance") + 1)
+        if (idIndex === screenIds.indexOf("satnav_guidance") + 1)
         {
-            nextLargeScreen.idIndex = 0;  // Go back to the "clock" screen
+            idIndex = 0;  // Go back to the "clock" screen
         } // if
     } // if
 
-    changeLargeScreenTo(screenIds[nextLargeScreen.idIndex]);
+    changeLargeScreenTo(screenIds[idIndex]);
 } // nextLargeScreen
 
 function changeToTripCounter(id)
@@ -609,26 +605,26 @@ function nextSmallScreen()
     // The IDs of the screens ("divs") that will be cycled through
     var screenIds = ["trip_info", "gps_info", "instrument_small"]; 
 
-    // Create and initialize static variable (that survives invocations of this function)
-    if (typeof nextSmallScreen.idIndex === "undefined") nextSmallScreen.idIndex = 0;
+    // Will become -1 if not found
+    var idIndex = screenIds.indexOf(currentSmallScreenId);
 
-    if (nextSmallScreen.idIndex == screenIds.indexOf("trip_info") && $("#trip_1").is(":visible"))
+    if (idIndex == screenIds.indexOf("trip_info") && $("#trip_1").is(":visible"))
     {
         // Change to the second trip counter
         changeToTripCounter("trip_2");
     }
     else
     {
-        if (nextSmallScreen.idIndex == screenIds.indexOf("instrument_small"))
+        if (idIndex == screenIds.indexOf("instrument_small"))
         {
             // Change to the first trip counter
             changeToTripCounter("trip_1");
         } // if
 
         // Get the ID of the next screen in the sequence
-        nextSmallScreen.idIndex = (nextSmallScreen.idIndex + 1) % screenIds.length;
+        idIndex = (idIndex + 1) % screenIds.length;
 
-        changeSmallScreenTo(screenIds[nextSmallScreen.idIndex]);
+        changeSmallScreenTo(screenIds[idIndex]);
     } // if
 } // nextSmallScreen
 
@@ -1589,6 +1585,7 @@ function satnavSelectFirstAvailableCharacter()
 // Puts the "Enter city" screen into the mode where the user simply has to confirm the current destination city
 function satnavConfirmCityMode()
 {
+    // Clear the character-by-character entry string
     $("#satnav_entered_string").text("");
     satnavLastEnteredChar = null;
 
@@ -1598,7 +1595,7 @@ function satnavConfirmCityMode()
     $("#satnav_current_destination_city").show();
 
     // If a current destination city is shown, enable the "Validate" button
-    $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_city").text === "");
+    $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_city").text() === "");
 
     // Set button text
     $('#satnav_enter_characters_change_or_city_center_button').text('Change');
@@ -1623,6 +1620,7 @@ var userHadOpportunityToEnterStreet = false;
 // Puts the "Enter street" screen into the mode where the user simply has to confirm the current destination street
 function satnavConfirmStreetMode()
 {
+    // Clear the character-by-character entry string
     $("#satnav_entered_string").text("");
     satnavLastEnteredChar = null;
 
@@ -1632,7 +1630,7 @@ function satnavConfirmStreetMode()
     $("#satnav_current_destination_street").show();
 
     // If a current destination street is shown, enable the "Validate" button
-    $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_street").text === "");
+    $("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", $("#satnav_current_destination_street").text() === "");
 
     // Set button text
     // TODO - set full text, make button auto-expand when selected
@@ -1667,12 +1665,7 @@ function satnavEnterCharactersChangeOrCityCenterButtonPress()
 
 function satnavEnterCity()
 {
-    // Clear the character-by-character entry string
-    $("#satnav_entered_string").text("");
-    satnavLastEnteredChar = null;
-
     gotoMenu("satnav_enter_city_characters");
-
     satnavConfirmCityMode();
 } // satnavEnterCity
 
@@ -2209,6 +2202,9 @@ function handleItemChange(item, value)
             // Show the audio settings popup to display the current volume
             $("#" + highlightIds[audioSettingHighlightIndex]).hide();
 
+            // Don't pop up when user is browsing the menus
+            if (currentMenu) break;
+
             // Show the audio settings popup 
             if ($("#contact_key_position").text() != "" && $("#contact_key_position").text() !== "OFF")
             {
@@ -2598,7 +2594,7 @@ function handleItemChange(item, value)
         case "cd_status":
         {
             $("#cd_status_error").toggle(value === "ERROR");
-            if (value === "ERROR") showNotificationPopup("Disc unreadable<br />(Upside down?)", 6000)
+            if (value === "ERROR") showNotificationPopup("Disc unreadable<br />(upside down?)", 6000)
         } // case
         break;
 
@@ -2612,7 +2608,7 @@ function handleItemChange(item, value)
 
         case "cd_changer_status":
         {
-            if (value === "ERROR") showNotificationPopup("Disc unreadable<br />(Wrong side?)", 6000)
+            if (value === "ERROR") showNotificationPopup("Disc unreadable<br />(wrong side?)", 6000)
             $("#cd_changer_status_error").toggle(value === "ERROR");
         } // case
         break;
@@ -2688,7 +2684,7 @@ function handleItemChange(item, value)
                 //$("#cd_changer_status_previous_track").hide();
             } // if
 
-            selectDefaultScreen(value);
+            selectDefaultScreen();
         } // case
         break;
 
@@ -2895,21 +2891,27 @@ function handleItemChange(item, value)
             // TODO - if this actually enables the button, also select it?
             $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
 
-            // Button text
-            $("#satnav_navigation_options_menu_stop_guidance_button").text(
-                value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
-
             // Has anything changed?
             if (value === satnavMode) break;
             var previousSatnavMode = satnavMode;
             satnavMode = value;
 
+            // Button text in menu
+            $("#satnav_navigation_options_menu_stop_guidance_button").text(
+                value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
+
             if (value === "IN_GUIDANCE_MODE")
             {
                 // Just entered guidance mode
+
                 $("#satnav_navigation_options_menu_stop_guidance_button").text("Stop guidance");
                 if ($("#satnav_guidance_preference_menu").is(":visible")) break;
                 satnavSwitchToGuidanceScreen();
+
+                // If the small screen (left) is currently "gps_info", then go to the next screen ("instrument_small").
+                // When the system is in guidance mode, the right stalk button does not cycle through "gps_info".
+                if (currentSmallScreenId === "gps_info") changeSmallScreenTo("instrument_small");
+
                 break;
             }
 
@@ -3237,7 +3239,7 @@ function handleItemChange(item, value)
                 // Switching (back) into the "satnav_enter_street_characters" screen
 
                 if (currentMenu === "satnav_current_destination_house_number") exitMenu();
-                else gotoMenu(value);
+                else satnavGotoEnterStreetOrNumber();
 
                 break;
             }
@@ -3628,46 +3630,17 @@ function handleItemChange(item, value)
 
         case "satnav_curr_heading_compass_needle_rotation":
         {
-            // Place the "N" just in front of the arrow point in both compasses
-            $("#satnav_curr_heading_compass_tag_0_6").css(
+            // Place the "N" just in front of the arrow point in the compass
+            $("#satnav_curr_heading_compass_tag").css(
                 "transform",
                 "translate(" +
                     42 * Math.sin(value * Math.PI / 180) + "px," +
                     -42 * Math.cos(value * Math.PI / 180) + "px)"
                 );
 
-            $("#satnav_curr_heading_compass_tag_2").css(
-                "transform",
-                "translate(" +
-                    105 * Math.sin(value * Math.PI / 180) + "px," +
-                    -105 * Math.cos(value * Math.PI / 180) + "px)"
-                );
-
             // Enable elements as soon as a value is received
-            $("[id^=satnav_curr_heading_compass_tag]").find("*").removeClass('satNavInstructionDisabledIconText');
-            $('[gid="satnav_curr_heading_compass_needle"]').find("*").removeClass('satNavInstructionDisabledIcon');
-
-            // var scale = $("#satnav_curr_heading_compass_needle_svg").attr("transform")
-            // $('[gid="satnav_curr_heading_compass_tag"] svg').each(function (){ console.log ( $("#satnav_curr_heading_compass_needle_svg").attr("transform") )})
-            /*
-            $("path[id='satnav_curr_heading_compass_needle_svg']").each(
-                function()
-                {
-                    var scaleStr = $(this).attr("transform");
-                    var scale = parseFloat(scaleStr.replace( /[^\d\.]+/g, ''));
-                    console.log(scale);
-                }
-            );
-
-            $("path[id='satnav_curr_heading_compass_needle_svg']").each(
-                function()
-                {
-                    var scaleStr = $(this).attr("transform");
-                    var scale = parseFloat(scaleStr.replace( /[^\d\.]+/g, ''));
-                    console.log($(this).parent().parent().attr("gid"));
-                }
-            );
-            */
+            $("#satnav_curr_heading_compass_tag").find("*").removeClass('satNavInstructionDisabledIconText');
+            $("#satnav_curr_heading_compass_needle").find("*").removeClass('satNavInstructionDisabledIcon');
         } // case
         break;
 
@@ -3742,8 +3715,8 @@ function handleItemChange(item, value)
             clearInterval(handleItemChange.rightStalkButtonTimer);
             handleItemChange.rightStalkButtonTimer = null;
 
-            // "Short-press" changes to the next small screen on the left hand side of the display
-            //nextSmallScreen(); - TODO - remove; set by value of item "small_screen"
+            // "Short-press" changes to the next small screen on the left hand side of the display.
+            // This is already handled by item "small_screen" (below).
         } // case
         break;
 
@@ -3756,16 +3729,6 @@ function handleItemChange(item, value)
             handleItemChange.smallScreen = value;
 
             gotoSmallScreen(value);
-        } // case
-        break;
-
-        // TODO - make this work
-        case "com2000_light_switch_auto":
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
-            // Use (short) press of the left-hand stalk end-button to cycle through the small screens
-            //nextSmallScreen();
         } // case
         break;
 

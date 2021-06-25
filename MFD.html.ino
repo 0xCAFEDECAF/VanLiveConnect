@@ -201,27 +201,12 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="gps_info" style="display:none;">
 
-        <div gid="satnav_gps_fix" class="iconSmall led ledOff" style="left:300px; top:20px;">
+        <div gid="satnav_gps_fix" class="iconVeryLarge led ledOff" style="left:120px; top:100px; height:160px; line-height:1;">
           <div class="centerAligned fas fa-satellite-dish"></div>
         </div>
 
-        <!-- Current heading, shown as compass needle -->
-
-        <div gid="satnav_curr_heading_compass_needle" style="position:absolute; left:135px; top:135px; width:120px; height:180px; transform:rotate(0deg); transform-origin:center;">
-          <svg style="height:240px;">
-            <path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(1.5)"></path>
-          </svg>
-        </div>
-
-        <!-- Small "N" at end of arrow, indicating "North" -->
-        <div id="satnav_curr_heading_compass_tag_2" style="position:absolute; left:135px; top:135px; width:120px; height:180px; transform:translate(0px,-105px); transform-origin:center;">
-          <svg>
-            <text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="60" y="90" font-size="60px">N</text>
-          </svg>
-        </div>
-
         <!-- Current street and city -->
-        <div class="icon" style="left:00px; top:350px; width:390px; height:200px;">
+        <div id="satnav_curr_street_small" class="icon" style="left:00px; top:350px; width:390px; height:200px;">
           <div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
         </div>
 
@@ -942,14 +927,14 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Current heading, shown as compass needle -->
 
-        <div gid="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
           <svg>
             <path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
           </svg>
         </div>
 
         <!-- Small "N" at end of arrow, indicating "North" -->
-        <div id="satnav_curr_heading_compass_tag_0_6" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:translate(0px,-42px); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_tag" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:translate(0px,-42px); transform-origin:center;">
           <svg>
             <text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="24" y="36" font-size="20px">N</text>
           </svg>
@@ -962,7 +947,10 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Current location -->
 
-        <div id="satnav_current_location" style="display:none;">
+        <div id="satnav_current_location"
+          on_enter="$('#satnav_curr_street_small').hide();"
+          on_exit="$('#satnav_curr_street_small').show();"
+          style="display:none;">
 
           <!-- Current street and city -->
           <div class="icon iconBorder" style="left:20px; top:150px; width:930px; height:250px;">
@@ -1175,7 +1163,6 @@ char mfd_html[] PROGMEM = R"=====(
               button_orientation="horizontal"
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-              <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_validate_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 on_click="satnavGotoEnterStreetOrNumber();"
@@ -2058,9 +2045,9 @@ char mfd_html[] PROGMEM = R"=====(
       <!-- Notification popup, with warning or information icon -->
       <div id="notification_popup" class="icon notificationPopup" style="display:none;">
         <div id="notification_icon_warning" class="centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
-          style="display:none; position:absolute; left:30px; line-height: 1.2;"></div>
+          style="display:none; position:absolute; left:30px;"></div>
         <div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
-          style="display:block; position:absolute; left:30px; line-height: 1.2;"></div>
+          style="display:block; position:absolute; left:30px;"></div>
         <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
         </div>
       </div>
@@ -2094,39 +2081,6 @@ char mfd_html[] PROGMEM = R"=====(
           Door open!
         </div>
       </div>  <!-- "door_open_popup" -->
-
-      <!-- Audio settings popup -->
-
-      <div id="audio_settings_popup" class="icon notificationPopup" style="display:none; top:80px; height:430px;">
-
-        <div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
-        <div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;">Tuner</div>
-
-        <div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
-        <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
-
-        <div class="tag" style="left:50px; top:220px; width:200px;">Bass</div>
-        <div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
-        <div class="tag" style="left:50px; top:280px; width:200px;">Treble</div>
-        <div id="treble" class="dots" style="left:260px; top:275px; width:100px; text-align:right;">-</div>
-
-        <div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
-
-        <div class="tag" style="left:430px; top:220px; width:200px;">Fader</div>
-        <div id="fader" class="dots" style="left:640px; top:215px; width:100px; text-align:right;">-</div>
-        <div class="tag" style="left:430px; top:280px; width:200px;">Balance</div>
-        <div id="balance" class="dots" style="left:640px; top:275px; width:100px; text-align:right;">-</div>
-
-        <div id="auto_volume" class="led ledOff" style="left:475px; top:360px; width:260px;">AUTO-VOL</div>
-
-        <!-- Highlight boxes -->
-        <div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:200px; width:320px; height:60px;"></div>
-        <div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:260px; width:320px; height:60px;"></div>
-        <div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:348px; width:147px; height:37px;"></div>
-        <div id="fader_select" class="highlight icon iconBorder" style="left:410px; top:200px; width:320px; height:60px;"></div>
-        <div id="balance_select" class="highlight icon iconBorder" style="left:410px; top:260px; width:320px; height:60px;"></div>
-        <div id="auto_volume_select" class="highlight icon iconBorder" style="left:465px; top:348px; width:257px; height:37px;"></div>
-      </div>  <!-- "audio_settings_popup" -->
 
       <!-- Sat nav initializing popup -->
 
@@ -2247,6 +2201,39 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="status_popup_text" class="centerAligned" style="position:absolute; left:100px; width:610px;">
         </div>
       </div>  <!-- "status_popup" -->
+
+      <!-- Audio settings popup -->
+
+      <div id="audio_settings_popup" class="icon notificationPopup" style="display:none; top:80px; height:430px;">
+
+        <div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
+        <div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;">Tuner</div>
+
+        <div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
+        <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
+
+        <div class="tag" style="left:50px; top:220px; width:200px;">Bass</div>
+        <div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
+        <div class="tag" style="left:50px; top:280px; width:200px;">Treble</div>
+        <div id="treble" class="dots" style="left:260px; top:275px; width:100px; text-align:right;">-</div>
+
+        <div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
+
+        <div class="tag" style="left:430px; top:220px; width:200px;">Fader</div>
+        <div id="fader" class="dots" style="left:640px; top:215px; width:100px; text-align:right;">-</div>
+        <div class="tag" style="left:430px; top:280px; width:200px;">Balance</div>
+        <div id="balance" class="dots" style="left:640px; top:275px; width:100px; text-align:right;">-</div>
+
+        <div id="auto_volume" class="led ledOff" style="left:475px; top:360px; width:260px;">AUTO-VOL</div>
+
+        <!-- Highlight boxes -->
+        <div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:200px; width:320px; height:60px;"></div>
+        <div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:260px; width:320px; height:60px;"></div>
+        <div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:348px; width:147px; height:37px;"></div>
+        <div id="fader_select" class="highlight icon iconBorder" style="left:410px; top:200px; width:320px; height:60px;"></div>
+        <div id="balance_select" class="highlight icon iconBorder" style="left:410px; top:260px; width:320px; height:60px;"></div>
+        <div id="auto_volume_select" class="highlight icon iconBorder" style="left:465px; top:348px; width:257px; height:37px;"></div>
+      </div>  <!-- "audio_settings_popup" -->
 
       <!--
         Invisible "div" covering entire screen, handling "gorilla-style" taps that trigger a change to the

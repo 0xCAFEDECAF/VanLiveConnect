@@ -160,7 +160,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20MCP2551_bb.png)
 
-   👉 Note: CANH of the transciever is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+   👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
       it turns out this works best.
 
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
@@ -169,7 +169,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20SN65HVD230_bb.png)
 
-   👉 Note: CANH of the transciever is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+   👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
       it turns out this works best.
    
 3. The simplest schematic is not to use a transceiver at all, but connect the VAN DATA line to GrouND using

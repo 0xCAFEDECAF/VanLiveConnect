@@ -166,6 +166,8 @@ textarea
 {
   font-size:120px;
   width:160px;
+/*  height:160px;*/
+  line-height:1.2;
 }
 /*.iconNoBorder
 {
@@ -264,6 +266,20 @@ textarea
   stroke-width:14;
   stroke-linecap:round;
   fill:rgb(41,55,74);
+}
+.satNavInstructionDisabledIcon
+{
+  stroke:rgb(67,82,105);
+}
+.satNavInstructionIconText
+{
+  fill:#dfe7f2;
+  dominant-baseline:middle;
+  text-anchor:middle;
+}
+.satNavInstructionDisabledIconText
+{
+  fill:rgb(67,82,105);
 }
 .satNavInstructionIconLeg
 {
