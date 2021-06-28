@@ -82,9 +82,9 @@ char mfd_html[] PROGMEM = R"=====(
            |  | | `- div id="satnav_enter_house_number"
            |  | |   `- div id="satnav_current_destination_house_number"
            |  | `- div id="satnav_show_address"
-           |  | | `- div id="satnav_show_private_address"
-           |  | | `- div id="satnav_show_business_address"
-           |  | | `- div id="satnav_show_place_of_interest_address"
+           |  | | `- div id="satnav_show_personal_address"
+           |  | | `- div id="satnav_show_professional_address"
+           |  | | `- div id="satnav_show_service_address"
            |  | | `- div id="satnav_show_current_destination"
            |  | | `- div id="satnav_show_last_destination"
            |  | `- div id="satnav_archive_in_directory"
@@ -94,7 +94,6 @@ char mfd_html[] PROGMEM = R"=====(
            |  |  # Popups in the "large" information panel
            |  `- div id="notification_popup"  # Popup window with warning or information icon
            |  `- div id="door_open_popup"  # Door open popup
-           |  `- div id="audio_settings_popup"  # Audio settings popup
            |  `- div id="satnav_initializing_popup"  # Sat nav initializing popup
            |  `- div id="satnav_input_stored_in_personal_dir_popup"
            |  `- div id="satnav_input_stored_in_professional_dir_popup"
@@ -103,6 +102,7 @@ char mfd_html[] PROGMEM = R"=====(
            |  `- div id="satnav_guidance_preference_popup"  # Change navigation preference popup
            |  `- div id="satnav_delete_directory_data_popup"  # Delete sat nav directory data popup
            |  `- div id="status_popup"  # Simple popup without icon
+           |  `- div id="audio_settings_popup"  # Audio settings popup
            |
            |  # Full-screen popups
            `- div id="tuner_presets_popup" 
@@ -1030,8 +1030,9 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volme</div>
           <div class="button">Delete directories</div>
 
+            <!-- class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Resume guidance</div> -->
           <div id="satnav_navigation_options_menu_stop_guidance_button"
-            class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Resume guidance</div>
+            class="button" on_click="selectDefaultScreen();">Resume guidance</div>
 
         </div>  <!-- "satnav_navigation_options_menu" -->
 
@@ -1064,7 +1065,9 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
-          <div class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Stop guidance</div>
+          <!-- <div class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Stop guidance</div> -->
+          <div id="satnav_tools_menu_stop_guidance_button" class="button" on_click="selectDefaultScreen();">Stop guidance</div>
+
         </div>  <!-- "satnav_guidance_tools_menu" -->
 
         <!-- Sat nav guidance criteria menu -->
@@ -1202,14 +1205,14 @@ char mfd_html[] PROGMEM = R"=====(
               on_enter="highlightFirstLine('satnav_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
               style="display:none;">
 
-              <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>
+              <div class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter city</div>
 
               <!--
                 The following div will disappear as soon as the user starts choosing letters, which will then
                 appear one by one in "satnav_entered_string"
               -->
               <div id="satnav_current_destination_city"
-                class="dots" style="left:25px; top:160px; width:925px; font-size:50px;"></div>
+                class="dots" style="left:25px; top:180px; width:925px; font-size:50px;"></div>
             </div>
 
             <div id="satnav_enter_street_characters"
@@ -1217,14 +1220,14 @@ char mfd_html[] PROGMEM = R"=====(
               on_esc="satnavConfirmCityMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
               style="display:none;">
 
-              <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter street</div>
+              <div class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter street</div>
 
               <!--
                 The following div will disappear as soon as the user starts choosing letters, which will then
                 appear one by one in "satnav_entered_string"
               -->
               <div id="satnav_current_destination_street"
-                class="dots" style="left:25px; top:160px; width:925px; font-size:50px;"></div>
+                class="dots" style="left:25px; top:180px; width:925px; font-size:50px;"></div>
             </div>
 
           </div>  <!-- "satnav_enter_characters" -->
@@ -1234,9 +1237,9 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_choose_from_list" style="display:none;">
 
             <!-- What is being entered? (city, street) -->
-            <div id="mfd_to_satnav_request" class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter city</div>
+            <div id="mfd_to_satnav_request" class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter city</div>
 
-            <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:100px; width:218px; text-align:right;">-</div>
+            <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div>
 
             <!-- TODO - id="satnav_software_modules_list": show this? -->
 
@@ -1244,7 +1247,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_up_button="highlightPreviousLine();"
               on_down_button="highlightNextLine();"
               on_click="satnavListItemClicked();"
-              style="font-size:40px; left:20px; top:160px; width:923px; height:360px;
+              style="font-size:40px; left:20px; top:180px; width:923px; height:360px;
                 overflow:hidden; white-space:nowrap;
                 background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">
             </div>
@@ -1261,10 +1264,10 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_enter_house_number" style="display:none;">
 
             <!-- What is being entered? (house number) -->
-            <div class="tag" style="left:20px; top:90px; width:930px; text-align:left;">Enter number</div>
+            <div class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter number</div>
 
             <!-- The number that has been entered thus far -->
-            <div id="satnav_entered_number" class="dots" style="left:25px; top:160px; width:930px;"></div>
+            <div id="satnav_entered_number" class="dots" style="left:25px; top:180px; width:930px;"></div>
 
             <!--
               The following div will disappear as soon as the user starts choosing numbers, which will then
@@ -1313,24 +1316,24 @@ char mfd_html[] PROGMEM = R"=====(
         <!-- Showing an address (entry) -->
         <div id="satnav_show_address" style="display:none;">
 
-          <div id="satnav_show_private_address" style="display:none;">
+          <div id="satnav_show_personal_address" style="display:none;">
 
-            <div id="satnav_private_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
+            <div id="satnav_personal_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
 
             <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_private_address_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_personal_address_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_private_address_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_personal_address_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_private_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_personal_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
-            <div id="satnav_private_address_validate_buttons" style="display:block">
-              <div id="satnav_show_private_address_validate_button"
+            <div id="satnav_personal_address_validate_buttons" style="display:block">
+              <div id="satnav_show_personal_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button buttonSelected"
                 style="left:25px; top:450px; width:180px; height:40px;">
@@ -1338,7 +1341,7 @@ char mfd_html[] PROGMEM = R"=====(
               </div>
             </div>
 
-            <div id="satnav_private_address_manage_buttons" style="display:none">
+            <div id="satnav_personal_address_manage_buttons" style="display:none">
               <div button_orientation="horizontal"
                 style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
@@ -1357,26 +1360,26 @@ char mfd_html[] PROGMEM = R"=====(
                 </div>
               </div>
             </div>
-          </div>  <!-- "satnav_show_private_address" -->
+          </div>  <!-- "satnav_show_personal_address" -->
 
-          <div id="satnav_show_business_address" style="display:none;">
+          <div id="satnav_show_professional_address" style="display:none;">
 
-            <div id="satnav_business_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
+            <div id="satnav_professional_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
 
             <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_business_address_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_professional_address_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_business_address_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_professional_address_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_business_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_professional_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
-            <div id="satnav_business_address_validate_buttons" style="display:block">
-              <div id="satnav_show_business_address_validate_button"
+            <div id="satnav_professional_address_validate_buttons" style="display:block">
+              <div id="satnav_show_professional_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button buttonSelected"
                 style="left:25px; top:450px; width:180px; height:40px;">
@@ -1384,7 +1387,7 @@ char mfd_html[] PROGMEM = R"=====(
               </div>
             </div>
 
-            <div id="satnav_business_address_manage_buttons" style="display:none">
+            <div id="satnav_professional_address_manage_buttons" style="display:none">
               <div button_orientation="horizontal"
                 style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
@@ -1403,47 +1406,47 @@ char mfd_html[] PROGMEM = R"=====(
                 </div>
               </div>
             </div>
-          </div>  <!-- "satnav_show_business_address" -->
+          </div>  <!-- "satnav_show_professional_address" -->
 
-          <div id="satnav_show_place_of_interest_address"
+          <div id="satnav_show_service_address"
             style="display:none;">
 
-            <div id="satnav_place_of_interest_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
+            <div id="satnav_service_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
 
             <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_place_of_interest_address_city" class="dots" style="left:210px; top:195px; width:750px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_service_address_city" class="dots" style="left:210px; top:195px; width:750px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_place_of_interest_address_street" class="dots" style="left:210px; top:285px; width:750px; height:90px; font-size:40px; white-space:normal;">
+            <div id="satnav_service_address_street" class="dots" style="left:210px; top:285px; width:750px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
-            <div id="satnav_place_of_interest_address_distance_number" class="dots" style=" left:25px; top:376px; width:180px; text-align:right;">-</div>
-            <div id="satnav_place_of_interest_address_distance_unit" class="dots" style="font-size:30px; left:210px; top:400px;"></div>
+            <div id="satnav_service_address_distance_number" class="dots" style=" left:25px; top:376px; width:180px; text-align:right;">-</div>
+            <div id="satnav_service_address_distance_unit" class="dots" style="font-size:30px; left:210px; top:400px;"></div>
 
             <!-- Show also the entry number and the total number of entries found -->
-            <div id="satnav_place_of_interest_address_entry_number" class="dots" style=" left:600px; top:376px; width:160px; text-align:right;">-</div>
+            <div id="satnav_service_address_entry_number" class="dots" style=" left:600px; top:376px; width:160px; text-align:right;">-</div>
             <div class="tag" style="left:733px; top:376px; width:50px;">/</div>
             <div id="satnav_to_mfd_list_size" class="dots" style=" left:800px; top:376px; width:160px; text-align:left;">-</div>
 
             <div button_orientation="horizontal" style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-              <div id="satnav_place_of_interest_address_validate_button"
+              <div id="satnav_service_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button"
                 style="left:0px; top:0px; width:180px; height:40px;">
                 Validate
               </div>
-              <div id="satnav_place_of_interest_address_previous_button"
+              <div id="satnav_service_address_previous_button"
                 class="icon button" style="left:210px; top:0px; width:180px; height:40px;">
                 Previous
               </div>
-              <div id="satnav_place_of_interest_address_next_button"
+              <div id="satnav_service_address_next_button"
                 class="icon button buttonSelected" style="left:420px; top:0px; width:180px; height:40px;">
                 Next
               </div>
             </div>
-          </div>  <!-- "satnav_show_place_of_interest_address" -->
+          </div>  <!-- "satnav_show_service_address" -->
 
           <!-- TODO - Might need the full screen width for long city / street names -->
           <div id="satnav_show_current_destination"

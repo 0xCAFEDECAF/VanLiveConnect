@@ -629,6 +629,8 @@ VanPacketParseResult_t ParseVinPkt(const char* idenStr, TVanPacketRxDesc& pkt, c
     return VAN_PACKET_PARSE_OK;
 } // ParseVinPkt
 
+static bool economyMode = false;
+
 VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8A4
@@ -643,6 +645,8 @@ VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt
     if (waterTempRaw != 0xFF) lastValidWaterTempRaw = waterTempRaw;  // Copy only if packet value is valid
     bool isWaterTempValid = lastValidWaterTempRaw != 0xFF;
     sint16_t waterTemp = (uint16_t)lastValidWaterTempRaw - 39;
+
+    economyMode = data[1] & 0x10;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -682,7 +686,7 @@ VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt
         ToHexStr((uint8_t)(data[1] & 0x03)),
 
         data[1] & 0x04 ? yesStr : noStr,
-        data[1] & 0x10 ? onStr : offStr,
+        economyMode ? onStr : offStr,
         data[1] & 0x20 ? yesStr : noStr,
         data[1] & 0x40 ? presentStr : notPresentStr,
         isWaterTempValid ? ToStr(waterTemp) : notApplicable3Str,
@@ -1063,7 +1067,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
             code == 0x0100 ? PSTR("End_of_button_press") :
 
             // User selects street from list
-            // TODO - also when user selects category from list of services
+            // TODO - also when user selects service from list of services
             code == 0x0101 ? PSTR("Selected_street_from_list") :
 
             // User selects a menu entry or letter? User pressed "Val" (middle button on IR remote control).
@@ -1126,10 +1130,11 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
 
     bool stalkIsPressed = data[10] & 0x01;
 
-    // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset) happens
-    // on the correct trip counter
-    do
+    while (! economyMode)
     {
+        // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset)
+        // happens on the correct trip counter
+
         // Just pressed?
         if (! stalkWasPressed && stalkIsPressed)
         {
@@ -1183,8 +1188,9 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         } // if
 
         popupLastAppeared = millis();
-    }
-    while (false);
+
+        break;
+    } // while
 
     stalkWasPressed = stalkIsPressed;
 
@@ -1606,14 +1612,14 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(const char* idenStr, TVanPacketR
         data[3] & 0x02 ? onStr : offStr,
 
         // Surely fuel level. Test with tank full shows definitely level is in litres.
-        data[4] == 0xFF ? notApplicable3Str : FloatToStr(floatBuf[0], fuelLevelFiltered, 1),
+        data[4] == 0xFF || data[4] == 0x00 ? notApplicable3Str : FloatToStr(floatBuf[0], fuelLevelFiltered, 1),
 
         #define FULL_TANK_LITRES (73.0)
         data[4] == 0xFF ? PSTR("0") :
             fuelLevelFiltered >= FULL_TANK_LITRES ? PSTR("1") :
                 FloatToStr(floatBuf[1], fuelLevelFiltered / FULL_TANK_LITRES, 2),
 
-        data[5] == 0xFF ? notApplicable3Str : FloatToStr(floatBuf[2], data[5] / 2.0, 1)
+        data[5] == 0xFF || data[5] == 0x00 ? notApplicable3Str : FloatToStr(floatBuf[2], data[5] / 2.0, 1)
     );
 
     // JSON buffer overflow?
@@ -3321,8 +3327,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     report == SR_PERSONAL_ADDRESS ?
-                        PSTR("satnav_private_address_entry") :
-                        PSTR("satnav_business_address_entry"),
+                        PSTR("satnav_personal_address_entry") :
+                        PSTR("satnav_professional_address_entry"),
 
                     // Name of the entry
                     records[0][0] == "C" ? records[0][9].c_str() : records[0][8].c_str(),
@@ -3330,22 +3336,22 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     // Address
 
                     report == SR_PERSONAL_ADDRESS ?
-                        PSTR("satnav_private_address_country") :
-                        PSTR("satnav_business_address_country"),
+                        PSTR("satnav_personal_address_country") :
+                        PSTR("satnav_professional_address_country"),
 
                     // Country
                     records[0][1].c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
-                        PSTR("satnav_private_address_province") :
-                        PSTR("satnav_business_address_province"),
+                        PSTR("satnav_personal_address_province") :
+                        PSTR("satnav_professional_address_province"),
 
                     // Province
                     records[0][2].c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
-                        PSTR("satnav_private_address_city") :
-                        PSTR("satnav_business_address_city"),
+                        PSTR("satnav_personal_address_city") :
+                        PSTR("satnav_professional_address_city"),
 
                     // City + optional district
                     records[0][3].c_str(),
@@ -3353,8 +3359,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     records[0][4].c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
-                        PSTR("satnav_private_address_street") :
-                        PSTR("satnav_business_address_street"),
+                        PSTR("satnav_personal_address_street") :
+                        PSTR("satnav_professional_address_street"),
 
                     // Street
                     // Note: if the street is empty: it means "City center"
@@ -3362,8 +3368,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     records[0][6].c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
-                        PSTR("satnav_private_address_house_number") :
-                        PSTR("satnav_business_address_house_number"),
+                        PSTR("satnav_personal_address_house_number") :
+                        PSTR("satnav_professional_address_house_number"),
 
                     // First string is either "C" or "V"; "C" has GPS coordinates in [7] and [8]; "V" has house number
                     // in [7]. If we see "V", show house number
@@ -3378,22 +3384,22 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
         {
             const static char jsonFormatter[] PROGMEM =
                 ",\n"
-                "\"satnav_place_of_interest_address_entry\": \"%s\",\n"
-                "\"satnav_place_of_interest_address_country\": \"%s\",\n"
-                "\"satnav_place_of_interest_address_province\": \"%s\",\n"
-                "\"satnav_place_of_interest_address_city\": \"%s%S%s\",\n"
-                "\"satnav_place_of_interest_address_street\": \"%s%s\",\n"
-                "\"satnav_place_of_interest_address_distance\": \"%s m\"";
+                "\"satnav_service_address_entry\": \"%s\",\n"
+                "\"satnav_service_address_country\": \"%s\",\n"
+                "\"satnav_service_address_province\": \"%s\",\n"
+                "\"satnav_service_address_city\": \"%s%S%s\",\n"
+                "\"satnav_service_address_street\": \"%s%s\",\n"
+                "\"satnav_service_address_distance\": \"%s m\"";
 
-            // Chosen place of interest address is in first (and only) record. Copy at least city [3], district [4]
+            // Chosen service address is in first (and only) record. Copy at least city [3], district [4]
             // (if any), street [5, 6], entry name [9] and distance [11]; skip the other strings.
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
-                    // Name of the place of interest
+                    // Name of the service address
                     records[0][9].c_str(),
 
-                    // Address of the place of interest
+                    // Service address
 
                     // Country
                     records[0][1].c_str(),
@@ -3410,7 +3416,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     records[0][5].c_str() + 1,  // Skip the fixed first letter ('G' or 'I')
                     records[0][6].c_str(),
 
-                    // Distance (in metres) to the place of interest
+                    // Distance (in metres) to the service address
                     records[0][11].c_str()
                 );
         }
@@ -3499,7 +3505,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter);
 
-            // Each "category" in the list is a single string in a separate record
+            // Each "service" in the list is a single string in a separate record
             for (int i = 0; i < currentRecord; i++)
             {
                 at += at >= n ? 0 :
@@ -3652,7 +3658,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
 
         // * request == 0x08 (SR_SERVICE_LIST),
         //   param == 0xFF:
-        //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): present nag screen. Satnav response is PLACE_OF_INTEREST_CATEGORY_LIST
+        //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): present nag screen. Satnav response is SR_SERVICE_LIST
         //              with list_size=38, but the MFD ignores that.
         //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
@@ -3669,7 +3675,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1: MFD browses address by address)
 
         request == SR_SERVICE_ADDRESS && param == 0x0D && type == SRT_REQ_N_ITEMS ? PSTR("satnav_choose_from_list") :
-        request == SR_SERVICE_ADDRESS && param == 0x0D && type == SRT_REQ_ITEMS ? PSTR("satnav_show_place_of_interest_address") :
+        request == SR_SERVICE_ADDRESS && param == 0x0D && type == SRT_REQ_ITEMS ? PSTR("satnav_show_service_address") :
 
         // * request == 0x09 (SR_SERVICE_ADDRESS),
         //   param == 0x0E:
@@ -3717,7 +3723,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
 
         // * request == 0x10 (SR_CURRENT_STREET),
         //   param == 0x0D:
-        //   - type = 2 (SRT_SELECT) (dataLen = 11): select current location for e.g. places of interest
+        //   - type = 2 (SRT_SELECT) (dataLen = 11): select current location for e.g. service addresses
         //     -- no further data
 
         request == SR_CURRENT_STREET && param == 0x0D && type == SRT_SELECT ? emptyStr :
@@ -3745,7 +3751,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): get entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
-        request == SR_PERSONAL_ADDRESS && param == 0xFF && type == SRT_REQ_ITEMS ? PSTR("satnav_show_private_address") :
+        request == SR_PERSONAL_ADDRESS && param == 0xFF && type == SRT_REQ_ITEMS ? PSTR("satnav_show_personal_address") :
 
         // * request == 0x12 (SR_PROFESSIONAL_ADDRESS),
         //   param == 0x0E:
@@ -3759,7 +3765,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
         //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): get entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
-        request == SR_PROFESSIONAL_ADDRESS && param == 0xFF && type == SRT_REQ_ITEMS ? PSTR("satnav_show_business_address") :
+        request == SR_PROFESSIONAL_ADDRESS && param == 0xFF && type == SRT_REQ_ITEMS ? PSTR("satnav_show_professional_address") :
 
         // * request == 0x1B (SR_PERSONAL_ADDRESS_LIST),
         //   param == 0xFF:
