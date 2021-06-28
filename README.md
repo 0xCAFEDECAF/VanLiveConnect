@@ -160,8 +160,8 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20MCP2551_bb.png)
 
-   👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
-      it turns out this works best.
+> 👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+     it turns out this works best.
 
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    The SN65HVD230 transceiver already has 3.3V logic, so it is possible to directly connect the CRX / RXD / R pin of
@@ -169,7 +169,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20SN65HVD230_bb.png)
 
-   👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+>  👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
       it turns out this works best.
    
 3. The simplest schematic is not to use a transceiver at all, but connect the VAN DATA line to GrouND using
@@ -178,7 +178,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20voltage%20divider_bb.png)
    
-   👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
+>  👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
       cause your car to explode! (or anything less catastrofic)
 
 When the IR remote control is used to navigate, e.g. through the sat nav menus, this is usually not reflected on the
