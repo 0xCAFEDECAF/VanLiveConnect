@@ -280,7 +280,7 @@ button on the remote control and going into the same screen again.
 
 Unfortunately, it appears that configuring the EPS8266 hardware as Wi-Fi access point dramatically increases the number
 of CRC errors. Therefore, in my own configuration, I turn on the
-[Wi-Fi hotspot](https://support.google.com/android/answer/9059108?hl=en) of my daily smartphone (so becomes a
+[Wi-Fi hotspot](https://support.google.com/android/answer/9059108?hl=en) of my daily smartphone (so it becomes a
 Wi-Fi access point). The EPS8266 hardware and tablet have been configured to connect to that hotspot as Wi-Fi client.
 
 I am investigating how to improve on the error-free reception of VAN bus frames.
