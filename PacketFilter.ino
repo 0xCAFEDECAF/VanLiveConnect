@@ -10,6 +10,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
     if (filter == VAN_PACKETS_ALL_EXCEPT)
     {
         // Show all packets, but discard the following:
+        // (Commented-out IDs will be printed on Serial)
         if (
             false
             // || iden == VIN_IDEN
@@ -58,6 +59,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
     if (filter == VAN_PACKETS_NONE_EXCEPT)
     {
         // Show no packets, except the following:
+        // (Commented-out IDs will NOT be printed on Serial)
         if (
             true
             // && iden != VIN_IDEN
@@ -106,6 +108,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
     if (filter == VAN_PACKETS_HEAD_UNIT)
     {
         // Head unit packets (plus anything not recognized)
+        // (Commented-out IDs will be printed on Serial)
         if (
             false
             || iden == VIN_IDEN
@@ -154,6 +157,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
     if (filter == VAN_PACKETS_AIRCON)
     {
         // Aircon packets (plus anything not recognized)
+        // (Commented-out IDs will be printed on Serial)
         if (
             false
             || iden == VIN_IDEN
@@ -202,6 +206,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
     if (filter == VAN_PACKETS_COM2000_ETC)
     {
         // COM2000 packets and surroundings (plus anything not recognized)
+        // (Commented-out IDs will be printed on Serial)
         if (
             false
             || iden == VIN_IDEN
@@ -250,6 +255,7 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
     if (filter == VAN_PACKETS_SAT_NAV)
     {
         // SatNav packets (plus anything not recognized)
+        // (Commented-out IDs will be printed on Serial)
         if (
             false
             || iden == VIN_IDEN

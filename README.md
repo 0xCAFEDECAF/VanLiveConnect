@@ -126,7 +126,7 @@ Will not support:
 
 ## ⚙️ Technical Details<a name = "details"></a>
 
-In the beginning of 2000's the PSA group (Peugeot and Citroen) used VAN bus as a communication protocol
+In the beginning of 2000's the PSA group (Peugeot and Citroën) used VAN bus as a communication protocol
 between the various comfort-related equipment. Later, around 2005, they started to replace this protocol
 in their newer cars with the CAN bus protocol, however some models had VAN bus inside them until 2009.
 
@@ -278,6 +278,11 @@ Not all VAN bus packets are received error-free; see [this explanation](https://
 When using the sat nav, this sometimes causes a screen to stay empty. If that happens, try again by using the "Esc"
 button on the remote control and going into the same screen again.
 
+Unfortunately, it appears that configuring the EPS8266 hardware as Wi-Fi access point dramatically increases the number
+of CRC errors. Therefore, in my own configuration, I turn on the
+[Wi-Fi hotspot](https://support.google.com/android/answer/9059108?hl=en) of my daily smartphone (so becomes a
+Wi-Fi access point). The EPS8266 hardware and tablet have been configured to connect to that hotspot as Wi-Fi client.
+
 I am investigating how to improve on the error-free reception of VAN bus frames.
 
 ## 👷 Work to be Done<a name = "todo"></a>
@@ -295,7 +300,7 @@ I am investigating how to improve on the error-free reception of VAN bus frames.
 
 It will work (at least to some extent) if you have a Peugeot of around 1996-2004, fitted with a VAN comfort bus.
 
-As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peugeot and Citroen) as a
+As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peugeot and Citroën) as a
 communication protocol between the various comfort-related equipment. Later, around 2005, they started to
 replace this protocol in their newer cars with the CAN bus protocol.
 

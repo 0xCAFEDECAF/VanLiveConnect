@@ -1115,6 +1115,10 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
     return VAN_PACKET_PARSE_OK;
 } // ParseDeviceReportPkt
 
+// Keep track of the tab selected in the trip info popup (as shown during guidance mode, after pressing the right
+// stalk button)
+int tripInfoPopupTabIndex = -1;
+
 VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#564
@@ -1129,6 +1133,21 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
     static bool stalkWasPressed = false;
 
     bool stalkIsPressed = data[10] & 0x01;
+
+    // Not in sat nav guidance mode?
+    if (! getStore()->satnavGuidanceActive)
+    {
+        tripInfoPopupTabIndex = -1;
+    }
+    else if (tripInfoPopupTabIndex < 0)
+    {
+        // In guidance mode, stay in the current small screen
+        tripInfoPopupTabIndex = getStore()->smallScreenIndex;
+
+        // But if the GPS info screen was showing, go to the next screen (SMALL_SCREEN_FUEL_CONSUMPTION)
+        if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
+        tripInfoPopupTabIndex %= N_SMALL_SCREENS;
+    } // if
 
     while (! economyMode)
     {
@@ -1145,7 +1164,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         // Only continue if just released
         if (! stalkWasPressed || stalkIsPressed) break;
 
-        // Only continue if short-press
+        // Only continue if it was a short-press
         // Note: short-press = switch screen; long-press = reset trip counter currently shown (if any)
         if (millis() - stalkLastPressed >= 1000) break; // TODO - exact time
 
@@ -1157,34 +1176,36 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
             getStore()->smallScreenIndex %= N_SMALL_SCREENS;
 
             MarkStoreDirty();
+
             break;
         } // if
 
-        // In sat nav guidance mode:
-        // - First short-press does not switch screen but simply triggers the popup
-        // - As long as the popup is visible, the next short-press leads to next screen...
-        // - ...but skips the SMALL_SCREEN_GPS_INFO screen
+        // In sat nav guidance mode, the logic is a bit weird:
+        // - The first short-press does not switch screen but simply triggers the trip info popup on the original MFD.
+        // - As long as the trip info popup is visible, the next short-press leads to the next tab on the original MFD.
+        //   Our implementation is to go to the next small screen (but skipping the SMALL_SCREEN_GPS_INFO screen).
+        // - Which tab is shown in the trip info popup is not stored; i.e., when leaving guidance mode,
+        //   the small screen (left on the MFD) goes back to the tab it was originally showing.
 
         static unsigned long popupLastAppeared;
 
         // Arithmetic has safe roll-over
-        if (millis() - popupLastAppeared > 6000)  // TODO - check exact popup timeout
+        if (millis() - popupLastAppeared > 8000)
         {
-            // The popup is not visible: short-press simply triggers the popup. Stay in the current small screen.
+            // The popup is not visible: short-press simply triggers the popup on the original MFD.
+            // Our implementation is to stay in the current small screen.
         }
         else
         {
-            // As long as the popup is visible, short-press cycles through the 2 trip counters and the
-            // fuel consumption screen
-
-            getStore()->smallScreenIndex++;
+            // As long as the popup is visible on the original MFD, short-press cycles through the 2 trip counters
+            // and the fuel consumption tab
+            tripInfoPopupTabIndex++;
 
             // Skip GPS info screen
-            if (getStore()->smallScreenIndex == SMALL_SCREEN_GPS_INFO) getStore()->smallScreenIndex++;
+            if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
 
-            getStore()->smallScreenIndex %= N_SMALL_SCREENS;
-
-            MarkStoreDirty();
+            // Roll-over if necessary
+            tripInfoPopupTabIndex %= N_SMALL_SCREENS;
         } // if
 
         popupLastAppeared = millis();
@@ -1229,7 +1250,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         data[7] & 0x10 ? openStr : closedStr,
         data[7] & 0x08 ? openStr : closedStr,
         stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
-        SmallScreenStr(getStore()->smallScreenIndex),
+        SmallScreenStr(tripInfoPopupTabIndex >= 0 ? tripInfoPopupTabIndex : getStore()->smallScreenIndex),
 
         // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
         // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.

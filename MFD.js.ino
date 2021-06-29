@@ -624,7 +624,7 @@ function nextSmallScreen()
 
 // Go full-screen
 //
-// Note: when going full-screen, Android Chrome does no longer respect the view port, i.e zooms in. This seems
+// Note: when going full-screen, Android Chrome no longer respects the view port, i.e zooms in. This seems
 // to be a known issue; see also:
 // - https://stackoverflow.com/questions/39236875/fullscreen-api-on-androind-chrome-moble-disregards-meta-viewport-scale-setting?rq=1
 //   ("the scale is hard fixed to 1 when you enter fullscreen.")
@@ -1911,11 +1911,11 @@ function satnavSetDirectoryAddressScreenMode(mode)
 
         $("#satnav_personal_address_validate_buttons").hide();
         $("#satnav_personal_address_manage_buttons").show();
-        $("#satnav_manage_private_address_rename_button").addClass("buttonSelected");
+        $("#satnav_manage_personal_address_rename_button").addClass("buttonSelected");
 
         $("#satnav_professional_address_validate_buttons").hide();
         $("#satnav_professional_address_manage_buttons").show();
-        $("#satnav_manage_business_address_rename_button").addClass("buttonSelected");
+        $("#satnav_manage_professional_address_rename_button").addClass("buttonSelected");
     } // if
 } // satnavSetDirectoryAddressScreenMode
 
@@ -2116,7 +2116,6 @@ var suppressScreenChangeToAudio = null;
 
 function satnavValidateVocalSynthesisLevel()
 {
-
     var comingFromMenu = menuStack[menuStack.length - 1];
     if (comingFromMenu === "satnav_guidance_tools_menu")
     {
@@ -2144,6 +2143,22 @@ function satnavValidateVocalSynthesisLevel()
         exitMenu();
     } // if
 } // satnavValidateVocalSynthesisLevel
+
+function satnavEscapeVocalSynthesisLevel()
+{
+    var comingFromMenu = menuStack[menuStack.length - 1];
+    if (comingFromMenu === "satnav_guidance_tools_menu")
+    {
+        // Go back to guidance screen
+        selectDefaultScreen();
+    }
+    else
+    {
+        // In main menu
+        currentMenu = menuStack.pop();
+        changeLargeScreenTo(currentMenu);
+    } // if
+} // satnavEscapeVocalSynthesisLevel
 
 // -----
 // Handling of 'system' screen
@@ -3139,35 +3154,47 @@ function handleItemChange(item, value)
 
         case "satnav_personal_address_entry":
         {
-            // Only if the "satnav_personal_address_manage_buttons" are visible
-            if (! $("#satnav_personal_address_manage_buttons").is(":visible")) break;
-
-            $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
-            $("#satnav_delete_directory_entry_in_popup").text(value);
-
-            // The "Rename" button is disabled if the entry is not on the current disc (value ends with "&#x24E7;" (X))
+            // The "Rename" resp. "Validate" buttons are disabled if the entry is not on the current disc
+            // (value ends with "&#x24E7;" (X))
             var entryNotOnDisc = value.match(/&#x24E7;$/);
 
-            $("#satnav_manage_private_address_rename_button").toggleClass("buttonDisabled", entryNotOnDisc);
-            $("#satnav_manage_private_address_rename_button").toggleClass("buttonSelected", ! entryNotOnDisc);
-            $("#satnav_manage_private_address_delete_button").toggleClass("buttonSelected", entryNotOnDisc);
+            if ($("#satnav_personal_address_manage_buttons").is(":visible"))
+            {
+                $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+                $("#satnav_delete_directory_entry_in_popup").text(value);
+
+                $("#satnav_manage_personal_address_rename_button").toggleClass("buttonDisabled", entryNotOnDisc);
+                $("#satnav_manage_personal_address_rename_button").toggleClass("buttonSelected", ! entryNotOnDisc);
+                $("#satnav_manage_personal_address_delete_button").toggleClass("buttonSelected", entryNotOnDisc);
+            }
+            else
+            {
+                $("#satnav_show_personal_address_validate_button").toggleClass("buttonDisabled", entryNotOnDisc);
+                $("#satnav_show_personal_address_validate_button").toggleClass("buttonSelected", ! entryNotOnDisc);
+            } // if
         } // case
         break;
 
         case "satnav_professional_address_entry":
         {
-            // Only if the "satnav_professional_address_manage_buttons" are visible
-            if (! $("#satnav_professional_address_manage_buttons").is(":visible")) break;
-
-            $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
-            $("#satnav_delete_directory_entry_in_popup").text(value);
-
-            // The "Rename" button is disabled if the entry is not on the current disc (value ends with "&#x24E7;" (X))
+            // The "Rename" resp. "Validate" buttons are disabled if the entry is not on the current disc
+            // (value ends with "&#x24E7;" (X))
             var entryNotOnDisc = value.match(/&#x24E7;$/);
 
-            $("#satnav_manage_business_address_rename_button").toggleClass("buttonDisabled", entryNotOnDisc);
-            $("#satnav_manage_business_address_rename_button").toggleClass("buttonSelected", ! entryNotOnDisc);
-            $("#satnav_manage_business_address_delete_button").toggleClass("buttonSelected", entryNotOnDisc);
+            if ($("#satnav_professional_address_manage_buttons").is(":visible"))
+            {
+                $("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+                $("#satnav_delete_directory_entry_in_popup").text(value);
+
+                $("#satnav_manage_professional_address_rename_button").toggleClass("buttonDisabled", entryNotOnDisc);
+                $("#satnav_manage_professional_address_rename_button").toggleClass("buttonSelected", ! entryNotOnDisc);
+                $("#satnav_manage_professional_address_delete_button").toggleClass("buttonSelected", entryNotOnDisc);
+            }
+            else
+            {
+                $("#satnav_show_professional_address_validate_button").toggleClass("buttonDisabled", entryNotOnDisc);
+                $("#satnav_show_professional_address_validate_button").toggleClass("buttonSelected", ! entryNotOnDisc);
+            } // if
         } // case
         break;
 
@@ -3833,6 +3860,9 @@ function handleItemChange(item, value)
             }
             else if (value === "MODE_BUTTON")
             {
+                // Ignore if in menu
+                if (currentMenu && currentMenu !== "satnav_guidance") break;
+
                 nextLargeScreen();
             } // if
         } // case
@@ -3843,17 +3873,7 @@ function handleItemChange(item, value)
             if (value === "MFD_SCREEN_OFF")
             {
                 hidePopup();
-            }
-            else if (value === "TRIP_COUTER_1_RESET")
-            {
-                changeSmallScreenTo("trip_info");
-                changeToTripCounter("trip_1");
-            }
-            else if (value === "TRIP_COUTER_2_RESET") 
-            {
-                changeSmallScreenTo("trip_info");
-                changeToTripCounter("trip_2");
-            }
+            } // if
         } // case
         break;
 

@@ -1027,7 +1027,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="button buttonSelected"
             on_click="satnavSetDirectoryAddressScreenMode('MANAGE');"
             goto_id="satnav_directory_management_menu">Directory management</div>
-          <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volme</div>
+          <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
           <div class="button">Delete directories</div>
 
             <!-- class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Resume guidance</div> -->
@@ -1100,7 +1100,7 @@ char mfd_html[] PROGMEM = R"=====(
         <!-- Sat nav vocal synthesis level screen -->
 
         <div id="satnav_vocal_synthesis_level"
-          on_esc="satnavSwitchToGuidanceScreen();"
+          on_esc="satnavEscapeVocalSynthesisLevel();"
           class="tag menuTitle" style="display:none; left:60px; top:140px; width:920px; height:410px;">
 
           Vocal synthesis level<br style="line-height:100px;" />
@@ -1345,14 +1345,14 @@ char mfd_html[] PROGMEM = R"=====(
               <div button_orientation="horizontal"
                 style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-                <div id="satnav_manage_private_address_rename_button"
+                <div id="satnav_manage_personal_address_rename_button"
                   goto_id="satnav_rename_entry_in_directory_entry"
                   class="icon button"
                   style="left:0px; top:0px; width:180px; height:40px;">
                   Rename
                 </div>
 
-                <div id="satnav_manage_private_address_delete_button"
+                <div id="satnav_manage_personal_address_delete_button"
                   on_click="showPopup('satnav_delete_item_popup', 30000);"
                   class="icon button"
                   style="left:210px; top:0px; width:180px; height:40px;">
@@ -1391,14 +1391,14 @@ char mfd_html[] PROGMEM = R"=====(
               <div button_orientation="horizontal"
                 style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-                <div id="satnav_manage_business_address_rename_button"
+                <div id="satnav_manage_professional_address_rename_button"
                   goto_id="satnav_rename_entry_in_directory_entry"
                   class="icon button"
                   style="left:0px; top:0px; width:180px; height:40px;">
                   Rename
                 </div>
 
-                <div id="satnav_manage_business_address_delete_button"
+                <div id="satnav_manage_professional_address_delete_button"
                   on_click="showPopup('satnav_delete_item_popup', 30000);"
                   class="icon button"
                   style="left:210px; top:0px; width:180px; height:40px;">
