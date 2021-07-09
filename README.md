@@ -96,6 +96,9 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 * The SSID of the Wi-Fi access point is: "PSA display AP" (with the spaces, without the quotes)
 * No password is needed.
 
+> 👉 Note: it is better to setup the ESP hardware as Wi-Fi client instead of access point. For an explanation,
+     see [Limitations, Caveats](#limits) below.
+
 Of course you can modify the SSID and choose your own password by editing the ``Config.h`` file.
 
 ## 🕹️ MFD functions supported
