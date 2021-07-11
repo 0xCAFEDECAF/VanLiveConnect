@@ -2366,7 +2366,7 @@ char mfd_html[] PROGMEM = R"=====(
       <div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
 
       <div class="tabTop tabActive" style="position:absolute; font-size:40px; left:30px; top:80px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
-      <div class="tabcontent" style="display:block; left:20px; top:130px; width:380px; height:180px;">
+      <div class="iconBorder" style="display:block; position:absolute; left:20px; top:130px; width:380px; height:180px;">
         <div class="tag" style="left:130px; top:10px; width:120px;">Width</div>
         <div class="tag" style="left:240px; top:10px; width:120px;">Height</div>
         <div class="tag" style="left:0px; top:60px; width:150px;">Screen</div>
@@ -2381,7 +2381,7 @@ char mfd_html[] PROGMEM = R"=====(
       </div>
 
       <div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:80px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
-      <div class="tabcontent" style="display:block; left:420px; top:130px; width:920px; height:330px;">
+      <div class="iconBorder" style="display:block; position:absolute; left:420px; top:130px; width:920px; height:330px;">
         <div class="tag" style="left:0px; top:10px; width:230px; font-size:25px;">Boot Version</div>
         <div class="tag" style="left:0px; top:45px; width:230px; font-size:25px;">Flash ID</div>
         <div class="tag" style="left:0px; top:80px; width:230px; font-size:25px;">Flash size (real)</div>

@@ -2792,7 +2792,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
             // and during guidance. It stops after a "STOPPING_NAVIGATION" status message.
             status == 0x0108 ? PSTR("SATNAV_IN_OPERATION") :
 
-            status == 0x0110 ? ToHexStr(status) :
+            status == 0x0110 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING") :
             status == 0x0120 ? PSTR("ACCEPTED_TERMS_AND_CONDITIONS") :
             status == 0x0140 ? PSTR("GPS_POS_FOUND") :
             status == 0x0306 ? PSTR("SATNAV_DISC_ID_READ") :

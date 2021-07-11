@@ -174,8 +174,9 @@ void SetupStore()
         size_t fileSize = dir.fileSize();
         Serial.printf_P(PSTR("FS File: '%s', size: %s\n"), fileName.c_str(), _formatBytes(fileSize).c_str());
 
-        // Remove all files except one "instance" of '/store.json'
-        if (fileName != STORE_FILE_NAME || foundOne) SPIFFS.remove(fileName);
+        // Remove all "instances" of '/store.json' except one (yes, SPIFFS sometimes has the same name
+        // for different files)
+        if (fileName == STORE_FILE_NAME && foundOne) SPIFFS.remove(fileName);
 
         if (fileName == STORE_FILE_NAME) foundOne = true;
     } // while
