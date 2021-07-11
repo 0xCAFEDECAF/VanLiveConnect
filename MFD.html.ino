@@ -744,10 +744,12 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="set_screen_brightness" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
         Set brightness<br style="line-height:100px;" />
         <!-- TODO - design this screen -->
+        <small>[Not yet implemented]</small>
       </div>  <!-- "set_screen_brightness" -->
 
       <div id="set_date_time" class="tag menuTitle" style="display:none; left:30px; top:50px; width:920px; height:410px;">
-        Set date and time
+        Set date and time<br />
+        <small>[Not yet implemented]</small>
 
         <div style="position:absolute; top:160px; font-size:60px; text-align:center;">
           <div style="position:absolute; left:30px;">1</div>
@@ -835,14 +837,14 @@ char mfd_html[] PROGMEM = R"=====(
           class="button"
           UP_BUTTON="set_date_time_increase_day"
           style="position:absolute; left:0px; top:340px; width:180px; height:40px;">Validate</div>
-
       </div>  <!-- "set_date_time" -->
 
       <div id="set_language" class="tag menuTitle" style="display:none; left:30px; top:50px; width:920px; height:410px;">
-        Select a language
+        Select a language<br />
+        <small>[Not yet implemented]</small>
 
         <div style="font-size:46px; text-align:left;">
-          <div style="position:absolute; left:0px; top:120px; width:280px; height:150px;">
+          <div style="position:absolute; left:0px; top:160px; width:280px; height:150px;">
             <span id="set_language_german"
               class="tickBox button"
               RIGHT_BUTTON="set_language_spanish"
@@ -854,7 +856,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_click="toggleTick()"></span> English<br style="line-height:70px;" />
           </div>
 
-          <div style="position:absolute; left:280px; top:120px; width:280px; height:150px;">
+          <div style="position:absolute; left:280px; top:160px; width:280px; height:150px;">
             <span id="set_language_spanish"
               class="tickBox button"
               LEFT_BUTTON="set_language_german"
@@ -868,7 +870,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_click="toggleTick()"></span> Fran&ccedil;ais<br style="line-height:70px;" />
           </div>
 
-          <div style="position:absolute; left:560px; top:120px; width:280px; height:150px;">
+          <div style="position:absolute; left:560px; top:160px; width:280px; height:150px;">
             <span id="set_language_dutch"
               class="tickBox button"
               LEFT_BUTTON="set_language_spanish"
@@ -890,6 +892,7 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="set_units" class="tag menuTitle" style="display:none; left:30px; top:140px; width:920px; height:410px;">
         Set format and units<br style="line-height:100px;" />
+        <small>[Not yet implemented]</small>
         <!-- TODO - design this screen -->
       </div>  <!-- "set_units" -->
 
@@ -983,7 +986,7 @@ char mfd_html[] PROGMEM = R"=====(
           Navigation / Guidance<br style="line-height:100px;" />
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-          <div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
+          <div class="button" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
           <!--
             This button is disabled until a {"satnav_to_mfd_response":"Service","satnav_to_mfd_list_size":"38"} packet
@@ -1335,7 +1338,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_personal_address_validate_buttons" style="display:block">
               <div id="satnav_show_personal_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-                class="icon button buttonSelected"
+                class="icon button"
                 style="left:25px; top:450px; width:180px; height:40px;">
                 Validate
               </div>
@@ -1353,7 +1356,7 @@ char mfd_html[] PROGMEM = R"=====(
                 </div>
 
                 <div id="satnav_manage_personal_address_delete_button"
-                  on_click="showPopup('satnav_delete_item_popup', 30000);"
+                  on_click="satnavDirectoryEntry = $('#satnav_personal_address_entry').text(); showPopup('satnav_delete_item_popup', 30000);"
                   class="icon button"
                   style="left:210px; top:0px; width:180px; height:40px;">
                   Delete
@@ -1381,7 +1384,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_professional_address_validate_buttons" style="display:block">
               <div id="satnav_show_professional_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-                class="icon button buttonSelected"
+                class="icon button"
                 style="left:25px; top:450px; width:180px; height:40px;">
                 Validate
               </div>
@@ -1399,7 +1402,7 @@ char mfd_html[] PROGMEM = R"=====(
                 </div>
 
                 <div id="satnav_manage_professional_address_delete_button"
-                  on_click="showPopup('satnav_delete_item_popup', 30000);"
+                  on_click="satnavDirectoryEntry = $('#satnav_professional_address_entry').text(); showPopup('satnav_delete_item_popup', 30000);"
                   class="icon button"
                   style="left:210px; top:0px; width:180px; height:40px;">
                   Delete
@@ -1552,7 +1555,7 @@ char mfd_html[] PROGMEM = R"=====(
                 Validate
               </div>
               <div
-                on_click="satnavEnterCity();"
+                on_click="satnavEnterNewCity();"
                 class="icon button" style="left:210px; top:0px; width:230px; height:40px;">
                 Change
               </div>
@@ -1687,7 +1690,7 @@ char mfd_html[] PROGMEM = R"=====(
             <!-- on_click: goes all the way back to the "Directory management" menu -->
             <div id="satnav_rename_entry_in_directory_validate_button"
               UP_BUTTON="satnav_rename_entry_in_directory_characters_line_2"
-              on_click="satnavLastEnteredChar = null; menuStack.pop(); menuStack.pop(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
+              on_click="satnavDirectoryEntryRenameValidateButton();"
               class="icon button"
               style="left:0px; top:0px; width:240px; height:40px;">
               Validate
@@ -2126,7 +2129,7 @@ char mfd_html[] PROGMEM = R"=====(
             <!-- on_click: goes all the way back to the "Directory management" menu -->
             <div id="satnav_delete_item_popup_yes_button"
               class="icon button"
-              on_click="hidePopup(); exitMenu(); exitMenu();"
+              on_click="satnavDeleteDirectoryEntry();"
               style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
@@ -2142,7 +2145,9 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- Sat nav calculating route popup -->
 
-      <div id="satnav_calculating_route_popup" class="icon notificationPopup" style="display:none;">
+      <div id="satnav_calculating_route_popup" class="icon notificationPopup"
+        on_exit="satnavSwitchToGuidanceScreen();"
+        style="display:none;">
         <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
           Computing route<br />in progress
         </div>
@@ -2163,7 +2168,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div button_orientation="horizontal">
             <div id="satnav_guidance_preference_popup_yes_button"
               class="icon button"
-              on_click="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) showPopup('satnav_calculating_route_popup');"
+              on_click="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) showPopup('satnav_calculating_route_popup', 30000);"
               style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
