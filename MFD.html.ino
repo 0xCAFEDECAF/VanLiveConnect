@@ -1046,13 +1046,15 @@ char mfd_html[] PROGMEM = R"=====(
           Directory management<br style="line-height:100px;" />
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
+            <!-- on_click="highlightFirstLine('satnav_list');" -->
           <div class="button buttonSelected"
-            on_click="highlightFirstLine('satnav_list');"
+            on_click="satnavGotoListScreen();"
             goto_id="satnav_choose_from_list">Personal directory</div>
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
+            <!-- on_click="highlightFirstLine('satnav_list');" -->
           <div class="button"
-            on_click="highlightFirstLine('satnav_list');"
+            on_click="satnavGotoListScreen();"
             goto_id="satnav_choose_from_list">Professional directory</div>
         </div>  <!-- "satnav_directory_management_menu" -->
 
@@ -1560,7 +1562,6 @@ char mfd_html[] PROGMEM = R"=====(
                 Change
               </div>
 
-              <!-- on_click="exitMenu(); highlightFirstLine('satnav_list');" -->
               <div
                 on_click="highlightFirstLine('satnav_list');"
                 class="icon button" style="left:470px; top:0px; width:340px; height:40px;">

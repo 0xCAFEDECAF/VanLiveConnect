@@ -733,10 +733,10 @@ function inMenu()
 
         // Or in one of the "main" screens (not a menu)?
         // TODO - maybe better to select by matching the string "menu" in the value (ID) of 'currentMenu'
-        || currentMenu === "clock"
-        || currentMenu === "instruments" || currentMenu === "pre_flight"
-        || currentMenu === "tuner" || currentMenu === "cd_player" || currentMenu === "cd_changer"
-        || currentMenu === "satnav_guidance" || currentMenu === "satnav_curr_turn_icon";
+        || currentLargeScreenId === "clock"
+        || currentLargeScreenId === "instruments" || currentLargeScreenId === "pre_flight"
+        || currentLargeScreenId === "tuner" || currentLargeScreenId === "cd_player" || currentLargeScreenId === "cd_changer"
+        || currentLargeScreenId === "satnav_guidance" || currentLargeScreenId === "satnav_curr_turn_icon";
 
     return ! notInMenu;
 } // inMenu
@@ -803,9 +803,6 @@ function gotoTopLevelMenu(menu)
     if (menu === undefined)
     {
         menu = "main_menu";
-
-        //currentMenu = null;
-        // TODO - test this
         currentMenu = currentLargeScreenId;
     }
     else
@@ -1414,16 +1411,19 @@ function hideAudioSettingsPopup()
 {
     clearInterval(audioSettingsPopupShowTimer);
     clearInterval(audioSettingsPopupHideTimer);
-    $("#audio_settings_popup").hide();
     updatingAudioVolume = false;
     isAudioMenuVisible = false;
+
+    if (! $("#audio_settings_popup").is(":visible")) return false;
+    $("#audio_settings_popup").hide();
+    return true;
 } // hideAudioSettingsPopup
 
 function hideAudioSettingsPopupAfter(msec)
 {
     // (Re-)arm the timer to hide the popup after the specified number of milliseconds
     clearInterval(audioSettingsPopupHideTimer);
-    audioSettingsPopupHideTimer = setTimeout(function () { hideAudioSettingsPopup(); }, msec);
+    audioSettingsPopupHideTimer = setTimeout(hideAudioSettingsPopup, msec);
 } // hideAudioSettingsPopupAfter
 
 // The IDs of the audio settings highlight boxes ("divs") to be cycled through
@@ -1466,7 +1466,7 @@ function highlightAudioSetting(goToFirst)
 
 function hideTunerPresetsPopup()
 {
-    hidePopup("tuner_presets_popup");
+    return hidePopup("tuner_presets_popup");
 } // hideTunerPresetsPopup
 
 // Show the audio settings popup
@@ -1566,13 +1566,14 @@ function satnavGotoListScreen()
         currentMenu = null;
     } // if
 
-    // Clear the list box
-    $("#satnav_list").text(""); // TODO - necessary?
-    highlightFirstLine("satnav_list");
+    satnavLastEnteredChar = null;
 
     gotoMenu("satnav_choose_from_list");
 
-    satnavLastEnteredChar = null;
+    // Clear the list box
+    $("#satnav_list").text("");
+    $('[gid="satnav_to_mfd_list_size"]').text("");
+    highlightFirstLine("satnav_list");
 } // satnavGotoListScreen
 
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
@@ -2155,13 +2156,13 @@ function satnavGuidancePreferenceValidate()
     if (currentMenu !== "satnav_guidance")
     {
         satnavSwitchToGuidanceScreen();
-        showPopup("satnav_calculating_route_popup", 30000);
     }
     else
     {
         // Return to the guidance screen (bit clumsy)
         exitMenu();
     } // if
+    showPopup("satnav_calculating_route_popup", 30000);
 } // satnavGuidancePreferenceValidate
 
 function satnavSwitchToGuidanceScreen()
@@ -3797,66 +3798,6 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        // TODO - the following does not work. Find a suitable button.
-        case "left_stalk_button":
-        {
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
-            // Has anything changed?
-            if (value === handleItemChange.leftStalkButton) break;
-            handleItemChange.leftStalkButton = value;
-
-            if (value !== "PRESSED") break;
-
-            nextLargeScreen();
-        } // case
-        break;
-
-        case "right_stalk_button":
-        {
-            // Has anything changed?
-            if (value === handleItemChange.rightStalkButton) break;
-            handleItemChange.rightStalkButton = value;
-
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
-            if (value === "PRESSED")
-            {
-                // Start a "long-press" timer
-                clearInterval(handleItemChange.rightStalkButtonTimer);
-                handleItemChange.rightStalkButtonTimer = setTimeout(
-                    function ()
-                    {
-                        // "Long-press" changes to the next large screen
-                        //
-                        // This would, finally, by an easy way to walk through the screens! No more grabbing the
-                        // flimsy remote control from the glove compartment while driving, keeping your head up
-                        // in an awkward position desperately attempting to keep an eye on the road ahead.
-                        //
-                        // TODO - long-pressing the right-hand stalk button *also* resets the trip counter :-(
-                        nextLargeScreen();
-                        handleItemChange.rightStalkButtonTimer = null;
-                    },
-                    1000
-                );
-
-                break;
-            } // if
-
-            // value === "RELEASED"
-
-            // The "long-press" timer already expired: it was a "long-press"
-            if (handleItemChange.rightStalkButtonTimer == null) break;
-
-            // The "long-press" timer is still running: it was a "short-press"
-            clearInterval(handleItemChange.rightStalkButtonTimer);
-            handleItemChange.rightStalkButtonTimer = null;
-
-            // "Short-press" changes to the next small screen on the left hand side of the display.
-            // This is already handled by item "small_screen" (below).
-        } // case
-        break;
-
         case "small_screen":
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
@@ -3904,11 +3845,13 @@ function handleItemChange(item, value)
                 if (hidePopup("notification_popup")) break;
 
                 // Also close these, if shown
+                if (hideTunerPresetsPopup()) break;
+                if (hideAudioSettingsPopup()) break;
                 if (hidePopup("satnav_initializing_popup")) break;
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
                 if (hidePopup("satnav_delete_item_popup")) break;
-                //if (hidePopup("satnav_calculating_route_popup")) break; // Not sure
+                if (hidePopup("satnav_calculating_route_popup")) break;
 
                 // Hiding this popup might make the underlying "Computing route in progress" popup visible
                 if (hidePopup("satnav_guidance_preference_popup")) break;
@@ -3946,16 +3889,17 @@ function handleItemChange(item, value)
                 if (hidePopup("status_popup")) break;
 
                 // Also close these, if shown
+                if (hideTunerPresetsPopup()) break;
+                if (hideAudioSettingsPopup()) break;
                 if (hidePopup("satnav_initializing_popup")) break;
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
-                //if (hidePopup("satnav_calculating_route_popup")) break;
+                if (hidePopup("satnav_calculating_route_popup")) break;
 
                 // Entering a character in the "satnav_enter_street_characters" screen?
                 if ($("#satnav_enter_street_characters").is(":visible")) userHadOpportunityToEnterStreet = true;
 
                 // In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
-                //if ($("#satnav_guidance").is(":visible") && $(".notificationPopup:visible").length === 0)
                 if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
                     && $(".notificationPopup:visible").length === 0  // No popup showing?
                     && ! inMenu())  // Not in any menu?
@@ -3970,7 +3914,6 @@ function handleItemChange(item, value)
             else if (value === "MODE_BUTTON")
             {
                 // Ignore when user is browsing the menus
-                //if (currentMenu && currentMenu !== "satnav_guidance") break;
                 if (inMenu()) break;
 
                 nextLargeScreen();
