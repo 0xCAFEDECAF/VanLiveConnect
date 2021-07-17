@@ -2156,13 +2156,13 @@ function satnavGuidancePreferenceValidate()
     if (currentMenu !== "satnav_guidance")
     {
         satnavSwitchToGuidanceScreen();
+        //showPopup("satnav_calculating_route_popup", 30000);
     }
     else
     {
         // Return to the guidance screen (bit clumsy)
         exitMenu();
     } // if
-    showPopup("satnav_calculating_route_popup", 30000);
 } // satnavGuidancePreferenceValidate
 
 function satnavSwitchToGuidanceScreen()
@@ -3851,7 +3851,6 @@ function handleItemChange(item, value)
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
                 if (hidePopup("satnav_delete_item_popup")) break;
-                if (hidePopup("satnav_calculating_route_popup")) break;
 
                 // Hiding this popup might make the underlying "Computing route in progress" popup visible
                 if (hidePopup("satnav_guidance_preference_popup")) break;
@@ -3894,7 +3893,6 @@ function handleItemChange(item, value)
                 if (hidePopup("satnav_initializing_popup")) break;
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
-                if (hidePopup("satnav_calculating_route_popup")) break;
 
                 // Entering a character in the "satnav_enter_street_characters" screen?
                 if ($("#satnav_enter_street_characters").is(":visible")) userHadOpportunityToEnterStreet = true;

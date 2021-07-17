@@ -1129,7 +1129,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_enter_characters" style="display:none;">
 
             <!-- The city or street that has been entered thus far -->
-            <div id="satnav_entered_string" class="dots" style="left:25px; top:160px; width:925px; font-size:50px;"></div>
+            <div id="satnav_entered_string" class="dots" style="left:25px; top:180px; width:925px; font-size:50px;"></div>
 
             <div class="tag" style="left:20px; top:240px; width:550px; text-align:left;">Choose next letter</div>
 
@@ -1239,7 +1239,9 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- ...or choosing entry from list... -->
 
-          <div id="satnav_choose_from_list" style="display:none;">
+          <div id="satnav_choose_from_list"
+            on_enter="if (highlightIndexes['satnav_list'] === 0) $('#satnav_list').scrollTop(0);"
+            style="display:none;">
 
             <!-- What is being entered? (city, street) -->
             <div id="mfd_to_satnav_request" class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter city</div>
@@ -1281,7 +1283,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="satnav_current_destination_house_number"
               on_enter="satnavConfirmHouseNumber();"
               on_esc="satnavConfirmStreetMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
-              class="dots" style="left:25px; top:160px; width:930px;"></div>
+              class="dots" style="left:25px; top:180px; width:930px;"></div>
 
             <div id="satnav_house_number_range" class="dots" style="left:25px; top:230px; width:930px; text-align:right;"></div>
 
