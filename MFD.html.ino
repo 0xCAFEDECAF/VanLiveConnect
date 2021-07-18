@@ -1416,7 +1416,8 @@ char mfd_html[] PROGMEM = R"=====(
           </div>  <!-- "satnav_show_professional_address" -->
 
           <div id="satnav_show_service_address"
-            style="display:none;">
+            style="display:none;"
+            on_enter="$('#satnav_show_service_address .dots:not(#satnav_to_mfd_list_size)').text('');">
 
             <div id="satnav_service_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
 

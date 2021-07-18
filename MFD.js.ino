@@ -1470,21 +1470,24 @@ function hideTunerPresetsPopup()
 } // hideTunerPresetsPopup
 
 // Show the audio settings popup
-function showAudioSettingsPopup()
+function showAudioSettingsPopup(button)
 {
-    // If the tuner presets popup is visible, hide it
-    hideTunerPresetsPopup();
+    if (button === "AUDIO")
+    {
+        // If the tuner presets popup is visible, hide it
+        hideTunerPresetsPopup();
 
-    // Highlight the first audio setting ("bass")
-    if (! isAudioMenuVisible) highlightAudioSetting(true);
+        // Highlight the first audio setting ("bass") if just popped up, else highlight next audio setting
+        highlightAudioSetting(! isAudioMenuVisible);
 
-    // Show the audio settings popup
-    $("#audio_settings_popup").show();
+        // Show the audio settings popup
+        $("#audio_settings_popup").show();
 
-    updatingAudioVolume = false;
-    isAudioMenuVisible = true;
+        updatingAudioVolume = false;
+        isAudioMenuVisible = true;
+    } // if
 
-    // Hide the popup after 12 seconds.
+    // (Re-)start the timer to hide the popup after.
     // Note: set to at least 12 seconds, otherwise the popup will appear again just before it is being force-closed.
     hideAudioSettingsPopupAfter(12000);
 } // showAudioSettingsPopup
@@ -2365,14 +2368,8 @@ function handleItemChange(item, value)
             // Check for audio button press or release
             if (value.substring(0, 5) === "AUDIO")
             {
-                // Don't do anything on "AUDIO (released)" or any other variant
-                if (value !== "AUDIO") break;
-
-                // First button press: show the audio settings popup
-                if (! isAudioMenuVisible) showAudioSettingsPopup()
-
-                // Next button press: highlight next audio setting
-                else highlightAudioSetting();
+                // Make sure the audio settings popup is shown. If so, take care to restart the time-out
+                showAudioSettingsPopup(value);
 
                 break;
             } // if
