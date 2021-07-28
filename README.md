@@ -351,7 +351,7 @@ replace this protocol in their newer cars with the CAN bus protocol.
   * Chrome, any recent version
 * Mobile
   * Android Firefox 68.11.0 and higher
-  * Android Firefox 88.0 and higher
+  * Android Chrome 88.0 and higher
 
 ## 📜 References<a name = "extref"></a>
 
