@@ -342,6 +342,17 @@ As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peug
 communication protocol between the various comfort-related equipment. Later, around 2005, they started to
 replace this protocol in their newer cars with the CAN bus protocol.
 
+<b>Question:</b> Which web browsers will this work with?
+
+<b>Answer:</b> I have tested successfully on:
+* Windows Desktop
+  * Internet Explorer 11 (the dinosaur)
+  * Firefox, any recent version
+  * Chrome, any recent version
+* Mobile
+  * Android Firefox 68.11.0 and higher
+  * Android Firefox 88.0 and higher
+
 ## 📜 References<a name = "extref"></a>
 
 For background reading:
