@@ -32,6 +32,9 @@ inline void WifiConfig()
 
 #endif // WIFI_AP_MODE
 
+// Uncomment to see JSON buffers printed on the Serial port
+#define PRINT_JSON_BUFFERS_ON_SERIAL
+
 // Which type of packets will be printed on Serial?
 
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC
