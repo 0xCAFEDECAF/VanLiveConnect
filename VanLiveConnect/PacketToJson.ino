@@ -371,7 +371,7 @@ const char* RadioPiCountry(uint8_t countryCode)
         countryCode == 0x04 ? PSTR("CH") :  // Switzerland
         countryCode == 0x05 ? PSTR("IT") :  // Italy
         countryCode == 0x06 ? PSTR("BEL") :  // Belgium
-        countryCode == 0x07 ? PSTR("LU") :  // Luxemburg
+        countryCode == 0x07 ? PSTR("LUX") :  // Luxemburg
         countryCode == 0x08 ? PSTR("NL") :  // Netherlands
         countryCode == 0x09 ? PSTR("DNK") :  // Denmark
         countryCode == 0x0A ? PSTR("AUT") :  // Austria
@@ -1135,14 +1135,14 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
     bool stalkIsPressed = data[10] & 0x01;
 
     // Not in sat nav guidance mode?
-    if (! getStore()->satnavGuidanceActive)
+    if (! GetStore()->satnavGuidanceActive)
     {
         tripInfoPopupTabIndex = -1;
     }
     else if (tripInfoPopupTabIndex < 0)
     {
         // In guidance mode, stay in the current small screen
-        tripInfoPopupTabIndex = getStore()->smallScreenIndex;
+        tripInfoPopupTabIndex = GetStore()->smallScreenIndex;
 
         // But if the GPS info screen was showing, go to the next screen (SMALL_SCREEN_FUEL_CONSUMPTION)
         if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
@@ -1169,11 +1169,11 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         if (millis() - stalkLastPressed >= 1000) break; // TODO - exact time
 
         // Not in sat nav guidance mode?
-        if (! getStore()->satnavGuidanceActive)
+        if (! GetStore()->satnavGuidanceActive)
         {
             // Short-press of right stalk button selects next small screen
-            getStore()->smallScreenIndex++;
-            getStore()->smallScreenIndex %= N_SMALL_SCREENS;
+            GetStore()->smallScreenIndex++;
+            GetStore()->smallScreenIndex %= N_SMALL_SCREENS;
 
             MarkStoreDirty();
 
@@ -1250,7 +1250,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         data[7] & 0x10 ? openStr : closedStr,
         data[7] & 0x08 ? openStr : closedStr,
         stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
-        SmallScreenStr(tripInfoPopupTabIndex >= 0 ? tripInfoPopupTabIndex : getStore()->smallScreenIndex),
+        SmallScreenStr(tripInfoPopupTabIndex >= 0 ? tripInfoPopupTabIndex : GetStore()->smallScreenIndex),
 
         // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
         // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.
@@ -1548,18 +1548,21 @@ VanPacketParseResult_t ParseDashboardPkt(const char* idenStr, TVanPacketRxDesc& 
 
     uint16_t engineRpm = (uint16_t)data[0] << 8 | data[1];
     uint16_t vehicleSpeed = (uint16_t)data[2] << 8 | data[3];
-
+    uint32_t sec = (uint32_t)data[4] << 16 | (uint32_t)data[5] << 8 | data[6];
+    static uint32_t prevSec = 0;
     static long savedEngineRpm = 0;
     static long savedVehicleSpeed = 0;
 
     // With engine running, there are about 20 or so of these packets per second. Limit the rate somewhat.
-    // Send only if any of the reported values changes with more than 10 /min (engine_rpm) or 1 km/h (vehicle_speed).
+    // Send only if any of the reported values changes with more than 10 /min (engine_rpm), 1 km/h (vehicle_speed),
+    // or after 1 second.
     long diffEngineRpm = engineRpm - savedEngineRpm;
     long diffVehicleSpeed = vehicleSpeed - savedVehicleSpeed;
-    if (abs(diffEngineRpm) < 10 * 8 && abs(diffVehicleSpeed) < 100 * 1) return VAN_PACKET_NO_CONTENT;
+    if (abs(diffEngineRpm) < 10 * 8 && abs(diffVehicleSpeed) < 100 * 1 && sec == prevSec) return VAN_PACKET_NO_CONTENT;
 
     savedEngineRpm = engineRpm;
     savedVehicleSpeed = vehicleSpeed;
+    prevSec = sec;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2268,8 +2271,8 @@ VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& 
         // Force change to the appropriate small screen (left hand side of the display)
 
         uint8_t smallScreenIdx = mfdStatus == 0xA0FF ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
-        bool isChanged = getStore()->smallScreenIndex != smallScreenIdx;
-        getStore()->smallScreenIndex = smallScreenIdx;
+        bool isChanged = GetStore()->smallScreenIndex != smallScreenIdx;
+        GetStore()->smallScreenIndex = smallScreenIdx;
         if (isChanged) MarkStoreDirty();
 
         at += at >= n ? 0 :
@@ -2679,12 +2682,12 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
     // The following data is stored in non-volatile storage
 
     bool satnavGuidanceActive = satnavStatus2 == 0x05;
-    bool isChanged = getStore()->satnavGuidanceActive != satnavGuidanceActive;
-    getStore()->satnavGuidanceActive = satnavGuidanceActive;
+    bool isChanged = GetStore()->satnavGuidanceActive != satnavGuidanceActive;
+    GetStore()->satnavGuidanceActive = satnavGuidanceActive;
 
     bool satnavDiscPresent = (data[2] & 0x70) == 0x30;
-    isChanged = isChanged || getStore()->satnavDiscPresent != satnavDiscPresent;
-    getStore()->satnavDiscPresent = satnavDiscPresent;
+    isChanged = isChanged || GetStore()->satnavDiscPresent != satnavDiscPresent;
+    GetStore()->satnavDiscPresent = satnavDiscPresent;
 
     if (isChanged) MarkStoreDirty();
 
@@ -2819,8 +2822,8 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
         at = snprintf_P(buf, n, jsonFormatter, SatNavGuidancePreferenceStr(preference));
 
         // Save also in non-volatile storage
-        bool isChanged = getStore()->satnavGuidancePreference != preference;
-        getStore()->satnavGuidancePreference = preference;
+        bool isChanged = GetStore()->satnavGuidancePreference != preference;
+        GetStore()->satnavGuidancePreference = preference;
         if (isChanged) MarkStoreDirty();
     }
     else if (dataLen == 17 && data[0] == 0x20)
@@ -3479,13 +3482,13 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
 
                     if (report == SR_PERSONAL_ADDRESS_LIST)
                     {
-                        isChanged = getStore()->personalDirectoryEntries[i] != records[i][0];
-                        if (isChanged) getStore()->personalDirectoryEntries[i] = records[i][0];
+                        isChanged = GetStore()->personalDirectoryEntries[i] != records[i][0];
+                        if (isChanged) GetStore()->personalDirectoryEntries[i] = records[i][0];
                     }
                     else
                     {
-                        isChanged = getStore()->professionalDirectoryEntries[i] != records[i][0];
-                        if (isChanged) getStore()->professionalDirectoryEntries[i] = records[i][0];
+                        isChanged = GetStore()->professionalDirectoryEntries[i] != records[i][0];
+                        if (isChanged) GetStore()->professionalDirectoryEntries[i] = records[i][0];
                     } // if
 
                     if (isChanged) MarkStoreDirty();
@@ -4434,12 +4437,12 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
     int at = snprintf_P(buf, n, jsonFormatter,
 
         // Small screen (left hand side of the display) to start with
-        SmallScreenStr(getStore()->smallScreenIndex),
+        SmallScreenStr(GetStore()->smallScreenIndex),
 
         cdChangerCartridgePresent ? yesStr : noStr,
-        getStore()->satnavDiscPresent ? yesStr : noStr,
+        GetStore()->satnavDiscPresent ? yesStr : noStr,
         satnavStatus2Str,
-        SatNavGuidancePreferenceStr(getStore()->satnavGuidancePreference)        
+        SatNavGuidancePreferenceStr(GetStore()->satnavGuidancePreference)        
     );
 
     if (satnavServiceListSize > 0)
@@ -4459,7 +4462,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 
     // The names of the directory entries are matched against while entering new entries or renaming existing ones.
     // When the user tries to create an entry with an existing name, the "Validate" button becomes grayed out.
-    String* entryLists[2] = { getStore()->personalDirectoryEntries, getStore()->professionalDirectoryEntries };
+    String* entryLists[2] = { GetStore()->personalDirectoryEntries, GetStore()->professionalDirectoryEntries };
     for (int i = 0; i < 2; i++)
     {
         String* entryList = entryLists[i];
@@ -4505,6 +4508,9 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 
     return buf;
 } // EquipmentStatusDataToJson
+
+// Defined in WebServer.ino
+extern uint16_t serialDumpFilter;
 
 // Check if the new packet data differs from the previous.
 // Optionally, print the new packet on Serial, highlighting the bytes that differ.

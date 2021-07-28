@@ -1,0 +1,426 @@
+
+// Uncomment to serve from SPI flash file system
+#define SERVE_FRONTS_FROM_SPIFFS
+//#define SERVE_JAVASCRIPT_FROM_SPIFFS
+//#define SERVE_CSS_FROM_SPIFFS
+
+ESP8266WebServer webServer;
+
+// Defined in Esp.ino
+extern const String md5Checksum;
+
+// Print all HTTP request details on Serial
+void printHttpRequest()
+{
+    // TODO - remove
+    return;
+
+    Serial.print(F("[webServer] Received request from "));
+    String ip = webServer.client().remoteIP().toString();
+    Serial.print(ip);
+    Serial.print(webServer.method() == HTTP_GET ? F(": GET - '") : F(": POST - '"));
+    Serial.print(webServer.uri());
+
+    if (webServer.args() > 0) Serial.print("?");
+
+    for (uint8_t i = 0; i < webServer.args(); i++)
+    {
+        Serial.print(webServer.argName(i));
+        Serial.print(F("="));
+        Serial.print(webServer.arg(i));
+        if (i < webServer.args() - 1) Serial.print('&');
+    } // for
+
+    Serial.println(F("'"));
+} // printHttpRequest
+
+// Returns true if the actual Etag is equal to the received Etag in an 'If-None-Match' header field.
+// Shameless copy from: https://werner.rothschopf.net/microcontroller/202011_arduino_webserver_caching_en.htm .
+bool checkETag(const String& etag)
+{
+    if (etag == "") return false;
+
+    for (int i = 0; i < webServer.headers(); i++)
+    {
+        if (webServer.headerName(i).compareTo(F("If-None-Match")) == 0)
+        {
+            String read = webServer.header(i);
+            read.replace("\"", ""); // some browsers (i.e. Samsung) discard the double quotes
+            if (read == etag)
+            {
+                webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
+
+                webServer.send(304, "text/plain", F("Not Modified"));
+                Serial.println(
+                    String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified"));
+                return true;
+            } // if
+        } // if
+    } // for
+
+    webServer.sendHeader(F("ETag"), String("\"") + etag + "\"");
+
+    // Cache 10 seconds, then falls back to using the "If-None-Match" mechanism
+    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+    webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
+
+    return false;
+} // checkETag
+
+// serialDumpFilter == 0 means: no filtering; print all
+// serialDumpFilter != 0 means: print only the packet + JSON data for the specified IDEN
+uint16_t serialDumpFilter;
+
+// Set a simple filter on the dumping of packet + JSON data on Serial.
+// Surf to e.g. http://car.lan/dumpOnly?iden=8c4 to have only packets with IDEN 0x8C4 dumped on serial.
+// Surf to http://car.lan/dumpOnly?iden=0 to remove any filter, i.e. dump all packets.
+void HandleDumpFilter()
+{
+    Serial.print(F("Web server received request from "));
+    String ip = webServer.client().remoteIP().toString();
+    Serial.print(ip);
+    Serial.print(webServer.method() == HTTP_GET ? F(": GET - '") : F(": POST - '"));
+    Serial.print(webServer.uri());
+    bool found = false;
+    if (webServer.args() > 0)
+    {
+        Serial.print("?");
+        for (uint8_t i = 0; i < webServer.args(); i++)
+        {
+            if (! found && webServer.argName(i) == "iden" && webServer.arg(i).length() <= 3)
+            {
+                // Invalid conversion results in 0, which is ok: it corresponds to "remove any filter"
+                serialDumpFilter = strtol(webServer.arg(i).c_str(), NULL, 16);
+                found = true;
+            } // if
+
+            Serial.print(webServer.argName(i));
+            Serial.print(F("="));
+            Serial.print(webServer.arg(i));
+            if (i < webServer.args() - 1) Serial.print('&');
+        } // for
+    } // if
+    Serial.println(F("'"));
+
+    webServer.send(200, F("text/plain"),
+        ! found ? F("NOT OK!") :
+        serialDumpFilter == 0 ? F("OK: dumping all JSON data") :
+        F("OK: filtering JSON data"));
+} // HandleDumpFilter
+
+// -----
+// MIME type string constants
+
+//static const char PROGMEM textJavascriptStr[] = "text/javascript";
+static const char textJavascriptStr[] = "text/javascript";
+//static const char PROGMEM textCssStr[] = "text/css";
+static const char textCssStr[] = "text/css";
+//static const char PROGMEM fontWoffStr[] = "font/woff";
+static const char fontWoffStr[] = "application/font-woff";
+
+// -----
+// Fonts
+
+// Defined in ArialRoundedMTbold.woff.ino
+extern char ArialRoundedMTbold_woff[];
+extern unsigned int ArialRoundedMTbold_woff_len;
+
+// Defined in DotsAllForNow.woff.ino
+extern char DotsAllForNow_woff[];
+extern unsigned int DotsAllForNow_woff_len;
+
+// Defined in DSEG7Classic-BoldItalic.woff.ino
+extern char DSEG7Classic_BoldItalic_woff[];
+extern unsigned int DSEG7Classic_BoldItalic_woff_len;
+
+// Defined in DSEG14Classic-BoldItalic.woff.ino
+extern char DSEG14Classic_BoldItalic_woff[];
+extern unsigned int DSEG14Classic_BoldItalic_woff_len;
+
+// Defined in fa-solid-900.woff.ino
+extern char webfonts_fa_solid_900_woff[];
+extern unsigned int webfonts_fa_solid_900_woff_len;
+
+// -----
+// Javascript files
+
+extern char jQuery_js[];  // Defined in jquery-3.5.1.min.js.ino
+extern char mfd_js[];  // Defined in MFD.js.ino
+
+// -----
+// Cascading style sheet files
+
+extern char faAll_css[];  // Defined in fa-all.css.ino
+extern char carInfo_css[];  // Defined in CarInfo.css.ino
+
+// -----
+// HTML files
+
+extern char mfd_html[];  // Defined in MFD.html.ino
+void ServeMainHtml();
+
+void HandleNotFound()
+{
+    if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
+
+#ifdef WIFI_AP_MODE
+    // If webServer.uri() ends with '.html' or '.txt', then serve the main HTML page ('/MFD.html').
+    // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
+    // http://detectportal.firefox.com/success.txt
+    if (webServer.uri().endsWith(".html") || webServer.uri().endsWith(".txt"))
+    {
+        return ServeMainHtml();
+    } // if
+#endif // WIFI_AP_MODE
+
+    // Gold-plated response
+    String message = F("File Not Found\n\n");
+    message += F("URI: ");
+    message += webServer.uri();
+    message += F("\nMethod: ");
+    message += (webServer.method() == HTTP_GET) ? F("GET") : F("POST");
+    message += F("\nArguments: ");
+    message += webServer.args();
+    message += F("\n");
+    for (uint8_t i = 0; i < webServer.args(); i++)
+    {
+        message += " " + webServer.argName(i) + F(": ") + webServer.arg(i) + F("\n");
+    } // for
+
+    webServer.send(404, F("text/plain;charset=utf-8"), message);
+} // HandleNotFound
+
+// Serve a specified font
+void ServeFont(PGM_P content, unsigned int content_len)
+{
+    printHttpRequest();
+    unsigned long start = millis();
+
+    // Cache 10 seconds
+    // TODO - does this header have any effect? Implementation of font caching seems pretty weird in various browsers...
+    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+
+    webServer.send_P(200, fontWoffStr, content, content_len);  
+
+    Serial.printf_P(PSTR("[webServer] Serving font '%S' took: %lu msec\n"),
+        webServer.uri().c_str(),
+        millis() - start);
+} // ServeFont
+
+// Serve a specified font from the SPI Flash File System (SPIFFS)
+void ServeFontFromFile(const char* path)
+{
+    printHttpRequest();
+    unsigned long start = millis();
+
+    // Cache 10 seconds
+    // TODO - does this header have any effect? Implementation of font caching seems pretty weird in various browsers...
+    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+
+    VanBusRx.Disable();
+    if (! SPIFFS.exists(path))
+    {
+        VanBusRx.Enable();
+        Serial.printf("[webServer] File '%s' not found\n", path);
+        return HandleNotFound();
+    } // if
+
+    File file = SPIFFS.open(path, "r");
+    size_t sent = webServer.streamFile(file, fontWoffStr);
+    file.close();
+    VanBusRx.Enable();
+
+    Serial.printf_P(PSTR("[webServer] Serving font '%s' from file system took: %lu msec\n"),
+        webServer.uri().c_str(),
+        millis() - start);
+} // ServeFontFromFile
+
+// Serve a specified document (text, html, css, javascript, ...)
+void ServeDocument(PGM_P mimeType, PGM_P content)
+{
+    printHttpRequest();
+    unsigned long start = millis();
+    bool eTagMatches = checkETag(md5Checksum);
+    if (! eTagMatches)
+    {
+        // Serve the complete document
+
+        webServer.send_P(200, mimeType, content);  
+    } // if
+
+    Serial.printf_P(PSTR("[webServer] %S '%s' took: %lu msec\n"),
+        eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
+        webServer.uri().c_str(),
+        millis() - start);
+} // ServeDocument
+
+// Convert the file extension to the MIME type
+const char* getContentType(const String& path)
+{
+    if (path.endsWith(".html")) return "text/html";
+    else if (path.endsWith(".woff")) return fontWoffStr;
+    else if (path.endsWith(".css")) return textCssStr;
+    else if (path.endsWith(".js")) return textJavascriptStr;
+    else if (path.endsWith(".ico")) return "image/x-icon";
+    else if (path.endsWith(".jpg")) return "image/jpeg";
+    else if (path.endsWith(".png")) return "image/png";
+    return "text/plain";
+} // getContentType
+
+// Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
+void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
+{
+    printHttpRequest();
+
+    String path(urlPath == 0 ? webServer.uri() : urlPath);
+    String md5 = getMd5(path);
+    if (md5.length() == 0)
+    {
+        // If 'getMd5(path)' returns an empty string, it means that 'path' is not found in the file system
+
+        // Try the ".gz" file
+        md5 = getMd5(path + ".gz");
+        if (md5.length() == 0)
+        {
+            Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), path.c_str());
+            return HandleNotFound();
+        } // if
+
+        path += ".gz";
+    } // if
+
+    unsigned long start = millis();
+
+    bool eTagMatches = checkETag(md5);
+    if (! eTagMatches)
+    {
+        // Get the MIME type, if necessary
+        if (mimeType == 0) mimeType = getContentType(path);
+
+        // Serve the complete document
+        VanBusRx.Disable();
+        File file = SPIFFS.open(path, "r");
+        size_t sent = webServer.streamFile(file, mimeType);
+        file.close();
+        VanBusRx.Enable();
+    } // if
+
+    Serial.printf_P(PSTR("[webServer] %S '%S' from file system took: %lu msec\n"),
+        eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
+        path.c_str(),
+        millis() - start);
+} // ServeDocumentFromFile
+
+// Serve the main HTML page
+void ServeMainHtml()
+{
+    // This one should always be served from memory, so updating is easy and does not need the SPI flash file
+    // system uploader (which will delete all stored data in 'store.ino')
+    ServeDocument(PSTR("text/html"), mfd_html);
+
+    // Alternatives, when serving from the SPI flash file system
+    //ServeDocumentFromFile("/MFD.html.gz", "text/html");
+    //ServeDocumentFromFile("/MFD.html", "text/html");
+} // ServeMainHtml
+
+void SetupWebServer()
+{
+#ifdef SERVE_FRONTS_FROM_SPIFFS
+    webServer.on(F("/ArialRoundedMTbold.woff"), [](){ ServeFontFromFile("/ArialRoundedMTbold.woff"); });
+    webServer.on(F("/DotsAllForNow.woff"), [](){ ServeFontFromFile("/DotsAllForNow.woff"); });
+    webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG7Classic-BoldItalic.woff"); });
+    webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG14Classic-BoldItalic.woff"); });
+    webServer.on(F("/webfonts/fa-solid-900.woff"), [](){ ServeFontFromFile("/fa-solid-900.woff"); });
+#else
+    webServer.on(F("/ArialRoundedMTbold.woff"), [](){
+        ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
+    });
+    webServer.on(F("/DotsAllForNow.woff"), [](){
+        ServeFont(DotsAllForNow_woff, DotsAllForNow_woff_len);
+    });
+    webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){
+        ServeFont(DSEG7Classic_BoldItalic_woff, DSEG7Classic_BoldItalic_woff_len);
+    });
+    webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){
+        ServeFont(DSEG14Classic_BoldItalic_woff, DSEG14Classic_BoldItalic_woff_len);
+    });
+    webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
+        ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
+    });
+#endif // SERVE_FRONTS_FROM_SPIFFS
+/*
+    webServer.on(F("/ArialRoundedMTbold.woff"), [](){
+#ifdef SERVE_FRONTS_FROM_SPIFFS
+        ServeFontFromFile("/ArialRoundedMTbold.woff");
+#else
+        ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
+#endif
+    });
+    webServer.on(F("/DotsAllForNow.woff"), [](){
+#ifdef SERVE_FRONTS_FROM_SPIFFS
+        ServeFontFromFile("/DotsAllForNow.woff");
+#else
+        ServeFont(DotsAllForNow_woff, DotsAllForNow_woff_len);
+#endif
+    });
+    webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){
+#ifdef SERVE_FRONTS_FROM_SPIFFS
+        ServeFontFromFile("/DSEG7Classic-BoldItalic.woff");
+#else
+        ServeFont(DSEG7Classic_BoldItalic_woff, DSEG7Classic_BoldItalic_woff_len);
+#endif
+    });
+    webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){
+#ifdef SERVE_FRONTS_FROM_SPIFFS
+        ServeFontFromFile("/DSEG14Classic-BoldItalic.woff");
+#else
+        ServeFont(DSEG14Classic_BoldItalic_woff, DSEG14Classic_BoldItalic_woff_len);
+#endif
+    });
+    webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
+#ifdef SERVE_FRONTS_FROM_SPIFFS
+        ServeFontFromFile("/fa-solid-900.woff");
+#else
+        ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
+#endif
+    });
+*/
+    // Javascript files
+#ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
+    webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocumentFromFile(); });
+#else
+    webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocument(textJavascriptStr, jQuery_js); });
+#endif // SERVE_JAVASCRIPT_FROM_SPIFFS
+    webServer.on(F("/MFD.js"), [](){
+        // This one should always be served from memory, so updating is easy and does not need the SPI flash file
+        // system uploader (which will delete all stored data in 'store.ino')
+        ServeDocument(textJavascriptStr, mfd_js);
+    });
+
+    // Cascading style sheet files
+#ifdef SERVE_CSS_FROM_SPIFFS
+    webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile(); });
+    webServer.on(F("/CarInfo.css"), [](){ ServeDocumentFromFile(); });
+#else
+    webServer.on(F("/css/all.css"), [](){ ServeDocument(textCssStr, faAll_css); });
+    webServer.on(F("/CarInfo.css"), [](){ ServeDocument(textCssStr, carInfo_css); });
+#endif // SERVE_CSS_FROM_SPIFFS
+
+    // HTML files
+    webServer.on(F("/MFD.html"), ServeMainHtml);
+
+    webServer.on(F("/dumpOnly"), HandleDumpFilter);
+
+    // Try to serve any not further listed document from the SPI flash file system
+    webServer.onNotFound([]() { ServeDocumentFromFile(); });
+
+    const char* headers[] = { "If-None-Match" };
+    webServer.collectHeaders(headers, sizeof(headers)/ sizeof(headers[0]));
+
+    webServer.begin();
+} // SetupWebServer
+
+void LoopWebServer()
+{
+    webServer.handleClient();
+} // LoopWebServer

@@ -113,21 +113,6 @@ var FancyWebSocket = function(url)
     } // function
 }; // FancyWebSocket
 
-var websocketServerHost = window.location.hostname;
-
-// TODO - hard coded "172.217.28", better to use AP_IP from Config.h
-if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(/^172\.217\.28/))
-{
-    //websocketServerHost = "VanLiveConnect.lan";
-    websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
-    //websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
-} // if
-
-console.log("// Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
-
-// WebSocket class instance
-var socket = new FancyWebSocket("ws://" + websocketServerHost + ":81/");
-
 // In "demo mode", specific fields will not be updated
 var inDemoMode = false;
 
@@ -286,10 +271,36 @@ function writeToDom(jsonObj)
     } // for
 } // writeToDom
 
-// Bind to WebSocket to server events
-socket.bind('display', function(data) { writeToDom(data); });
-//socket.bind('open', function () { inDemoMode = false; });
-//socket.bind('close', function () { demoMode(); });
+var websocketServerHost = window.location.hostname;
+
+// TODO - hard coded "172.217.28", better to use AP_IP from Config.h
+if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(/^172\.217\.28/))
+{
+    //websocketServerHost = "VanLiveConnect.lan";
+    //websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
+    websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
+} // if
+
+// For stability, connect to the web socket server only after a few seconds.
+// Background: VAN bus receiver is started on first connection of client. Web server may be serving files from
+// SPIFFS at the same time. SPIFFS file access and VAN bus receiver cannot operate at the same time. Use timing
+// to separate the activities (poor man's solution...)
+// TODO - improve
+var connectToWebsocketTimer = setTimeout(
+    function ()
+    {
+        console.log("// Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
+
+        // WebSocket class instance
+        var socket = new FancyWebSocket("ws://" + websocketServerHost + ":81/");
+
+        // Bind to WebSocket to server events
+        socket.bind('display', function(data) { writeToDom(data); });
+        //socket.bind('open', function () { inDemoMode = false; });
+        //socket.bind('close', function () { demoMode(); });
+    }, // function
+    5000
+);
 
 // -----
 // Functions for navigating through the screens and their subscreens/elements
@@ -3841,13 +3852,14 @@ function handleItemChange(item, value)
                 if (hidePopup("status_popup")) break;
                 if (hidePopup("notification_popup")) break;
 
-                // Also close these, if shown
+                // Also close these, if currently shown
                 if (hideTunerPresetsPopup()) break;
                 if (hideAudioSettingsPopup()) break;
                 if (hidePopup("satnav_initializing_popup")) break;
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
                 if (hidePopup("satnav_delete_item_popup")) break;
+                if (hidePopup("satnav_delete_directory_data_popup")) break;
 
                 // Hiding this popup might make the underlying "Computing route in progress" popup visible
                 if (hidePopup("satnav_guidance_preference_popup")) break;
@@ -3884,12 +3896,13 @@ function handleItemChange(item, value)
                 // If a status popup is showing, hide it and break
                 if (hidePopup("status_popup")) break;
 
-                // Also close these, if shown
+                // Also close these, if currently shown
                 if (hideTunerPresetsPopup()) break;
                 if (hideAudioSettingsPopup()) break;
                 if (hidePopup("satnav_initializing_popup")) break;
                 if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
+                if (hidePopup("satnav_delete_directory_data_popup")) break;
 
                 // Entering a character in the "satnav_enter_street_characters" screen?
                 if ($("#satnav_enter_street_characters").is(":visible")) userHadOpportunityToEnterStreet = true;

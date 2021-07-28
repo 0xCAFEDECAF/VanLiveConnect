@@ -66,7 +66,7 @@ void SetupWifi()
     delay(1);
 } // SetupWifi
 
-const char* WifiDataToJson(IPAddress& client)
+const char* WifiDataToJson(const IPAddress& client)
 {
     #define WIFI_DATA_JSON_BUFFER_SIZE 128
     static char jsonBuffer[WIFI_DATA_JSON_BUFFER_SIZE];

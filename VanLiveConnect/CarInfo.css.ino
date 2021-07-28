@@ -32,14 +32,15 @@ body
   color:#dfe7f2;
   font-size:50px;
   white-space:nowrap;
-/*
-  background-image: url('6.jpg');
+
+  background-image: url('background.jpg');
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: 970px 650px;
-*/
+  background-size: 1350px 650px;
+
+  /* TODO - background-blend-mode not supported by IE11 */
   /*background-blend-mode: luminosity;*/
-  background-blend-mode: multiply; /* TODO - does not work well with IE11 */
+  background-blend-mode: multiply; 
   /*background-blend-mode: lighten;*/
 }
 /*

@@ -4,7 +4,7 @@
 
 #define MILLIS_PER_SEC (1000UL)
 
-StoredData _initialStore =
+StoredData_t _initialStore =
 {
     .smallScreenIndex = SMALL_SCREEN_TRIP_INFO_1, // When the original MFD is plugged in, this is what it starts with
     .satnavGuidanceActive = false,
@@ -12,9 +12,20 @@ StoredData _initialStore =
     .satnavGuidancePreference = 0x00,
 };
 
-StoredData* _store = NULL;
+StoredData_t* _store = NULL;
 
-// Make sure the number is greater than or equal to the number of entries in StoredData
+// Table with the MD5 hash value of each file in the root directory
+struct FileMd5Entry_t
+{
+    String path;
+    String md5;
+}; // FileMd5Entry_t
+
+#define MAX_FILE_MD5 20
+FileMd5Entry_t fileMd5[MAX_FILE_MD5];
+int fileMd5Last = 0;
+
+// Make sure the number is greater than or equal to the number of entries in StoredData_t
 #define JSON_BUFFER_SIZE (JSON_OBJECT_SIZE(10 + 2 * MAX_DIRECTORY_ENTRIES))
 //#define JSON_BUFFER_SIZE (JSON_OBJECT_SIZE(20))
 const char STORE_FILE_NAME[] = "/store.json";
@@ -143,10 +154,12 @@ String _formatBytes(size_t bytes)
 void SetupStore()
 {
     // Allocate and fill with initial data
-    _store = new StoredData;
+    _store = new StoredData_t;
     *_store = _initialStore;
 
     Serial.print(F("Mounting SPI Flash File System (SPIFFS) ..."));
+
+    VanBusRx.Disable();
 
     // Make sure the file system is formatted and mounted
     if (! SPIFFS.begin())
@@ -154,6 +167,7 @@ void SetupStore()
         Serial.print(F("\nFailed to mount file system, trying to format ..."));
         if (! SPIFFS.format())
         {
+            VanBusRx.Enable();
             Serial.println(F("\nFailed to format file system, no persistent storage available!"));
             return;
         } // if
@@ -172,26 +186,73 @@ void SetupStore()
     {
         String fileName = dir.fileName();
         size_t fileSize = dir.fileSize();
-        Serial.printf_P(PSTR("FS File: '%s', size: %s\n"), fileName.c_str(), _formatBytes(fileSize).c_str());
 
         // Remove all "instances" of '/store.json' except one (yes, SPIFFS sometimes has the same name
         // for different files)
-        if (fileName == STORE_FILE_NAME && foundOne) SPIFFS.remove(fileName);
+        if (fileName == STORE_FILE_NAME && foundOne)
+        {
+            SPIFFS.remove(fileName);
+            continue;
+        } // if
 
+        // We want to find at least '/store.json'
         if (fileName == STORE_FILE_NAME) foundOne = true;
+
+        // Create a table with the MD5 hash value of each file
+        // Inspired by https://github.com/esp8266/Arduino/issues/3003
+        File file = SPIFFS.open(fileName, "r");
+        MD5Builder md5;
+        md5.begin();
+        md5.addStream(file, file.size());
+        md5.calculate();
+        md5.toString();
+        file.close();
+
+        Serial.printf_P(
+            PSTR("FS File: '%s', size: %s, MD5: %s\n"),
+            fileName.c_str(),
+            _formatBytes(fileSize).c_str(),
+            md5.toString().c_str()
+        );
+
+        if (fileMd5Last < MAX_FILE_MD5)
+        {
+            fileMd5[fileMd5Last].path = fileName;
+            fileMd5[fileMd5Last].md5 = md5.toString();
+            fileMd5Last++;
+        }
+        else
+        {
+            Serial.println("=====> Too many files found: please increase MAX_FILE_MD5");
+        } // if
     } // while
+
+    VanBusRx.Enable();
 
     _readStore();
 } // SetupStore
+
+String getMd5(const String& path)
+{
+    int i = 0;
+    while (i < MAX_FILE_MD5)
+    {
+        if (fileMd5[i].path == path) return fileMd5[i].md5;
+        i++;
+    } // while
+
+    // To indicate 'path' not found
+    return "";
+} // getMd5
 
 // Must have called SetupStore() first.
 // Note: 'lazy initialization' within this function (and anywhere else) just doesn't work. If this function is e.g.
 // invoked from inside a callback function, the initialization just takes too long, or the stack overflows, or whatever,
 // and the system becomes unstable.
-StoredData* getStore()
+StoredData_t* GetStore()
 {
     return _store;
-} // getStore
+} // GetStore
 
 void MarkStoreDirty()
 {
