@@ -194,20 +194,48 @@ on pins D5, D6 and D7, facing outward; see also the above schematics.
 
 ## 🚀 Building the Project<a name = "building"></a>
 
-#### Compiling
+Before proceeding with this project, make sure you check all the following prerequisites.
 
-To compile the project you will need the following:
+#### 1. Install ESP8266 Board in Arduino IDE
+
+We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-on installed. You will need:
 
 * [Arduino IDE](https://www.arduino.cc/en/software), with
 * [ESP8266 Board Manager](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed.
   I am currently using [version 2.6.3](https://github.com/esp8266/Arduino/releases/tag/2.6.3) but other versions
   may also be working fine.
-* Various libraries installed as listed in the [Used Libraries](#libraries") section below.
 
-In the "Tools" menu, choose:
+Follow the next tutorial to install the IDE and the ESP8266 Board Manager:
+
+> [Install ESP8266 Board in Arduino IDE (Windows, Mac OS X, Linux)](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
+
+#### 2. Filesystem Uploader Plugin
+
+To upload files to the ESP8266 SPI Flash Filesystem (SPIFFS), we’ll use the Filesystem Uploader Plugin. Install the
+plugin in your Arduino IDE:
+
+> [Install ESP8266 Filesystem Uploader in Arduino IDE](https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/)
+
+#### 3. Installing Libraries
+
+In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
+
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2
+  (TODO - not yet released).
+* [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
+  version 2.2.0, 2.3.3 and 2.3.4 .
+* [ArduinoJson Library by Benoît Blanchon](https://github.com/bblanchon/ArduinoJson) - Tested with version 5.11.1 .
+
+#### 4. Board settings
+
+In the Arduino IDE, go to the "Tools" menu, and choose:
 
 * CPU frequency: 160 MHz, and
 * lwIP variant: "v2 Higher Bandwidth (no features)".
+
+Here is a picture of board settings that have been tested to work:
+
+![Board settings](extras/Arduino%20IDE/Board%20settings.png)
 
 I seem to have better Wi-Fi performance by setting the variable `build.sdk` to:
 
@@ -217,7 +245,7 @@ inside the following file:
 
     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\platform.txt
 
-#### Uploading
+#### 5. Uploading
 
 To upload the compiled project you will need the following:
 
@@ -228,23 +256,30 @@ will allow uploading via Wi-Fi using a "network port" in the Arduino IDE. See
 [this documentation](https://arduino-esp8266.readthedocs.io/en/latest/ota_updates/readme.html) for help on using the
 OTA feature of the arduino-esp8266.
 
-To have a correctly initialized SPI Flash File System (SPIFFS), the first upload onto a fresh Wemos D1 must be
-done by selecting the Arduino menu "Tools" --> "Erase Flash" --> "All Flash Contents". Note: uploading will take a
-little bit longer than usual. After that, select "Only Sketch".
+In the Arduino IDE, go to the "Tools" menu. Click the line "ESP8266 Sketch Data Upload":
+
+![Data upload](extras/Arduino%20IDE/Data%20upload.png)
+
+This will upload the (static) web server resources (font files, CSS files, etc.) which are located in the "data" folder.
+
+If that is done, compile and upload the sketch binary itself:
+
+![Compile and upload](extras/Arduino%20IDE/Compile%20and%20upload.png)
 
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
 
-### First Run
+### 6. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
-the SPI Flash File System (SPIFFS).
+the SPI Flash File System (SPIFFS). In my experience, a freshly uploaded SPIFFS always causes the board to crash
+the first time, but after that it works fine.
 
 ## 📚 Used Libraries<a name = "libraries"></a>
 
 ### Arduino/ESP8266
 
-In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
+In the Arduino IDE, make sure to install the following libraries:
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2 .
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
