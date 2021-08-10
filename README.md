@@ -224,7 +224,6 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
   (TODO - not yet released).
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3 and 2.3.4 .
-* [ArduinoJson Library by Benoît Blanchon](https://github.com/bblanchon/ArduinoJson) - Tested with version 5.11.1 .
 
 #### 4. Board settings
 
