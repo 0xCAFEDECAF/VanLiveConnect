@@ -97,7 +97,7 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 * No password is needed.
 
 > 👉 Note: it is better to setup the ESP hardware as Wi-Fi client instead of access point. For an explanation,
-     see [Limitations, Caveats](#limits) below.
+    see [Limitations, Caveats](#limits) below.
 
 Of course you can modify the SSID and choose your own password by editing the ``Config.h`` file.
 
@@ -164,7 +164,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 ![schema](extras/schematics/Schematic%20using%20MCP2551_bb.png)
 
 > 👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
-     it turns out this works best.
+    it turns out this works best.
 
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    The SN65HVD230 transceiver already has 3.3V logic, so it is possible to directly connect the CRX / RXD / R pin of
@@ -172,8 +172,8 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20SN65HVD230_bb.png)
 
->  👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
-      it turns out this works best.
+> 👉 Note: CANH of the transceiver is connected to VAN BAR, CANL to VAN. This may seem illogical but in practice
+    it turns out this works best.
    
 3. The simplest schematic is not to use a transceiver at all, but connect the VAN DATA line to GrouND using
    two 4.7 kOhm resistors. Connect the GPIO pin of your ESP8266 board to the 1:2 [voltage divider] that is thus
@@ -181,8 +181,8 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 ![schema](extras/schematics/Schematic%20using%20voltage%20divider_bb.png)
    
->  👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
-      cause your car to explode! (or anything less catastrofic)
+> 👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
+    cause your car to explode! (or anything less catastrofic)
 
 When the IR remote control is used to navigate, e.g. through the sat nav menus, this is usually not reflected on the
 comfort bus. So, reading the VAN comfort bus is not enough to detect e.g. scrolling through the menus or lists
@@ -207,16 +207,9 @@ We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-
 
 Follow the next tutorial to install the IDE and the ESP8266 Board Manager:
 
-> [Install ESP8266 Board in Arduino IDE (Windows, Mac OS X, Linux)](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
+* [Install ESP8266 Board in Arduino IDE (Windows, Mac OS X, Linux)](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
 
-#### 2. Filesystem Uploader Plugin
-
-To upload files to the ESP8266 SPI Flash Filesystem (SPIFFS), we’ll use the Filesystem Uploader Plugin. Install the
-plugin in your Arduino IDE:
-
-> [Install ESP8266 Filesystem Uploader in Arduino IDE](https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/)
-
-#### 3. Installing Libraries
+#### 2. Installing Libraries
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
@@ -225,7 +218,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3 and 2.3.4 .
 
-#### 4. Board settings
+#### 3. Board settings
 
 In the Arduino IDE, go to the "Tools" menu, and choose:
 
@@ -244,7 +237,7 @@ inside the following file:
 
     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\platform.txt
 
-#### 5. Uploading
+#### 4. Uploading
 
 To upload the compiled project you will need the following:
 
@@ -255,30 +248,22 @@ will allow uploading via Wi-Fi using a "network port" in the Arduino IDE. See
 [this documentation](https://arduino-esp8266.readthedocs.io/en/latest/ota_updates/readme.html) for help on using the
 OTA feature of the arduino-esp8266.
 
-In the Arduino IDE, go to the "Tools" menu. Click the line "ESP8266 Sketch Data Upload":
-
-![Data upload](extras/Arduino%20IDE/Data%20upload.png)
-
-This will upload the (static) web server resources (font files, CSS files, etc.) which are located in the "data" folder.
-
-If that is done, compile and upload the sketch binary itself:
-
 ![Compile and upload](extras/Arduino%20IDE/Compile%20and%20upload.png)
 
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
 
-### 6. First Run
+### 5. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
-the SPI Flash File System (SPIFFS). In my experience, a freshly uploaded SPIFFS always causes the board to crash
-the first time, but after that it works fine.
+the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware always causes the board to
+crash the very first time, but after that it works (uploads) fine.
 
 ## 📚 Used Libraries<a name = "libraries"></a>
 
 ### Arduino/ESP8266
 
-In the Arduino IDE, make sure to install the following libraries:
+In the Arduino IDE, the following libraries are used:
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2 .
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
@@ -317,7 +302,8 @@ button on the remote control and going into the same screen again.
 Unfortunately, it appears that configuring the EPS8266 hardware as Wi-Fi access point dramatically increases the number
 of CRC errors. Therefore, in my own configuration, I turn on the
 [Wi-Fi hotspot](https://support.google.com/android/answer/9059108?hl=en) of my daily smartphone (so it becomes a
-Wi-Fi access point). The EPS8266 hardware and tablet have been configured to connect to that hotspot as Wi-Fi client.
+Wi-Fi access point). The EPS8266 hardware and display tablet have been configured to connect to that hotspot as
+Wi-Fi client.
 
 I am investigating how to improve on the error-free reception of VAN bus frames.
 
