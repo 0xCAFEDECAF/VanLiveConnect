@@ -23,67 +23,67 @@ the VAN bus.</p>
 
 Don't bore us, give us the screen shots!
 
-**Main entry screen**
+**Main entry screen:**
 
 ![screen](extras/screenshots/Clock.png)
 
-**Tuner**
+**Tuner:**
 
 ![screen](extras/screenshots/Tuner.png)
 
-**Tuner presets popup**
+**Tuner presets popup:**
 
 ![screen](extras/screenshots/Tuner%20presets%20popup.png)
 
-**Audio settings**
+**Audio settings:**
 
 ![screen](extras/screenshots/Audio%20settings%20popup.png)
 
-**CD player**
+**CD player:**
 
 ![screen](extras/screenshots/CD%20player.png)
 
-**CD changer**
+**CD changer:**
 
 ![screen](extras/screenshots/CD%20changer.png)
 
-**Second trip counter**
+**Second trip counter:**
 
 ![screen](extras/screenshots/Trip%20counter%20%232.png)
 
-**"Pre-flight" checks**
+**"Pre-flight" checks:**
 
 ![screen](extras/screenshots/Pre-flight%20checks.png)
 
-**Instrument cluster (YMMV 🤣)**
+**Instrument cluster (YMMV 🤣):**
 
 ![screen](extras/screenshots/Instruments.png)
 
-**Current location**
+**Current location:**
 
 ![screen](extras/screenshots/Current%20location.png)
 
-**Sat nav main menu**
+**Sat nav main menu:**
 
 ![screen](extras/screenshots/Sat%20nav%20menu.png)
 
-**Sat nav enter destination - city**
+**Sat nav enter destination - city:**
 
 ![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
 
-**Sat nav - personal address entry (not mine!)**
+**Sat nav - personal address entry (not mine!):**
 
 ![screen](extras/screenshots/Sat%20nav%20personal%20address.png)
 
-**Sat nav guidance**
+**Sat nav guidance:**
 
 ![screen](extras/screenshots/Sat%20nav%20guidance.png)
 
-**Door open popup**
+**Door open popup:**
 
 ![screen](extras/screenshots/Door%20open%20popup.png)
 
-**Warning popup**
+**Warning popup:**
 
 ![screen](extras/screenshots/Warning%20popup.png)
 
@@ -103,7 +103,7 @@ Of course you can modify the SSID and choose your own password by editing the ``
 
 ## 🕹️ MFD functions supported
 
-See also the [Screen Shots](#screenshots) above.
+See also the [screen shots](#screenshots) above.
 
 * Clock with exterior temperature
 * Instruments (speed, RPM, fuel level, engine temperature)
@@ -253,7 +253,7 @@ OTA feature of the arduino-esp8266.
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
 
-### 5. First Run
+#### 5. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
 the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware always causes the board to
