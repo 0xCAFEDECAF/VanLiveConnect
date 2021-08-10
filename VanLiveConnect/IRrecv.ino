@@ -11,13 +11,6 @@
 // - Removed all decoding stuff except decoding as hash
 //
 
-#define IR_RECV_PIN D5  // IR receiver data pin is connected to pin D5
-
-// Using D7 as VCC and D6 as ground pin for the IR receiver. Should be possible with e.g. the
-// TSOP4838 IR receiver as it typically uses only 0.7 mA.
-#define IR_VCC D7
-#define IR_GND D6
-
 // Receiver states
 #define STATE_IDLE 2
 #define STATE_MARK 3
@@ -146,7 +139,7 @@ int IRrecv::decode(TIrPacket* results)
 // Converts the raw code values into a 32-bit hash code.
 // Hopefully this code is unique for each button.
 // This isn't a "real" decoding, just an arbitrary value.
-long IRrecv::decodeHash(TIrPacket *results)
+long IRrecv::decodeHash(TIrPacket* results)
 {
     // Require at least 6 samples to prevent triggering on noise
     if (results->rawlen < 6) return IR_ERR;
@@ -180,7 +173,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     #define IR_JSON_BUFFER_SIZE 256
     static char jsonBuffer[IR_JSON_BUFFER_SIZE];
 
-    const char* buttonStr =
+    PGM_P buttonStr =
         pkt.value == 0x01A0DA1B ? PSTR("MENU_BUTTON") :
         pkt.value == 0x8E8C855C ? PSTR("MODE_BUTTON") :
         pkt.value == 0x816E43D7 ? PSTR("ESC_BUTTON") :

@@ -907,7 +907,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Status LEDs -->
 
-        <div id="satnav_disc_present" class="iconSmall led ledOff" style="left:350px; top:30px;">
+        <div id="satnav_disc_recognized" class="iconSmall led ledOff" style="left:350px; top:30px;">
           <div class="centerAligned fas fa-compact-disc"></div>
         </div>
 
@@ -1036,7 +1036,6 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="button" on_click="showPopup('satnav_delete_directory_data_popup');">Delete directories</div>
 
-            <!-- class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Resume guidance</div> -->
           <div id="satnav_navigation_options_menu_stop_guidance_button"
             class="button" on_click="selectDefaultScreen();">Resume guidance</div>
 
@@ -1073,7 +1072,6 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
-          <!-- <div class="button" on_click="satnavMode = 'IDLE'; selectDefaultScreen();">Stop guidance</div> -->
           <div id="satnav_tools_menu_stop_guidance_button" class="button" on_click="selectDefaultScreen();">Stop guidance</div>
 
         </div>  <!-- "satnav_guidance_tools_menu" -->
@@ -2169,7 +2167,6 @@ char mfd_html[] PROGMEM = R"=====(
         on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
         <div class="centerAligned" style="position:absolute; left:50px; width:710px; height:200px;">
-          <!-- TODO - show current navigation criteria -->
           Keep criteria "<span id="satnav_guidance_current_preference_text">Fastest route</span>"?
 
           <div button_orientation="horizontal">
@@ -2199,7 +2196,7 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div button_orientation="horizontal">
             <div id="satnav_delete_directory_data_popup_yes_button"
-              on_click="satnavPersonalDirectoryEntries = []; satnavProfessionalDirectoryEntries = []; hidePopup('satnav_delete_directory_data_popup');"
+              on_click="satnavDeleteDirectories();"
               class="icon button" style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>

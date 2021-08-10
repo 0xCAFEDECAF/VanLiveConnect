@@ -47,7 +47,7 @@ void SetupOta()
     });
     ArduinoOTA.begin();
     Serial.println(F(" OK"));
-} // setupOta
+} // SetupOta
 
 void LoopOta()
 {

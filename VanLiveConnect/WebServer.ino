@@ -1,13 +1,120 @@
 
-// Uncomment to serve from SPI flash file system
-#define SERVE_FRONTS_FROM_SPIFFS
+#include "FS.h"
+
+// Use the following #defines to serve (part of) the web documents from SPI flash file system (SPIFFS)
+// Note: unfortunately, the more is served from SPIFFS, the more VAN packets have CRC errors :-(
+
+//#define SERVE_FROM_SPIFFS
+
+#ifdef SERVE_FROM_SPIFFS
+
+//#define SERVE_FRONTS_FROM_SPIFFS
 //#define SERVE_JAVASCRIPT_FROM_SPIFFS
 //#define SERVE_CSS_FROM_SPIFFS
+
+#endif // SERVE_FROM_SPIFFS
 
 ESP8266WebServer webServer;
 
 // Defined in Esp.ino
 extern const String md5Checksum;
+
+#ifdef SERVE_FROM_SPIFFS
+
+// Table with the MD5 hash value of each file in the root directory
+struct FileMd5Entry_t
+{
+    String path;
+    String md5;
+}; // FileMd5Entry_t
+
+#define MAX_FILE_MD5 20
+FileMd5Entry_t fileMd5[MAX_FILE_MD5];
+int fileMd5Last = 0;
+
+String _formatBytes(size_t bytes)
+{
+    if (bytes < 1024) return String(bytes)+" Bytes";
+    else if (bytes < (1024 * 1024)) return String(bytes/1024.0)+" KBytes";
+    else if(bytes < (1024 * 1024 * 1024)) return String(bytes/1024.0/1024.0)+" MBytes";
+    else return String(bytes/1024.0/1024.0/1024.0)+" GBytes";
+} // _formatBytes
+
+void SetupStore()
+{
+    Serial.print(F("Mounting SPI Flash File System (SPIFFS) ..."));
+
+    VanBusRx.Disable();
+
+    // Make sure the file system is formatted and mounted
+    if (! SPIFFS.begin())
+    {
+        Serial.print(F("\nFailed to mount file system, trying to format ..."));
+        if (! SPIFFS.format())
+        {
+            VanBusRx.Enable();
+            Serial.println(F("\nFailed to format file system, no persistent storage available!"));
+            return;
+        } // if
+    } // if
+
+    // Print file system size
+    FSInfo fs_info;
+    SPIFFS.info(fs_info);
+    char b[MAX_FLOAT_SIZE];
+    Serial.printf_P(PSTR(" OK, total %s MByes\n"), FloatToStr(b, fs_info.totalBytes / 1024.0 / 1024.0, 2));
+
+    // Print the contents of the root directory
+    bool foundOne = false;
+    Dir dir = SPIFFS.openDir("/");
+    while (dir.next())
+    {
+        String fileName = dir.fileName();
+
+        // Create a table with the MD5 hash value of each file
+        // Inspired by https://github.com/esp8266/Arduino/issues/3003
+        File file = SPIFFS.open(fileName, "r");
+        size_t fileSize = file.size();
+        MD5Builder md5;
+        md5.begin();
+        md5.addStream(file, fileSize);
+        md5.calculate();
+        md5.toString();
+        file.close();
+
+        Serial.printf_P(
+            PSTR("FS File: '%s', size: %s, MD5: %s\n"),
+            fileName.c_str(),
+            _formatBytes(fileSize).c_str(),
+            md5.toString().c_str()
+        );
+
+        fileMd5[fileMd5Last].path = fileName;
+        fileMd5[fileMd5Last].md5 = md5.toString();
+        if (++fileMd5Last >= MAX_FILE_MD5)
+        {
+            Serial.println("=====> Too many files found: please increase MAX_FILE_MD5");
+            break;
+        } // if
+    } // while
+
+    VanBusRx.Enable();
+} // SetupStore
+
+String getMd5(const String& path)
+{
+    int i = 0;
+    while (i < MAX_FILE_MD5)
+    {
+        if (fileMd5[i].path == path) return fileMd5[i].md5;
+        i++;
+    } // while
+
+    // To indicate 'path' not found
+    return "";
+} // getMd5
+
+#endif // SERVE_FROM_SPIFFS
 
 // Print all HTTP request details on Serial
 void printHttpRequest()
@@ -60,8 +167,7 @@ bool checkETag(const String& etag)
 
     webServer.sendHeader(F("ETag"), String("\"") + etag + "\"");
 
-    // Cache 10 seconds, then falls back to using the "If-None-Match" mechanism
-    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
+    // Cache so many seconds, then falls back to using the "If-None-Match" mechanism
     webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
 
     return false;
@@ -161,6 +267,8 @@ void ServeMainHtml();
 
 void HandleNotFound()
 {
+    Serial.printf("[webServer] File '%s' not found\n", webServer.uri().c_str());
+
     if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
 
 #ifdef WIFI_AP_MODE
@@ -190,15 +298,11 @@ void HandleNotFound()
     webServer.send(404, F("text/plain;charset=utf-8"), message);
 } // HandleNotFound
 
-// Serve a specified font
+// Serve a specified font from program memory
 void ServeFont(PGM_P content, unsigned int content_len)
 {
     printHttpRequest();
     unsigned long start = millis();
-
-    // Cache 10 seconds
-    // TODO - does this header have any effect? Implementation of font caching seems pretty weird in various browsers...
-    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
 
     webServer.send_P(200, fontWoffStr, content, content_len);  
 
@@ -207,21 +311,18 @@ void ServeFont(PGM_P content, unsigned int content_len)
         millis() - start);
 } // ServeFont
 
+#ifdef SERVE_FROM_SPIFFS
+
 // Serve a specified font from the SPI Flash File System (SPIFFS)
 void ServeFontFromFile(const char* path)
 {
     printHttpRequest();
     unsigned long start = millis();
 
-    // Cache 10 seconds
-    // TODO - does this header have any effect? Implementation of font caching seems pretty weird in various browsers...
-    //webServer.sendHeader(F("Cache-Control"), F("private, max-age=10"), true);
-
     VanBusRx.Disable();
     if (! SPIFFS.exists(path))
     {
         VanBusRx.Enable();
-        Serial.printf("[webServer] File '%s' not found\n", path);
         return HandleNotFound();
     } // if
 
@@ -235,7 +336,9 @@ void ServeFontFromFile(const char* path)
         millis() - start);
 } // ServeFontFromFile
 
-// Serve a specified document (text, html, css, javascript, ...)
+#endif // SERVE_FROM_SPIFFS
+
+// Serve a specified document (text, html, css, javascript, ...) from program memory
 void ServeDocument(PGM_P mimeType, PGM_P content)
 {
     printHttpRequest();
@@ -244,7 +347,6 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
     if (! eTagMatches)
     {
         // Serve the complete document
-
         webServer.send_P(200, mimeType, content);  
     } // if
 
@@ -258,14 +360,16 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
 const char* getContentType(const String& path)
 {
     if (path.endsWith(".html")) return "text/html";
-    else if (path.endsWith(".woff")) return fontWoffStr;
-    else if (path.endsWith(".css")) return textCssStr;
-    else if (path.endsWith(".js")) return textJavascriptStr;
-    else if (path.endsWith(".ico")) return "image/x-icon";
-    else if (path.endsWith(".jpg")) return "image/jpeg";
-    else if (path.endsWith(".png")) return "image/png";
+    if (path.endsWith(".woff")) return fontWoffStr;
+    if (path.endsWith(".css")) return textCssStr;
+    if (path.endsWith(".js")) return textJavascriptStr;
+    if (path.endsWith(".ico")) return "image/x-icon";
+    if (path.endsWith(".jpg")) return "image/jpeg";
+    if (path.endsWith(".png")) return "image/png";
     return "text/plain";
 } // getContentType
+
+#ifdef SERVE_FROM_SPIFFS
 
 // Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
 void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
@@ -311,10 +415,12 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
         millis() - start);
 } // ServeDocumentFromFile
 
+#endif // SERVE_FROM_SPIFFS
+
 // Serve the main HTML page
 void ServeMainHtml()
 {
-    // This one should always be served from memory, so updating is easy and does not need the SPI flash file
+    // This one should always be served from program memory, so updating is easy and does not need the SPI flash file
     // system uploader (which will delete all stored data in 'store.ino')
     ServeDocument(PSTR("text/html"), mfd_html);
 
@@ -325,6 +431,9 @@ void ServeMainHtml()
 
 void SetupWebServer()
 {
+    // -----
+    // Fonts
+
 #ifdef SERVE_FRONTS_FROM_SPIFFS
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){ ServeFontFromFile("/ArialRoundedMTbold.woff"); });
     webServer.on(F("/DotsAllForNow.woff"), [](){ ServeFontFromFile("/DotsAllForNow.woff"); });
@@ -348,56 +457,25 @@ void SetupWebServer()
         ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });
 #endif // SERVE_FRONTS_FROM_SPIFFS
-/*
-    webServer.on(F("/ArialRoundedMTbold.woff"), [](){
-#ifdef SERVE_FRONTS_FROM_SPIFFS
-        ServeFontFromFile("/ArialRoundedMTbold.woff");
-#else
-        ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
-#endif
-    });
-    webServer.on(F("/DotsAllForNow.woff"), [](){
-#ifdef SERVE_FRONTS_FROM_SPIFFS
-        ServeFontFromFile("/DotsAllForNow.woff");
-#else
-        ServeFont(DotsAllForNow_woff, DotsAllForNow_woff_len);
-#endif
-    });
-    webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){
-#ifdef SERVE_FRONTS_FROM_SPIFFS
-        ServeFontFromFile("/DSEG7Classic-BoldItalic.woff");
-#else
-        ServeFont(DSEG7Classic_BoldItalic_woff, DSEG7Classic_BoldItalic_woff_len);
-#endif
-    });
-    webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){
-#ifdef SERVE_FRONTS_FROM_SPIFFS
-        ServeFontFromFile("/DSEG14Classic-BoldItalic.woff");
-#else
-        ServeFont(DSEG14Classic_BoldItalic_woff, DSEG14Classic_BoldItalic_woff_len);
-#endif
-    });
-    webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
-#ifdef SERVE_FRONTS_FROM_SPIFFS
-        ServeFontFromFile("/fa-solid-900.woff");
-#else
-        ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
-#endif
-    });
-*/
+
+    // -----
     // Javascript files
+
 #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
     webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocumentFromFile(); });
 #else
     webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocument(textJavascriptStr, jQuery_js); });
 #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
+
     webServer.on(F("/MFD.js"), [](){
-        // This one should always be served from memory, so updating is easy and does not need the SPI flash file
-        // system uploader (which will delete all stored data in 'store.ino')
+        // This one should always be served from program memory, so updating is easy and does not need the SPI flash
+        // file system uploader (which will delete all stored data in 'store.ino')
         ServeDocument(textJavascriptStr, mfd_js);
     });
 
+    // -----
     // Cascading style sheet files
+
 #ifdef SERVE_CSS_FROM_SPIFFS
     webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile(); });
     webServer.on(F("/CarInfo.css"), [](){ ServeDocumentFromFile(); });
@@ -406,13 +484,22 @@ void SetupWebServer()
     webServer.on(F("/CarInfo.css"), [](){ ServeDocument(textCssStr, carInfo_css); });
 #endif // SERVE_CSS_FROM_SPIFFS
 
+    // -----
     // HTML files
+
     webServer.on(F("/MFD.html"), ServeMainHtml);
+
+    // -----
+    // Miscellaneous
 
     webServer.on(F("/dumpOnly"), HandleDumpFilter);
 
+#ifdef SERVE_FROM_SPIFFS
     // Try to serve any not further listed document from the SPI flash file system
-    webServer.onNotFound([]() { ServeDocumentFromFile(); });
+    webServer.onNotFound([](){ ServeDocumentFromFile(); });
+#else
+    webServer.onNotFound(HandleNotFound);
+#endif // SERVE_FROM_SPIFFS
 
     const char* headers[] = { "If-None-Match" };
     webServer.collectHeaders(headers, sizeof(headers)/ sizeof(headers[0]));

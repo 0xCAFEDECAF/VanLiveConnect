@@ -609,6 +609,8 @@ function gotoSmallScreen(smallScreenName)
     } // switch
 } // gotoSmallScreen
 
+gotoSmallScreen(localStorage.smallScreen);
+
 // Cycle through the small screens on the left hand side of the display
 function nextSmallScreen()
 {
@@ -770,9 +772,13 @@ function selectFirstMenuItem(id)
 // Enter a specific menu
 function gotoMenu(menu)
 {
-    if (currentMenu) menuStack.push(currentMenu);
-    currentMenu = menu;
-    changeLargeScreenTo(currentMenu);
+    // Change screen, but only if not already there
+    if (currentMenu !== menu)
+    {
+        if (currentMenu) menuStack.push(currentMenu);
+        currentMenu = menu;
+        changeLargeScreenTo(currentMenu);
+    } // if
 
     // Retrieve all the buttons in the currently shown menu
     var buttons = $("#" + currentMenu).find(".button");
@@ -1516,7 +1522,15 @@ function showTunerPresetsPopup()
 // -----
 // Functions for satellite navigation menu and screen handling
 
-var satnavMode = "INITIALIZING";  // Current sat nav mode, saved as last reported in item "satnav_status_2"
+// Current sat nav mode, saved as last reported in item "satnav_status_2"
+var satnavMode = localStorage.satnavMode || "INITIALIZING";
+
+// Check if the "Navigation/Guidance" button must be enabled in the main menu
+if (typeof localStorage.satnavMode !== "undefined")
+{
+    $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
+} // if
+
 var satnavRouteComputed = false;
 var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
@@ -1525,8 +1539,8 @@ var satnavStatus1 = "";
 var satnavDestinationNotAccessibleByRoadPopupShown = false;  // Show this popup only once at start of guidance
 var satnavCurrentStreet = "";
 var satnavDirectoryEntry = "";
-var satnavPersonalDirectoryEntries = [];
-var satnavProfessionalDirectoryEntries = [];
+var satnavPersonalDirectoryEntries = JSON.parse(localStorage.satnavPersonalDirectoryEntries || "[]");
+var satnavProfessionalDirectoryEntries = JSON.parse(localStorage.satnavProfessionalDirectoryEntries || "[]");
 
 function satnavShowDisclaimer()
 {
@@ -1544,7 +1558,7 @@ function satnavGotoMainMenu()
         return;
     } // if
 
-    if ($("#satnav_disc_present").hasClass("ledOff"))
+    if ($("#satnav_disc_recognized").hasClass("ledOff"))
     {
         showStatusPopup("Navigation CD-ROM<br />is unreadable", 10000);
         return;
@@ -1558,7 +1572,8 @@ function satnavGotoMainMenu()
     } // if
 
     // Change to the sat nav main menu with an exit to the general main manu
-    menuStack.push("main_menu");
+    //menuStack.push("main_menu");
+    menuStack = [ "main_menu" ];
     currentMenu = "satnav_main_menu";
     changeLargeScreenTo("satnav_main_menu");
 
@@ -1934,6 +1949,9 @@ function satnavArchiveInDirectoryCreatePersonalEntry()
     var newEntryName = $("#satnav_archive_in_directory_entry").text().replace(/-+$/, "");
     satnavPersonalDirectoryEntries.push(newEntryName);
 
+    // Save in local (persistent) store
+    localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
+
     showPopup("satnav_input_stored_in_personal_dir_popup", 7000);
 } // satnavArchiveInDirectoryCreatePersonalEntry
 
@@ -1942,6 +1960,9 @@ function satnavArchiveInDirectoryCreateProfessionalEntry()
     // Add the new entry to the list of known entries
     var newEntryName = $("#satnav_archive_in_directory_entry").text().replace(/-+$/, "");
     satnavProfessionalDirectoryEntries.push(newEntryName);
+
+    // Save in local (persistent) store
+    localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
 
     showPopup("satnav_input_stored_in_professional_dir_popup", 7000);
 } // satnavArchiveInDirectoryCreateProfessionalEntry
@@ -2065,8 +2086,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
     // Enable or disable buttons, depending on if there is anything in the entry field
     $(screenSelector).find(".button").toggleClass("buttonDisabled", $(entrySelector).text()[0] === "-");
 
-    // Enable or disable "Personal dir", "Professional d" and Validate" button if currently
-    // entered entry name is already listed
+    // Enable or disable "Personal dir", "Professional d" and Validate" button if entered name already exists
     var enteredEntryName = $(entrySelector).text().replace(/-+$/, "");
     var personalEntryExists = satnavPersonalDirectoryEntries.indexOf(enteredEntryName) >= 0;
     var professionalEntryExists = satnavProfessionalDirectoryEntries.indexOf(enteredEntryName) >= 0;
@@ -2090,11 +2110,20 @@ function satnavDirectoryEntryRenameValidateButton()
     if (index >= 0)
     {
         satnavPersonalDirectoryEntries[index] = newEntryName;
+
+        // Save in local (persistent) store
+        localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
     }
     else
     {
         index = satnavProfessionalDirectoryEntries.indexOf(satnavDirectoryEntry);
-        if (index >= 0) satnavProfessionalDirectoryEntries[index] = newEntryName;
+        if (index >= 0)
+        {
+            satnavProfessionalDirectoryEntries[index] = newEntryName;
+
+            // Save in local (persistent) store
+            localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
+        } // if
     } // if
 
     // Go all the way back to the "Directory management" menu
@@ -2111,11 +2140,20 @@ function satnavDeleteDirectoryEntry()
     if (index >= 0)
     {
         satnavPersonalDirectoryEntries.splice(index, 1);
+
+        // Save in local (persistent) store
+        localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
     }
     else
     {
         index = satnavProfessionalDirectoryEntries.indexOf(satnavDirectoryEntry);
-        if (index >= 0) satnavProfessionalDirectoryEntries.splice(index, 1);
+        if (index >= 0)
+        {
+            satnavProfessionalDirectoryEntries.splice(index, 1);
+
+            // Save in local (persistent) store
+            localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
+        } // if
     } // if
 
     hidePopup();
@@ -2128,7 +2166,7 @@ function satnavDirectoryEntryMoveUpFromCorrectionButton(screenId)
 {
     var line2id = screenId + "_characters_line_2";
 
-    if (typeof highlightIndexes[line2id] == "undefined")
+    if (typeof highlightIndexes[line2id] === "undefined")
     {
         // In this case, "UP" moves the cursor to the first letter of in the first line
         satnavSelectFirstLineOfDirectoryEntryScreen(screenId);
@@ -2140,6 +2178,43 @@ function satnavDirectoryEntryMoveUpFromCorrectionButton(screenId)
         navigateButtons('UP_BUTTON');
     } // if
 } // satnavDirectoryEntryMoveUpFromCorrectionButton
+
+function satnavDeleteDirectories()
+{
+    hidePopup('satnav_delete_directory_data_popup');
+
+    satnavPersonalDirectoryEntries = [];
+    satnavProfessionalDirectoryEntries = [];
+
+    // Save in local (persistent) store
+    localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
+    localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
+} // satnavDeleteDirectories
+
+function satnavGuidanceSetPreference(value)
+{
+    if (typeof value === "undefined" || value === "---") return;
+
+    // Set the correct text in the sat nav guidance preference popup
+    var satnavGuidancePreferenceText =
+        value === "FASTEST_ROUTE" ? "Fastest route" :
+        value === "SHORTEST_DISTANCE" ? "Shortest route" :
+        value === "AVOID_HIGHWAY" ? "Avoid highway route" :
+        value === "COMPROMISE_FAST_SHORT" ? "Fast/short compromise route" :
+        "??";
+    $("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText);
+
+    // Also set the correct tick box in the sat nav guidance preference menu
+    var satnavGuidancePreferenceTickBoxId =
+        value === "FASTEST_ROUTE" ? "satnav_guidance_preference_fastest" :
+        value === "SHORTEST_DISTANCE" ? "satnav_guidance_preference_shortest" :
+        value === "AVOID_HIGHWAY" ? "satnav_guidance_preference_avoid_highway" :
+        value === "COMPROMISE_FAST_SHORT" ? "satnav_guidance_preference_compromise" :
+        undefined;
+    setTick(satnavGuidancePreferenceTickBoxId);
+} // satnavGuidanceSetPreference
+
+satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
 
 // Find the ticked button and select it
 function satnavGuidancePreferenceSelectTickedButton()
@@ -2333,7 +2408,6 @@ function handleItemChange(item, value)
             $("#" + highlightIds[audioSettingHighlightIndex]).hide();
 
             // Don't pop up when user is browsing the menus
-            //if (currentMenu && currentMenu !== "satnav_guidance") break;
             if (inMenu()) break;
 
             // Show the audio settings popup 
@@ -2840,7 +2914,7 @@ function handleItemChange(item, value)
 
             if (value !== "ON") break;
 
-            showNotificationPopup("Changing to<br />power-save mode", 5000);
+            if (currentLargeScreenId !== "pre_flight") showNotificationPopup("Changing to<br />power-save mode", 15000);
         } // case
         break;
 
@@ -2939,6 +3013,7 @@ function handleItemChange(item, value)
             {
                 clearInterval(handleItemChange.contactKeyOffTimer);
                 changeLargeScreenTo("pre_flight");
+                hidePopup();
             }
             else if (value === "ACC")
             {
@@ -2967,12 +3042,8 @@ function handleItemChange(item, value)
             // Only if not empty
             if (value === "") break;
 
-            var message = value.substring(2);
-
-            // This is handled separately; it should not also appear in the notification popup
-            if (message === "Door open") break;
-
-            var isWarning = value.substring(0, 1) === "!";
+            var message = value.slice(0, -1);
+            var isWarning = value.slice(-1) === "!";
             showNotificationPopup(message, 10000, isWarning);
         } // case
         break;
@@ -3018,7 +3089,7 @@ function handleItemChange(item, value)
 
         case "satnav_status_2":
         {
-            // Only if not empty
+            // Only if valid
             if (value === "") break;
 
             // As soon as we receive anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
@@ -3029,6 +3100,7 @@ function handleItemChange(item, value)
             if (value === satnavMode) break;
             var previousSatnavMode = satnavMode;
             satnavMode = value;
+            localStorage.satnavMode = value;
 
             // Button texts in menus
             $("#satnav_navigation_options_menu_stop_guidance_button").text(
@@ -3084,7 +3156,7 @@ function handleItemChange(item, value)
             if (value === "POWERING_OFF")
             {
                 $("#main_menu_goto_satnav_button").addClass("buttonDisabled");
-                $("#satnav_disc_present").addClass("ledOff");
+                $("#satnav_disc_recognized").addClass("ledOff");
                 handleItemChange.nSatNavDiscUnreadable = 1;
                 satnavDisclaimerAccepted = false;
             }
@@ -3127,7 +3199,7 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "satnav_disc_present":
+        case "satnav_disc_recognized":
         {
             if (handleItemChange.nSatNavDiscUnreadable === undefined) handleItemChange.nSatNavDiscUnreadable = 0;
 
@@ -3226,40 +3298,6 @@ function handleItemChange(item, value)
             // But if current street is empty (""), then just keep the current text.
             if (value !== "") $("#satnav_guidance_next_street").text(value)
             else if (satnavCurrentStreet !== "") $("#satnav_guidance_next_street").text(satnavCurrentStreet);
-        } // case
-        break;
-
-        case "satnav_personal_directory_entries":
-        {
-            // Store the list of entries. When the user tries to create an entry with an existing name,
-            // the "Validate" button must be disabled.
-            satnavPersonalDirectoryEntries = value;
-
-            // Remove invalid characters
-            satnavPersonalDirectoryEntries = satnavPersonalDirectoryEntries.map(function(entry)
-            {
-                entry = entry.replace(/&.*?;/g, "");
-                entry = entry.replace(/\?/g, "");
-                entry = entry.trim();
-                return entry;
-            });
-        } // case
-        break;
-
-        case "satnav_professional_directory_entries":
-        {
-            // Store the list of entries. When the user tries to create an entry with an existing name,
-            // the "Validate" button must be disabled.
-            satnavProfessionalDirectoryEntries = value;
-
-            // Remove invalid characters
-            satnavProfessionalDirectoryEntries = satnavProfessionalDirectoryEntries.map(function(entry)
-            {
-                entry = entry.replace(/&.*?;/g, "");
-                entry = entry.replace(/\?/g, "");
-                entry = entry.trim();
-                return entry;
-            });
         } // case
         break;
 
@@ -3519,6 +3557,44 @@ function handleItemChange(item, value)
             // Highlight the current line (or the first, if no line is currently highlighted)
             highlightLine("satnav_list");
 
+            var title = $("#mfd_to_satnav_request").text();
+            if (title === "Personal address list")
+            {
+                // Store the list of entries. When the user tries to create an entry with an existing name,
+                // the "Validate" button must be disabled.
+                satnavPersonalDirectoryEntries = value;
+
+                // Remove invalid characters
+                satnavPersonalDirectoryEntries = satnavPersonalDirectoryEntries.map(function(entry)
+                {
+                    entry = entry.replace(/&.*?;/g, "");
+                    entry = entry.replace(/\?/g, "");
+                    entry = entry.trim();
+                    return entry;
+                });
+
+                // Save in local (persistent) store
+                localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
+            }
+            else if (title === "Professional address list")
+            {
+                // Store the list of entries. When the user tries to create an entry with an existing name,
+                // the "Validate" button must be disabled.
+                satnavProfessionalDirectoryEntries = value;
+
+                // Remove invalid characters
+                satnavProfessionalDirectoryEntries = satnavProfessionalDirectoryEntries.map(function(entry)
+                {
+                    entry = entry.replace(/&.*?;/g, "");
+                    entry = entry.replace(/\?/g, "");
+                    entry = entry.trim();
+                    return entry;
+                });
+
+                // Save in local (persistent) store
+                localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
+            } // if
+
             // TODO - make this work
             // Make the list box visible so that the spinning disk icon disappears behind it
             //document.getElementById("satnav_list").style.display = "block";
@@ -3533,31 +3609,18 @@ function handleItemChange(item, value)
 
             if (! $("#satnav_show_service_address").is(":visible")) break;
 
-            //satnavServiceAddressSetButtons(+value + 1);
             satnavServiceAddressSetButtons(parseInt(value) + 1);
-
         } // case
         break;
 
         case "satnav_guidance_preference":
         {
-            // Set the correct text in the sat nav guidance preference popup
-            var satnavGuidancePreferenceText =
-                value === "FASTEST_ROUTE" ? "Fastest route" :
-                value === "SHORTEST_DISTANCE" ? "Shortest route" :
-                value === "AVOID_HIGHWAY" ? "Avoid highway route" :
-                value === "COMPROMISE_FAST_SHORT" ? "Fast/short compromise route" :
-                "";
-            $("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText);
+            if (value === "---") break;
 
-            // Also set the correct tick box in the sat nav guidance preference menu
-            var satnavGuidancePreferenceTickBoxId =
-                value === "FASTEST_ROUTE" ? "satnav_guidance_preference_fastest" :
-                value === "SHORTEST_DISTANCE" ? "satnav_guidance_preference_shortest" :
-                value === "AVOID_HIGHWAY" ? "satnav_guidance_preference_avoid_highway" :
-                value === "COMPROMISE_FAST_SHORT" ? "satnav_guidance_preference_compromise" :
-                undefined;
-            setTick(satnavGuidancePreferenceTickBoxId);
+            satnavGuidanceSetPreference(value);
+
+            // Save also in local (persistent) store
+            localStorage.satnavGuidancePreference = value;
         } // case
         break;
 
@@ -3811,8 +3874,8 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // Has anything changed?
-            if (value === handleItemChange.smallScreen) break;
-            handleItemChange.smallScreen = value;
+            if (value === localStorage.smallScreen) break;
+            localStorage.smallScreen = value;
 
             gotoSmallScreen(value);
         } // case
@@ -3931,7 +3994,11 @@ function handleItemChange(item, value)
 
         case "mfd_status":
         {
-            if (value === "MFD_SCREEN_OFF")
+            if (value === "MFD_SCREEN_ON" && handleItemChange.economyMode === "ON")
+            {
+                showNotificationPopup("Changing to<br />power-save mode", 15000);
+            }
+            else if (value === "MFD_SCREEN_OFF")
             {
                 hidePopup();
             } // if

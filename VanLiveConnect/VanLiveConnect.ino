@@ -26,6 +26,8 @@
 #include <ESP8266WebServer.h>
 #include <VanBusRx.h>
 
+#include <EEPROM.h>
+
 #include "Config.h"
 
 #ifdef WIFI_AP_MODE
@@ -47,21 +49,6 @@ void LoopOta();
 
 // Persistent storage, defined in Store.ino
 void SetupStore();
-void MarkStoreDirty();
-void LoopStore();
-struct StoredData_t
-{
-    uint8_t smallScreenIndex;  // SmallScreen_t
-    bool satnavGuidanceActive;
-    bool satnavDiscPresent;
-    uint8_t satnavGuidancePreference;
-
-    // TODO - increase to 100 (causes crash at boot time)
-    #define MAX_DIRECTORY_ENTRIES 40
-    String personalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
-    String professionalDirectoryEntries[MAX_DIRECTORY_ENTRIES];
-};
-StoredData_t* GetStore();
 
 // Defined in WebServer.ino
 void SetupWebServer();
@@ -89,12 +76,14 @@ enum VanPacketFilter_t
     VAN_PACKETS_SAT_NAV
 }; // enum VanPacketFilter_t
 
+// Infrared receiver
+
 // Results returned from the IR decoder
 typedef struct
 {
     unsigned long value;  // Decoded value
     int bits;  // Number of bits in decoded value
-    volatile unsigned int *rawbuf;  // Raw intervals in 50 usec ticks
+    volatile unsigned int* rawbuf;  // Raw intervals in 50 usec ticks
     int rawlen;  // Number of records in rawbuf
 } TIrPacket;
 
@@ -199,8 +188,11 @@ void setup()
 
     PrintSystemSpecs();
 
+    Serial.println(F("Initializing EEPROM"));
+    EEPROM.begin(64);
+
     // Setup non-volatile storage on SPIFFS
-    SetupStore();
+    //SetupStore();
 
     SetupWifi();
 
@@ -249,20 +241,20 @@ void loop()
     TIrPacket irPacket;
     if (IrReceive(irPacket)) BroadcastJsonText(ParseIrPacketToJson(irPacket));
 
-    // VAN bus receiver
-    TVanPacketRxDesc pkt;
-    bool isQueueOverrun = false;
-    if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
-    if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
-
-    // Print statistics every 5 seconds
-    static unsigned long lastUpdate = 0;
-    if (millis() - lastUpdate >= 5000UL) // Arithmetic has safe roll-over
+    if (VanBusRx.IsSetup())
     {
-        lastUpdate = millis();
-        VanBusRx.DumpStats(Serial);
-    } // if
+        // VAN bus receiver
+        TVanPacketRxDesc pkt;
+        bool isQueueOverrun = false;
+        if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
+        if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
-    // Handle persistent storage
-    LoopStore();
+        // Print statistics every 5 seconds
+        static unsigned long lastUpdate = 0;
+        if (millis() - lastUpdate >= 5000UL) // Arithmetic has safe roll-over
+        {
+            lastUpdate = millis();
+            VanBusRx.DumpStats(Serial);
+        } // if
+    } // if
 } // loop

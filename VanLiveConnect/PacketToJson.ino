@@ -20,10 +20,10 @@ enum VanPacketParseResult_t
     VAN_PACKET_PARSE_UNRECOGNIZED_IDEN = -3,  // Packet had unrecognized IDEN field
     VAN_PACKET_PARSE_TO_BE_DECODED = -4,  // IDEN recognized but the correct parsing of this packet is not yet known
     VAN_PACKET_PARSE_JSON_TOO_LONG = -5,  // IDEN recognized but the parsing into JSON overflows 'jsonBuffer'
-    VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least on fragment of a multi-fragment message
+    VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least one fragment of a multi-fragment message
 }; // enum VanPacketParseResult_t
 
-typedef VanPacketParseResult_t (*TPacketParser)(const char*, TVanPacketRxDesc&, char*, const int);
+typedef VanPacketParseResult_t (*TPacketParser)(TVanPacketRxDesc&, char*, const int);
 
 struct IdenHandler_t
 {
@@ -54,6 +54,10 @@ const char PROGMEM notApplicable3Str[] = "---";
 
 // Defined in PacketFilter.ino
 bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter);
+
+// Functions for (emulated) EEPROM
+void WriteEeprom(int const address, uint8_t const val);
+void CommitEeprom();
 
 // Uses statically allocated buffer, so don't call twice within the same printf invocation 
 char* ToStr(uint8_t data)
@@ -149,25 +153,28 @@ void AsciiToHtml(String& in)
 // Index of small screen
 enum SmallScreen_t
 {
-    // Same order as the original MFD goes through as the driver short-presses the right stalk button
+    SMALL_SCREEN_INVALID = 0xFF,
+    SMALL_SCREEN_FIRST = 0,
 
-    SMALL_SCREEN_TRIP_INFO_1, // When the original MFD is plugged in, this is what it starts with
+    // Same order as the original MFD goes through as the driver short-presses the right stalk button
+    SMALL_SCREEN_TRIP_INFO_1 = SMALL_SCREEN_FIRST, // When the original MFD is plugged in, this is what it starts with
     SMALL_SCREEN_TRIP_INFO_2,
     SMALL_SCREEN_GPS_INFO, // Skipped when in guidance mode
     SMALL_SCREEN_FUEL_CONSUMPTION,
 
+    SMALL_SCREEN_LAST = SMALL_SCREEN_FUEL_CONSUMPTION,
     N_SMALL_SCREENS
 }; // enum SmallScreen_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* SmallScreenStr(uint8_t data)
+PGM_P SmallScreenStr(uint8_t data)
 {
     return
         data == SMALL_SCREEN_TRIP_INFO_1 ? PSTR("TRIP_INFO_1") :
         data == SMALL_SCREEN_TRIP_INFO_2 ? PSTR("TRIP_INFO_2") :
         data == SMALL_SCREEN_GPS_INFO ? PSTR("GPS_INFO") :
         data == SMALL_SCREEN_FUEL_CONSUMPTION ? PSTR("FUEL_CONSUMPTION") :
-        ToHexStr(data);
+        notApplicable3Str;
 } // SmallScreenStr
 
 // Tuner band
@@ -183,7 +190,7 @@ enum TunerBand_t
 }; // enum TunerBand_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* TunerBandStr(uint8_t data)
+PGM_P TunerBandStr(uint8_t data)
 {
     return
         data == TB_NONE ? noneStr :
@@ -193,7 +200,7 @@ const char* TunerBandStr(uint8_t data)
         data == TB_FMAST ? PSTR("FMAST") :
         data == TB_AM ? PSTR("AM") :
         data == TB_PTY_SELECT ? PSTR("PTY_SELECT") :  // When selecting PTY to search for
-        ToHexStr(data);
+        notApplicable3Str;
 } // TunerBandStr
 
 // Tuner search mode
@@ -218,7 +225,7 @@ enum TunerSearchMode_t
 }; // enum TunerSearchMode_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* TunerSearchModeStr(uint8_t data)
+PGM_P TunerSearchModeStr(uint8_t data)
 {
     return
         data == TS_NOT_SEARCHING ? PSTR("NOT_SEARCHING") :
@@ -226,12 +233,12 @@ const char* TunerSearchModeStr(uint8_t data)
         data == TS_BY_FREQUENCY ? PSTR("SEARCHING_BY_FREQUENCY") :
         data == TS_BY_MATCHING_PTY ? PSTR("SEARCHING_MATCHING_PTY") : // Searching for station with matching PTY
         data == TS_FM_AST ? PSTR("FM_AST_SCAN") : // AutoSTore scan in the FMAST band (long-press "Radio Band" button)
-        ToHexStr(data);
+        notApplicable3Str;
 } // TunerSearchModeStr
 
 // "Full" PTY string
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* PtyStrFull(uint8_t ptyCode)
+PGM_P PtyStrFull(uint8_t ptyCode)
 {
     // See also:
     // https://www.electronics-notes.com/articles/audio-video/broadcast-audio/rds-radio-data-system-pty-codes.php
@@ -274,7 +281,7 @@ const char* PtyStrFull(uint8_t ptyCode)
 // 16-character PTY string
 // See: poupa.cz/rds/r98_009_2.pdf, page 2
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* PtyStr16(uint8_t ptyCode)
+PGM_P PtyStr16(uint8_t ptyCode)
 {
     // See also:
     // https://www.electronics-notes.com/articles/audio-video/broadcast-audio/rds-radio-data-system-pty-codes.php
@@ -317,7 +324,7 @@ const char* PtyStr16(uint8_t ptyCode)
 // 8-character PTY string
 // See: poupa.cz/rds/r98_009_2.pdf, page 2
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* PtyStr8(uint8_t ptyCode)
+PGM_P PtyStr8(uint8_t ptyCode)
 {
     // See also:
     // https://www.electronics-notes.com/articles/audio-video/broadcast-audio/rds-radio-data-system-pty-codes.php
@@ -358,7 +365,7 @@ const char* PtyStr8(uint8_t ptyCode)
 } // PtyStr8
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* RadioPiCountry(uint8_t countryCode)
+PGM_P RadioPiCountry(uint8_t countryCode)
 {
     // See also:
     // - http://poupa.cz/rds/countrycodes.htm
@@ -383,7 +390,7 @@ const char* RadioPiCountry(uint8_t countryCode)
 } // RadioPiCountry
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* RadioPiAreaCoverage(uint8_t coverageCode)
+PGM_P RadioPiAreaCoverage(uint8_t coverageCode)
 {
     // https://www.pira.cz/rds/show.asp?art=rds_encoder_support
     return
@@ -431,7 +438,7 @@ enum SatNavRequest_t
 }; // enum SatNavRequest_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* SatNavRequestStr(uint8_t data)
+PGM_P SatNavRequestStr(uint8_t data)
 {
     return
         data == SR_ENTER_COUNTRY ? PSTR("Enter country") :
@@ -467,7 +474,7 @@ enum SatNavRequestType_t
 }; // enum SatNavRequestType_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* SatNavRequestTypeStr(uint8_t data)
+PGM_P SatNavRequestTypeStr(uint8_t data)
 {
     return
         data == SRT_REQ_N_ITEMS ? PSTR("REQ_N_ITEMS") :
@@ -482,11 +489,13 @@ enum SatNavGuidancePreference_t
     SGP_FASTEST_ROUTE = 0x01,
     SGP_SHORTEST_DISTANCE = 0x04,
     SGP_AVOID_HIGHWAY = 0x12,
-    SGP_COMPROMISE_FAST_SHORT = 0x02
+    SGP_COMPROMISE_FAST_SHORT = 0x02,
+
+    SGP_INVALID = 0x00
 }; // enum SatNavGuidancePreference_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-const char* SatNavGuidancePreferenceStr(uint8_t data)
+PGM_P SatNavGuidancePreferenceStr(uint8_t data)
 {
     return
         data == SGP_FASTEST_ROUTE ? PSTR("FASTEST_ROUTE") :
@@ -569,45 +578,7 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
         );
 } // GuidanceInstructionIconJson
 
-#if 0
-
-#include <PrintEx.h>
-
-const char* PacketRawToStr(TVanPacketRxDesc& pkt)
-{
-    static char dumpBuffer[MAX_DUMP_RAW_SIZE];
-
-    // Dump to a string-stream
-    GString str(dumpBuffer);
-    PrintAdapter streamer(str);
-    pkt.DumpRaw(streamer, '\0');
-
-    return dumpBuffer;
-} // PacketRawToStr
-
-// Dump the raw packet data into a JSON object
-VanPacketParseResult_t DefaultPacketParser(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
-{
-    const static char jsonFormatter[] PROGMEM =
-    "{\n"
-        "\"event\": \"display\",\n"
-        "\"data\":\n"
-        "{\n"
-            "\"%s\": \"%s\"\n"
-        "}\n"
-    "}\n";
-
-    int at = snprintf_P(buf, n, jsonFormatter, idenStr, PacketRawToStr(pkt));
-
-    // JSON buffer overflow?
-    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
-
-    return VAN_PACKET_PARSE_OK;
-} // DefaultPacketParser
-
-#endif
-
-VanPacketParseResult_t ParseVinPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#E24
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#E24
@@ -631,7 +602,7 @@ VanPacketParseResult_t ParseVinPkt(const char* idenStr, TVanPacketRxDesc& pkt, c
 
 static bool economyMode = false;
 
-VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8A4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8A4
@@ -707,7 +678,7 @@ VanPacketParseResult_t ParseEnginePkt(const char* idenStr, TVanPacketRxDesc& pkt
     return VAN_PACKET_PARSE_OK;
 } // ParseEnginePkt
 
-VanPacketParseResult_t ParseHeadUnitStalkPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseHeadUnitStalkPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#9C4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#9C4
@@ -747,7 +718,7 @@ VanPacketParseResult_t ParseHeadUnitStalkPkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitStalkPkt
 
-VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4FC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4FC_1
@@ -913,7 +884,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(const char* idenStr, TVanPacketRxDes
     return VAN_PACKET_PARSE_OK;
 } // ParseLightsStatusPkt
 
-VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8C4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8C4
@@ -1115,17 +1086,43 @@ VanPacketParseResult_t ParseDeviceReportPkt(const char* idenStr, TVanPacketRxDes
     return VAN_PACKET_PARSE_OK;
 } // ParseDeviceReportPkt
 
-// Keep track of the tab selected in the trip info popup (as shown during guidance mode, after pressing the right
-// stalk button)
+// Keep track of the tab selected in the trip info popup (as shown during sat nav guidance mode, after pressing
+// the right stalk button)
 int tripInfoPopupTabIndex = -1;
 
-VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+// Value stored in (emulated) EEPROM
+uint8_t smallScreenIndex = SMALL_SCREEN_INVALID;
+#define SMALL_SCREEN_EEPROM_POS (1)
+
+// Initialize smallScreenIndex, if necessary
+void InitSmallScreenIndex()
+{
+    if (smallScreenIndex < SMALL_SCREEN_FIRST || smallScreenIndex > SMALL_SCREEN_LAST)
+    {
+        smallScreenIndex = EEPROM.read(SMALL_SCREEN_EEPROM_POS);
+        Serial.printf_P(PSTR("=====> Read value %u from EEPROM\n"), smallScreenIndex);  // TODO - remove
+
+        if (smallScreenIndex < SMALL_SCREEN_FIRST || smallScreenIndex > SMALL_SCREEN_LAST)
+        {
+            // When the original MFD is plugged in, this is what it starts with
+            smallScreenIndex = SMALL_SCREEN_TRIP_INFO_1;
+
+            WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
+        } // if
+    } // if
+} // InitSmallScreenIndex
+
+bool satnavGuidanceActive = false;
+
+VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#564
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#564
 
     const uint8_t* data = pkt.Data();
     int dataLen = pkt.DataLen();
+
+    InitSmallScreenIndex();
 
     // Keep track when the stalk was pressed, so that we can distinguish between short press and long press
 
@@ -1135,18 +1132,23 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
     bool stalkIsPressed = data[10] & 0x01;
 
     // Not in sat nav guidance mode?
-    if (! GetStore()->satnavGuidanceActive)
+    if (! satnavGuidanceActive)
     {
         tripInfoPopupTabIndex = -1;
     }
-    else if (tripInfoPopupTabIndex < 0)
+    else
     {
-        // In guidance mode, stay in the current small screen
-        tripInfoPopupTabIndex = GetStore()->smallScreenIndex;
+        // In guidance mode
 
-        // But if the GPS info screen was showing, go to the next screen (SMALL_SCREEN_FUEL_CONSUMPTION)
-        if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
-        tripInfoPopupTabIndex %= N_SMALL_SCREENS;
+        if (tripInfoPopupTabIndex < 0)
+        {
+            // Stay in the current small screen
+            tripInfoPopupTabIndex = smallScreenIndex;
+
+            // But if the GPS info screen was showing, go to the next screen (SMALL_SCREEN_FUEL_CONSUMPTION)
+            if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
+            tripInfoPopupTabIndex %= N_SMALL_SCREENS;
+        } // if
     } // if
 
     while (! economyMode)
@@ -1169,13 +1171,13 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         if (millis() - stalkLastPressed >= 1000) break; // TODO - exact time
 
         // Not in sat nav guidance mode?
-        if (! GetStore()->satnavGuidanceActive)
+        if (! satnavGuidanceActive)
         {
             // Short-press of right stalk button selects next small screen
-            GetStore()->smallScreenIndex++;
-            GetStore()->smallScreenIndex %= N_SMALL_SCREENS;
+            smallScreenIndex++;
+            smallScreenIndex %= N_SMALL_SCREENS;
 
-            MarkStoreDirty();
+            WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
 
             break;
         } // if
@@ -1250,7 +1252,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
         data[7] & 0x10 ? openStr : closedStr,
         data[7] & 0x08 ? openStr : closedStr,
         stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
-        SmallScreenStr(tripInfoPopupTabIndex >= 0 ? tripInfoPopupTabIndex : GetStore()->smallScreenIndex),
+        SmallScreenStr(tripInfoPopupTabIndex >= 0 ? tripInfoPopupTabIndex : smallScreenIndex),
 
         // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
         // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.
@@ -1294,7 +1296,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(const char* idenStr, TVanPacketRxDesc&
     return VAN_PACKET_PARSE_OK;
 } // ParseCarStatus1Pkt
 
-VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#524
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#524
@@ -1305,100 +1307,101 @@ VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc&
     if (dataLen != 14 && dataLen != 16) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
     // All known notifications, as literally retrieved from my vehicle (406 year 2003, DAM number 9586; your vehicle
-    // may have other texts). Retrieving was done with VanBus/examples/DisplayNotifications/DisplayNotifications.ino .
+    // may have other notification texts). Retrieving was done with the example sketch:
+    // "VanBus/examples/DisplayNotifications/DisplayNotifications.ino".
 
-    // By convention, the first two bytes are either "! " for warnings or "i " (or just "  ") for information.
+    // By convention, warning notifications end with "!"; information notifications do not.
     // TODO - translate into all languages
 
     // Byte 0, 0x00...0x07
-    static const char msg_0_0[] PROGMEM = "! Tyre pressure too low";
+    static const char msg_0_0[] PROGMEM = "Tyre pressure too low!";
     static const char msg_0_1[] PROGMEM = "";
-    static const char msg_0_2[] PROGMEM = "! Automatic gearbox temperature too high";
-    static const char msg_0_3[] PROGMEM = "! Brake fluid level low"; // and exclamation mark on instrument cluster
-    static const char msg_0_4[] PROGMEM = "! Hydraulic suspension pressure defective";
-    static const char msg_0_5[] PROGMEM = "! Suspension defective";
-    static const char msg_0_6[] PROGMEM = "! Engine oil temperature too high"; // and oil can on instrument cluster
-    static const char msg_0_7[] PROGMEM = "! Engine temperature too high";
+    static const char msg_0_2[] PROGMEM = "Automatic gearbox temperature too high!";
+    static const char msg_0_3[] PROGMEM = "Brake fluid level low!"; // and exclamation mark on instrument cluster
+    static const char msg_0_4[] PROGMEM = "Hydraulic suspension pressure defective!";
+    static const char msg_0_5[] PROGMEM = "Suspension defective!";
+    static const char msg_0_6[] PROGMEM = "Engine oil temperature too high!"; // and oil can on instrument cluster
+    static const char msg_0_7[] PROGMEM = "Engine temperature too high!";
 
     // Byte 1, 0x08...0x0F
-    static const char msg_1_0[] PROGMEM = "  Clear diesel filter (FAP) URGENT"; // and mil icon on instrument cluster
+    static const char msg_1_0[] PROGMEM = "Clear diesel filter (FAP) URGENT"; // and mil icon on instrument cluster
     static const char msg_1_1[] PROGMEM = "";
-    static const char msg_1_2[] PROGMEM = "! Min level additive gasoil";
-    static const char msg_1_3[] PROGMEM = "! Fuel cap open";
-    static const char msg_1_4[] PROGMEM = "! Puncture(s) detected";
-    static const char msg_1_5[] PROGMEM = "! Cooling circuit level too low"; // and icon on instrument cluster
-    static const char msg_1_6[] PROGMEM = "! Oil pressure insufficient";
-    static const char msg_1_7[] PROGMEM = "! Engine oil level too low";
+    static const char msg_1_2[] PROGMEM = "Min level additive gasoil!";
+    static const char msg_1_3[] PROGMEM = "Fuel cap open!";
+    static const char msg_1_4[] PROGMEM = "Puncture(s) detected!";
+    static const char msg_1_5[] PROGMEM = "Cooling circuit level too low!"; // and icon on instrument cluster
+    static const char msg_1_6[] PROGMEM = "Oil pressure insufficient!";
+    static const char msg_1_7[] PROGMEM = "Engine oil level too low!";
 
     // Byte 2, 0x10...0x17
-    static const char msg_2_0[] PROGMEM = "! Engine antipollution system defective";
-    static const char msg_2_1[] PROGMEM = "! Brake pads worn";
-    static const char msg_2_2[] PROGMEM = "  Check Control OK";  // Wow... bad translation
-    static const char msg_2_3[] PROGMEM = "! Automatic gearbox defective";
-    static const char msg_2_4[] PROGMEM = "! ASR / ESP system defective"; // and icon on instrument cluster
-    static const char msg_2_5[] PROGMEM = "! ABS brake system defective";
-    static const char msg_2_6[] PROGMEM = "! Suspension and power steering defective";
-    static const char msg_2_7[] PROGMEM = "! Brake system defective";
+    static const char msg_2_0[] PROGMEM = "Engine antipollution system defective!";
+    static const char msg_2_1[] PROGMEM = "Brake pads worn!";
+    static const char msg_2_2[] PROGMEM = "Check Control OK";  // Wow... bad translation
+    static const char msg_2_3[] PROGMEM = "Automatic gearbox defective!";
+    static const char msg_2_4[] PROGMEM = "ASR / ESP system defective!"; // and icon on instrument cluster
+    static const char msg_2_5[] PROGMEM = "ABS brake system defective!";
+    static const char msg_2_6[] PROGMEM = "Suspension and power steering defective!";
+    static const char msg_2_7[] PROGMEM = "Brake system defective!";
 
     // Byte 3, 0x18...0x1F
-    static const char msg_3_0[] PROGMEM = "! Airbag defective";
-    static const char msg_3_1[] PROGMEM = "! Airbag defective";
+    static const char msg_3_0[] PROGMEM = "Airbag defective!";
+    static const char msg_3_1[] PROGMEM = "Airbag defective!";
     static const char msg_3_2[] PROGMEM = "";
-    static const char msg_3_3[] PROGMEM = "! Engine temperature high";
+    static const char msg_3_3[] PROGMEM = "Engine temperature high!";
     static const char msg_3_4[] PROGMEM = "";
     static const char msg_3_5[] PROGMEM = "";
     static const char msg_3_6[] PROGMEM = "";
-    static const char msg_3_7[] PROGMEM = "  Water in Diesel fuel filter"; // and icon on instrument cluster
+    static const char msg_3_7[] PROGMEM = "Water in Diesel fuel filter"; // and icon on instrument cluster
 
     // Byte 4, 0x20...0x27
     static const char msg_4_0[] PROGMEM = "";
-    static const char msg_4_1[] PROGMEM = "! Automatic beam adjustment defective";
+    static const char msg_4_1[] PROGMEM = "Automatic beam adjustment defective!";
     static const char msg_4_2[] PROGMEM = "";
     static const char msg_4_3[] PROGMEM = "";
-    static const char msg_4_4[] PROGMEM = "! Service battery charge low";
-    static const char msg_4_5[] PROGMEM = "! Battery charge low"; // and battery icon on instrument cluster
-    static const char msg_4_6[] PROGMEM = "! Diesel antipollution system (FAP) defective";
-    static const char msg_4_7[] PROGMEM = "! Engine antipollution system inoperative"; // MIL icon flashing on instrument cluster
+    static const char msg_4_4[] PROGMEM = "Service battery charge low!";
+    static const char msg_4_5[] PROGMEM = "Battery charge low!"; // and battery icon on instrument cluster
+    static const char msg_4_6[] PROGMEM = "Diesel antipollution system (FAP) defective!";
+    static const char msg_4_7[] PROGMEM = "Engine antipollution system inoperative!"; // MIL icon flashing on instrument cluster
 
     // Byte 5, 0x28...0x2F
-    static const char msg_5_0[] PROGMEM = "! Handbrake on";
-    static const char msg_5_1[] PROGMEM = "! Safety belt not fastened";
-    static const char msg_5_2[] PROGMEM = "  Passenger airbag neutralized"; // and icon on instrument cluster
-    static const char msg_5_3[] PROGMEM = "  Windshield liquid level too low";
-    static const char msg_5_4[] PROGMEM = "  Current speed too high";
-    static const char msg_5_5[] PROGMEM = "  Ignition key still inserted";
-    static const char msg_5_6[] PROGMEM = "  Lights not on";
+    static const char msg_5_0[] PROGMEM = "Handbrake on!";
+    static const char msg_5_1[] PROGMEM = "Safety belt not fastened!";
+    static const char msg_5_2[] PROGMEM = "Passenger airbag neutralized"; // and icon on instrument cluster
+    static const char msg_5_3[] PROGMEM = "Windshield liquid level too low";
+    static const char msg_5_4[] PROGMEM = "Current speed too high";
+    static const char msg_5_5[] PROGMEM = "Ignition key still inserted";
+    static const char msg_5_6[] PROGMEM = "Lights not on";
     static const char msg_5_7[] PROGMEM = "";
 
     // Byte 6, 0x30...0x37
-    static const char msg_6_0[] PROGMEM = "  Impact sensor defective";
+    static const char msg_6_0[] PROGMEM = "Impact sensor defective";
     static const char msg_6_1[] PROGMEM = "";
-    static const char msg_6_2[] PROGMEM = "  Tyre pressure sensor battery low";
-    static const char msg_6_3[] PROGMEM = "  Plip remote control battery low";
+    static const char msg_6_2[] PROGMEM = "Tyre pressure sensor battery low";
+    static const char msg_6_3[] PROGMEM = "Plip remote control battery low";
     static const char msg_6_4[] PROGMEM = "";
-    static const char msg_6_5[] PROGMEM = "  Place automatic gearbox in P position";
-    static const char msg_6_6[] PROGMEM = "  Testing stop lamps : brake gently";
-    static const char msg_6_7[] PROGMEM = "! Fuel level low";
+    static const char msg_6_5[] PROGMEM = "Place automatic gearbox in P position";
+    static const char msg_6_6[] PROGMEM = "Testing stop lamps : brake gently";
+    static const char msg_6_7[] PROGMEM = "Fuel level low!";
 
     // Byte 7, 0x38...0x3F
-    static const char msg_7_0[] PROGMEM = "  Automatic headlight activation system disabled";
-    static const char msg_7_1[] PROGMEM = "! Turn-headlight defective";
-    static const char msg_7_2[] PROGMEM = "  Turn-headlight disable";
-    static const char msg_7_3[] PROGMEM = "  Turn-headlight enable";
+    static const char msg_7_0[] PROGMEM = "Automatic headlight activation system disabled";
+    static const char msg_7_1[] PROGMEM = "Turn-headlight defective!";
+    static const char msg_7_2[] PROGMEM = "Turn-headlight disable";
+    static const char msg_7_3[] PROGMEM = "Turn-headlight enable";
     static const char msg_7_4[] PROGMEM = "";
-    static const char msg_7_5[] PROGMEM = "! 7 tyre pressure sensors missing";
-    static const char msg_7_6[] PROGMEM = "! 7 tyre pressure sensors missing";
-    static const char msg_7_7[] PROGMEM = "! 7 tyre pressure sensors missing";
+    static const char msg_7_5[] PROGMEM = "7 tyre pressure sensors missing!";
+    static const char msg_7_6[] PROGMEM = "7 tyre pressure sensors missing!";
+    static const char msg_7_7[] PROGMEM = "7 tyre pressure sensors missing!";
 
     // Byte 8, 0x40...0x47
-    static const char msg_8_0[] PROGMEM = "  Doors locked";
-    static const char msg_8_1[] PROGMEM = "  ASR / ESP system disabled";
-    static const char msg_8_2[] PROGMEM = "  Child safety lock enabled";
-    static const char msg_8_3[] PROGMEM = "  Door self locking system enabled";
-    static const char msg_8_4[] PROGMEM = "  Automatic headlight activation system enabled";
-    static const char msg_8_5[] PROGMEM = "  Automatic wiper system enabled";
-    static const char msg_8_6[] PROGMEM = "  Electronic anti-theft system defective";
-    static const char msg_8_7[] PROGMEM = "  Sport suspension mode enabled";
+    static const char msg_8_0[] PROGMEM = "Doors locked";
+    static const char msg_8_1[] PROGMEM = "ASR / ESP system disabled";
+    static const char msg_8_2[] PROGMEM = "Child safety lock enabled";
+    static const char msg_8_3[] PROGMEM = "Door self locking system enabled";
+    static const char msg_8_4[] PROGMEM = "Automatic headlight activation system enabled";
+    static const char msg_8_5[] PROGMEM = "Automatic wiper system enabled";
+    static const char msg_8_6[] PROGMEM = "Electronic anti-theft system defective";
+    static const char msg_8_7[] PROGMEM = "Sport suspension mode enabled";
 
     // Byte 9 is the index of the current message
 
@@ -1527,6 +1530,7 @@ VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc&
     // Relying on short-circuit boolean evaluation
     if (currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0)
     {
+        // The message to be shown in the popup on the MFD
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"notification_message_on_mfd\": \"%S\""), msgTable[currentMsg]);
     } // if
@@ -1539,7 +1543,7 @@ VanPacketParseResult_t ParseCarStatus2Pkt(const char* idenStr, TVanPacketRxDesc&
     return VAN_PACKET_PARSE_OK;
 } // ParseCarStatus2Pkt
 
-VanPacketParseResult_t ParseDashboardPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#824
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#824
@@ -1594,7 +1598,7 @@ VanPacketParseResult_t ParseDashboardPkt(const char* idenStr, TVanPacketRxDesc& 
     return VAN_PACKET_PARSE_OK;
 } // ParseDashboardPkt
 
-VanPacketParseResult_t ParseDashboardButtonsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#664
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#664
@@ -1652,7 +1656,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(const char* idenStr, TVanPacketR
     return VAN_PACKET_PARSE_OK;
 } // ParseDashboardButtonsPkt
 
-VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#554
 
@@ -2099,7 +2103,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& p
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitPkt
 
-VanPacketParseResult_t ParseTimePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseTimePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#984
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#984
@@ -2135,7 +2139,7 @@ VanPacketParseResult_t ParseTimePkt(const char* idenStr, TVanPacketRxDesc& pkt, 
 static bool seenTapePresence = false;
 static bool seenCdPresence = false;
 
-VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4D4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4D4
@@ -2238,13 +2242,25 @@ VanPacketParseResult_t ParseAudioSettingsPkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseAudioSettingsPkt
 
-VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#5E4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#5E4
 
     const uint8_t* data = pkt.Data();
     uint16_t mfdStatus = (uint16_t)data[0] << 8 | data[1];
+
+    enum MfdStatus_t
+    {
+        MFD_SCREEN_OFF = 0x00FF,
+        MFD_SCREEN_ON = 0x20FF,
+        TRIP_COUTER_1_RESET = 0xA0FF,
+        TRIP_COUTER_2_RESET = 0x60FF
+    }; // enum MfdStatus_t
+
+    // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
+    // when the MFD is active and VAN packets are being received. VAN bus and SPIFFS don't work well together.
+    if (mfdStatus == MFD_SCREEN_OFF) CommitEeprom();
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2258,22 +2274,24 @@ VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& 
         // hmmm... MFD can also be ON if this is reported; this happens e.g. in the "minimal VAN network" test
         // setup with only the head unit (radio) and MFD. Maybe this is a status report: the MFD shows if has
         // received any packets that show connectivity to e.g. the BSI?
-        mfdStatus == 0x00FF ? PSTR("MFD_SCREEN_OFF") :
+        mfdStatus == MFD_SCREEN_OFF ? PSTR("MFD_SCREEN_OFF") :
 
-        mfdStatus == 0x20FF ? PSTR("MFD_SCREEN_ON") :
-        mfdStatus == 0xA0FF ? PSTR("TRIP_COUTER_1_RESET") :
-        mfdStatus == 0x60FF ? PSTR("TRIP_COUTER_2_RESET") :
+        mfdStatus == MFD_SCREEN_ON ? PSTR("MFD_SCREEN_ON") :
+        mfdStatus == TRIP_COUTER_1_RESET ? PSTR("TRIP_COUTER_1_RESET") :
+        mfdStatus == TRIP_COUTER_2_RESET ? PSTR("TRIP_COUTER_2_RESET") :
         ToHexStr(mfdStatus)
     );
 
-    if (mfdStatus == 0xA0FF || mfdStatus == 0x60FF)
+    if (mfdStatus == TRIP_COUTER_1_RESET || mfdStatus == TRIP_COUTER_2_RESET)
     {
         // Force change to the appropriate small screen (left hand side of the display)
 
-        uint8_t smallScreenIdx = mfdStatus == 0xA0FF ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
-        bool isChanged = GetStore()->smallScreenIndex != smallScreenIdx;
-        GetStore()->smallScreenIndex = smallScreenIdx;
-        if (isChanged) MarkStoreDirty();
+        uint8_t smallScreenIdx = mfdStatus == TRIP_COUTER_1_RESET ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
+        if (smallScreenIndex != smallScreenIdx)
+        {
+            smallScreenIndex = smallScreenIdx;
+            WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
+        } // if
 
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR
@@ -2293,7 +2311,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(const char* idenStr, TVanPacketRxDesc& 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdStatusPkt
 
-VanPacketParseResult_t ParseAirCon1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#464
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#464
@@ -2410,7 +2428,7 @@ VanPacketParseResult_t ParseAirCon1Pkt(const char* idenStr, TVanPacketRxDesc& pk
     return VAN_PACKET_PARSE_OK;
 } // ParseAirCon1Pkt
 
-VanPacketParseResult_t ParseAirCon2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4DC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4DC
@@ -2474,7 +2492,7 @@ VanPacketParseResult_t ParseAirCon2Pkt(const char* idenStr, TVanPacketRxDesc& pk
 // Saved equipment status (volatile)
 bool cdChangerCartridgePresent = false;
 
-VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4EC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4EC
@@ -2604,7 +2622,7 @@ VanPacketParseResult_t ParseCdChangerPkt(const char* idenStr, TVanPacketRxDesc& 
     return VAN_PACKET_PARSE_OK;
 } // ParseCdChangerPkt
 
-VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#54E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#54E
@@ -2662,9 +2680,10 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(const char* idenStr, TVanPacketRxDe
 } // ParseSatNavStatus1Pkt
 
 // Saved equipment status (volatile)
-const char* satnavStatus2Str = emptyStr;
+PGM_P satnavStatus2Str = emptyStr;
+bool satnavDiscRecognized = false;
 
-VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#7CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#7CE
@@ -2677,19 +2696,10 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
         satnavStatus2 == 0x00 ? PSTR("INITIALIZING") : // TODO - change to "IDLE"
         satnavStatus2 == 0x01 ? PSTR("IDLE") : // TODO - change to "READY"
         satnavStatus2 == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
-        ToHexStr(satnavStatus2);
+        emptyStr;
 
-    // The following data is stored in non-volatile storage
-
-    bool satnavGuidanceActive = satnavStatus2 == 0x05;
-    bool isChanged = GetStore()->satnavGuidanceActive != satnavGuidanceActive;
-    GetStore()->satnavGuidanceActive = satnavGuidanceActive;
-
-    bool satnavDiscPresent = (data[2] & 0x70) == 0x30;
-    isChanged = isChanged || GetStore()->satnavDiscPresent != satnavDiscPresent;
-    GetStore()->satnavDiscPresent = satnavDiscPresent;
-
-    if (isChanged) MarkStoreDirty();
+    satnavGuidanceActive = satnavStatus2 == 0x05;
+    satnavDiscRecognized = (data[2] & 0x70) == 0x30;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2701,7 +2711,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
             "\"satnav_destination_reachable\": \"%S\",\n"
             "\"satnav_on_map\": \"%S\",\n"
             "\"satnav_download_finished\": \"%S\",\n"
-            "\"satnav_disc_present\": \"%S\",\n"
+            "\"satnav_disc_recognized\": \"%S\",\n"
             "\"satnav_gps_fix\": \"%S\",\n"
             "\"satnav_gps_fix_lost\": \"%S\",\n"
             "\"satnav_gps_scanning\": \"%S\",\n"
@@ -2760,7 +2770,9 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus2Pkt
 
-VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+uint8_t satnavGuidancePreference = SGP_INVALID;
+
+VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8CE
@@ -2808,7 +2820,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
     {
         // Sat nav guidance preference
 
-        uint8_t preference = data[1];
+        satnavGuidancePreference = data[1];
 
         const static char jsonFormatter[] PROGMEM =
         "{\n"
@@ -2819,12 +2831,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
             "}\n"
         "}\n";
 
-        at = snprintf_P(buf, n, jsonFormatter, SatNavGuidancePreferenceStr(preference));
-
-        // Save also in non-volatile storage
-        bool isChanged = GetStore()->satnavGuidancePreference != preference;
-        GetStore()->satnavGuidancePreference = preference;
-        if (isChanged) MarkStoreDirty();
+        at = snprintf_P(buf, n, jsonFormatter, SatNavGuidancePreferenceStr(satnavGuidancePreference));
     }
     else if (dataLen == 17 && data[0] == 0x20)
     {
@@ -2863,7 +2870,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(const char* idenStr, TVanPacketRxDe
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus3Pkt
 
-VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#9CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#9CE
@@ -2943,7 +2950,7 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(const char* idenStr, TVanPacke
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavGuidanceDataPkt
 
-VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#64E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#64E
@@ -3075,7 +3082,7 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(const char* idenStr, TVanPacketRxD
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavGuidancePkt
 
-VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#6CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#6CE
@@ -3477,21 +3484,6 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
                     records[i][0].replace("?", "");
                     records[i][0].replace("&#x24E7;", "");
                     records[i][0].trim();
-
-                    bool isChanged = false;
-
-                    if (report == SR_PERSONAL_ADDRESS_LIST)
-                    {
-                        isChanged = GetStore()->personalDirectoryEntries[i] != records[i][0];
-                        if (isChanged) GetStore()->personalDirectoryEntries[i] = records[i][0];
-                    }
-                    else
-                    {
-                        isChanged = GetStore()->professionalDirectoryEntries[i] != records[i][0];
-                        if (isChanged) GetStore()->professionalDirectoryEntries[i] = records[i][0];
-                    } // if
-
-                    if (isChanged) MarkStoreDirty();
                 } // if
             } // for
 
@@ -3597,7 +3589,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(const char* idenStr, TVanPacketRxDes
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavReportPkt
 
-VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#94E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#94E
@@ -3907,7 +3899,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(const char* idenStr, TVanPacketRxDesc
 // Saved equipment status (volatile)
 sint16_t satnavServiceListSize = -1;
 
-VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#74E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#74E
@@ -3981,7 +3973,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(const char* idenStr, TVanPacketRxDesc
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavToMfdPkt
 
-VanPacketParseResult_t ParseWheelSpeedPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseWheelSpeedPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#744
 
@@ -4014,7 +4006,7 @@ VanPacketParseResult_t ParseWheelSpeedPkt(const char* idenStr, TVanPacketRxDesc&
     return VAN_PACKET_PARSE_OK;
 } // ParseWheelSpeedPkt
 
-VanPacketParseResult_t ParseOdometerPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseOdometerPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8FC
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8FC
@@ -4042,7 +4034,7 @@ VanPacketParseResult_t ParseOdometerPkt(const char* idenStr, TVanPacketRxDesc& p
     return VAN_PACKET_PARSE_OK;
 } // ParseOdometerPkt
 
-VanPacketParseResult_t ParseCom2000Pkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseCom2000Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#450
 
@@ -4120,7 +4112,7 @@ VanPacketParseResult_t ParseCom2000Pkt(const char* idenStr, TVanPacketRxDesc& pk
     return VAN_PACKET_PARSE_OK;
 } // ParseCom2000Pkt
 
-VanPacketParseResult_t ParseCdChangerCmdPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseCdChangerCmdPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8EC
 
@@ -4161,7 +4153,7 @@ VanPacketParseResult_t ParseCdChangerCmdPkt(const char* idenStr, TVanPacketRxDes
     return VAN_PACKET_PARSE_OK;
 } // ParseCdChangerCmdPkt
 
-VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8D4
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8D4
@@ -4423,6 +4415,8 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(const char* idenStr, TVanPacketRxDe
 // update of this data as received thus far, instead of having to wait for this data to appear on the bus.
 const char* EquipmentStatusDataToJson(char* buf, const int n)
 {
+    InitSmallScreenIndex();
+
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -4430,20 +4424,30 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "{\n"
             "\"small_screen\": \"%S\",\n"
             "\"cd_changer_cartridge_present\": \"%S\",\n"
-            "\"satnav_disc_present\": \"%S\",\n"
-            "\"satnav_status_2\": \"%S\",\n"
+            "\"satnav_disc_recognized\": \"%S\",\n"
             "\"satnav_guidance_preference\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
 
         // Small screen (left hand side of the display) to start with
-        SmallScreenStr(GetStore()->smallScreenIndex),
+        SmallScreenStr(smallScreenIndex),
 
         cdChangerCartridgePresent ? yesStr : noStr,
-        GetStore()->satnavDiscPresent ? yesStr : noStr,
-        satnavStatus2Str,
-        SatNavGuidancePreferenceStr(GetStore()->satnavGuidancePreference)        
+        satnavDiscRecognized ? yesStr : noStr,
+        SatNavGuidancePreferenceStr(satnavGuidancePreference)        
     );
+
+    if (strlen_P(satnavStatus2Str) != 0)
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR
+                (
+                    ",\n"
+                    "\"satnav_status_2\": \"%S\""
+                ),
+                satnavStatus2Str
+            );
+    }
 
     if (satnavServiceListSize > 0)
     {
@@ -4460,6 +4464,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             );
     } // if
 
+#if 0
     // The names of the directory entries are matched against while entering new entries or renaming existing ones.
     // When the user tries to create an entry with an existing name, the "Validate" button becomes grayed out.
     String* entryLists[2] = { GetStore()->personalDirectoryEntries, GetStore()->professionalDirectoryEntries };
@@ -4493,6 +4498,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
         } // if
     } // for
+#endif
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
@@ -4619,10 +4625,6 @@ static IdenHandler_t handlers[] =
     { COM2000_IDEN, "com2000", 10, &ParseCom2000Pkt },
     { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, &ParseCdChangerCmdPkt },
     { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, &ParseMfdToHeadUnitPkt },
-#if 0
-    { AIR_CONDITIONER_DIAG_IDEN, "aircon_diag", -1, &DefaultPacketParser },
-    { AIR_CONDITIONER_DIAG_COMMAND_IDEN, "aircon_diag_command", -1, &DefaultPacketParser },
-#endif
 }; // handlers
 
 const IdenHandler_t* const handlers_end = handlers + sizeof(handlers) / sizeof(handlers[0]);
@@ -4663,14 +4665,14 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
     //   be ignored.
     if (IsPacketDataDuplicate(pkt, handler)) return "";
 
-    int result = handler->parser(handler->idenStr, pkt, jsonBuffer, JSON_BUFFER_SIZE);
+    int result = handler->parser(pkt, jsonBuffer, JSON_BUFFER_SIZE);
 
     if (result == VAN_PACKET_PARSE_JSON_TOO_LONG)
     {
         Serial.print(F("--> WARNING: JSON BUFFER OVERFLOW!\n"));
 
         // No use to return the JSON buffer; it is invalid
-        return ""; // result != VAN_PACKET_PARSE_OK
+        return "";
     } // if
 
     if (result != VAN_PACKET_PARSE_OK) return ""; // Parsing result not OK
