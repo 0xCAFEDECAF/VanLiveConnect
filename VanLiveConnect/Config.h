@@ -1,6 +1,8 @@
 #ifndef Config_h
 #define Config_h
 
+#include <ESP8266WiFi.h>
+
 // -----
 // Wi-Fi
 
@@ -35,6 +37,9 @@ inline void WifiConfig()
 
 #endif // WIFI_AP_MODE
 
+// Comment out to use the mDNS responder
+//#define USE_MDNS
+
 // -----
 // Infrared receiver
 
@@ -54,9 +59,10 @@ inline void WifiConfig()
 
 // Which type of packets will be printed on Serial?
 
-#define SELECTED_PACKETS VAN_PACKETS_ALL_EXCEPT
+#define SELECTED_PACKETS VAN_PACKETS_ALL
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC
 //#define SELECTED_PACKETS VAN_PACKETS_HEAD_UNIT
 //#define SELECTED_PACKETS VAN_PACKETS_SAT_NAV
+//#define SELECTED_PACKETS VAN_PACKETS_NONE
 
 #endif // Config_h

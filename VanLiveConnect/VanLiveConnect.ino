@@ -10,9 +10,13 @@
  * Documentation, details: see the 'README.md' file.
  */
 
-#include <ESP8266WiFi.h>
+#include "Config.h"
 
-//#define USE_MDNS
+#include <EEPROM.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <VanBusRx.h>
+
 #ifdef USE_MDNS
 #include <ESP8266mDNS.h>
 #endif // USE_MDNS
@@ -22,13 +26,6 @@
 
 // Or this for "WebSockets_Generic" (https://github.com/khoih-prog/WebSockets_Generic):
 //#include <WebSocketsServer_Generic.h>
-
-#include <ESP8266WebServer.h>
-#include <VanBusRx.h>
-
-#include <EEPROM.h>
-
-#include "Config.h"
 
 #ifdef WIFI_AP_MODE
 
@@ -68,8 +65,8 @@ const char* GetHostname();
 
 enum VanPacketFilter_t
 {
-    VAN_PACKETS_ALL_EXCEPT,
-    VAN_PACKETS_NONE_EXCEPT,
+    VAN_PACKETS_ALL,
+    VAN_PACKETS_NONE,
     VAN_PACKETS_HEAD_UNIT,
     VAN_PACKETS_AIRCON,
     VAN_PACKETS_COM2000_ETC,
@@ -113,16 +110,20 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
 const char* EquipmentStatusDataToJson(char* buf, const int n);
 void PrintJsonText(const char* jsonBuffer);
 
+uint8_t websocketNum = 0xFF;
+
 // Broadcast a (JSON) message to all websocket clients
 void BroadcastJsonText(const char* json)
 {
     if (strlen(json) <= 0) return;
+    if (websocketNum == 0xFF) return;
 
     delay(1); // Give some time to system to process other things?
 
     unsigned long start = millis();
 
     webSocket.broadcastTXT(json);
+    //webSocket.sendTXT(websocketNum, json); // Alternative
 
     // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
     // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
@@ -147,6 +148,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_DISCONNECTED:
         {
             Serial.printf("Websocket [%u] Disconnected!\n", num);
+            websocketNum = 0xFF;
         }
         break;
 
@@ -158,6 +160,8 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
                 clientIp[0], clientIp[1], clientIp[2], clientIp[3],
                 payload);
 
+            websocketNum = num;
+
             // Dump ESP system data to client
             BroadcastJsonText(EspDataToJson());
 
@@ -168,10 +172,6 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             #define EQPT_STATUS_DATA_JSON_BUFFER_SIZE 2048
             char jsonBuffer[EQPT_STATUS_DATA_JSON_BUFFER_SIZE];
             BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, EQPT_STATUS_DATA_JSON_BUFFER_SIZE));
-
-            // Delay this until a websocket client actually connects; may give less CRC errors during packet reception
-            // TODO - test this
-            SetupVanReceiver();
         }
         break;
     } // switch
@@ -223,6 +223,8 @@ void setup()
 #endif // WIFI_AP_MODE
     Serial.println(F("/MFD.html"));
 
+    SetupVanReceiver();
+
     IrSetup();
 } // setup
 
@@ -241,20 +243,17 @@ void loop()
     TIrPacket irPacket;
     if (IrReceive(irPacket)) BroadcastJsonText(ParseIrPacketToJson(irPacket));
 
-    if (VanBusRx.IsSetup())
-    {
-        // VAN bus receiver
-        TVanPacketRxDesc pkt;
-        bool isQueueOverrun = false;
-        if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
-        if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
+    // VAN bus receiver
+    TVanPacketRxDesc pkt;
+    bool isQueueOverrun = false;
+    if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
+    if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
-        // Print statistics every 5 seconds
-        static unsigned long lastUpdate = 0;
-        if (millis() - lastUpdate >= 5000UL) // Arithmetic has safe roll-over
-        {
-            lastUpdate = millis();
-            VanBusRx.DumpStats(Serial);
-        } // if
+    // Print statistics every 5 seconds
+    static unsigned long lastUpdate = 0;
+    if (millis() - lastUpdate >= 5000UL) // Arithmetic has safe roll-over
+    {
+        lastUpdate = millis();
+        VanBusRx.DumpStats(Serial);
     } // if
 } // loop

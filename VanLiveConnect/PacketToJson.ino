@@ -2681,7 +2681,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
 // Saved equipment status (volatile)
 PGM_P satnavStatus2Str = emptyStr;
-bool satnavDiscRecognized = false;
+bool satnavDiscRecognized = true;  // We can safely assume true until we get an explict message from the sat nav unit
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -2727,8 +2727,8 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[1] & 0x40 ? noStr : yesStr,
         data[1] & 0x80 ? yesStr : noStr,
 
+        satnavDiscRecognized ? yesStr :
         (data[2] & 0x70) == 0x70 ? noStr :
-        (data[2] & 0x70) == 0x30 ? yesStr :
         ToHexStr((uint8_t)(data[2] & 0x70)),
 
         data[2] & 0x01 ? yesStr : noStr,
@@ -3244,13 +3244,20 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         {
             if (records[0][6].length() == 0)
             {
+                // In this case, the original MFD says: "Street not listed"
+
                 const static char jsonFormatter[] PROGMEM =
                     ",\n"
-                    "\"%S\": \"\"";
+                    "\"%S\": \"%s%S%s\"";
 
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatter,
-                        report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street")
+                        report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
+
+                        // City (if any) + optional district
+                        records[0][3].c_str(),
+                        records[0][4].length() == 0 ? emptyStr : PSTR(" - "),
+                        records[0][4].c_str()
                     );
 
                 break;

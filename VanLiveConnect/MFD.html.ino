@@ -101,6 +101,7 @@ char mfd_html[] PROGMEM = R"=====(
            |  `- div id="satnav_calculating_route_popup"  # Sat nav computing route popup
            |  `- div id="satnav_guidance_preference_popup"  # Change navigation preference popup
            |  `- div id="satnav_delete_directory_data_popup"  # Delete sat nav directory data popup
+           |  `- div id="satnav_continue_guidance_popup"
            |  `- div id="status_popup"  # Simple popup without icon
            |  `- div id="audio_settings_popup"  # Audio settings popup
            |
@@ -1036,8 +1037,8 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="button" on_click="showPopup('satnav_delete_directory_data_popup');">Delete directories</div>
 
-          <div id="satnav_navigation_options_menu_stop_guidance_button"
-            class="button" on_click="selectDefaultScreen();">Resume guidance</div>
+          <div id="satnav_navigation_options_menu_stop_guidance_button" class="button"
+            on_click="localStorage.askForGuidanceContinuation = 'NO'; selectDefaultScreen();">Resume guidance</div>
 
         </div>  <!-- "satnav_navigation_options_menu" -->
 
@@ -1048,13 +1049,11 @@ char mfd_html[] PROGMEM = R"=====(
           Directory management<br style="line-height:100px;" />
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-            <!-- on_click="highlightFirstLine('satnav_list');" -->
           <div class="button buttonSelected"
             on_click="satnavGotoListScreen();"
             goto_id="satnav_choose_from_list">Personal directory</div>
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-            <!-- on_click="highlightFirstLine('satnav_list');" -->
           <div class="button"
             on_click="satnavGotoListScreen();"
             goto_id="satnav_choose_from_list">Professional directory</div>
@@ -1072,7 +1071,8 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
-          <div id="satnav_tools_menu_stop_guidance_button" class="button" on_click="selectDefaultScreen();">Stop guidance</div>
+          <div id="satnav_tools_menu_stop_guidance_button" class="button"
+            on_click="localStorage.askForGuidanceContinuation = 'NO'; selectDefaultScreen();">Stop guidance</div>
 
         </div>  <!-- "satnav_guidance_tools_menu" -->
 
@@ -2208,6 +2208,29 @@ char mfd_html[] PROGMEM = R"=====(
           </div>
         </div>
       </div>  <!-- "satnav_delete_directory_data_popup" -->
+
+      <!-- Sat nav popup with question: Continue guidance to destination? (Yes/No) -->
+
+      <div id="satnav_continue_guidance_popup"
+        on_enter="selectButton('satnav_continue_guidance_popup_yes_button');"
+        class="icon notificationPopup" style="display:none; height:300px;">
+        <div class="centerAligned" style="position:absolute; left:50px; width:710px; height:200px;">
+          Continue guidance to destination ?
+
+          <div button_orientation="horizontal">
+            <div id="satnav_continue_guidance_popup_yes_button"
+              on_click="hidePopup('satnav_continue_guidance_popup'); satnavShowDisclaimer();"
+              class="icon button" style="left:150px; top:150px; width:150px; height:40px;">
+              Yes
+            </div>
+            <div id="satnav_continue_guidance_popup_no_button"
+              on_click="hidePopup('satnav_continue_guidance_popup');"
+              class="icon button" style="left:360px; top:150px; width:150px; height:40px;">
+              No
+            </div>
+          </div>
+        </div>
+      </div>  <!-- "satnav_continue_guidance_popup" -->
 
       <!-- Status popup (without icon) -->
 

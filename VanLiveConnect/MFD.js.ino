@@ -14,7 +14,7 @@ function numberWithSpaces(x)
 // -----
 // On-screen clocks
 
-// Retrieve and show the current date and time
+// Show the current date and time
 function updateDateTime()
 {
     var date = new Date().toLocaleDateString
@@ -281,11 +281,7 @@ if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(
     websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
 } // if
 
-// For stability, connect to the web socket server only after a few seconds.
-// Background: VAN bus receiver is started on first connection of client. Web server may be serving files from
-// SPIFFS at the same time. SPIFFS file access and VAN bus receiver cannot operate at the same time. Use timing
-// to separate the activities (poor man's solution...)
-// TODO - improve
+// For stability, connect to the web socket server only after a few seconds
 var connectToWebsocketTimer = setTimeout(
     function ()
     {
@@ -299,7 +295,7 @@ var connectToWebsocketTimer = setTimeout(
         //socket.bind('open', function () { inDemoMode = false; });
         //socket.bind('close', function () { demoMode(); });
     }, // function
-    5000
+    4000
 );
 
 // -----
@@ -1492,6 +1488,9 @@ function showAudioSettingsPopup(button)
     if (button === "AUDIO")
     {
         // If the tuner presets popup is visible, hide it
+        // Note: on the original MFD, the tuner presets popup stays in the background, showing up again as soon
+        // as the volume disapears. But that would become ugly here, because the tuner presets popup is not in
+        // the same position as the audio settings popup.
         hideTunerPresetsPopup();
 
         // Highlight the first audio setting ("bass") if just popped up, else highlight next audio setting
@@ -3009,11 +3008,25 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // Show "Pre-flight checks" screen if contact key is in "ON" position, without engine running
-            if (value === "ON" && engineRunning === "NO")
+            if (value === "ON")
             {
-                clearInterval(handleItemChange.contactKeyOffTimer);
-                changeLargeScreenTo("pre_flight");
-                hidePopup();
+                if (engineRunning === "NO")
+                {
+                    clearInterval(handleItemChange.contactKeyOffTimer);
+                    changeLargeScreenTo("pre_flight");
+                    hidePopup();
+                } // if
+
+                if (localStorage.askForGuidanceContinuation === "YES")
+                {
+                    // Show popup "Continue guidance to destination? [Yes]/No"
+                    // TODO - implement
+
+                    //console.log("// Show popup \"Continue guidance to destination? [Yes]/No\" [TODO - implement]");
+                    showPopup('satnav_continue_guidance_popup', 15000);
+
+                    localStorage.askForGuidanceContinuation = "NO";
+                } // if
             }
             else if (value === "ACC")
             {
@@ -3021,6 +3034,10 @@ function handleItemChange(item, value)
             }
             else if (value === "OFF")
             {
+                // If in guidance mode while turning off contact key, remember to show popup
+                // "Continue guidance to destination?" the next time the contact key is turned "ON"
+                if (satnavMode === "IN_GUIDANCE_MODE") localStorage.askForGuidanceContinuation = "YES";
+
                 // After 2 seconds, show the audio screen (or fallback to current location or clock)
                 clearInterval(handleItemChange.contactKeyOffTimer);
                 handleItemChange.contactKeyOffTimer = setTimeout(
@@ -3068,10 +3085,12 @@ function handleItemChange(item, value)
             {
                 if ($("#satnav_guidance").is(":visible") && $(".notificationPopup:visible").length === 0)
                 {
+                    // Show popup only at start of guidance
                     if (! satnavDestinationNotAccessibleByRoadPopupShown)
                     {
-                        // Show only at start of guidance
-                        showStatusPopup("Destination is not<br />accessible by road", 8000);
+                        // But only if the curent location is known
+                        if (satnavCurrentStreet !== "") showStatusPopup("Destination is not<br />accessible by road", 8000);
+
                         satnavDestinationNotAccessibleByRoadPopupShown = true;
                     } // if
                 } // if
@@ -3108,10 +3127,9 @@ function handleItemChange(item, value)
             $("#satnav_tools_menu_stop_guidance_button").text(
                 value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
 
+            // Just entered guidance mode?
             if (value === "IN_GUIDANCE_MODE")
             {
-                // Just entered guidance mode
-
                 if ($("#satnav_guidance_preference_menu").is(":visible")) break;
                 satnavSwitchToGuidanceScreen();
 
@@ -3122,9 +3140,9 @@ function handleItemChange(item, value)
                 break;
             }
 
+            // Just left guidance mode?
             if (previousSatnavMode === "IN_GUIDANCE_MODE")
             {
-                // Just left guidance mode
                 if ($("#satnav_guidance").is(":visible")) selectDefaultScreen();
             } // if
 
@@ -3277,17 +3295,17 @@ function handleItemChange(item, value)
 
             if (satnavMode === "IN_GUIDANCE_MODE")
             {
-                $("#satnav_guidance_curr_street").text(value !== "" ? value : "Street not listed");
+                // In the guidance screen, show "Street (City)", otherwise "Street not listed"
+                $("#satnav_guidance_curr_street").text(value.match(/\(.*\)/) ? value : "Street not listed");
             } // if
 
-            $('[gid="satnav_curr_street_shown"]').text(value !== "" ? value : "Not on map"); // TODO - find exact text
-
-            if (value === "") break;
+            // In the current location screen, show "City", or "Street (City)", otherwise "Street not listed"
+            $('[gid="satnav_curr_street_shown"]').text(value !== "" ? value : "Street not listed");
 
             // Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
             if (! $("#clock").is(":visible")) break;
 
-            // Show the current location (street and city)
+            // Show the current location
             changeLargeScreenTo("satnav_current_location");
         } // case
         break;
@@ -3829,8 +3847,11 @@ function handleItemChange(item, value)
                 // Hide the "Computing route in progress" popup, if showing
                 hidePopup("satnav_calculating_route_popup");
 
+                satnavCurrentStreet = "";
+
                 $("#satnav_guidance_next_street").text("Follow the heading");
                 $("#satnav_guidance_curr_street").text("Not digitized area");
+                $('[gid="satnav_curr_street_shown"]').text("Not digitized area");
             } // if
 
             $("#satnav_turn_at_indication").toggle(value !== "ON");
@@ -3923,6 +3944,7 @@ function handleItemChange(item, value)
                 if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
                 if (hidePopup("satnav_delete_item_popup")) break;
                 if (hidePopup("satnav_delete_directory_data_popup")) break;
+                if (hidePopup("satnav_continue_guidance_popup")) break;
 
                 // Hiding this popup might make the underlying "Computing route in progress" popup visible
                 if (hidePopup("satnav_guidance_preference_popup")) break;
@@ -4009,4 +4031,639 @@ function handleItemChange(item, value)
         break;
     } // switch
 } // handleItemChange
+
+// -----
+// Functions for demo
+
+// Head unit OFF
+function headUnitOff()
+{
+    writeToDom
+    (
+        {
+            "power":"OFF",
+            "tape_present":"NO",
+            "cd_present":"YES",
+            "audio_source":"NONE",
+            "ext_mute":"OFF",
+            "mute":"OFF",
+            "volume":"0",
+            "volume_update":"NO",
+            "volume_perc":{"style":{"transform":"scaleX(0.00)"}},
+            "audio_menu":"CLOSED",
+            "bass":"+4",
+            "bass_update":"NO",
+            "treble":"+4",
+            "treble_update":"NO",
+            "loudness":"ON",
+            "fader":"+0",
+            "fader_update":"NO",
+            "balance":"+0",
+            "balance_update":"NO",
+            "auto_volume":"ON"
+        }
+    );
+} // headUnitOff
+
+// Handle key down events in demo mode
+function onKeyDown(event)
+{
+    // Do nothing if the event was already processed
+    if (event.defaultPrevented) return; 
+
+    switch (event.key)
+    {
+        case "m":
+        case "M":
+        {
+            writeToDom({"mfd_remote_control":"MENU_BUTTON"});
+        } // case
+        break;
+
+        case "Down": // IE/Edge specific value
+        case "ArrowDown":
+        {
+            writeToDom({"mfd_remote_control":"DOWN_BUTTON"});
+            break;
+        } // case
+
+        case "Up": // IE/Edge specific value
+        case "ArrowUp":
+        {
+            writeToDom({"mfd_remote_control":"UP_BUTTON"});
+            break;
+        } // case
+
+        case "Left": // IE/Edge specific value
+        case "ArrowLeft":
+        {
+            writeToDom({"mfd_remote_control":"LEFT_BUTTON"});
+            break;
+        } // case
+
+        case "Right": // IE/Edge specific value
+        case "ArrowRight":
+        {
+            writeToDom({"mfd_remote_control":"RIGHT_BUTTON"});
+            break;
+        } // case
+
+        case "Tab":
+        {
+            inDemoMode = false;  // To cycle through the screens like the remote control "MOD" button would
+            writeToDom({"mfd_remote_control":"MODE_BUTTON"});
+            inDemoMode = true;
+            break;
+        } // case
+
+        case "Enter":
+        {
+            writeToDom({"mfd_remote_control":"ENTER_BUTTON"});
+            break;
+        } // case
+
+        case "Esc": // IE/Edge specific value
+        case "Escape":
+        {
+            writeToDom({"mfd_remote_control":"ESC_BUTTON"});
+            break;
+        } // case
+
+        case "n":
+        case "N":
+        {
+            if (satnavMode !== "IN_GUIDANCE_MODE") satnavMode = "IN_GUIDANCE_MODE";
+            else satnavMode = "IDLE";
+
+            console.log("// satnavMode set to '" + satnavMode + "'");
+
+            break;
+        } // case
+
+        case "t":
+        case "T":
+        {
+            if ($("#audio_source").text() !== "TUNER")
+            {
+                // Tuner ON
+                writeToDom
+                (
+                    {
+                        "power":"ON",
+                        "tape_present":"NO",
+                        "cd_present":"YES",
+                        "audio_source":"TUNER",
+                        "ext_mute":"OFF",
+                        "mute":"OFF",
+                        "volume":"0",
+                        "volume_update":"NO",
+                        "volume_perc":{"style":{"transform":"scaleX(0.00)"}},
+                        "audio_menu":"CLOSED",
+                        "bass":"+4",
+                        "bass_update":"NO",
+                        "treble":"+4",
+                        "treble_update":"NO",
+                        "loudness":"ON",
+                        "fader":"+0",
+                        "fader_update":"NO",
+                        "balance":"+0",
+                        "balance_update":"NO",
+                        "auto_volume":"ON"
+                    }
+                );
+                writeToDom
+                (
+                    {
+                        "tuner_band":"FM1",
+                        "fm_band":"ON",
+                        "fm_band_1":"ON",
+                        "fm_band_2":"OFF",
+                        "fm_band_ast":"OFF",
+                        "am_band":"OFF",
+                        "tuner_memory":"5",
+                        "frequency":"100.1",
+                        "frequency_h":"0",
+                        "frequency_unit":"MHz",
+                        "frequency_khz":"OFF",
+                        "frequency_mhz":"ON",
+                        "signal_strength":"8",
+                        "search_mode":"NOT_SEARCHING",
+                        "search_manual":"OFF",
+                        "search_sensitivity":"",
+                        "search_sensitivity_lo":"OFF",
+                        "search_sensitivity_dx":"OFF",
+                        "search_direction":"",
+                        "search_direction_up":"OFF",
+                        "search_direction_down":"OFF",
+                        "pty_selection_menu":"OFF",
+                        "selected_pty_8":"Pop M",
+                        "selected_pty_16":"Pop Music",
+                        "selected_pty_full":"Pop Music",
+                        "pty_standby_mode":"NO",
+                        "pty_match":"NO",
+                        "pty_8":"News",
+                        "pty_16":"News",
+                        "pty_full":"News",
+                        "pi_code":"83D1",
+                        "pi_country":"NL",
+                        "pi_area_coverage":"supra-regional",
+                        "regional":"OFF",
+                        "ta_selected":"YES",
+                        "ta_not_available":"NO",
+                        "rds_selected":"YES",
+                        "rds_not_available":"NO",
+                        "rds_text":"BNR     ",
+                        "info_traffic":"NO"
+                    }
+                );
+            }
+            else
+            {
+                headUnitOff();
+            } // if
+        } // case
+        break;
+
+        case "i":
+        case "I":
+        {
+            if ($("#audio_source").text() !== "CD")
+            {
+                // CD player ON
+                writeToDom
+                (
+                    {
+                        "power":"ON",
+                        "tape_present":"NO",
+                        "cd_present":"YES",
+                        "audio_source":"CD",
+                        "ext_mute":"OFF",
+                        "mute":"OFF",
+                        "volume":"1",
+                        "volume_update":"NO",
+                        "volume_perc":{"style":{"transform":"scaleX(0.03)"}},
+                        "audio_menu":"CLOSED",
+                        "bass":"+3",
+                        "bass_update":"NO",
+                        "treble":"+3",
+                        "treble_update":"NO",
+                        "loudness":"ON",
+                        "fader":"+0",
+                        "fader_update":"NO",
+                        "balance":"+0",
+                        "balance_update":"NO",
+                        "auto_volume":"ON"
+                    }
+                );
+                writeToDom
+                (
+                    {
+                        "cd_status":"PLAY",
+                        "cd_status_loading":"OFF",
+                        "cd_status_eject":"OFF",
+                        "cd_status_pause":"OFF",
+                        "cd_status_play":"ON",
+                        "cd_status_fast_forward":"OFF",
+                        "cd_status_rewind":"OFF",
+                        "cd_status_searching":"OFF",
+                        "cd_track_time":"3:08",
+                        "cd_current_track":"9",
+                        "cd_total_tracks":"15",
+                        "cd_total_time":"--:--",
+                        "cd_random":"OFF"
+                    }
+                );
+            }
+            else
+            {
+                headUnitOff();
+            } // if
+        } // case
+        break;
+
+        case "c":
+        case "C":
+        {
+            if ($("#audio_source").text() !== "CD_CHANGER")
+            {
+                // CD player ON
+                writeToDom
+                (
+                    {
+                        "power":"ON",
+                        "tape_present":"NO",
+                        "cd_present":"YES",
+                        "audio_source":"CD_CHANGER",
+                        "ext_mute":"OFF",
+                        "mute":"OFF",
+                        "volume":"1",
+                        "volume_update":"NO",
+                        "volume_perc":{"style":{"transform":"scaleX(0.03)"}},
+                        "audio_menu":"CLOSED",
+                        "bass":"+3",
+                        "bass_update":"NO",
+                        "treble":"+3",
+                        "treble_update":"NO",
+                        "loudness":"ON",
+                        "fader":"+0",
+                        "fader_update":"NO",
+                        "balance":"+0",
+                        "balance_update":"NO",
+                        "auto_volume":"ON"
+                    }
+                );
+                writeToDom
+                (
+                    {
+                        "cd_changer_present":"YES",
+                        "cd_changer_status_loading":"NO",
+                        "cd_changer_status_eject":"NO",
+                        "cd_changer_status_operational":"YES",
+                        "cd_changer_status_searching":"ON",
+                        "cd_changer_status":"PLAY-SEARCHING",
+                        "cd_changer_status_pause":"OFF",
+                        "cd_changer_status_play":"OFF",
+                        "cd_changer_status_fast_forward":"OFF",
+                        "cd_changer_status_rewind":"OFF",
+                        "cd_changer_cartridge_present":"YES",
+                        "cd_changer_track_time":"--:--",
+                        "cd_changer_current_track":"13",
+                        "cd_changer_total_tracks":"15",
+                        "cd_changer_disc_1_present":"YES",
+                        "cd_changer_disc_2_present":"YES",
+                        "cd_changer_disc_3_present":"YES",
+                        "cd_changer_disc_4_present":"YES",
+                        "cd_changer_disc_5_present":"NO",
+                        "cd_changer_disc_6_present":"NO",
+                        "cd_changer_current_disc":cdChangerCurrentDisc,
+                        "cd_changer_random":"OFF"
+                    }
+                );
+            }
+            else
+            {
+                headUnitOff();
+            } // if
+        } // case
+        break;
+
+        default:
+            return; // Quit when this doesn't handle the key event.
+    } // switch
+
+    // Cancel the default action to avoid it being handled twice
+    event.preventDefault();
+} // onKeyDown
+
+function demoMode()
+{
+    // Set "demo mode" on to prevent certain fields from being overwritten; fill DOM elements with demo values
+    inDemoMode = true;
+
+    // In demo mode, we can type keys to simulate remote control buttons
+    window.addEventListener("keydown", onKeyDown, true);
+
+    // Small information panel (left)
+    $("#trip_1_button").addClass("active");
+    $("#trip_2_button").removeClass("active");
+    $("#trip_1").show();
+    $("#trip_2").hide();
+    $("#avg_consumption_lt_100_1").text("5.7");
+    $("#avg_speed_1").text("63");
+    $("#distance_1").text("2370");
+    $("#avg_consumption_lt_100_2").text("6.3");
+    $("#avg_speed_2").text("72");
+    $("#distance_2").text("1325");
+
+    // Large information panel (right)
+
+    // Multimedia
+    $("#power").removeClass("ledOff");
+    $("#power").addClass("ledOn");
+    $("#cd_present").removeClass("ledOff");
+    $("#cd_present").addClass("ledOn");
+    $("#tape_present").removeClass("ledOn");
+    $("#tape_present").addClass("ledOff");
+    $("#cd_changer_cartridge_present").removeClass("ledOff");
+    $("#cd_changer_cartridge_present").addClass("ledOn");
+
+    $("#info_traffic").removeClass("ledOn");
+    $("#info_traffic").addClass("ledOff");
+    $("#ext_mute").removeClass("ledOn");
+    $("#ext_mute").addClass("ledOff");
+    $("#mute").removeClass("ledOn");
+    $("#mute").addClass("ledOff");
+
+    // Tuner
+    $("#ta_selected").removeClass("ledOff");
+    $("#ta_selected").addClass("ledOn");
+    $("#ta_not_available").hide();
+    $("#tuner_band").text("FM1");
+    $('[gid="tuner_memory"]').text("5");
+    $('[gid="frequency"]').text("102.1");
+    $('[gid="frequency_h"]').text("0");
+    $('[gid="frequency_mhz"]').removeClass("ledOff");
+    $('[gid="frequency_mhz"]').addClass("ledOn");
+    $('[gid="rds_text"]').text("RADIO 538");
+    $("#pty_8").text("Pop M");
+    $("#pty_16").text("Pop Music");
+    $('[gid="pi_country"]').text("NL");
+    $("#search_sensitivity_dx").removeClass("ledOff");
+    $("#search_sensitivity_dx").addClass("ledOn");
+    $("#signal_strength").text("12");
+    $("#regional").removeClass("ledOff");
+    $("#regional").addClass("ledOn");
+    $("#rds_selected").removeClass("ledOff");
+    $("#rds_selected").addClass("ledOn");
+    $("#rds_not_available").hide();
+
+    // Audio settings popup
+    $('[gid="volume"]').text("12");
+    $("#bass").text("+4");
+    $("#treble").text("+3");
+    $("#fader").text("-1");
+    $("#balance").text("0");
+    $("#loudness").removeClass("ledOn");
+    $("#loudness").addClass("ledOff");
+    $("#auto_volume").removeClass("ledOff");
+    $("#auto_volume").addClass("ledOn");
+    $("#bass_select").show();
+
+    // Tape player
+    $("#tape_side").text("2");
+    $("#tape_status_play").show();
+
+    // Internal CD player
+    $('[gid="audio_source"]').text("CD");
+    $("#cd_track_time").text("2:17");
+    $("#cd_status_play").show();
+    $("#cd_total_time").text("43:16");
+    $("#cd_current_track").text("3");
+    $("#cd_total_tracks").text("15");
+
+    // CD changer
+    cdChangerCurrentDisc = "3";
+    $("#cd_changer_track_time").text("4:51");
+    $("#cd_changer_status_play").show();
+    $("#cd_changer_current_disc").text(cdChangerCurrentDisc);
+    $("#cd_changer_current_track").text("6");
+    $("#cd_changer_total_tracks").text("11");
+    $("#cd_changer_disc_1_present").removeClass("ledOff");
+    $("#cd_changer_disc_1_present").addClass("ledOn");
+    $("#cd_changer_disc_2_present").removeClass("ledOff");
+    $("#cd_changer_disc_2_present").addClass("ledOn");
+    $("#cd_changer_disc_3_present").removeClass("ledOff");
+    $("#cd_changer_disc_3_present").addClass("ledOn");
+    $("#cd_changer_disc_4_present").removeClass("ledOff");
+    $("#cd_changer_disc_4_present").addClass("ledOn");
+    $("#cd_changer_disc_5_present").removeClass("ledOn");
+    $("#cd_changer_disc_5_present").addClass("ledOff");
+    $("#cd_changer_disc_6_present").removeClass("ledOn");
+    $("#cd_changer_disc_6_present").addClass("ledOff");
+    $("#cd_changer_disc_3_present").addClass("ledActive");
+    $("#cd_changer_disc_3_present").css({marginTop: '-=25px'});
+
+    // Status bar
+    $("#inst_consumption_lt_100").text("6.6");
+    $("#distance_to_empty").text("750");
+    $('[gid="exterior_temperature"]').html("12.5 &deg;C");
+
+    // Pre-flight checks
+    $('[gid="fuel_level_filtered"]').text("51.6");
+    $('[gid="fuel_level_filtered_perc"]').css("transform", "scaleX(0.645)");
+    $('[gid="water_temp"]').text("65.0");
+    $('[gid="water_temp_perc"]').css("transform", "scaleX(0.5)");
+    $("#oil_level_raw").text("80");
+    $("#oil_level_raw_perc").css("transform", "scaleX(0.94)");
+    $("#remaining_km_to_service").text("27 500");
+    $("#remaining_km_to_service_perc").css("transform", "scaleX(0.917)");
+    $("#contact_key_position").text("START");
+    $("#dashboard_programmed_brightness").text("14");
+    $("#diesel_glow_plugs").addClass("ledOn");
+    $("#diesel_glow_plugs").removeClass("ledOff");
+    $("#vin").text("VF38FRHZF80371XXX");
+
+    // Instrument cluster
+    $('[gid="vehicle_speed"]').text("0");
+    $('[gid="engine_rpm"]').text("873");
+    $("#odometer_1").text("65 803.2");
+
+    // Sat nav
+    $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
+    $("#main_menu_goto_satnav_button").addClass("buttonSelected");
+    $("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
+    $("#satnav_disc_recognized").addClass("ledOn");
+    $("#satnav_disc_recognized").removeClass("ledOff");
+    $("#satnav_gps_scanning").addClass("ledOff");
+    $("#satnav_gps_scanning").removeClass("ledOn");
+    $("#satnav_gps_fix_lost").addClass("ledOff");
+    $("#satnav_gps_fix_lost").removeClass("ledOn");
+    $('[gid="satnav_gps_fix"]').addClass("ledOn");
+    $('[gid="satnav_gps_fix"]').removeClass("ledOff");
+    $("#satnav_gps_speed").text("0");
+
+    // Compass
+    var compass_heading = 135;
+    $("#satnav_curr_heading_compass_needle").css("transform", "rotate(" + compass_heading + "deg)");
+    $("#satnav_curr_heading_compass_tag").css(
+        "transform",
+        "translate(" +
+            42 * Math.sin(compass_heading * Math.PI / 180) + "px," +
+            -42 * Math.cos(compass_heading * Math.PI / 180) + "px)"
+        );
+    $("#satnav_curr_heading_compass_tag").find("*").removeClass('satNavInstructionDisabledIconText');
+    $("#satnav_curr_heading_compass_needle").find("*").removeClass('satNavInstructionDisabledIcon');
+
+    // Sat nav current location
+    $('[gid="satnav_curr_street_shown"]').text("Keizersgracht (Amsterdam)");
+
+    // Sat nav guidance preference
+    $("#satnav_guidance_preference_fastest").html("");
+    $("#satnav_guidance_preference_shortest").html("<b>&#10004;</b>");
+    satnavGuidancePreferenceSelectTickedButton();
+
+    // Sat nav enter destination city
+    $("#satnav_current_destination_city").text("Amsterdam");
+    $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
+    $("#satnav_enter_characters_validate_button").addClass("buttonSelected");
+    $('[gid="satnav_to_mfd_list_size"]').text("35");
+    $("#satnav_current_destination_street").text("Keizersgracht");
+
+    // Sat nav choose destination street from list
+    $("#mfd_to_satnav_request").text("Enter street");
+    var lines =
+    [
+        "AADIJK -ALMELO- -AADORP-",
+        "AADORPWEG -ALMELO- -AADORP-",
+        "ACACIALAAN -ALMELO- -AADORP-",
+        "ALBARDASTRAAT -ALMELO- -AADORP-",
+        "ALMELOSEWEG -ALMELO- -AADORP-",
+        "BEDRIJVENPARKSINGEL -ALMELO- -AADORP-",
+        "BEDRIJVENPARK TWENTE -ALMELO- -AADORP-",
+        "BERKENLAAN -ALMELO- -AADORP-",
+        "BEUKENLAAN -ALMELO- -AADORP-",
+        "BRUGLAAN -ALMELO- -AADORP-",
+        "DENNENLAAN -ALMELO- -AADORP-",
+        "SCHOUT DODDESTRAAT -ALMELO- -AADORP-",
+        "EIKENLAAN -ALMELO- -AADORP-",
+        "GRAVENWEG -ALMELO- -AADORP-",
+        "HEUVELTJESLAAN -ALMELO- -AADORP-",
+        "IEPENWEG NOORD -ALMELO- -AADORP-",
+        "IEPENWEG ZUID -ALMELO- -AADORP-",
+        "KANAALWEG ZUID -ALMELO- -AADORP-",
+        "KASTANJELAAN -ALMELO- -AADORP-",
+        "KERKWEG -ALMELO- -AADORP-"
+    ];
+    $("#satnav_list").html(lines.join('<br />'));
+    highlightFirstLine("satnav_list");
+    highlightNextLine("satnav_list");
+
+    // Sat nav enter destination house number
+    $("#satnav_house_number_range").text("From 1 to 812");
+    $("#satnav_entered_number").text("6 0 9 ");
+    highlightFirstLetter("satnav_house_number_show_characters");
+    highlightPreviousLetter("satnav_house_number_show_characters");
+    highlightPreviousLetter("satnav_house_number_show_characters");
+
+    // Sat nav private address entry
+    $("#satnav_personal_address_entry").text("HOME");
+    $("#satnav_personal_address_city").text("AMSTELVEEN");
+    $("#satnav_personal_address_street_shown").text("SPORTLAAN");
+    $("#satnav_personal_address_house_number_shown").text("23");
+
+    // Sat nav business address entry
+    $("#satnav_professional_address_entry").text("WORK");
+    $("#satnav_professional_address_city").text("Schiphol");
+    $("#satnav_professional_address_street_shown").text("Westzijde");
+    $("#satnav_professional_address_house_number_shown").text("1118");
+
+    // Sat nav place of interest address entry
+    $("#satnav_service_address_entry").text("P1 Short-term parking");
+    $("#satnav_service_address_city").text("Schiphol");
+    $("#satnav_service_address_street").text("Boulevard");
+    $("#satnav_service_address_distance_number").text("17");
+    $("#satnav_service_address_distance_unit").text("km");
+    $("#satnav_service_address_entry_number").text("3");
+    $("#satnav_to_mfd_list_size").text("17");
+
+    // Sat nav programmed (current) destination
+    $('[gid="satnav_current_destination_city"]').text("Amsterdam");
+    $("#satnav_current_destination_street_shown").text("Keizersgracht");
+    $("#satnav_current_destination_house_number_shown").text("609");
+
+    // Sat nav last destination
+    $('[gid="satnav_last_destination_city"]').text("Schiphol");
+    $('[gid="satnav_last_destination_street_shown"]').text("Evert van de Beekstraat");
+    $('[gid="satnav_last_destination_house_number_shown"]').text("31");
+
+    // Sat nav guidance
+    $("#satnav_distance_to_dest_via_road_number").text("45");
+    $("#satnav_distance_to_dest_via_road_unit").text("km");
+    $("#satnav_guidance_curr_street").text("Evert van de Beekstraat");
+    $("#satnav_guidance_next_street").text("Handelskade");
+    $("#satnav_turn_at_number").text("200");
+    $("#satnav_turn_at_unit").text("m");
+    $("#satnav_next_turn_icon").show();
+
+    // Heading to destination
+    var heading_to_dest = 292.5;
+    $("#satnav_heading_to_dest_pointer").css("transform", "rotate(" + heading_to_dest + "deg)");
+    $("#satnav_heading_to_dest_tag").css(
+        "transform",
+        "translate(" +
+            70 * Math.sin(heading_to_dest * Math.PI / 180) + "px," +
+            -70 * Math.cos(heading_to_dest * Math.PI / 180) + "px)"
+        );
+    $("#satnav_heading_to_dest_tag").find("*").removeClass('satNavInstructionDisabledIconText');
+    $("#satnav_heading_to_dest_pointer").find("*").removeClass('satNavInstructionDisabledIcon');
+
+
+    // Current turn is a roundabout with five legs; display the legs not to take
+    $("#satnav_curr_turn_icon").show();
+    $("#satnav_curr_turn_roundabout").show();
+    $("#satnav_curr_turn_icon_leg_90_0").show();
+    $("#satnav_curr_turn_icon_leg_157_5").show();
+    $("#satnav_curr_turn_icon_leg_202_5").show();
+
+    // Next turn is a junction four legs; display the legs not to take
+    $("#satnav_next_turn_icon_leg_112_5").show();
+    $("#satnav_next_turn_icon_leg_202_5").show();
+
+    // Show some "no entry" icons
+    $("#satnav_curr_turn_icon_no_entry_157_5").show();
+    $("#satnav_next_turn_icon_no_entry_202_5").show();
+
+    // Set the "direction" arrows
+    var currTurnAngle = 247.5;
+    document.getElementById("satnav_curr_turn_icon_direction").style.transform = "rotate(" + currTurnAngle + "deg)";
+    document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute(
+        "d", describeArc(150, 150, 30, currTurnAngle - 180, 180)
+    );
+    var nextTurnAngle = 292.5;
+    document.getElementById("satnav_next_turn_icon_direction").style.transform = "rotate(" + nextTurnAngle + "deg)";
+    document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute(
+        "d", describeArc(150, 150, 30, nextTurnAngle - 180, 180)
+    );
+
+    // Popup warning or information
+    $("#notification_icon_warning").show();
+    $("#notification_icon_info").hide();
+    $("#last_notification_message_on_mfd").text("Oil pressure too low");
+
+    // Door open popup
+    $("#door_front_left").show();
+    $("#door_front_right").show();
+
+    // Tuner presets popup
+    $("#presets_fm_1").show();
+    $("#radio_preset_FM1_1").text("NPO 1");
+    $("#radio_preset_FM1_2").text("Classic NL");
+    $("#radio_preset_FM1_3").text("3FM");
+    $("#radio_preset_FM1_4").text("BNR");
+    $("#radio_preset_FM1_5").text("Radio 538");
+    $("#radio_preset_FM1_6").text("Veronica");
+    $("#presets_memory_5_select").show();
+} // demoMode
+
+//demoMode();
 )=====";
