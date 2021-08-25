@@ -43,6 +43,13 @@ inline void WifiConfig()
 // -----
 // Infrared receiver
 
+// Choose by uncommenting one of these #defines below (or define your own)
+//#define IR_TSOP48XX
+#define IR_TSOP312XX
+
+// TSOP48XX
+#ifdef IR_TSOP48XX
+
 // IR receiver data pin
 #define IR_RECV_PIN D5
 
@@ -50,6 +57,21 @@ inline void WifiConfig()
 // TSOP4838 IR receiver as it typically uses only 0.7 mA.
 #define IR_VCC D7
 #define IR_GND D6
+
+#endif // IR_TSOP48XX
+
+// TSOP312XX
+#ifdef IR_TSOP312XX
+
+// IR receiver data pin
+#define IR_RECV_PIN D7
+
+// Using D7 as VCC and D6 as ground pin for the IR receiver. Should be possible with e.g. the
+// TSOP31238 IR receiver as it typically uses only 0.35 mA.
+#define IR_VCC D5
+#define IR_GND D0
+
+#endif // IR_TSOP312XX
 
 // -----
 // Debugging
