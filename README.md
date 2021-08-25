@@ -213,7 +213,8 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Manager:
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
-* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2.
+  Should that not work, you can always try [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3 and 2.3.4 .
 
@@ -324,6 +325,17 @@ It will work (at least to some extent) if you have a Peugeot of around 1996-2004
 As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peugeot and Citroën) as a
 communication protocol between the various comfort-related equipment. Later, around 2005, they started to
 replace this protocol in their newer cars with the CAN bus protocol.
+
+---
+
+<b>Question:</b> Do I still need the original multi-functional display (MFD)?
+
+<b>Answer:</b> Yes, you do. But you do not need its (crappy) LCD to be working. The MFD is only needed to generate
+the necessary VAN-bus packets to drive the equipment (Tuner, CD-changer, Sat nav, etc.). Maybe in a later stage,
+I will be able to reverse-engineer the higher-level protocols and state machines that the MFD implmements. But that
+will take time...
+
+---
 
 <b>Question:</b> Which web browsers will this work with?
 
