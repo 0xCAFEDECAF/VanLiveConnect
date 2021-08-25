@@ -1522,13 +1522,7 @@ function showTunerPresetsPopup()
 // Functions for satellite navigation menu and screen handling
 
 // Current sat nav mode, saved as last reported in item "satnav_status_2"
-var satnavMode = localStorage.satnavMode || "INITIALIZING";
-
-// Check if the "Navigation/Guidance" button must be enabled in the main menu
-if (typeof localStorage.satnavMode !== "undefined")
-{
-    $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
-} // if
+var satnavMode = "INITIALIZING";
 
 var satnavRouteComputed = false;
 var satnavDisclaimerAccepted = false;
@@ -2255,7 +2249,7 @@ function satnavGuidancePreferenceValidate()
 
 function satnavSwitchToGuidanceScreen()
 {
-    //console.log("satnavSwitchToGuidanceScreen()");
+    //console.log("// satnavSwitchToGuidanceScreen()");
 
     menuStack = [];
     currentMenu = "satnav_guidance";
@@ -2680,13 +2674,8 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            if (handleItemChange.currentTunerPresetMemoryValue >= "1"
-                && handleItemChange.currentTunerPresetMemoryValue <= "6")
-            {
-                // Un-highlight the previous entry in the "tuner_presets_popup"
-                var highlightId = "presets_memory_" + handleItemChange.currentTunerPresetMemoryValue + "_select";
-                $("#" + highlightId).hide();
-            } // if
+            // Un-highlight any previous entry in the "tuner_presets_popup"
+            $('div[id^=presets_memory_][id$=_select]').hide()
 
             // Make sure the audio settings popup is hidden
             hideAudioSettingsPopup();
@@ -3020,9 +3009,6 @@ function handleItemChange(item, value)
                 if (localStorage.askForGuidanceContinuation === "YES")
                 {
                     // Show popup "Continue guidance to destination? [Yes]/No"
-                    // TODO - implement
-
-                    //console.log("// Show popup \"Continue guidance to destination? [Yes]/No\" [TODO - implement]");
                     showPopup('satnav_continue_guidance_popup', 15000);
 
                     localStorage.askForGuidanceContinuation = "NO";
@@ -3078,21 +3064,19 @@ function handleItemChange(item, value)
             } // if
 
             // Show one or the other
-            $("#satnav_distance_to_dest_via_road_visible").toggle(satnavStatus1 !== "DESTINATION_NOT_ON_MAP");
-            $("#satnav_distance_to_dest_via_straight_line_visible").toggle(satnavStatus1 === "DESTINATION_NOT_ON_MAP");
+            var destinationAccessible = satnavStatus1.match(/DESTINATION_NOT_ON_MAP/) === null;
+            $("#satnav_distance_to_dest_via_road_visible").toggle(destinationAccessible);
+            $("#satnav_distance_to_dest_via_straight_line_visible").toggle(! destinationAccessible);
 
-            if (satnavStatus1 === "DESTINATION_NOT_ON_MAP")
+            if (! destinationAccessible)
             {
-                if ($("#satnav_guidance").is(":visible") && $(".notificationPopup:visible").length === 0)
+                // Show popup only once, at start of guidance
+                if (! satnavDestinationNotAccessibleByRoadPopupShown)
                 {
-                    // Show popup only at start of guidance
-                    if (! satnavDestinationNotAccessibleByRoadPopupShown)
-                    {
-                        // But only if the curent location is known
-                        if (satnavCurrentStreet !== "") showStatusPopup("Destination is not<br />accessible by road", 8000);
+                    // But only if the curent location is known
+                    if (satnavCurrentStreet !== "") showStatusPopup("Destination is not<br />accessible by road", 8000);
 
-                        satnavDestinationNotAccessibleByRoadPopupShown = true;
-                    } // if
+                    satnavDestinationNotAccessibleByRoadPopupShown = true;
                 } // if
             }
             else if (satnavStatus1.match(/NO_DISC/))
@@ -3119,7 +3103,6 @@ function handleItemChange(item, value)
             if (value === satnavMode) break;
             var previousSatnavMode = satnavMode;
             satnavMode = value;
-            localStorage.satnavMode = value;
 
             // Button texts in menus
             $("#satnav_navigation_options_menu_stop_guidance_button").text(
@@ -3220,6 +3203,9 @@ function handleItemChange(item, value)
         case "satnav_disc_recognized":
         {
             if (handleItemChange.nSatNavDiscUnreadable === undefined) handleItemChange.nSatNavDiscUnreadable = 0;
+
+            // Enable or disable the "Navigation/Guidance" button in the main menu
+            $("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", value === "NO");
 
             if (value === "YES") handleItemChange.nSatNavDiscUnreadable = 0;
             else handleItemChange.nSatNavDiscUnreadable++;

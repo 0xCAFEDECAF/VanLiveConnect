@@ -2150,8 +2150,8 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- Sat nav calculating route popup -->
 
+      <!-- on_exit="satnavSwitchToGuidanceScreen();" -->
       <div id="satnav_calculating_route_popup" class="icon notificationPopup"
-        on_exit="satnavSwitchToGuidanceScreen();"
         style="display:none;">
         <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
           Computing route<br />in progress

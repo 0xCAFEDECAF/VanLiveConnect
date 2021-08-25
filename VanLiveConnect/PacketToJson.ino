@@ -988,11 +988,12 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // Found combinations:
         //
         // 07-00-01
-        // 07-00-02 - MFD requests "satnav_status_3" ?
+        // 07-00-02 - MFD requests "satnav_status_3"
         // 07-00-03 - MFD requests "satnav_status_3" and "satnav_status_2" ?
         // 07-01-00 - MFD requests "satnav_status_1" ?
         // 07-01-01 - User selected street from list. MFD requests "satnav_status_1" ?
         // 07-01-03
+        // 07-06-00 - MFD requests "satnav_guidance_data" and "satnav_guidance"
         // 07-10-00 - User pressed "Val" on remote control
         // 07-20-00 - MFD requests next "satnav_report" packet
         // 07-21-00 - MFD requests "satnav_status_1" and next "satnav_report" packet ?
@@ -1001,7 +1002,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // 07-40-02 - MFD requests "satnav_status_2"
         // 07-41-00 - MFD requests "satnav_status_1" and "satnav_status_2" ?
         // 07-44-00 - MFD requests "satnav_status_2" and "satnav_guidance_data"
-        // 07-47-00 - MFD requests "satnav_status_1", "satnav_status_2", "satnav_guidance_data" and "satnav_guidance" ?
+        // 07-47-00 - MFD requests "satnav_status_1", "satnav_status_2", "satnav_guidance_data" and "satnav_guidance"
         // 07-60-00
         //
         // So it looks like data[1] and data[2] are in fact bitfields:
@@ -1023,7 +1024,15 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"mfd_to_satnav_instruction\": \"%S\"\n"
+                "\"mfd_to_satnav_instruction\": \"%S\",\n"
+                "\"mfd_to_satnav_status_1_request\": \"%S\",\n"
+                "\"mfd_to_satnav_status_2_request\": \"%S\",\n"
+                "\"mfd_to_satnav_status_3_request\": \"%S\",\n"
+                "\"mfd_to_satnav_guidance_request\": \"%S\",\n"
+                "\"mfd_to_satnav_guidance_data_request\": \"%S\",\n"
+                "\"mfd_to_satnav_report_request\": \"%S\",\n"
+                "\"mfd_to_satnav_response_request\": \"%S\",\n"
+                "\"mfd_to_satnav_user_selection\": \"%S\"\n"
             "}\n"
         "}\n";
 
@@ -1059,7 +1068,16 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // MFD asks for sat nav guidance data packet (IDEN 0x9CE) and satnav_status_2 (IDEN 0x7CE)
             code == 0x4400 ? PSTR("Request_sat_nav_guidance_data") :
 
-            ToHexStr(code)
+            ToHexStr(code),
+
+            data[1] & 0x01 ? yesStr : noStr,
+            data[1] & 0x40 ? yesStr : noStr,
+            data[2] & 0x02 ? yesStr : noStr,
+            data[1] & 0x02 ? yesStr : noStr,
+            data[1] & 0x04 ? yesStr : noStr,
+            data[1] & 0x20 ? yesStr : noStr,
+            data[1] & 0x10 ? yesStr : noStr,
+            data[2] & 0x01 ? yesStr : noStr
         );
     }
     else if (data[0] == 0x52)
@@ -2642,7 +2660,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
     int at = snprintf_P(buf, n, jsonFormatter,
 
         // TODO - check; total guess
-        status == 0x0000 ? emptyStr :
+        status == 0x0000 ? noneStr :
         status == 0x0001 ? PSTR("DESTINATION_NOT_ON_MAP") :
         status == 0x0020 ? ToHexStr(status) :  // Seen this but what is it?? Nearly at destination ??
         status == 0x0080 ? PSTR("READY") :
@@ -2659,15 +2677,15 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0701 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START_2") :
         status == 0x0800 ? PSTR("END_OF_AUDIO_MESSAGE") :  // Follows 0x0400, 0x0700, 0x0701
         status == 0x4000 ? PSTR("GUIDANCE_STOPPED") :
-        status == 0x4001 ? ToHexStr(status) :  // Seen this but what is it??
+        status == 0x4001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_2") :
         status == 0x9000 ? PSTR("READING_DISC_2") :
         status == 0x9080 ? PSTR("START_CALCULATING_ROUTE") : // TODO - guessing
-        status == 0xD001 ? ToHexStr(status) :  // Seen this but what is it??
+        status == 0xD001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         ToHexStr(status),
 
-        data[4] == 0x0B ? PSTR(" 0x0B") :  // Seen with status 0x4001 and 0xD001
+        data[4] == 0x0B ? emptyStr :  // Seen with status 0x4001 and 0xD001
         data[4] == 0x0C ? PSTR(" DISC_UNREADABLE") :
         data[4] == 0x0E ? PSTR(" NO_DISC") :
         emptyStr
@@ -2681,7 +2699,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
 // Saved equipment status (volatile)
 PGM_P satnavStatus2Str = emptyStr;
-bool satnavDiscRecognized = true;  // We can safely assume true until we get an explict message from the sat nav unit
+bool satnavDiscRecognized = true;  // Let's assume true until we get an explict message from the sat nav unit
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
