@@ -66,11 +66,8 @@ void SetupWifi()
     delay(1);
 } // SetupWifi
 
-const char* WifiDataToJson(const IPAddress& client)
+const char* WifiDataToJson(const IPAddress& client, char* buf, const int n)
 {
-    #define WIFI_DATA_JSON_BUFFER_SIZE 128
-    static char jsonBuffer[WIFI_DATA_JSON_BUFFER_SIZE];
-
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -80,19 +77,17 @@ const char* WifiDataToJson(const IPAddress& client)
         "}\n"
     "}\n";
 
-    int at = snprintf_P(jsonBuffer, WIFI_DATA_JSON_BUFFER_SIZE, jsonFormatter,
-        client[0], client[1], client[2], client[3]
-    );
+    int at = snprintf_P(buf, n, jsonFormatter, client[0], client[1], client[2], client[3]);
 
     // JSON buffer overflow?
-    if (at >= WIFI_DATA_JSON_BUFFER_SIZE) return "";
+    if (at >= n) return "";
 
     #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
 
     Serial.print(F("Wi-Fi data as JSON object:\n"));
-    PrintJsonText(jsonBuffer);
+    PrintJsonText(buf);
 
     #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
-    return jsonBuffer;
+    return buf;
 } // WifiDataToJson

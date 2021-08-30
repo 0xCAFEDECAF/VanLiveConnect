@@ -150,6 +150,28 @@ void AsciiToHtml(String& in)
     } // for
 } // ToHtml
 
+// Pretty-print a JSON formatted string, adding indentation
+void PrintJsonText(const char* jsonBuffer)
+{
+    // Number of spaces to add for each indentation level
+    #define PRETTY_PRINT_JSON_INDENT 2
+
+    size_t j = 0;
+    int indent = 0;
+    while (j < strlen(jsonBuffer))
+    {
+        const char* subString = jsonBuffer + j;
+
+        if (subString[0] == '}' || subString[0] == ']') indent -= PRETTY_PRINT_JSON_INDENT;
+
+        size_t n = strcspn(subString, "\n");
+        if (n != strlen(subString)) Serial.printf("%*s%.*s\n", indent, "", n, subString);
+        j = j + n + 1;
+
+        if (subString[0] == '{' || subString[0] == '[') indent += PRETTY_PRINT_JSON_INDENT;
+    } // while
+} // PrintJsonText
+
 // Index of small screen
 enum SmallScreen_t
 {
@@ -577,6 +599,73 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
             direction % 10
         );
 } // GuidanceInstructionIconJson
+
+// Sat nav equipment detection stuff
+
+bool satnavEquipmentDetected = true;
+
+unsigned long satnavEquipmentDetectionTimer = millis();
+unsigned long satnavEquipmentDetectionTimeout = 10000;
+bool satnavEquipmentDetectionTimerRunning = true;
+
+// Arm the timer
+void ArmSatnavEquipmentDetectionTimer(unsigned long timeout)
+{
+    satnavEquipmentDetectionTimer = millis();
+    satnavEquipmentDetectionTimeout = timeout;
+    satnavEquipmentDetectionTimerRunning = true;
+} // ArmSatnavEquipmentDetectionTimer
+
+void SatnavEquipmentDetected()
+{
+    satnavEquipmentDetected = true;
+    satnavEquipmentDetectionTimerRunning = false;
+} // SatnavEquipmentDetected
+
+// At boot time, assume sat nav unit is present, but start a 10 second timer to see life from the sat nav unit
+// TODO - implement "equipment detected" after timer has expired
+const char* SatnavEquipmentDetection(char* buf, const int n)
+{
+    static bool reportedSatnavEquipmentDetected = true;
+
+    if (satnavEquipmentDetectionTimerRunning &&
+
+        // Arithmetic has safe roll-over
+        millis() - satnavEquipmentDetectionTimer >= satnavEquipmentDetectionTimeout)
+    {
+        // No sat nav equipment detected
+        satnavEquipmentDetected = false;
+
+        Serial.print(F("No sat nav equipment detected:\n"));
+
+        // Kill the timer
+        satnavEquipmentDetectionTimerRunning = false;
+    } // if
+
+    if (satnavEquipmentDetected == reportedSatnavEquipmentDetected) return "";
+
+    const static char jsonFormatter[] PROGMEM =
+    "{\n"
+        "\"event\": \"display\",\n"
+        "\"data\":\n"
+        "{\n"
+            "\"satnav_equipment_present\": \"%S\"\n"
+        "}\n"
+    "}\n";
+
+    int at = snprintf_P(buf, n, jsonFormatter, satnavEquipmentDetected ? yesStr : noStr);
+
+    // JSON buffer overflow?
+    if (at >= n) return "";
+
+    reportedSatnavEquipmentDetected = satnavEquipmentDetected;
+
+#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+    PrintJsonText(buf);
+#endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
+    return buf;
+} // 
 
 VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -2020,8 +2109,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
         {
             // http://pinterpeti.hu/psavanbus/PSA-VAN.html#554_6
 
-            // TODO - do we know the fixed numbers? Seems like this can only be 10 or 12.
-            if (dataLen < 10) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
+            if (dataLen != 19) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
             char trackTimeStr[7];
             sprintf_P(trackTimeStr, PSTR("%X:%02X"), data[5], data[6]);
@@ -2175,7 +2263,7 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"power\": \"%S\",\n"  // TODO - change to "head_unit_power"
+            "\"head_unit_power\": \"%S\",\n"
             "\"tape_present\": \"%S\",\n"
             "\"cd_present\": \"%S\",\n"
             "\"audio_source\": \"%S\",\n"
@@ -2299,6 +2387,16 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         mfdStatus == TRIP_COUTER_2_RESET ? PSTR("TRIP_COUTER_2_RESET") :
         ToHexStr(mfdStatus)
     );
+
+    // After "MFD_SCREEN_ON", assume sat nav unit is present, but start a 10 second timer to see life from the
+    // sat nav unit
+    if (mfdStatus == MFD_SCREEN_ON)
+    {
+        satnavEquipmentDetected = true;
+
+        // Arm the timer
+        ArmSatnavEquipmentDetectionTimer(5000);
+    } // if
 
     if (mfdStatus == TRIP_COUTER_1_RESET || mfdStatus == TRIP_COUTER_2_RESET)
     {
@@ -2645,6 +2743,9 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
     // http://graham.auld.me.uk/projects/vanbus/packets.html#54E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#54E
 
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
+
     const uint8_t* data = pkt.Data();
     uint16_t status = (uint16_t)data[1] << 8 | data[2];
 
@@ -2659,7 +2760,6 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     int at = snprintf_P(buf, n, jsonFormatter,
 
-        // TODO - check; total guess
         status == 0x0000 ? noneStr :
         status == 0x0001 ? PSTR("DESTINATION_NOT_ON_MAP") :
         status == 0x0020 ? ToHexStr(status) :  // Seen this but what is it?? Nearly at destination ??
@@ -2699,20 +2799,23 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
 // Saved equipment status (volatile)
 PGM_P satnavStatus2Str = emptyStr;
-bool satnavDiscRecognized = true;  // Let's assume true until we get an explict message from the sat nav unit
+bool satnavDiscRecognized = false;
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#7CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#7CE
 
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
+
     const uint8_t* data = pkt.Data();
 
     uint8_t satnavStatus2 = data[1] & 0x0F;
 
     satnavStatus2Str =
-        satnavStatus2 == 0x00 ? PSTR("INITIALIZING") : // TODO - change to "IDLE"
-        satnavStatus2 == 0x01 ? PSTR("IDLE") : // TODO - change to "READY"
+        satnavStatus2 == 0x00 ? PSTR("INITIALIZING") :
+        satnavStatus2 == 0x01 ? PSTR("IDLE") :
         satnavStatus2 == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
         emptyStr;
 
@@ -2795,6 +2898,9 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8CE
 
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
+
     int dataLen = pkt.DataLen();
     if (dataLen != 2 && dataLen != 3 && dataLen != 17) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
@@ -2816,7 +2922,6 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         at = snprintf_P(buf, n, jsonFormatter,
 
-            // TODO - check; total guess
             status == 0x0000 ? PSTR("CALCULATING_ROUTE") :
             status == 0x0001 ? PSTR("STOPPING_NAVIGATION") :
             status == 0x0101 ? ToHexStr(status) :
@@ -2892,6 +2997,9 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#9CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#9CE
+
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
 
     const uint8_t* data = pkt.Data();
 
@@ -2972,6 +3080,9 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#64E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#64E
+
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
 
     int dataLen = pkt.DataLen();
     if (dataLen != 3 && dataLen != 4 && dataLen != 6 && dataLen != 13 && dataLen != 23)
@@ -3104,6 +3215,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#6CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#6CE
+
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
 
     int dataLen = pkt.DataLen();
     if (dataLen < 3) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
@@ -3929,6 +4043,9 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     // http://graham.auld.me.uk/projects/vanbus/packets.html#74E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#74E
 
+    // Sat nav equipment detected
+    SatnavEquipmentDetected();
+
     const uint8_t* data = pkt.Data();
     uint8_t request = data[1];
     sint16_t listSize = (sint16_t)(data[4] << 8 | data[5]);
@@ -4449,6 +4566,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "{\n"
             "\"small_screen\": \"%S\",\n"
             "\"cd_changer_cartridge_present\": \"%S\",\n"
+            "\"satnav_equipment_present\": \"%S\",\n"
             "\"satnav_disc_recognized\": \"%S\",\n"
             "\"satnav_guidance_preference\": \"%S\"";
 
@@ -4458,6 +4576,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         SmallScreenStr(smallScreenIndex),
 
         cdChangerCartridgePresent ? yesStr : noStr,
+        satnavEquipmentDetected ? yesStr : noStr,
         satnavDiscRecognized ? yesStr : noStr,
         SatNavGuidancePreferenceStr(satnavGuidancePreference)        
     );
@@ -4489,53 +4608,15 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             );
     } // if
 
-#if 0
-    // The names of the directory entries are matched against while entering new entries or renaming existing ones.
-    // When the user tries to create an entry with an existing name, the "Validate" button becomes grayed out.
-    String* entryLists[2] = { GetStore()->personalDirectoryEntries, GetStore()->professionalDirectoryEntries };
-    for (int i = 0; i < 2; i++)
-    {
-        String* entryList = entryLists[i];
-
-        if (entryList[0].length() > 0)
-        {
-            at += at >= n ? 0 :
-                snprintf_P(buf + at, n - at, PSTR
-                    (
-                        ",\n"
-                        "\"satnav_%S_directory_entries\":\n"
-                        "["
-                    ),
-                    i == 0 ? PSTR("personal") : PSTR("professional")
-                );
-
-            int j = 0;
-            while (j < MAX_DIRECTORY_ENTRIES && entryList[j].length() > 0)
-            {
-                at += at >= n ? 0 :
-                    snprintf_P(buf + at, n - at, PSTR("%S\n\"%s\""),
-                        j == 0 ? emptyStr : commaStr,
-                        entryList[j++].c_str()
-                    );
-            } // while
-
-            at += at >= n ? 0 :
-                snprintf_P(buf + at, n - at, PSTR("\n]"));
-        } // if
-    } // for
-#endif
-
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
     if (at >= n) return "";
 
-    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-
+#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     Serial.print(F("Equipment status data as JSON object:\n"));
     PrintJsonText(buf);
-
-    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+#endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return buf;
 } // EquipmentStatusDataToJson
@@ -4594,28 +4675,6 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 
     return false;
 } // IsPacketDataDuplicate
-
-// Pretty-print a JSON formatted string, adding indentation
-void PrintJsonText(const char* jsonBuffer)
-{
-    // Number of spaces to add for each indentation level
-    #define PRETTY_PRINT_JSON_INDENT 2
-
-    size_t j = 0;
-    int indent = 0;
-    while (j < strlen(jsonBuffer))
-    {
-        const char* subString = jsonBuffer + j;
-
-        if (subString[0] == '}' || subString[0] == ']') indent -= PRETTY_PRINT_JSON_INDENT;
-
-        size_t n = strcspn(subString, "\n");
-        if (n != strlen(subString)) Serial.printf("%*s%.*s\n", indent, "", n, subString);
-        j = j + n + 1;
-
-        if (subString[0] == '{' || subString[0] == '[') indent += PRETTY_PRINT_JSON_INDENT;
-    } // while
-} // PrintJsonText
 
 static IdenHandler_t handlers[] =
 {
@@ -4702,15 +4761,13 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 
     if (result != VAN_PACKET_PARSE_OK) return ""; // Parsing result not OK
 
-    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-
+#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.print(F("Parsed to JSON object:\n"));
         PrintJsonText(jsonBuffer);
     } // if
-
-    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+#endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return jsonBuffer;
 } // ParseVanPacketToJson

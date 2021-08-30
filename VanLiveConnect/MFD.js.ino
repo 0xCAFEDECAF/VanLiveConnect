@@ -654,6 +654,9 @@ function goFullScreen()
     //wscript.SendKeys("{F11}");
 } // goFullScreen
 
+// -----
+// Functions for popups
+
 // Show the specified popup, with an optional timeout
 function showPopup(id, msec)
 {
@@ -816,14 +819,10 @@ function gotoTopLevelMenu(menu)
     if (menu === undefined)
     {
         menu = "main_menu";
-        currentMenu = currentLargeScreenId;
-    }
-    else
-    {
-        // This is the screen we want to go back to when pressing "Esc" on the remote control
-        // TODO - always? I.e. not just in the 'else' clause?
-        currentMenu = currentLargeScreenId;
     } // if
+
+    // This is the screen we want to go back to when pressing "Esc" on the remote control inside the top level menu
+    currentMenu = currentLargeScreenId;
 
     gotoMenu(menu);
 } // gotoTopLevelMenu
@@ -966,7 +965,7 @@ function setTick(id)
     if (id === undefined) return;
 
     // In a group, only one tick box can be ticked at a time
-    $("#" + id).parent().find(".tickBox").each(function() { $(this).text("") } );
+    $("#" + id).parent().parent().find(".tickBox").each(function() { $(this).text("") } );
 
     $("#" + id).html("<b>&#10004;</b>");
 } // setTick
@@ -977,7 +976,7 @@ function toggleTick(id)
     if (id === undefined) return;
 
     // In a group, only one tick box can be ticked at a time
-    $("#" + id).parent().find(".tickBox").each(function() { $(this).text("") } );
+    $("#" + id).parent().parent().find(".tickBox").each(function() { $(this).text("") } );
 
     $("#" + id).html($("#" + id).text() === "" ? "<b>&#10004;</b>" : "");
 } // toggleTick
@@ -1545,13 +1544,14 @@ function satnavShowDisclaimer()
 
 function satnavGotoMainMenu()
 {
-    if (satnavStatus1.match(/NO_DISC/))
+    if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
     {
         showStatusPopup("Navigation CD-ROM is<br />missing", 8000);
         return;
     } // if
 
-    if ($("#satnav_disc_recognized").hasClass("ledOff"))
+    //if ($("#satnav_disc_recognized").hasClass("ledOff"))
+    if (satnavStatus1.match(/DISC_UNREADABLE/))
     {
         showStatusPopup("Navigation CD-ROM<br />is unreadable", 10000);
         return;
@@ -1874,7 +1874,7 @@ function satnavCheckEnteredHouseNumber()
         // Strip the entry formatting: remove spaces and underscores
         var enteredNumber = $("#satnav_entered_number").text().replace(/[\s_]/g, "");
 
-        // Selecting "No number" is also always ok
+        // Selecting "No number" is always ok
         if (enteredNumber === "") ok = true;
 
         // Check if the entered number is between the lowest and highest
@@ -1889,6 +1889,10 @@ function satnavCheckEnteredHouseNumber()
 
     if (ok)
     {
+        // Already copy the house number into the "satnav_show_current_destination" screen, in case the
+        // "satnav_report" packet is missed
+        $("#satnav_current_destination_house_number_shown").text(enteredNumber === "" ? "No number" : enteredNumber);
+
         gotoMenu("satnav_show_current_destination");
     }
     else
@@ -2261,7 +2265,7 @@ function satnavSwitchToGuidanceScreen()
 // Format a string like "45 km" or "7000 m" or "60 m". Return an array [distance, unit]
 function satnavFormatDistance(distanceStr)
 {
-    // Want compatibility with IE11 so cannot assign result array directly to variables
+    // We want compatibility with IE11 so cannot assign result array directly to variables
     var parts = distanceStr.split(" ");
     var distance = parts[0];
     var unit = parts [1];
@@ -3055,6 +3059,9 @@ function handleItemChange(item, value)
         {
             satnavStatus1 = value;
 
+            // No further handling when in power-save mode
+            if (handleItemChange.economyMode === "ON") break;
+
             if (satnavStatus1.match(/AUDIO/))
             {
                 // Turn on or off "satnav_audio" LED 
@@ -3070,14 +3077,14 @@ function handleItemChange(item, value)
 
             if (! destinationAccessible)
             {
-                // Show popup only once, at start of guidance
-                if (! satnavDestinationNotAccessibleByRoadPopupShown)
-                {
+                // // Show popup only once, at start of guidance
+                // if (! satnavDestinationNotAccessibleByRoadPopupShown)
+                // {
                     // But only if the curent location is known
                     if (satnavCurrentStreet !== "") showStatusPopup("Destination is not<br />accessible by road", 8000);
 
                     satnavDestinationNotAccessibleByRoadPopupShown = true;
-                } // if
+                // } // if
             }
             else if (satnavStatus1.match(/NO_DISC/))
             {
@@ -3085,6 +3092,7 @@ function handleItemChange(item, value)
             } // if
             else if (satnavStatus1.match(/DISC_UNREADABLE/))
             {
+                // TODO - show popup not directly, but only after a few times this status
                 showStatusPopup("Navigation CD-ROM<br />is unreadable", 5000);
             } // if
         } // case
@@ -3094,10 +3102,6 @@ function handleItemChange(item, value)
         {
             // Only if valid
             if (value === "") break;
-
-            // As soon as we receive anything from the sat nav, enable the "Navigation/Guidance" button in the main menu
-            // TODO - if this actually enables the button, also select it?
-            $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
 
             // Has anything changed?
             if (value === satnavMode) break;
@@ -3157,6 +3161,8 @@ function handleItemChange(item, value)
             if (value === "POWERING_OFF")
             {
                 $("#main_menu_goto_satnav_button").addClass("buttonDisabled");
+                $("#main_menu_goto_satnav_button").removeClass("buttonSelected");
+                $("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
                 $("#satnav_disc_recognized").addClass("ledOff");
                 handleItemChange.nSatNavDiscUnreadable = 1;
                 satnavDisclaimerAccepted = false;
@@ -3204,16 +3210,30 @@ function handleItemChange(item, value)
         {
             if (handleItemChange.nSatNavDiscUnreadable === undefined) handleItemChange.nSatNavDiscUnreadable = 0;
 
-            // Enable or disable the "Navigation/Guidance" button in the main menu
-            $("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", value === "NO");
+            // No further handling when in power-save mode
+            if (handleItemChange.economyMode === "ON") break;
 
             if (value === "YES") handleItemChange.nSatNavDiscUnreadable = 0;
             else handleItemChange.nSatNavDiscUnreadable++;
 
-            // At the 4-th and 14-th time of consequently reporting "NO", shortly show a status popup
-            if (handleItemChange.nSatNavDiscUnreadable == 4 || handleItemChange.nSatNavDiscUnreadable == 14)
+            // At the 6-th and 14-th time of consequently reporting "NO", shortly show a status popup
+            if (handleItemChange.nSatNavDiscUnreadable == 6 || handleItemChange.nSatNavDiscUnreadable == 14)
             {
                 showStatusPopup("Navigation CD-ROM<br />is unreadable", 4000);
+            } // if
+        } // case
+        break;
+
+        case "satnav_equipment_present":
+        {
+            // Enable or disable the "Navigation/Guidance" button in the main menu
+            $("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", value === "NO");
+
+            if (value === "NO")
+            {
+                // Select the 'Configure display' (bottom) button
+                $("#main_menu_goto_satnav_button").removeClass("buttonSelected");
+                $("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
             } // if
         } // case
         break;
@@ -3833,7 +3853,7 @@ function handleItemChange(item, value)
                 // Hide the "Computing route in progress" popup, if showing
                 hidePopup("satnav_calculating_route_popup");
 
-                satnavCurrentStreet = "";
+                //satnavCurrentStreet = "";
 
                 $("#satnav_guidance_next_street").text("Follow the heading");
                 $("#satnav_guidance_curr_street").text("Not digitized area");
@@ -3897,18 +3917,12 @@ function handleItemChange(item, value)
             // Ignore remote control buttons when in power-save mode
             if (handleItemChange.economyMode === "ON") break;
 
-            // Ignore same button press within 150 ms
-            if (value === handleItemChange.lastIrCode && Date.now() - handleItemChange.lastIrCodeProcessed < 150)
-            {
-                break;
-            } // if
+            var parts = value.split(" ");
+            var button = parts[0];
 
-            handleItemChange.lastIrCode = value;
-            handleItemChange.lastIrCodeProcessed = Date.now();
+            //console.log("// Item '" + item + "' set to '" + button + "'");
 
-            //console.log("Item '" + item + "' set to '" + value + "'");
-
-            if (value === "MENU_BUTTON")
+            if (button === "MENU_BUTTON")
             {
                 // Directly hide any visible audio popup
                 hideAudioSettingsPopup();
@@ -3916,7 +3930,7 @@ function handleItemChange(item, value)
 
                 gotoTopLevelMenu();
             }
-            else if (value === "ESC_BUTTON")
+            else if (button === "ESC_BUTTON")
             {
                 // If a status popup is showing, hide it and break
                 if (hidePopup("status_popup")) break;
@@ -3940,10 +3954,10 @@ function handleItemChange(item, value)
 
                 exitMenu();
             }
-            else if (value === "UP_BUTTON"
-                    || value === "DOWN_BUTTON"
-                    || value === "LEFT_BUTTON"
-                    || value === "RIGHT_BUTTON")
+            else if (button === "UP_BUTTON"
+                    || button === "DOWN_BUTTON"
+                    || button === "LEFT_BUTTON"
+                    || button === "RIGHT_BUTTON")
             {
                 // Entering a character in the "satnav_enter_street_characters" screen?
                 if ($("#satnav_enter_street_characters").is(":visible"))
@@ -3951,9 +3965,9 @@ function handleItemChange(item, value)
                     userHadOpportunityToEnterStreet = true;
                 } // if
 
-                keyPressed(value);
+                keyPressed(button);
             }
-            else if (value === "ENTER_BUTTON")
+            else if (button === "ENTER_BUTTON")
             {
                 // Ignore if just changed screen; sometimes the screen change is triggered by the system, not the
                 // remote control. If the user wanted pressed a button on the previous screen, it will end up
@@ -3990,7 +4004,7 @@ function handleItemChange(item, value)
                     buttonClicked();
                 } // if
             }
-            else if (value === "MODE_BUTTON")
+            else if (button === "MODE_BUTTON")
             {
                 // Ignore when user is browsing the menus
                 if (inMenu()) break;
@@ -4027,7 +4041,7 @@ function headUnitOff()
     writeToDom
     (
         {
-            "power":"OFF",
+            "head_unit_power":"OFF",
             "tape_present":"NO",
             "cd_present":"YES",
             "audio_source":"NONE",
@@ -4135,7 +4149,7 @@ function onKeyDown(event)
                 writeToDom
                 (
                     {
-                        "power":"ON",
+                        "head_unit_power":"ON",
                         "tape_present":"NO",
                         "cd_present":"YES",
                         "audio_source":"TUNER",
@@ -4219,7 +4233,7 @@ function onKeyDown(event)
                 writeToDom
                 (
                     {
-                        "power":"ON",
+                        "head_unit_power":"ON",
                         "tape_present":"NO",
                         "cd_present":"YES",
                         "audio_source":"CD",
@@ -4276,7 +4290,7 @@ function onKeyDown(event)
                 writeToDom
                 (
                     {
-                        "power":"ON",
+                        "head_unit_power":"ON",
                         "tape_present":"NO",
                         "cd_present":"YES",
                         "audio_source":"CD_CHANGER",
@@ -4477,6 +4491,7 @@ function demoMode()
     // Sat nav
     $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
     $("#main_menu_goto_satnav_button").addClass("buttonSelected");
+    $("#main_menu_goto_screen_configuration_button").removeClass("buttonSelected");
     $("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
     $("#satnav_disc_recognized").addClass("ledOn");
     $("#satnav_disc_recognized").removeClass("ledOff");

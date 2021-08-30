@@ -56,11 +56,11 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Defined in Esp.ino
 void PrintSystemSpecs();
-const char* EspDataToJson();
+const char* EspDataToJson(char* buf, const int n);
 
 // Defined in Wifi.ino
 void SetupWifi();
-const char* WifiDataToJson(const IPAddress& client);
+const char* WifiDataToJson(const IPAddress& client, char* buf, const int n);
 const char* GetHostname();
 
 enum VanPacketFilter_t
@@ -79,9 +79,11 @@ enum VanPacketFilter_t
 typedef struct
 {
     unsigned long value;  // Decoded value
+    PGM_P buttonStr;
     int bits;  // Number of bits in decoded value
     volatile unsigned int* rawbuf;  // Raw intervals in 50 usec ticks
     int rawlen;  // Number of records in rawbuf
+    bool held;
 } TIrPacket;
 
 // Defined in IRrecv.ino
@@ -108,6 +110,7 @@ void SetupVanReceiver()
 // Defined in PacketToJson.ino
 const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
 const char* EquipmentStatusDataToJson(char* buf, const int n);
+const char* SatnavEquipmentDetection(char* buf, const int n);
 void PrintJsonText(const char* jsonBuffer);
 
 uint8_t websocketNum = 0xFF;
@@ -162,16 +165,17 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
             websocketNum = num;
 
+            #define STATUS_JSON_BUFFER_SIZE 1024
+            char jsonBuffer[STATUS_JSON_BUFFER_SIZE];
+
             // Dump ESP system data to client
-            BroadcastJsonText(EspDataToJson());
+            BroadcastJsonText(EspDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
 
             // Dump Wi-Fi and IP data to client
-            BroadcastJsonText(WifiDataToJson(clientIp));
+            BroadcastJsonText(WifiDataToJson(clientIp, jsonBuffer, STATUS_JSON_BUFFER_SIZE));
 
             // Dump equipment status data, e.g. presence of sat nav and other devices
-            #define EQPT_STATUS_DATA_JSON_BUFFER_SIZE 2048
-            char jsonBuffer[EQPT_STATUS_DATA_JSON_BUFFER_SIZE];
-            BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, EQPT_STATUS_DATA_JSON_BUFFER_SIZE));
+            BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
         }
         break;
     } // switch
@@ -248,6 +252,10 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
     if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
+
+    #define SATNAV_EQUPT_JSON_BUFFER_SIZE 256
+    char jsonBuffer[SATNAV_EQUPT_JSON_BUFFER_SIZE];
+    BroadcastJsonText(SatnavEquipmentDetection(jsonBuffer, SATNAV_EQUPT_JSON_BUFFER_SIZE));
 
     // Print statistics every 5 seconds
     static unsigned long lastUpdate = 0;

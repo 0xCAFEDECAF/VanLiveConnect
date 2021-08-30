@@ -303,7 +303,7 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="audio" style="display:none;">
 
         <!-- Head unit status LEDs -->
-        <div id="power" class="iconSmall led ledOn" style="left:870px; top:40px;">
+        <div id="head_unit_power" class="iconSmall led ledOn" style="left:870px; top:40px;">
           <div class="centerAligned fa fa-power-off"></div>
         </div>
         <div id="cd_present" class="iconSmall led ledOn" style="left:870px; top:105px;">
@@ -727,11 +727,14 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="main_menu" class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
         Main menu<br style="line-height:100px;" />
         <div id="main_menu_goto_satnav_button"
-          class="button buttonDisabled"
+          class="button"
           on_click="satnavGotoMainMenu();">
           Navigation / Guidance
         </div>
-        <div class="button" goto_id="screen_configuration_menu">Configure display</div>
+        <div id="main_menu_goto_screen_configuration_button"
+          class="button" goto_id="screen_configuration_menu">
+          Configure display
+        </div>
       </div>  <!-- "main_menu" -->
 
       <div id="screen_configuration_menu" class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
@@ -767,6 +770,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div style="position:absolute; left:0px; text-align:left;">
             <span id="set_date_time_increase_day"
               class="button buttonSelected"
+              LEFT_BUTTON="set_date_time_decrease_minute"
               RIGHT_BUTTON="set_date_time_decrease_day"
               DOWN_BUTTON="set_date_time_validate_button"
               >&plus;</span>
@@ -829,6 +833,7 @@ char mfd_html[] PROGMEM = R"=====(
             <span id="set_date_time_decrease_minute"
               class="button"
               LEFT_BUTTON="set_date_time_increase_minute"
+              RIGHT_BUTTON="set_date_time_increase_day"
               DOWN_BUTTON="set_date_time_validate_button"
               >&ndash;</span>
           </div>
@@ -837,10 +842,13 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="set_date_time_validate_button"
           class="button"
           UP_BUTTON="set_date_time_increase_day"
+          on_click="exitMenu(); exitMenu(); exitMenu();"
           style="position:absolute; left:0px; top:340px; width:180px; height:40px;">Validate</div>
       </div>  <!-- "set_date_time" -->
 
-      <div id="set_language" class="tag menuTitle" style="display:none; left:20px; top:50px; width:920px; height:410px;">
+      <div id="set_language"
+        on_goto="$('#set_language').find('.button').removeClass('buttonSelected'); $('#set_language_english').addClass('buttonSelected');"
+        class="tag menuTitle" style="display:none; left:20px; top:50px; width:920px; height:410px;">
         Select a language<br />
         <small>[Not yet implemented]</small>
 
@@ -848,45 +856,58 @@ char mfd_html[] PROGMEM = R"=====(
           <div style="position:absolute; left:0px; top:160px; width:280px; height:150px;">
             <span id="set_language_german"
               class="tickBox button"
+              LEFT_BUTTON="set_language_dutch"
               RIGHT_BUTTON="set_language_spanish"
-              on_click="toggleTick()"></span> Deutsch<br style="line-height:70px;" />
+              on_click="toggleTick(); keyPressed('UP_BUTTON');">
+            </span> Deutsch<br style="line-height:70px;" />
             <span id="set_language_english"
               class="tickBox button buttonSelected"
+              LEFT_BUTTON="set_language_italian"
               RIGHT_BUTTON="set_language_french"
               DOWN_BUTTON="set_language_validate_button"
-              on_click="toggleTick()"></span> English<br style="line-height:70px;" />
+              on_click="toggleTick(); keyPressed('DOWN_BUTTON');">
+            </span> English<br style="line-height:70px;" />
           </div>
 
           <div style="position:absolute; left:280px; top:160px; width:280px; height:150px;">
             <span id="set_language_spanish"
               class="tickBox button"
+              UP_BUTTON="set_language_french"
               LEFT_BUTTON="set_language_german"
               RIGHT_BUTTON="set_language_dutch"
-              on_click="toggleTick()"></span> Espa&ntilde;ol<br style="line-height:70px;" />
+              on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');">
+            </span> Espa&ntilde;ol<br style="line-height:70px;" />
             <span id="set_language_french"
               class="tickBox button"
               LEFT_BUTTON="set_language_english"
               RIGHT_BUTTON="set_language_italian"
-              DOWN_BUTTON="set_language_validate_button"
-              on_click="toggleTick()"></span> Fran&ccedil;ais<br style="line-height:70px;" />
+              DOWN_BUTTON="set_language_spanish"
+              on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');">
+          </span> Fran&ccedil;ais<br style="line-height:70px;" />
           </div>
 
           <div style="position:absolute; left:560px; top:160px; width:280px; height:150px;">
             <span id="set_language_dutch"
               class="tickBox button"
+              UP_BUTTON="set_language_italian"
               LEFT_BUTTON="set_language_spanish"
-              on_click="toggleTick()"></span> Nederlands<br style="line-height:70px;" />
+              RIGHT_BUTTON="set_language_german"
+              on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');">
+            </span> Nederlands<br style="line-height:70px;" />
             <span id="set_language_italian"
               class="tickBox button"
               LEFT_BUTTON="set_language_french"
-              DOWN_BUTTON="set_language_validate_button"
-              on_click="toggleTick()"></span> Italiano<br style="line-height:70px;" />
+              RIGHT_BUTTON="set_language_english"
+              DOWN_BUTTON="set_language_dutch"
+              on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');">
+            </span> Italiano<br style="line-height:70px;" />
           </div>
         </div>
 
         <div id="set_language_validate_button"
           class="button"
           UP_BUTTON="set_language_english"
+          on_click="exitMenu(); exitMenu(); exitMenu();"
           style="position:absolute; left:0px; top:340px; width:180px; height:40px;">Validate</div>
 
       </div>  <!-- "set_language" -->
@@ -1143,6 +1164,7 @@ char mfd_html[] PROGMEM = R"=====(
             <!--
               On the original MFD, there is only room for 24 characters. If there are more characters to choose
               from, they spill over to the next line
+              TODO - sometimes, there is room for 25 characters....
             -->
             <div id="satnav_to_mfd_show_characters_line_1"
               UP_BUTTON="satnav_to_mfd_show_characters_line_1"

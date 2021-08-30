@@ -34,11 +34,8 @@ void PrintSystemSpecs()
     Serial.println(md5Checksum);
 } // PrintSystemSpecs
 
-const char* EspDataToJson()
+const char* EspDataToJson(char* buf, const int n)
 {
-    #define ESP_DATA_JSON_BUFFER_SIZE 1024
-    static char jsonBuffer[ESP_DATA_JSON_BUFFER_SIZE];
-
     uint32_t flashSizeReal = ESP.getFlashChipRealSize();
     uint32_t flashSizeIde = ESP.getFlashChipSize();
     FlashMode_t flashModeIde = ESP.getFlashChipMode();
@@ -71,7 +68,7 @@ const char* EspDataToJson()
     "}\n";
 
     char floatBuf[3][MAX_FLOAT_SIZE];
-    int at = snprintf_P(jsonBuffer, ESP_DATA_JSON_BUFFER_SIZE, jsonFormatter,
+    int at = snprintf_P(buf, n, jsonFormatter,
 
         ESP.getBootVersion(),
         ESP.getCpuFreqMHz(), // system_get_cpu_freq(),
@@ -99,7 +96,7 @@ const char* EspDataToJson()
     );
 
     // JSON buffer overflow?
-    if (at >= ESP_DATA_JSON_BUFFER_SIZE) return "";
+    if (at >= n) return "";
 
-    return jsonBuffer;
+    return buf;
 } // EspDataToJson
