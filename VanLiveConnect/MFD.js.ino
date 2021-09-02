@@ -1544,9 +1544,10 @@ function satnavShowDisclaimer()
 
 function satnavGotoMainMenu()
 {
-    if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
+    // Show popup "Initializing navigator" as long as mode is "INITIALIZING"
+    if (satnavMode === "INITIALIZING")
     {
-        showStatusPopup("Navigation CD-ROM is<br />missing", 8000);
+        showPopup("satnav_initializing_popup", 20000);
         return;
     } // if
 
@@ -1557,10 +1558,9 @@ function satnavGotoMainMenu()
         return;
     } // if
 
-    // Show popup "Initializing navigator" as long as mode is "INITIALIZING"
-    if (satnavMode === "INITIALIZING")
+    if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
     {
-        showPopup("satnav_initializing_popup", 20000);
+        showStatusPopup("Navigation CD-ROM is<br />missing", 8000);
         return;
     } // if
 
@@ -2242,7 +2242,6 @@ function satnavGuidancePreferenceValidate()
     if (currentMenu !== "satnav_guidance")
     {
         satnavSwitchToGuidanceScreen();
-        //showPopup("satnav_calculating_route_popup", 30000);
     }
     else
     {
@@ -3024,19 +3023,20 @@ function handleItemChange(item, value)
             }
             else if (value === "OFF")
             {
-                // If in guidance mode while turning off contact key, remember to show popup
-                // "Continue guidance to destination?" the next time the contact key is turned "ON"
-                if (satnavMode === "IN_GUIDANCE_MODE") localStorage.askForGuidanceContinuation = "YES";
-
-                // After 2 seconds, show the audio screen (or fallback to current location or clock)
+                // "OFF" position can be very short between "ACC" and "ON", so first wait a bit
                 clearInterval(handleItemChange.contactKeyOffTimer);
                 handleItemChange.contactKeyOffTimer = setTimeout(
                     function ()
                     {
+                        // If in guidance mode while turning off contact key, remember to show popup
+                        // "Continue guidance to destination?" the next time the contact key is turned "ON"
+                        if (satnavMode === "IN_GUIDANCE_MODE") localStorage.askForGuidanceContinuation = "YES";
+
+                        // Show the audio screen (or fallback to current location or clock)
                         selectDefaultScreen();
                         handleItemChange.contactKeyOffTimer = null;
                     },
-                    2000
+                    500
                 );
             } // if
         } // case
@@ -3081,7 +3081,11 @@ function handleItemChange(item, value)
                 // if (! satnavDestinationNotAccessibleByRoadPopupShown)
                 // {
                     // But only if the curent location is known
-                    if (satnavCurrentStreet !== "") showStatusPopup("Destination is not<br />accessible by road", 8000);
+                    //if (satnavCurrentStreet !== "")
+                    //{
+                        hidePopup();
+                        showStatusPopup("Destination is not<br />accessible by road", 8000);
+                    //}
 
                     satnavDestinationNotAccessibleByRoadPopupShown = true;
                 // } // if
@@ -3160,9 +3164,9 @@ function handleItemChange(item, value)
 
             if (value === "POWERING_OFF")
             {
-                $("#main_menu_goto_satnav_button").addClass("buttonDisabled");
-                $("#main_menu_goto_satnav_button").removeClass("buttonSelected");
-                $("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
+                //$("#main_menu_goto_satnav_button").addClass("buttonDisabled");
+                //$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
+                //$("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
                 $("#satnav_disc_recognized").addClass("ledOff");
                 handleItemChange.nSatNavDiscUnreadable = 1;
                 satnavDisclaimerAccepted = false;
@@ -3170,15 +3174,23 @@ function handleItemChange(item, value)
             else if (value === "CALCULATING_ROUTE")
             {
                 // TODO - necessary?
-                //showPopup("satnav_calculating_route_popup", 30000);
+                showPopup("satnav_calculating_route_popup", 30000);
+                localStorage.askForGuidanceContinuation = "NO";
             } // if
         } // case
         break;
 
         case "satnav_guidance_status":
         {
-            if (value.match(/CALCULATING_ROUTE/)) showPopup("satnav_calculating_route_popup", 30000);
-            else hidePopup("satnav_calculating_route_popup");
+            if (value.match(/CALCULATING_ROUTE/))
+            {
+                showPopup("satnav_calculating_route_popup", 30000);
+                localStorage.askForGuidanceContinuation = "NO";
+            }
+            else
+            {
+                hidePopup("satnav_calculating_route_popup");
+            } // if
         } // case
         break;
 
@@ -3306,6 +3318,7 @@ function handleItemChange(item, value)
             } // if
 
             // In the current location screen, show "City", or "Street (City)", otherwise "Street not listed"
+            // TODO - do we ever see "Not digitized area" in the current location screen?
             $('[gid="satnav_curr_street_shown"]').text(value !== "" ? value : "Street not listed");
 
             // Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
@@ -3489,9 +3502,11 @@ function handleItemChange(item, value)
 
         case "mfd_to_satnav_request_type":
         {
+            handleItemChange.mfdToSatnavRequestType = value;
+
             if (value !== "REQ_N_ITEMS") break;
 
-            switch(handleItemChange.mfdToSatnavRequest)
+            switch (handleItemChange.mfdToSatnavRequest)
             {
                 case "Enter city":
                 case "Enter street":
@@ -3518,6 +3533,27 @@ function handleItemChange(item, value)
                 default:
                 break;
             } // switch
+        } // case
+        break;
+
+        case "mfd_to_satnav_selection":
+        {
+            if (handleItemChange.mfdToSatnavRequest === "Enter street"
+                && handleItemChange.mfdToSatnavRequestType === "SELECT")
+            {
+                // Already copy the selected street into the "satnav_show_current_destination" screen, in case the
+                // "satnav_report" packet is missed
+
+                var lines = splitIntoLines("satnav_list");
+
+                if (lines[value] === undefined) break;
+
+                var selectedLine = lines[value];
+                var selectedStreetAndCity = selectedLine.replace(/<[^>]*>/g, '');  // Remove HTML formatting
+                var selectedStreet = selectedStreetAndCity.replace(/ -.*-/g, '');  // Keep only the street
+
+                $("#satnav_current_destination_street_shown").text(selectedStreet);
+            } // if
         } // case
         break;
 
@@ -3856,8 +3892,11 @@ function handleItemChange(item, value)
                 //satnavCurrentStreet = "";
 
                 $("#satnav_guidance_next_street").text("Follow the heading");
+
+                // To replicate a bug in the original MFD; in fact the current street is usually known
                 $("#satnav_guidance_curr_street").text("Not digitized area");
-                $('[gid="satnav_curr_street_shown"]').text("Not digitized area");
+
+                //$('[gid="satnav_curr_street_shown"]').text("Not digitized area");
             } // if
 
             $("#satnav_turn_at_indication").toggle(value !== "ON");

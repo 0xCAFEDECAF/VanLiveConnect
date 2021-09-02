@@ -294,8 +294,10 @@ bool IrReceive(TIrPacket& irPacket)
     lastValue = irPacket.value;
     lastUpdate = millis();
 
+#if 0
     Serial.printf_P(PSTR("=====> irPacket.value = 0x%lX (%S), lastValue = 0x%lX, lastInterval = %lu, held = %S\n"),
         irPacket.value, irPacket.buttonStr, lastValue, lastInterval, irPacket.held ? PSTR("YES") : PSTR("NO"));
+#endif
 
     // "MENU_BUTTON", "MODE_BUTTON" and "ENTER_BUTTON" are never "held". They fire only once.
     if (irPacket.held

@@ -253,10 +253,6 @@ void loop()
     if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
     if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
-    #define SATNAV_EQUPT_JSON_BUFFER_SIZE 256
-    char jsonBuffer[SATNAV_EQUPT_JSON_BUFFER_SIZE];
-    BroadcastJsonText(SatnavEquipmentDetection(jsonBuffer, SATNAV_EQUPT_JSON_BUFFER_SIZE));
-
     // Print statistics every 5 seconds
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL) // Arithmetic has safe roll-over

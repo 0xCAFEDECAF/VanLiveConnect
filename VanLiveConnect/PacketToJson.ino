@@ -30,8 +30,10 @@ struct IdenHandler_t
     uint16_t iden;
     char* idenStr;
     int dataLen;
+    bool ignoreDups;
     TPacketParser parser;
     uint8_t* prevData;
+    int prevDataLen;
 }; // struct IdenHandler_t
 
 // Often used string constants
@@ -49,8 +51,10 @@ const char PROGMEM styleDisplayBlockStr[] = "block";  // To set 'style="display:
 const char PROGMEM styleDisplayNoneStr[] = "none";  // To set 'style="display:none;"' in HTML
 const char PROGMEM noneStr[] = "NONE";
 const char PROGMEM updatedStr[] = "(UPD)";
+const char PROGMEM notApplicable1Str[] = "-";
 const char PROGMEM notApplicable2Str[] = "--";
 const char PROGMEM notApplicable3Str[] = "---";
+PGM_P dashStr = notApplicable1Str;
 
 // Defined in PacketFilter.ino
 bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter);
@@ -600,72 +604,8 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
         );
 } // GuidanceInstructionIconJson
 
-// Sat nav equipment detection stuff
-
+// Sat nav equipment detection
 bool satnavEquipmentDetected = true;
-
-unsigned long satnavEquipmentDetectionTimer = millis();
-unsigned long satnavEquipmentDetectionTimeout = 10000;
-bool satnavEquipmentDetectionTimerRunning = true;
-
-// Arm the timer
-void ArmSatnavEquipmentDetectionTimer(unsigned long timeout)
-{
-    satnavEquipmentDetectionTimer = millis();
-    satnavEquipmentDetectionTimeout = timeout;
-    satnavEquipmentDetectionTimerRunning = true;
-} // ArmSatnavEquipmentDetectionTimer
-
-void SatnavEquipmentDetected()
-{
-    satnavEquipmentDetected = true;
-    satnavEquipmentDetectionTimerRunning = false;
-} // SatnavEquipmentDetected
-
-// At boot time, assume sat nav unit is present, but start a 10 second timer to see life from the sat nav unit
-// TODO - implement "equipment detected" after timer has expired
-const char* SatnavEquipmentDetection(char* buf, const int n)
-{
-    static bool reportedSatnavEquipmentDetected = true;
-
-    if (satnavEquipmentDetectionTimerRunning &&
-
-        // Arithmetic has safe roll-over
-        millis() - satnavEquipmentDetectionTimer >= satnavEquipmentDetectionTimeout)
-    {
-        // No sat nav equipment detected
-        satnavEquipmentDetected = false;
-
-        Serial.print(F("No sat nav equipment detected:\n"));
-
-        // Kill the timer
-        satnavEquipmentDetectionTimerRunning = false;
-    } // if
-
-    if (satnavEquipmentDetected == reportedSatnavEquipmentDetected) return "";
-
-    const static char jsonFormatter[] PROGMEM =
-    "{\n"
-        "\"event\": \"display\",\n"
-        "\"data\":\n"
-        "{\n"
-            "\"satnav_equipment_present\": \"%S\"\n"
-        "}\n"
-    "}\n";
-
-    int at = snprintf_P(buf, n, jsonFormatter, satnavEquipmentDetected ? yesStr : noStr);
-
-    // JSON buffer overflow?
-    if (at >= n) return "";
-
-    reportedSatnavEquipmentDetected = satnavEquipmentDetected;
-
-#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    PrintJsonText(buf);
-#endif // PRINT_JSON_BUFFERS_ON_SERIAL
-
-    return buf;
-} // 
 
 VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -1298,8 +1238,10 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
         static unsigned long popupLastAppeared;
 
+        unsigned long now = millis();
+
         // Arithmetic has safe roll-over
-        if (millis() - popupLastAppeared > 8000)
+        if (now - popupLastAppeared > 8000)
         {
             // The popup is not visible: short-press simply triggers the popup on the original MFD.
             // Our implementation is to stay in the current small screen.
@@ -1317,7 +1259,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             tripInfoPopupTabIndex %= N_SMALL_SCREENS;
         } // if
 
-        popupLastAppeared = millis();
+        popupLastAppeared = now;
 
         break;
     } // while
@@ -1897,12 +1839,12 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 band == TB_FM2 ? onStr : offStr,
                 band == TB_FMAST ? onStr : offStr,
                 band == TB_AM ? onStr : offStr,
-                presetMemory == 0 ? PSTR("-") : presetMemoryBuffer,
+                presetMemory == 0 ? notApplicable1Str : presetMemoryBuffer,
                 frequency == 0x07FF ? notApplicable3Str :
                     band == TB_AM
                         ? FloatToStr(floatBuf, frequency, 0)  // AM and LW bands
                         : FloatToStr(floatBuf, (frequency / 2 + 500) / 10.0, 1),  // FM bands
-                frequency == 0x07FF ? PSTR("-") :
+                frequency == 0x07FF ? notApplicable1Str :
                     band == TB_AM
                         ? emptyStr  // AM and LW bands
                         : frequency % 2 == 0 ? PSTR("0") : PSTR("5"),  // FM bands
@@ -2388,16 +2330,6 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         ToHexStr(mfdStatus)
     );
 
-    // After "MFD_SCREEN_ON", assume sat nav unit is present, but start a 10 second timer to see life from the
-    // sat nav unit
-    if (mfdStatus == MFD_SCREEN_ON)
-    {
-        satnavEquipmentDetected = true;
-
-        // Arm the timer
-        ArmSatnavEquipmentDetectionTimer(5000);
-    } // if
-
     if (mfdStatus == TRIP_COUTER_1_RESET || mfdStatus == TRIP_COUTER_2_RESET)
     {
         // Force change to the appropriate small screen (left hand side of the display)
@@ -2743,9 +2675,6 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
     // http://graham.auld.me.uk/projects/vanbus/packets.html#54E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#54E
 
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
-
     const uint8_t* data = pkt.Data();
     uint16_t status = (uint16_t)data[1] << 8 | data[2];
 
@@ -2806,10 +2735,72 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     // http://graham.auld.me.uk/projects/vanbus/packets.html#7CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#7CE
 
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
+    int dataLen = pkt.DataLen();
+    if (dataLen != 0 && dataLen != 20) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
+
+    // Count number of times a a "read" frame did not get an in-frame response
+    static int nSatNavNotSeen = 0;
+
+    if (dataLen == 0)
+    {
+        // This is a "read" packet that did not get an in-frame response. If the sat nav unit is not there, this
+        // packet is sent by the MFD over and over again.
+
+        static unsigned long lastPacketReceived = 0;
+        unsigned long now = millis();
+        unsigned long packetInterval = now - lastPacketReceived;  // Arithmetic has safe roll-over
+        lastPacketReceived = now;
+
+        if (packetInterval < 500)
+        {
+            // As long as the MFD assumes the sat nav equipment is present (e.g. at boot time), it sends 5 bursts
+            // of each 3 packets. Ater that it sends one packet per second.
+            nSatNavNotSeen = 0;
+
+            // Already reported "equipment present"?
+            if (satnavEquipmentDetected) return VAN_PACKET_NO_CONTENT;
+
+            satnavEquipmentDetected = true;
+        }
+        else
+        {
+            // Already reported "no equipment present"?
+            if (! satnavEquipmentDetected) return VAN_PACKET_NO_CONTENT;
+
+            // After the last burst, count 2 non-bursts
+            nSatNavNotSeen++;
+
+            #define SATNAV_NO_ANSWER (2)
+            if (nSatNavNotSeen < SATNAV_NO_ANSWER) return VAN_PACKET_NO_CONTENT;
+
+            satnavEquipmentDetected = false;
+        } // if
+
+        const static char jsonFormatter[] PROGMEM =
+        "{\n"
+            "\"event\": \"display\",\n"
+            "\"data\":\n"
+            "{\n"
+                "\"satnav_equipment_present\": \"%S\"\n"
+            "}\n"
+        "}\n";
+
+        int at = snprintf_P(buf, n, jsonFormatter, satnavEquipmentDetected ? yesStr : noStr);
+
+        // JSON buffer overflow?
+        if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+
+        return VAN_PACKET_PARSE_OK;
+    } // if
+
+    nSatNavNotSeen = 0;
 
     const uint8_t* data = pkt.Data();
+
+    // Ignore duplicates of the "long" (20 byte) packets
+    static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
+    if (memcmp(data, packetData, dataLen) == 0) return VAN_PACKET_DUPLICATE;
+    memcpy(packetData, data, dataLen);
 
     uint8_t satnavStatus2 = data[1] & 0x0F;
 
@@ -2857,7 +2848,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[2] & 0x04 ? yesStr : noStr,
 
         // 0xE0 as boundary for "reverse": just guessing. Do we ever drive faster than 224 km/h?
-        data[16] >= 0xE0 ? PSTR("-") : emptyStr,
+        data[16] >= 0xE0 ? dashStr : emptyStr,
         data[16] < 0xE0 ? data[16] : 0xFF - data[16] + 1
     );
 
@@ -2883,10 +2874,18 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             );
     } // if
 
+    if (! satnavEquipmentDetected)
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_equipment_present\": \"YES\""));
+    } // if
+
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+
+    satnavEquipmentDetected = true;
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus2Pkt
@@ -2897,9 +2896,6 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#8CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#8CE
-
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
 
     int dataLen = pkt.DataLen();
     if (dataLen != 2 && dataLen != 3 && dataLen != 17) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
@@ -2998,9 +2994,6 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
     // http://graham.auld.me.uk/projects/vanbus/packets.html#9CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#9CE
 
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
-
     const uint8_t* data = pkt.Data();
 
     uint16_t currHeading = (uint16_t)data[1] << 8 | data[2];  // in compass degrees (0...359)
@@ -3080,9 +3073,6 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#64E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#64E
-
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
 
     int dataLen = pkt.DataLen();
     if (dataLen != 3 && dataLen != 4 && dataLen != 6 && dataLen != 13 && dataLen != 23)
@@ -3215,9 +3205,6 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#6CE
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#6CE
-
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
 
     int dataLen = pkt.DataLen();
     if (dataLen < 3) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
@@ -4043,9 +4030,6 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     // http://graham.auld.me.uk/projects/vanbus/packets.html#74E
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#74E
 
-    // Sat nav equipment detected
-    SatnavEquipmentDetected();
-
     const uint8_t* data = pkt.Data();
     uint8_t request = data[1];
     sint16_t listSize = (sint16_t)(data[4] << 8 | data[5]);
@@ -4633,8 +4617,17 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     const uint8_t* data = pkt.Data();
 
     // Relying on short-circuit boolean evaluation
-    if (handler->prevData != NULL && memcmp(data, handler->prevData, dataLen) == 0) return true;  // Duplicate packet
+    bool isDuplicate =
+        handler->prevDataLen - 1 == dataLen  // handler->prevDataLen is initialized to 0; use 1 for 0-byte packets
+        && handler->prevData != NULL
+        && memcmp(data, handler->prevData, dataLen) == 0;
 
+    if (handler->ignoreDups && isDuplicate) return true;  // Duplicate packet, to be ignored
+
+    // Don't repeatedly print the same packet
+    if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print
+
+    // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.printf_P(PSTR("---> Received: %s packet (0x%03X)\n"), handler->idenStr, iden);
@@ -4651,8 +4644,9 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
                 {
                     snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);
                 } // if
-                Serial.printf_P(PSTR("%s%c"), diffByte, i < dataLen - 1 ? '-' : '\n');
+                Serial.printf_P(PSTR("%s%S"), diffByte, i < dataLen - 1 ? dashStr : emptyStr);
             } // for
+            Serial.println();
         } // if
     } // if
 
@@ -4663,6 +4657,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         // Save packet data to compare against at next packet reception
         memset(handler->prevData, 0, VAN_MAX_DATA_BYTES);
         memcpy(handler->prevData, data, dataLen);
+        handler->prevDataLen = dataLen + 1;
     } // if
 
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
@@ -4679,36 +4674,40 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 static IdenHandler_t handlers[] =
 {
     // Columns:
-    // IDEN value, IDEN string, number of expected bytes (or -1 if varying/unknown), handler function
-    { VIN_IDEN, "vin", 17, &ParseVinPkt },
-    { ENGINE_IDEN, "engine", 7, &ParseEnginePkt },
-    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, &ParseHeadUnitStalkPkt },
-    { LIGHTS_STATUS_IDEN, "lights_status", -1, &ParseLightsStatusPkt },
-    { DEVICE_REPORT, "device_report", -1, &ParseDeviceReportPkt },
-    { CAR_STATUS1_IDEN, "car_status_1", 27, &ParseCarStatus1Pkt },
-    { CAR_STATUS2_IDEN, "car_status_2", -1, &ParseCarStatus2Pkt },
-    { DASHBOARD_IDEN, "dashboard", 7, &ParseDashboardPkt },
-    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, &ParseDashboardButtonsPkt },
-    { HEAD_UNIT_IDEN, "head_unit", -1, &ParseHeadUnitPkt },
-    { TIME_IDEN, "time", 5, &ParseTimePkt },
-    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, &ParseAudioSettingsPkt },
-    { MFD_STATUS_IDEN, "mfd_status", 2, &ParseMfdStatusPkt },
-    { AIRCON1_IDEN, "aircon_1", 5, &ParseAirCon1Pkt },
-    { AIRCON2_IDEN, "aircon_2", 7, &ParseAirCon2Pkt },
-    { CDCHANGER_IDEN, "cd_changer", -1, &ParseCdChangerPkt },
-    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, &ParseSatNavStatus1Pkt },
-    { SATNAV_STATUS_2_IDEN, "satnav_status_2", 20, &ParseSatNavStatus2Pkt },
-    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, &ParseSatNavStatus3Pkt },
-    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, &ParseSatNavGuidanceDataPkt },
-    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, &ParseSatNavGuidancePkt },
-    { SATNAV_REPORT_IDEN, "satnav_report", -1, &ParseSatNavReportPkt },
-    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, &ParseMfdToSatNavPkt },
-    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, &ParseSatNavToMfdPkt },
-    { WHEEL_SPEED_IDEN, "wheel_speed", 5, &ParseWheelSpeedPkt },
-    { ODOMETER_IDEN, "odometer", 5, &ParseOdometerPkt },
-    { COM2000_IDEN, "com2000", 10, &ParseCom2000Pkt },
-    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, &ParseCdChangerCmdPkt },
-    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, &ParseMfdToHeadUnitPkt },
+    // 1. IDEN value,
+    // 2. IDEN string,
+    // 3. Number of expected bytes (or -1 if varying/unknown),
+    // 4. Ignore duplicates (boolean)
+    // 5. handler function
+    { VIN_IDEN, "vin", 17, true, &ParseVinPkt },
+    { ENGINE_IDEN, "engine", 7, true, &ParseEnginePkt },
+    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, true, &ParseHeadUnitStalkPkt },
+    { LIGHTS_STATUS_IDEN, "lights_status", -1, true, &ParseLightsStatusPkt },
+    { DEVICE_REPORT, "device_report", -1, true, &ParseDeviceReportPkt },
+    { CAR_STATUS1_IDEN, "car_status_1", 27, true, &ParseCarStatus1Pkt },
+    { CAR_STATUS2_IDEN, "car_status_2", -1, true, &ParseCarStatus2Pkt },
+    { DASHBOARD_IDEN, "dashboard", 7, true, &ParseDashboardPkt },
+    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, true, &ParseDashboardButtonsPkt },
+    { HEAD_UNIT_IDEN, "head_unit", -1, true, &ParseHeadUnitPkt },
+    { TIME_IDEN, "time", 5, true, &ParseTimePkt },
+    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, true, &ParseAudioSettingsPkt },
+    { MFD_STATUS_IDEN, "mfd_status", 2, true, &ParseMfdStatusPkt },
+    { AIRCON1_IDEN, "aircon_1", 5, true, &ParseAirCon1Pkt },
+    { AIRCON2_IDEN, "aircon_2", 7, true, &ParseAirCon2Pkt },
+    { CDCHANGER_IDEN, "cd_changer", -1, true, &ParseCdChangerPkt },
+    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, true, &ParseSatNavStatus1Pkt },
+    { SATNAV_STATUS_2_IDEN, "satnav_status_2", -1, false, &ParseSatNavStatus2Pkt },
+    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, true, &ParseSatNavStatus3Pkt },
+    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, true, &ParseSatNavGuidanceDataPkt },
+    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, true, &ParseSatNavGuidancePkt },
+    { SATNAV_REPORT_IDEN, "satnav_report", -1, true, &ParseSatNavReportPkt },
+    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, true, &ParseMfdToSatNavPkt },
+    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, true, &ParseSatNavToMfdPkt },
+    { WHEEL_SPEED_IDEN, "wheel_speed", 5, true, &ParseWheelSpeedPkt },
+    { ODOMETER_IDEN, "odometer", 5, true, &ParseOdometerPkt },
+    { COM2000_IDEN, "com2000", 10, true, &ParseCom2000Pkt },
+    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, true, &ParseCdChangerCmdPkt },
+    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, true, &ParseMfdToHeadUnitPkt },
 }; // handlers
 
 const IdenHandler_t* const handlers_end = handlers + sizeof(handlers) / sizeof(handlers[0]);
@@ -4744,9 +4743,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 
     if (handler->dataLen >= 0 && dataLen != handler->dataLen) return ""; // Unexpected packet length
 
-    // Only process if packet content differs from previous packet
-    // TODO - specify handling modes for duplicate packets in handlers table: not all duplicate packets should
-    //   be ignored.
+    // Check if packet content is the same as in previous packet and must therefore be ignored
     if (IsPacketDataDuplicate(pkt, handler)) return "";
 
     int result = handler->parser(pkt, jsonBuffer, JSON_BUFFER_SIZE);
