@@ -8,6 +8,8 @@ const char* GetHostname()
 
 void SetupWifi()
 {
+    WiFi.hostname(GetHostname());
+
 #ifdef WIFI_AP_MODE
 
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s' ..."), WIFI_SSID);
@@ -20,9 +22,9 @@ void SetupWifi()
     WiFi.softAP(WIFI_SSID);
 #endif
 
-#else
+#else  // ! WIFI_AP_MODE
 
-    Serial.printf_P(PSTR("Connecting to Wi-Fi SSID '%s' "), WIFI_SSID);
+    Serial.printf_P(PSTR("Connecting to Wi-Fi SSID '%s'\n"), WIFI_SSID);
 
     WifiConfig();
 
@@ -45,26 +47,44 @@ void SetupWifi()
 #else
     WiFi.begin(WIFI_SSID);
 #endif
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print(".");
-        delay(500);
-    } // while
 
 #endif // WIFI_AP_MODE
 
-    Serial.println(F(" OK"));
-
-    WiFi.hostname(GetHostname());
-
-    Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
-
-    // Might decrease number of packet CRC errors in case the board was previously using Wi-Fi (Wi-Fi settings are
-    // persistent?)
-    wifi_set_sleep_type(NONE_SLEEP_T);
-
     delay(1);
 } // SetupWifi
+
+void WifiCheckStatus()
+{
+#ifdef WIFI_AP_MODE
+    return;
+#else  // ! WIFI_AP_MODE
+
+    wl_status_t wifiStatus = WiFi.status();
+
+    static bool wasConnected = false;
+    bool isConnected = wifiStatus == WL_CONNECTED;
+    if (isConnected == wasConnected) return;
+    wasConnected = isConnected;
+
+    if (isConnected)
+    {
+        Serial.printf_P(PSTR("Connected to Wi-Fi SSID '%s'\n"), WIFI_SSID);
+        Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
+
+        // Might decrease number of packet CRC errors in case the board was previously using Wi-Fi (Wi-Fi settings are
+        // persistent?)
+        wifi_set_sleep_type(NONE_SLEEP_T);
+
+        Serial.print(F("Please surf to: http://"));
+        Serial.print(WiFi.localIP());
+        Serial.println(F("/MFD.html"));
+    }
+    else
+    {
+        Serial.println(F("Wi-Fi DISconnected!"));
+    } // if
+#endif // WIFI_AP_MODE
+} // WifiCheckStatus
 
 const char* WifiDataToJson(const IPAddress& client, char* buf, const int n)
 {

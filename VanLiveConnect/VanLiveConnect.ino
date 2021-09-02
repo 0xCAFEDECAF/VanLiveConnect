@@ -62,6 +62,7 @@ const char* EspDataToJson(char* buf, const int n);
 void SetupWifi();
 const char* WifiDataToJson(const IPAddress& client, char* buf, const int n);
 const char* GetHostname();
+void WifiCheckStatus();
 
 enum VanPacketFilter_t
 {
@@ -219,13 +220,11 @@ void setup()
     webSocket.begin();
     webSocket.onEvent(WebSocketEvent);
 
-    Serial.print(F("Please surf to: http://"));
 #ifdef WIFI_AP_MODE
+    Serial.print(F("Please surf to: http://"));
     Serial.print(apIP);
-#else
-    Serial.print(WiFi.localIP());
-#endif // WIFI_AP_MODE
     Serial.println(F("/MFD.html"));
+#endif // WIFI_AP_MODE
 
     SetupVanReceiver();
 
@@ -237,6 +236,8 @@ void loop()
 #ifdef WIFI_AP_MODE
     dnsServer.processNextRequest();
 #endif // WIFI_AP_MODE
+
+    WifiCheckStatus();
 
     LoopOta(); 
 

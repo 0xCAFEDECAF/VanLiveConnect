@@ -4637,16 +4637,23 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         {
             // First line: print the new packet's data where it differs from the previous packet
             Serial.printf_P(PSTR("DIFF: 0x%03X (%s) "), iden, handler->idenStr);
-            for (int i = 0; i < dataLen; i++)
+            if (dataLen > 0)
             {
-                char diffByte[3] = "  ";
-                if (data[i] != handler->prevData[i])
+                for (int i = 0; i < dataLen; i++)
                 {
-                    snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);
-                } // if
-                Serial.printf_P(PSTR("%s%S"), diffByte, i < dataLen - 1 ? dashStr : emptyStr);
-            } // for
-            Serial.println();
+                    char diffByte[3] = "  ";
+                    if (data[i] != handler->prevData[i])
+                    {
+                        snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);
+                    } // if
+                    Serial.printf_P(PSTR("%s%S"), diffByte, i < dataLen - 1 ? dashStr : emptyStr);
+                } // for
+                Serial.println();
+            }
+            else
+            {
+                Serial.println("<no_data>");
+            } // if
         } // if
     } // if
 
@@ -4664,8 +4671,18 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     {
         // Now print the new packet's data in full
         Serial.printf_P(PSTR("FULL: 0x%03X (%s) "), iden, handler->idenStr);
-        for (int i = 0; i < dataLen; i++) Serial.printf_P(PSTR("%02X%c"), data[i], i < dataLen - 1 ? '-' : ' ');
-        Serial.println();
+        if (dataLen > 0)
+        {
+            for (int i = 0; i < dataLen; i++)
+            {
+                Serial.printf_P(PSTR("%02X%S"), data[i], i < dataLen - 1 ? dashStr : emptyStr);
+            } // for
+            Serial.println();
+        }
+        else
+        {
+            Serial.println("<no_data>");
+        } // if
     } // if
 
     return false;
