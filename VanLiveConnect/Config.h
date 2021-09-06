@@ -73,8 +73,8 @@
 // Infrared receiver
 
 // Choose by uncommenting one of these #defines below (or define your own)
-//#define IR_TSOP48XX
-#define IR_TSOP312XX
+#define IR_TSOP48XX
+//#define IR_TSOP312XX
 
 // TSOP48XX
 #ifdef IR_TSOP48XX
