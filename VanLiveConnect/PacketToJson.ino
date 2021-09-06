@@ -57,13 +57,20 @@ const char PROGMEM notApplicable3Str[] = "---";
 PGM_P dashStr = notApplicable1Str;
 
 // Defined in PacketFilter.ino
-bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter);
+bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter);
 
 // Functions for (emulated) EEPROM
 void WriteEeprom(int const address, uint8_t const val);
 void CommitEeprom();
 
-// Uses statically allocated buffer, so don't call twice within the same printf invocation 
+// Round downwards (even if negative) to nearest multiple of d. Safe for negative values of n and d, and for
+// values of n around 0.
+sint32_t _floor(sint32_t n, sint32_t d)
+{
+    return (n / d - (((n > 0) ^ (d > 0)) && (n % d))) * d;
+} // _floor
+
+// Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(uint8_t data)
 {
     #define MAX_UINT8_STR_SIZE 4
@@ -73,7 +80,7 @@ char* ToStr(uint8_t data)
     return buffer;
 } // ToStr
 
-// Uses statically allocated buffer, so don't call twice within the same printf invocation 
+// Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(uint16_t data)
 {
     #define MAX_UINT16_STR_SIZE 6
@@ -83,7 +90,7 @@ char* ToStr(uint16_t data)
     return buffer;
 } // ToStr
 
-// Uses statically allocated buffer, so don't call twice within the same printf invocation 
+// Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(sint16_t data)
 {
     #define MAX_SINT16_STR_SIZE 7
@@ -93,7 +100,7 @@ char* ToStr(sint16_t data)
     return buffer;
 } // ToStr
 
-// Uses statically allocated buffer, so don't call twice within the same printf invocation 
+// Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToBcdStr(uint8_t data)
 {
     #define MAX_UINT8_BCD_STR_SIZE 3
@@ -604,9 +611,6 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
         );
 } // GuidanceInstructionIconJson
 
-// Sat nav equipment detection
-bool satnavEquipmentDetected = true;
-
 VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#E24
@@ -693,7 +697,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
         // TODO - hard coded value 130 degrees Celsius for 100%
         #define MAX_COOLANT_TEMP (130)
-        ! isWaterTempValid || waterTemp < 0 ? PSTR("0") :
+        ! isWaterTempValid || waterTemp <= 0 ? PSTR("0") :
             waterTemp >= MAX_COOLANT_TEMP ? PSTR("1") :
                 FloatToStr(floatBuf[0], (float)waterTemp / MAX_COOLANT_TEMP, 2),
 
@@ -758,7 +762,11 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
 
     const uint8_t* data = pkt.Data();
 
-    uint16_t remainingKmToService = ((uint16_t)data[2] << 8 | data[3]) * 20;
+    uint16_t remainingKmToService20 = (uint16_t)(data[2] & 0x7F) << 8 | data[3];
+    bool remainingKmToServiceOverdue = data[2] & 0x80;
+
+    sint32_t remainingKmToService = remainingKmToService20 * 20;
+    if (remainingKmToServiceOverdue) remainingKmToService = - remainingKmToService;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -770,8 +778,8 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
             "\"warning_led\": \"%S\",\n"
             "\"diesel_glow_plugs\": \"%S\",\n"
             "\"door_open\": \"%S\",\n"
-            "\"remaining_km_to_service\": \"%u\",\n"
-            "\"remaining_km_to_service_dash\": \"%u\",\n"
+            "\"remaining_km_to_service\": \"%ld\",\n"
+            "\"remaining_km_to_service_dash\": \"%ld\",\n"
             "\"remaining_km_to_service_perc\":\n"
             "{\n"
                 "\"style\":\n"
@@ -791,12 +799,13 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         data[1] & 0x01 ? yesStr : noStr,
 
         remainingKmToService,
-        remainingKmToService / 100 * 100,  // Round downwards to nearest multiple of 100 kms
+        _floor(remainingKmToService, 100),  // Round downwards (even if negative) to nearest multiple of 100 kms
 
         // TODO - hard coded value 30,000 kms for 100%
         #define SERVICE_INTERVAL (30000)
-        remainingKmToService >= SERVICE_INTERVAL ? PSTR("1") :
-            FloatToStr(floatBuf, (float)remainingKmToService / SERVICE_INTERVAL, 2),
+        remainingKmToService <= 0 ? PSTR("0") :
+            remainingKmToService >= SERVICE_INTERVAL ? PSTR("1") :
+                FloatToStr(floatBuf, (float)remainingKmToService / SERVICE_INTERVAL, 2),
 
         data[5] & 0x80 ? PSTR("DIPPED_BEAM ") : emptyStr,
         data[5] & 0x40 ? PSTR("HIGH_BEAM ") : emptyStr,
@@ -854,8 +863,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
             "}",
 
             #define MAX_OIL_LEVEL (85)
-            data[8] >= MAX_OIL_LEVEL ?
-                PSTR("1") :
+            data[8] >= MAX_OIL_LEVEL ? PSTR("1") :
                 FloatToStr(floatBuf, (float)data[8] / MAX_OIL_LEVEL, 2)
         );
 
@@ -876,7 +884,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"lpg_fuel_level\": \"%S\""),
                 data[10] <= 8 ? PSTR("1") :
-                data[10] <= 23   ? PSTR("2") :
+                data[10] <= 17 ? PSTR("2") :
                 data[10] <= 33 ? PSTR("3") :
                 data[10] <= 50 ? PSTR("4") :
                 data[10] <= 67 ? PSTR("5") :
@@ -2618,7 +2626,7 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
         data[2] == 0x49 ? PSTR("INITIALIZE") :  // Not sure
         data[2] == 0x4B ? PSTR("LOADING") :
         data[2] == 0xC0 ? PSTR("POWER_ON_READY") :  // Not sure
-        data[2] == 0xC1 ? 
+        data[2] == 0xC1 ?
             data[10] == 0 ? PSTR("EJECT") :
             PSTR("PAUSE") :
         data[2] == 0xC3 ? PSTR("PLAY") :
@@ -2725,6 +2733,9 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus1Pkt
+
+// Sat nav equipment detection
+bool satnavEquipmentDetected = true;
 
 // Saved equipment status (volatile)
 PGM_P satnavStatus2Str = emptyStr;
@@ -3602,7 +3613,6 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         records[i][0].c_str()
                     );
 
-                // Save directory entries also in non-volatile storage
                 if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST)
                 {
                     // Remove possibly trailing special characters and spaces.
@@ -3747,35 +3757,36 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         // Combinations:
 
         // * request == 0x02 (SR_ENTER_CITY),
-        //   param == 0x1D:
+        //   param == 0x1D || param == 0x0D:
         //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): request (remaining) list length
         //     -- data[3]: (next) character to narrow down selection with. 0x00 if none.
-        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
+        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list
         //     -- data[5] << 8 | data[6]: offset in list (0-based)
         //     -- data[7] << 8 | data[8]: number of items to retrieve
         //   - type = 2 (SRT_SELECT) (dataLen = 11): select entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
-        request == SR_ENTER_CITY && param == 0x1D && type == SRT_REQ_N_ITEMS ? PSTR("satnav_enter_city_characters") :
-        request == SR_ENTER_CITY && param == 0x1D && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
-        request == SR_ENTER_CITY && param == 0x1D && type == SRT_SELECT ? emptyStr :
+        request == SR_ENTER_CITY && (param == 0x1D || param == 0x0D) && type == SRT_REQ_N_ITEMS ? PSTR("satnav_enter_city_characters") :
+        request == SR_ENTER_CITY && (param == 0x1D || param == 0x0D) && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
+        request == SR_ENTER_CITY && (param == 0x1D || param == 0x0D) && type == SRT_SELECT ? emptyStr :
 
         // * request == 0x05 (SR_ENTER_STREET),
-        //   param == 0x1D:
+        //   param == 0x1D || param == 0x0D:
         //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): request (remaining) list length
         //     -- data[3]: (next) character to narrow down selection with. 0x00 if none.
-        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
+        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list
         //     -- data[5] << 8 | data[6]: offset in list (0-based)
         //     -- data[7] << 8 | data[8]: number of items to retrieve
         //   - type = 2 (SRT_SELECT) (dataLen = 11): select entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
+        //   param == 0x1D: (TODO also || param == 0x0D ?)
         //   - type = 3 (SRT_SELECT_CITY_CENTER) (dataLen = 9): select city center
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
-        request == SR_ENTER_STREET && param == 0x1D && type == SRT_REQ_N_ITEMS ? PSTR("satnav_enter_street_characters") :
-        request == SR_ENTER_STREET && param == 0x1D && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
-        request == SR_ENTER_STREET && param == 0x1D && type == SRT_SELECT ? emptyStr :
+        request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_REQ_N_ITEMS ? PSTR("satnav_enter_street_characters") :
+        request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
+        request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_SELECT ? emptyStr :
         request == SR_ENTER_STREET && param == 0x1D && type == SRT_SELECT_CITY_CENTER ? PSTR("satnav_show_current_destination") :
 
         // * request == 0x06 (SR_ENTER_HOUSE_NUMBER),
@@ -3802,7 +3813,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         //   param == 0xFF:
         //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): present nag screen. Satnav response is SR_SERVICE_LIST
         //              with list_size=38, but the MFD ignores that.
-        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
+        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 38)
 
@@ -3812,7 +3823,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         // * request == 0x09 (SR_SERVICE_ADDRESS),
         //   param == 0x0D:
         //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): request list length
-        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
+        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1: MFD browses address by address)
 
@@ -3912,7 +3923,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         // * request == 0x1B (SR_PERSONAL_ADDRESS_LIST),
         //   param == 0xFF:
         //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): request list length
-        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
+        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list
         //     -- data[5] << 8 | data[6]: offset in list
         //     -- data[7] << 8 | data[8]: number of items to retrieve
 
@@ -3922,7 +3933,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         // * request == 0x1C (SR_PROFESSIONAL_ADDRESS_LIST),
         //   param == 0xFF:
         //   - type = 0 (SRT_REQ_N_ITEMS) (dataLen = 4): request list length
-        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list 
+        //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): request list
         //     -- data[5] << 8 | data[6]: offset in list
         //     -- data[7] << 8 | data[8]: number of items to retrieve
 
@@ -4562,7 +4573,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         cdChangerCartridgePresent ? yesStr : noStr,
         satnavEquipmentDetected ? yesStr : noStr,
         satnavDiscRecognized ? yesStr : noStr,
-        SatNavGuidancePreferenceStr(satnavGuidancePreference)        
+        SatNavGuidancePreferenceStr(satnavGuidancePreference)
     );
 
     if (strlen_P(satnavStatus2Str) != 0)
@@ -4628,7 +4639,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print
 
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
-    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
+    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.printf_P(PSTR("---> Received: %s packet (0x%03X)\n"), handler->idenStr, iden);
 
@@ -4667,7 +4678,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         handler->prevDataLen = dataLen + 1;
     } // if
 
-    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
+    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         // Now print the new packet's data in full
         Serial.printf_P(PSTR("FULL: 0x%03X (%s) "), iden, handler->idenStr);
@@ -4776,7 +4787,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
     if (result != VAN_PACKET_PARSE_OK) return ""; // Parsing result not OK
 
 #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && isPacketSelected(iden, SELECTED_PACKETS))
+    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.print(F("Parsed to JSON object:\n"));
         PrintJsonText(jsonBuffer);
