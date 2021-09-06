@@ -33,7 +33,7 @@
 
 #define DNS_PORT (53)
 DNSServer dnsServer;
-IPAddress apIP(AP_IP);
+IPAddress apIP;
 
 #endif // WIFI_AP_MODE
 
@@ -182,6 +182,11 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
     } // switch
 } // WebSocketEvent
 
+// For prototyping on Sonoff board
+#if defined ARDUINO_ESP8266_GENERIC || defined ARDUINO_ESP8266_ESP01
+#define LED_BUILTIN 13
+#endif
+
 void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -196,8 +201,12 @@ void setup()
     Serial.println(F("Initializing EEPROM"));
     EEPROM.begin(64);
 
-    // Setup non-volatile storage on SPIFFS
-    //SetupStore();
+    // Setup "Over The Air" (OTA) update
+    SetupOta();
+
+#ifdef WIFI_AP_MODE
+    apIP.fromString(IP_ADDR);
+#endif // WIFI_AP_MODE
 
     SetupWifi();
 
@@ -211,9 +220,6 @@ void setup()
     if (MDNS.begin(GetHostname())) Serial.println("mDNS responder started");
     else Serial.println("Error setting up MDNS responder!");
 #endif // USE_MDNS
-
-    // Setup "Over The Air" (OTA) update
-    SetupOta();
 
     SetupWebServer();
 
@@ -239,7 +245,7 @@ void loop()
 
     WifiCheckStatus();
 
-    LoopOta(); 
+    LoopOta();
 
     webSocket.loop();
     LoopWebServer();
@@ -256,7 +262,7 @@ void loop()
 
     // Print statistics every 5 seconds
     static unsigned long lastUpdate = 0;
-    if (millis() - lastUpdate >= 5000UL) // Arithmetic has safe roll-over
+    if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
     {
         lastUpdate = millis();
         VanBusRx.DumpStats(Serial);

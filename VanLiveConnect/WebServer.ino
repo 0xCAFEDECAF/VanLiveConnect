@@ -149,6 +149,8 @@ bool checkETag(const String& etag)
 
     for (int i = 0; i < webServer.headers(); i++)
     {
+        // Serial.println(
+            // String(F("[webServer] ")) + webServer.headerName(i) + F(": \"") + webServer.header(i) + F("\""));
         if (webServer.headerName(i).compareTo(F("If-None-Match")) == 0)
         {
             String read = webServer.header(i);
@@ -267,17 +269,20 @@ void ServeMainHtml();
 
 void HandleNotFound()
 {
-    Serial.printf("[webServer] File '%s' not found\n", webServer.uri().c_str());
+    Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), webServer.uri().c_str());
 
     if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
 
 #ifdef WIFI_AP_MODE
-    // If webServer.uri() ends with '.html' or '.txt', then serve the main HTML page ('/MFD.html').
+    // If webServer.uri() ends with '.html' or '.txt', then redirect to the main HTML page ('/MFD.html').
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
     // http://detectportal.firefox.com/success.txt
     if (webServer.uri().endsWith(".html") || webServer.uri().endsWith(".txt"))
     {
-        return ServeMainHtml();
+        webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
+        webServer.sendHeader(F("Cache-Control"), F("no-store"), true);
+        webServer.send(301, F("text/plain"), F("Redirect"));
+        return;
     } // if
 #endif // WIFI_AP_MODE
 
@@ -304,7 +309,7 @@ void ServeFont(PGM_P content, unsigned int content_len)
     printHttpRequest();
     unsigned long start = millis();
 
-    webServer.send_P(200, fontWoffStr, content, content_len);  
+    webServer.send_P(200, fontWoffStr, content, content_len);
 
     Serial.printf_P(PSTR("[webServer] Serving font '%S' took: %lu msec\n"),
         webServer.uri().c_str(),
@@ -347,7 +352,7 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
     if (! eTagMatches)
     {
         // Serve the complete document
-        webServer.send_P(200, mimeType, content);  
+        webServer.send_P(200, mimeType, content);
     } // if
 
     Serial.printf_P(PSTR("[webServer] %S '%s' took: %lu msec\n"),
@@ -421,7 +426,7 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 void ServeMainHtml()
 {
     // This one should always be served from program memory, so updating is easy and does not need the SPI flash file
-    // system uploader (which will delete all stored data in 'store.ino')
+    // system uploader
     ServeDocument(PSTR("text/html"), mfd_html);
 
     // Alternatives, when serving from the SPI flash file system

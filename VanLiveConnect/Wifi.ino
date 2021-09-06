@@ -3,7 +3,7 @@
 
 const char* GetHostname()
 {
-    return "VanLiveConnect";
+    return HOST_NAME;
 } // GetHostname
 
 void SetupWifi()
@@ -12,7 +12,7 @@ void SetupWifi()
 
 #ifdef WIFI_AP_MODE
 
-    Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s' ..."), WIFI_SSID);
+    Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), WIFI_SSID);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
@@ -59,15 +59,27 @@ void WifiCheckStatus()
     return;
 #else  // ! WIFI_AP_MODE
 
+    static unsigned long lastUpdate;
+    unsigned long now = millis();
+
+    if (now - lastUpdate < 250) return;  // Arithmetic has safe roll-over
+    lastUpdate = now;
+
     wl_status_t wifiStatus = WiFi.status();
 
     static bool wasConnected = false;
     bool isConnected = wifiStatus == WL_CONNECTED;
+
+    // Flash the LED as long as Wi-Fi is not connected
+    if (! isConnected) digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN) == LOW ? HIGH : LOW);  // Toggle the LED
+
     if (isConnected == wasConnected) return;
     wasConnected = isConnected;
 
     if (isConnected)
     {
+        digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+
         Serial.printf_P(PSTR("Connected to Wi-Fi SSID '%s'\n"), WIFI_SSID);
         Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
 

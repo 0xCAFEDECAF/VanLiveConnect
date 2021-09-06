@@ -81,7 +81,9 @@ showViewportSizes();
 // Inspired by https://gist.github.com/ismasan/299789
 var FancyWebSocket = function(url)
 {
+    var _url = url;
     var conn = new WebSocket(url);
+    var retryTimerId = null;
 
     var callbacks = {};
 
@@ -99,8 +101,20 @@ var FancyWebSocket = function(url)
         dispatch(json.event, json.data)
     };  // function
 
-    conn.onclose = function() { dispatch('close', null); }
-    conn.onopen = function() { dispatch('open', null); }
+    conn.onopen = function()
+    {
+        clearInterval(retryTimerId);
+        console.log("// Connected to websocket '" + url + "'!");
+        dispatch('open', null);
+    };
+
+    conn.onclose = function(event)
+    {
+        console.log("// Connection to websocket '" + url + "' died!");
+        dispatch('close', null);
+        // TODO - uncomment the following line. Currently it will crash the ESP.
+        //retryTimerId = setInterval(() => { conn = new WebSocket(_url); }, 2000);
+    };
 
     var dispatch = function(event_name, message)
     {
@@ -110,7 +124,7 @@ var FancyWebSocket = function(url)
         {
             chain[i](message)
         } // for
-    } // function
+    }; // function
 }; // FancyWebSocket
 
 // In "demo mode", specific fields will not be updated
@@ -272,14 +286,6 @@ function writeToDom(jsonObj)
 } // writeToDom
 
 var websocketServerHost = window.location.hostname;
-
-// TODO - hard coded "172.217.28", better to use AP_IP from Config.h
-if (! websocketServerHost.match(/^detectportal/) && ! websocketServerHost.match(/^172\.217\.28/))
-{
-    //websocketServerHost = "VanLiveConnect.lan";
-    //websocketServerHost = "192.168.43.2";  // For Android Wi-Fi hotspot
-    websocketServerHost = "192.168.137.2";  // For Windows Wi-Fi hotspot
-} // if
 
 // For stability, connect to the web socket server only after a few seconds
 var connectToWebsocketTimer = setTimeout(
@@ -473,7 +479,7 @@ function nextLargeScreen()
         "satnav_curr_turn_icon",  // Only in demo mode
 
         "system"  // Only in demo mode
-    ]; 
+    ];
 
     // Will become -1 if not found
     var idIndex = screenIds.indexOf(currentLargeScreenId);
@@ -611,7 +617,7 @@ gotoSmallScreen(localStorage.smallScreen);
 function nextSmallScreen()
 {
     // The IDs of the screens ("divs") that will be cycled through
-    var screenIds = ["trip_info", "gps_info", "instrument_small"]; 
+    var screenIds = ["trip_info", "gps_info", "instrument_small"];
 
     // Will become -1 if not found
     var idIndex = screenIds.indexOf(currentSmallScreenId);
@@ -828,7 +834,7 @@ function gotoTopLevelMenu(menu)
 } // gotoTopLevelMenu
 
 // Make the indicated button selected, or, if disabled, the first button below or to the right (wrap if necessary).
-// Also de-select all other buttons within the same div 
+// Also de-select all other buttons within the same div
 function selectButton(id)
 {
     var selectedButton = $("#" + id);
@@ -984,7 +990,7 @@ function toggleTick(id)
 // Handle an arrow key press in a screen with buttons
 function keyPressed(key)
 {
-    // Retrieve the currently selected button 
+    // Retrieve the currently selected button
     var selected = findSelectedButton();
     if (selected === undefined) return;
 
@@ -1005,7 +1011,7 @@ function keyPressed(key)
 // Handle an arrow key press in a screen with buttons
 function navigateButtons(key)
 {
-    // Retrieve the currently selected button 
+    // Retrieve the currently selected button
     var selected = findSelectedButton();
     if (selected === undefined) return;
 
@@ -1400,13 +1406,13 @@ function describeArc(x, y, radius, startAngle, endAngle)
 
     var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
 
-    var d = 
+    var d =
     [
-        "M", start.x, start.y, 
+        "M", start.x, start.y,
         "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
     ].join(" ");
 
-    return d;       
+    return d;
 } // describeArc
 
 // -----
@@ -1447,7 +1453,7 @@ var highlightIds =
     "fader_select",
     "balance_select",
     "auto_volume_select"
-]; 
+];
 var audioSettingHighlightIndex = 0; // Current audio settings highlight box index
 
 function highlightAudioSetting(goToFirst)
@@ -1492,11 +1498,11 @@ function showAudioSettingsPopup(button)
         // the same position as the audio settings popup.
         hideTunerPresetsPopup();
 
-        // Highlight the first audio setting ("bass") if just popped up, else highlight next audio setting
-        highlightAudioSetting(! isAudioMenuVisible);
-
         // Show the audio settings popup
         $("#audio_settings_popup").show();
+
+        // Highlight the first audio setting ("bass") if just popped up, else highlight next audio setting
+        highlightAudioSetting(! isAudioMenuVisible);
 
         updatingAudioVolume = false;
         isAudioMenuVisible = true;
@@ -2406,7 +2412,7 @@ function handleItemChange(item, value)
             // Don't pop up when user is browsing the menus
             if (inMenu()) break;
 
-            // Show the audio settings popup 
+            // Show the audio settings popup
             if ($("#contact_key_position").text() != "" && $("#contact_key_position").text() !== "OFF")
             {
                 $("#audio_settings_popup").show();
@@ -3064,7 +3070,7 @@ function handleItemChange(item, value)
 
             if (satnavStatus1.match(/AUDIO/))
             {
-                // Turn on or off "satnav_audio" LED 
+                // Turn on or off "satnav_audio" LED
                 var playingAudio = satnavStatus1.match(/START/) !== null;
                 $("#satnav_audio").toggleClass("ledOn", playingAudio);
                 $("#satnav_audio").toggleClass("ledOff", ! playingAudio);
@@ -3854,7 +3860,7 @@ function handleItemChange(item, value)
 
             if (lowestHouseNumberInRange == 0 && highestHouseNumberInRange == 0)
             {
-                // No house number can be entered: go directly to next screen 
+                // No house number can be entered: go directly to next screen
                 gotoMenu("satnav_show_current_destination");
             }
             else
@@ -4108,7 +4114,7 @@ function headUnitOff()
 function onKeyDown(event)
 {
     // Do nothing if the event was already processed
-    if (event.defaultPrevented) return; 
+    if (event.defaultPrevented) return;
 
     switch (event.key)
     {
