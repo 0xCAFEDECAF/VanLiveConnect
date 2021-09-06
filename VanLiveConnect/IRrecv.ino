@@ -21,7 +21,7 @@
 
 // Some useful constants
 #define USECPERTICK 50  // microseconds per clock interrupt tick
-#define RAWBUF 100 // Length of raw duration buffer 
+#define RAWBUF 100 // Length of raw duration buffer
 
 // Information for the interrupt handler
 typedef struct
@@ -169,7 +169,7 @@ int IRrecv::decode(TIrPacket* results)
 
 // Use FNV hash algorithm: http://isthe.com/chongo/tech/comp/fnv/#FNV-param
 #define FNV_PRIME_32 16777619
-#define FNV_BASIS_32 2166136261 
+#define FNV_BASIS_32 2166136261
 
 // Converts the raw code values into a 32-bit hash code.
 // Hopefully this code is unique for each button.
@@ -244,9 +244,9 @@ void IrSetup()
 
     // Using GPIO pins to feed the IR receiver. Should be possible with e.g. the TSOP4838 IR receiver as
     // it typically uses only 0.7 mA.
-    pinMode(IR_VCC, OUTPUT); 
+    pinMode(IR_VCC, OUTPUT);
     digitalWrite(IR_VCC, HIGH);
-    pinMode(IR_GND, OUTPUT); 
+    pinMode(IR_GND, OUTPUT);
     digitalWrite(IR_GND, LOW);
 
     irrecv.enableIRIn(); // Start the receiver

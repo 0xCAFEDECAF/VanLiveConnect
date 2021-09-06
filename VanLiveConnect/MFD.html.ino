@@ -106,7 +106,7 @@ char mfd_html[] PROGMEM = R"=====(
            |  `- div id="audio_settings_popup"  # Audio settings popup
            |
            |  # Full-screen popups
-           `- div id="tuner_presets_popup" 
+           `- div id="tuner_presets_popup"
            |
            `- div id="system"
            |
@@ -1022,7 +1022,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_click="satnavSetDirectoryAddressScreenMode('SELECT');"
             goto_id="satnav_select_from_memory_menu">Select destination from memory</div>
 
-          <div class="button" 
+          <div class="button"
             goto_id="satnav_navigation_options_menu">Navigation options</div>
 
         </div>  <!-- "satnav_main_menu" -->
@@ -1283,7 +1283,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <!-- Show spinning disk while text area is still empty, i.e. data is being retrieved -->
-            <!-- TODO - make visible as long as there is no data in the list --> 
+            <!-- TODO - make visible as long as there is no data in the list -->
             <div id="satnav_busy_icon" class="icon iconLarge" style="display:none; left:300px; top:130px; width:320px; height:280px; font-size:150px;">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
@@ -1501,7 +1501,7 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div button_orientation="horizontal" style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
-              <div 
+              <div
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
                 class="icon button buttonSelected"
                 style="left:0px; top:0px; width:180px; height:40px;">
@@ -1541,7 +1541,7 @@ char mfd_html[] PROGMEM = R"=====(
               class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
-            <div 
+            <div
               button_orientation="horizontal"
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
@@ -1572,7 +1572,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div gid="satnav_last_destination_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
-            <div 
+            <div
               button_orientation="horizontal"
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
@@ -1610,7 +1610,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="tag" style="left:25px; top:205px; width:190px; text-align:left; font-size:40px;">Name</div>
           <div id="satnav_archive_in_directory_entry"
             on_enter="satnavEnterArchiveInDirectoryScreen();"
-            on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);" 
+            on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
             class="dots"
             style="left:210px; top:195px; width:720px; height:90px; white-space:normal;"
           >----------------</div>
@@ -1682,7 +1682,7 @@ char mfd_html[] PROGMEM = R"=====(
           <!-- on_esc: this goes back to the "List" screen -->
           <div id="satnav_rename_entry_in_directory_entry"
             on_enter="satnavEnterRenameDirectoryEntryScreen();"
-            on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);" 
+            on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
             class="dots"
             style="left:210px; top:195px; width:720px; height:90px; white-space:normal;"
           >----------------</div>

@@ -5,7 +5,7 @@
 #include "Config.h"
 
 // Filter on specific IDENs
-bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
+bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter)
 {
     if (filter == VAN_PACKETS_ALL)
     {
@@ -303,4 +303,4 @@ bool isPacketSelected(uint16_t iden, VanPacketFilter_t filter)
 
     // Should never get here
     return true;
-} // isPacketSelected
+} // IsPacketSelected
