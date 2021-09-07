@@ -11,12 +11,12 @@
 // Define to use Wi-Fi "access point" (AP) mode. Comment out to use Wi-Fi station (client) mode
 #define WIFI_AP_MODE
 
-// Define when using DHCP; comment out when using a fixed IP address.
+// Define when using DHCP; comment out when using a static (fixed) IP address.
 // Note: only applicable in Wi-Fi station (client) mode.
 #define USE_DHCP
 
 // Define when using a Windows Internet Connection Sharing (ICS) Wi-Fi. Comment out when using Android Wi-Fi hotspot.
-// Note: only applicable when using a fixed IP address, not when using DHCP.
+// Note: only applicable when using a static (fixed) IP address, not when using DHCP.
 //#define WINDOWS_ICS
 
 #ifdef WIFI_AP_MODE // Wi-Fi access point mode
@@ -37,7 +37,7 @@
 
   #else // ! USE_DHCP
 
-    // Using fixed IP (not DHCP); hostname will not be registered.
+    // Using static (fixed) IP configuration (not DHCP); hostname will not be registered.
 
     #ifdef WINDOWS_ICS  // When using a Windows ICS hotspot
       #define IP_ADDR "192.168.137.2"

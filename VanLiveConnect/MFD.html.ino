@@ -2194,7 +2194,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div button_orientation="horizontal">
             <div id="satnav_guidance_preference_popup_yes_button"
               class="icon button"
-              on_click="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) showPopup('satnav_calculating_route_popup', 30000);"
+              on_click="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();"
               style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
@@ -2471,6 +2471,8 @@ char mfd_html[] PROGMEM = R"=====(
 
     <!-- "Status" line: fixed element in each screen -->
     <div class="horizontalLine" style="left:0px; top:550px; width:1350px;"></div>
+
+    <div id="comms_led" class="led ledOn" style="left:30px; top:590px; width:30px; height:30px;"></div>
 
     <div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
       <div id="inst_consumption_lt_100" class="dots" style="left:0px; top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>

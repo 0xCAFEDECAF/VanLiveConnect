@@ -114,7 +114,8 @@ textarea
 }
 .ledOff
 {
-  background-color:rgb(67,82,105);
+  /*background-color:rgb(67,82,105); - too light*/
+  background-color:rgb(25,31,40); /* TODO - maybe a bit too dark */
 }
 .ledActive
 {

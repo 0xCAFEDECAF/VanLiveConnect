@@ -1609,21 +1609,33 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     uint16_t engineRpm = (uint16_t)data[0] << 8 | data[1];
     uint16_t vehicleSpeed = (uint16_t)data[2] << 8 | data[3];
-    uint32_t sec = (uint32_t)data[4] << 16 | (uint32_t)data[5] << 8 | data[6];
-    static uint32_t prevSec = 0;
-    static long savedEngineRpm = 0;
-    static long savedVehicleSpeed = 0;
+    uint32_t seq = (uint32_t)data[4] << 16 | (uint32_t)data[5] << 8 | data[6];  // What use?
+
+    static long prevEngineRpm = 0;
+    static long prevVehicleSpeed = 0;
+    static uint32_t prevSeq = 0;
 
     // With engine running, there are about 20 or so of these packets per second. Limit the rate somewhat.
     // Send only if any of the reported values changes with more than 10 /min (engine_rpm), 1 km/h (vehicle_speed),
     // or after 1 second.
-    long diffEngineRpm = engineRpm - savedEngineRpm;
-    long diffVehicleSpeed = vehicleSpeed - savedVehicleSpeed;
-    if (abs(diffEngineRpm) < 10 * 8 && abs(diffVehicleSpeed) < 100 * 1 && sec == prevSec) return VAN_PACKET_NO_CONTENT;
 
-    savedEngineRpm = engineRpm;
-    savedVehicleSpeed = vehicleSpeed;
-    prevSec = sec;
+    static unsigned long lastUpdated = 0;
+    unsigned long now = millis();
+
+    long diffEngineRpm = engineRpm - prevEngineRpm;
+    long diffVehicleSpeed = vehicleSpeed - prevVehicleSpeed;
+
+    // Arithmetic has safe roll-over
+    if (abs(diffEngineRpm) < 10 * 8 && abs(diffVehicleSpeed) < 100 * 1 && now - lastUpdated < 1000)
+    {
+        return VAN_PACKET_NO_CONTENT;
+    } // if
+
+    lastUpdated = now;
+
+    prevEngineRpm = engineRpm;
+    prevVehicleSpeed = vehicleSpeed;
+    prevSeq = seq;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"

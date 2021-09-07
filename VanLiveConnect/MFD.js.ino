@@ -145,6 +145,10 @@ var fixFieldsOnDemo =
 
 function writeToDom(jsonObj)
 {
+    // Toggle the "comms_led" to indicate communication activity
+    $("#comms_led").toggleClass("ledOn");
+    $("#comms_led").toggleClass("ledOff");
+
     // The following log entries can be used to literally re-play a session; simply copy-paste these lines into the
     // console window of the web-browser. Also it can be really useful to copy and save these lines into a text file
     // for later re-playing at your desk.
@@ -408,7 +412,13 @@ function selectDefaultScreen(audioSource)
     } // if
 
     // Show current street, if known
-    if (selectedScreen === "" && satnavCurrentStreet !== "") selectedScreen = "satnav_current_location";
+    if (selectedScreen === "" && satnavCurrentStreet !== "")
+    {
+        selectedScreen = "satnav_current_location";
+
+        // But don't switch away from instrument screen
+        if (currentLargeScreenId === "instruments") return;
+    } // if
 
     // Fall back to instrument screen if engine is running
     if (selectedScreen === "" && engineRunning === "YES") selectedScreen = "instruments";
@@ -1534,7 +1544,10 @@ var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
 var satnavStatus1 = "";
-var satnavDestinationNotAccessibleByRoadPopupShown = false;  // Show this popup only once at start of guidance
+
+// Show this popup only once at start of guidance or after recalculation
+var satnavDestinationNotAccessibleByRoadPopupShown = false;
+
 var satnavCurrentStreet = "";
 var satnavDirectoryEntry = "";
 var satnavPersonalDirectoryEntries = JSON.parse(localStorage.satnavPersonalDirectoryEntries || "[]");
@@ -2256,6 +2269,17 @@ function satnavGuidancePreferenceValidate()
     } // if
 } // satnavGuidancePreferenceValidate
 
+function satnavCalculatingRoute()
+{
+    // If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
+    // start, but not any more during the guidance.
+    satnavDestinationNotAccessibleByRoadPopupShown = false;
+
+    localStorage.askForGuidanceContinuation = "NO";
+
+    showPopup("satnav_calculating_route_popup", 30000);
+} // satnavCalculatingRoute
+
 function satnavSwitchToGuidanceScreen()
 {
     //console.log("// satnavSwitchToGuidanceScreen()");
@@ -2556,7 +2580,6 @@ function handleItemChange(item, value)
             if (value === "TUNER" || value === "TAPE" || value === "CD" || value === "CD_CHANGER")
             {
                 // Don't change screen when user is browsing the menus
-                //if (currentMenu && currentMenu !== "satnav_guidance") break;
                 if (inMenu()) break;
 
                 selectDefaultScreen(value);
@@ -2779,9 +2802,8 @@ function handleItemChange(item, value)
 
             if (typeof handleItemChange.infoTraffic === "undefined") handleItemChange.infoTraffic = "NO";
 
-            // Don't pop up when user is browsing the menus
-            //if (currentMenu) break;
-            if (inMenu()) break;
+            // Don't pop up when user is browsing the menus, or in guidance mode
+            if (inMenu() || $("#satnav_guidance").is(":visible")) break;
 
             // Has anything changed?
             if (value === handleItemChange.infoTraffic) break;
@@ -2852,7 +2874,6 @@ function handleItemChange(item, value)
             //console.log("Item '" + item + "' set to '" + value + "'");
 
             // When in a menu, a change in the audio source does not imply any further action
-            //if (currentMenu) break;
             if (inMenu()) break;
 
             // Suppress?
@@ -3083,9 +3104,9 @@ function handleItemChange(item, value)
 
             if (! destinationAccessible)
             {
-                // // Show popup only once, at start of guidance
-                // if (! satnavDestinationNotAccessibleByRoadPopupShown)
-                // {
+                // Show this popup only once at start of guidance or after recalculation
+                if (! satnavDestinationNotAccessibleByRoadPopupShown)
+                {
                     // But only if the curent location is known
                     //if (satnavCurrentStreet !== "")
                     //{
@@ -3094,7 +3115,7 @@ function handleItemChange(item, value)
                     //}
 
                     satnavDestinationNotAccessibleByRoadPopupShown = true;
-                // } // if
+                } // if
             }
             else if (satnavStatus1.match(/NO_DISC/))
             {
@@ -3166,9 +3187,11 @@ function handleItemChange(item, value)
 
         case "satnav_status_3":
         {
-            if (value === "STOPPING_NAVIGATION") satnavDestinationNotAccessibleByRoadPopupShown = false;
-
-            if (value === "POWERING_OFF")
+            if (value === "STOPPING_NAVIGATION")
+            {
+                satnavDestinationNotAccessibleByRoadPopupShown = false;
+            }
+            else if (value === "POWERING_OFF")
             {
                 //$("#main_menu_goto_satnav_button").addClass("buttonDisabled");
                 //$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
@@ -3176,12 +3199,12 @@ function handleItemChange(item, value)
                 $("#satnav_disc_recognized").addClass("ledOff");
                 handleItemChange.nSatNavDiscUnreadable = 1;
                 satnavDisclaimerAccepted = false;
+                satnavDestinationNotAccessibleByRoadPopupShown = false;
             }
             else if (value === "CALCULATING_ROUTE")
             {
                 // TODO - necessary?
-                showPopup("satnav_calculating_route_popup", 30000);
-                localStorage.askForGuidanceContinuation = "NO";
+                satnavCalculatingRoute();
             } // if
         } // case
         break;
@@ -3190,8 +3213,7 @@ function handleItemChange(item, value)
         {
             if (value.match(/CALCULATING_ROUTE/))
             {
-                showPopup("satnav_calculating_route_popup", 30000);
-                localStorage.askForGuidanceContinuation = "NO";
+                satnavCalculatingRoute();
             }
             else
             {
