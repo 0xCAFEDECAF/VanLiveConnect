@@ -527,6 +527,15 @@ enum SatNavGuidancePreference_t
     SGP_INVALID = 0x00
 }; // enum SatNavGuidancePreference_t
 
+bool IsSatNavGuidancePreferenceValueValid(uint8_t value)
+{
+    return
+        value == SGP_FASTEST_ROUTE
+        || value == SGP_SHORTEST_DISTANCE
+        || value == SGP_AVOID_HIGHWAY
+        || value == SGP_COMPROMISE_FAST_SHORT;
+} // IsSatNavGuidancePreferenceValueValid
+
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
 PGM_P SatNavGuidancePreferenceStr(uint8_t data)
 {
@@ -1152,19 +1161,22 @@ uint8_t smallScreenIndex = SMALL_SCREEN_INVALID;
 // Initialize smallScreenIndex, if necessary
 void InitSmallScreenIndex()
 {
-    if (smallScreenIndex < SMALL_SCREEN_FIRST || smallScreenIndex > SMALL_SCREEN_LAST)
-    {
-        smallScreenIndex = EEPROM.read(SMALL_SCREEN_EEPROM_POS);
-        Serial.printf_P(PSTR("=====> Read value %u from EEPROM\n"), smallScreenIndex);  // TODO - remove
+    if (smallScreenIndex >= SMALL_SCREEN_FIRST && smallScreenIndex <= SMALL_SCREEN_LAST) return;
 
-        if (smallScreenIndex < SMALL_SCREEN_FIRST || smallScreenIndex > SMALL_SCREEN_LAST)
-        {
-            // When the original MFD is plugged in, this is what it starts with
-            smallScreenIndex = SMALL_SCREEN_TRIP_INFO_1;
+    smallScreenIndex = EEPROM.read(SMALL_SCREEN_EEPROM_POS);
 
-            WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
-        } // if
-    } // if
+    // TODO - remove
+    Serial.printf_P(
+        PSTR("=====> Read value %u from EEPROM position %d\n"),
+        smallScreenIndex,
+        SMALL_SCREEN_EEPROM_POS);
+
+    if (smallScreenIndex >= SMALL_SCREEN_FIRST && smallScreenIndex <= SMALL_SCREEN_LAST) return;
+
+    // When the original MFD is plugged in, this is what it starts with
+    smallScreenIndex = SMALL_SCREEN_TRIP_INFO_1;
+
+    WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
 } // InitSmallScreenIndex
 
 bool satnavGuidanceActive = false;
@@ -2913,7 +2925,30 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavStatus2Pkt
 
+// Value stored in (emulated) EEPROM
 uint8_t satnavGuidancePreference = SGP_INVALID;
+#define SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS (2)
+
+// Initialize smallScreenIndex, if necessary
+void InitSatnavGuidancePreference()
+{
+    if (IsSatNavGuidancePreferenceValueValid(satnavGuidancePreference)) return;
+
+    satnavGuidancePreference = EEPROM.read(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
+
+    // TODO - remove
+    Serial.printf_P(
+        PSTR("=====> Read value %u from EEPROM position %d\n"),
+        satnavGuidancePreference,
+        SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
+
+    if (IsSatNavGuidancePreferenceValueValid(satnavGuidancePreference)) return;
+
+    // When the original MFD is plugged in, this is what it starts with
+    satnavGuidancePreference = SGP_FASTEST_ROUTE;
+
+    WriteEeprom(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS, satnavGuidancePreference);
+} // InitSatnavGuidancePreference
 
 VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -2974,6 +3009,8 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
         "}\n";
 
         at = snprintf_P(buf, n, jsonFormatter, SatNavGuidancePreferenceStr(satnavGuidancePreference));
+
+        WriteEeprom(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS, satnavGuidancePreference);
     }
     else if (dataLen == 17 && data[0] == 0x20)
     {
@@ -4565,6 +4602,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
 const char* EquipmentStatusDataToJson(char* buf, const int n)
 {
     InitSmallScreenIndex();
+    InitSatnavGuidancePreference();
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"

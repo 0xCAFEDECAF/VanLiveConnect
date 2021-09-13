@@ -264,10 +264,6 @@ char mfd_html[] PROGMEM = R"=====(
       <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div>
     </div>  <!-- "Small" information panel -->
 
-    <!-- Separator line -->
-
-    <div class="verticalLine" style="left:390px; top:0px; height:550px;"></div>
-
     <!-- "Large" information panel -->
 
     <div style="position:absolute; left:390px; top:0px; width:960px; height:550px;">
@@ -626,13 +622,19 @@ char mfd_html[] PROGMEM = R"=====(
           </div>
         </div>
 
+        <!-- Status LEDs -->
+        <div id="warning_led" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2; left:0px; top:410px; width:140px; height:140px;"></div>
+        <div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2; left:110px; top:410px; width:140px; height:140px;"></div>
+        <div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
+        <div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
+
         <!-- Contact key position -->
 
         <div class="icon iconSmall" style="left:20px; top:366px;">
           <div class="centerAligned fas fa-key"></div>
         </div>
 
-        <div id="contact_key_position" class="dots" style="left:140px; top:365px; width:230px;"></div>
+        <div id="contact_key_position" class="dots" style="padding-left:30px; line-height:2; left:110px; top:335px; width:260px; height:120px;"></div>
 
         <!-- Dashboard illumination level -->
 
@@ -644,12 +646,6 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:365px; width:130px;">--</div>
-
-        <!-- Status LEDs -->
-        <div id="warning_led" class="led ledOff fas fa-exclamation-triangle" style="font-size:44px; line-height:1.3; left:20px; top:450px; width:80px;"></div>
-        <div id="door_open" class="led ledOff fas fa-door-open" style="font-size:44px; line-height:1.3; left:120px; top:450px; width:80px;"></div>
-        <div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:44px; line-height:1.3; left:220px; top:450px; width:80px;"></div>
-        <div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:44px; line-height:1.3; left:320px; top:450px; width:80px;"></div>
 
         <!-- VIN number (very small) -->
         <div id="vin" class="tag" style="font-size:30px; left:480px; top:477px; width:460px; text-align:right;"></div>
@@ -1583,7 +1579,7 @@ char mfd_html[] PROGMEM = R"=====(
                 Validate
               </div>
               <div
-                on_click="satnavEnterNewCity();"
+                on_click="satnavEnterNewCityForService();"
                 class="icon button" style="left:210px; top:0px; width:230px; height:40px;">
                 Change
               </div>
@@ -2306,6 +2302,10 @@ char mfd_html[] PROGMEM = R"=====(
       </div>
 
     </div>  <!-- "Large" information panel -->
+
+    <!-- Separator line -->
+
+    <div class="verticalLine" style="left:390px; top:0px; height:550px;"></div>
 
     <!--
       Small, invisible "div" covering top right area of screen, handling a taps that triggers changing to
