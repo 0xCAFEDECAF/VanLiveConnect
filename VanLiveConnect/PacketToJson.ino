@@ -54,6 +54,7 @@ const char PROGMEM updatedStr[] = "(UPD)";
 const char PROGMEM notApplicable1Str[] = "-";
 const char PROGMEM notApplicable2Str[] = "--";
 const char PROGMEM notApplicable3Str[] = "---";
+const char PROGMEM notApplicableFloatStr[] = "--.-";
 PGM_P dashStr = notApplicable1Str;
 
 // Defined in PacketFilter.ino
@@ -620,10 +621,36 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
         );
 } // GuidanceInstructionIconJson
 
+enum Fuel_t
+{
+    FUEL_PETROL,
+    FUEL_DIESEL
+}; // Fuel_t
+
+int fuelType = FUEL_PETROL;
+
 VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#E24
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#E24
+
+    const uint8_t* data = pkt.Data();
+
+    // Engine (fuel) types:
+    // - "8" = XUD: diesel
+    // - "F" = ES9, EW10: petrol
+    // - "H" = XU10, DW10 (HDI): diesel
+    //
+    // See also: http://www.peugeotlogic.com/workshop/wshtml/specs/vincode.htm
+    char engineType = data[6];
+
+    switch (engineType)
+    {
+        case '8':
+        case 'H': fuelType = FUEL_DIESEL; break;
+        case 'F': fuelType = FUEL_PETROL; break;
+        // Default already set to FUEL_PETROL
+    } // switch
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -634,7 +661,7 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
         "}\n"
     "}\n";
 
-    int at = snprintf_P(buf, n, jsonFormatter, pkt.Data());
+    int at = snprintf_P(buf, n, jsonFormatter, data);
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
@@ -1179,6 +1206,18 @@ void InitSmallScreenIndex()
     WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
 } // InitSmallScreenIndex
 
+uint16_t vehicleSpeed_x100 = 0xFFFF;  // in units of 0.01 km/h, i.e. 9000 = 90 km/h
+inline bool IsVehicleSpeedValid()
+{
+    return vehicleSpeed_x100 != 0xFFFF;
+} // IsVehicleSpeedValid
+
+uint16_t engineRpm_x8 = 0xFFFF;  // in units of 0.125 rpm, i.e. 24000 = 3000 rpm
+inline bool IsEngineRpmValid()
+{
+    return engineRpm_x8 != 0xFFFF;
+} // IsEngineRpmValid
+
 bool satnavGuidanceActive = false;
 
 VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -1223,10 +1262,12 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset)
         // happens on the correct trip counter
 
+        unsigned long now = millis();
+
         // Just pressed?
         if (! stalkWasPressed && stalkIsPressed)
         {
-            stalkLastPressed = millis();
+            stalkLastPressed = now;
             break;
         } // if
 
@@ -1235,7 +1276,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
         // Only continue if it was a short-press
         // Note: short-press = switch screen; long-press = reset trip counter currently shown (if any)
-        if (millis() - stalkLastPressed >= 1000) break; // TODO - exact time
+        if (now - stalkLastPressed >= 1000) break; // TODO - exact time
 
         // Not in sat nav guidance mode?
         if (! satnavGuidanceActive)
@@ -1257,8 +1298,6 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         //   the small screen (left on the MFD) goes back to the tab it was originally showing.
 
         static unsigned long popupLastAppeared;
-
-        unsigned long now = millis();
 
         // Arithmetic has safe roll-over
         if (now - popupLastAppeared > 8000)
@@ -1292,7 +1331,58 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     uint16_t avgConsumptionLt100Trip1 = (uint16_t)data[16] << 8 | data[17];
     uint16_t distanceTrip2 = (uint16_t)data[18] << 8 | data[19];
     uint16_t avgConsumptionLt100Trip2 = (uint16_t)data[20] << 8 | data[21];
-    uint16_t instConsumptionLt100 = (uint16_t)data[22] << 8 | data[23];
+    uint16_t instConsumptionLt100_x10 = (uint16_t)data[22] << 8 | data[23];
+
+    bool instConsumptionValid = instConsumptionLt100_x10 != 0xFFFF;
+
+    float deliveredPower = -1.0;
+    if (instConsumptionValid && IsVehicleSpeedValid())
+    {
+        // Rough calculation of power (HP) from fuel consumption data
+        // (No idea if this is of any use or value...)
+        //
+        // Base data:
+        //
+        // - Energy per litre (acc. https://en.wikipedia.org/wiki/Fuel_efficiency ):
+        //   * Diesel: 38.6 MegaJoule = 38600 KiloJoule
+        //   * Petrol (gasoline: 34.8 MegaJoule = 34800 KiloJoule
+        //
+        // - 1 HP (horsepower) = 745.70 Joules / second (Watt) = 0.7457 KiloWatt
+        //
+        // - Fuel to wheel efficiency (acc. https://en.wikipedia.org/wiki/Fuel_efficiency ):
+        //   * Diesel: 30%
+        //   * Petrol: 20%
+        //   ==> Of course, these "efficiency" percentages are highly debatable: could be more, could be less,
+        //       depending on circumstances such as engine, air and fuel temperature, etc. Maybe the turbocharger
+        //       in the HDI and XUD engives results in a higher efficiency? Let's just stick to these values for
+        //       now; we can improve later.
+        //
+        if (fuelType == FUEL_DIESEL)
+        {
+            deliveredPower =
+                (instConsumptionLt100_x10 / 10.0) * 38600 // KiloJoules per 100 km (burnt)
+                * (vehicleSpeed_x100 / 100.0) / 100.0 // KiloJoules per hour
+                / 3600.0  // KiloJoules per second == KiloWatt
+                / 0.7457  // HPs burnt
+                * 0.3;  // HPs delivered
+        }
+        else // fuelType == FUEL_PETROL
+        {
+            deliveredPower =
+                (instConsumptionLt100_x10 / 10.0) * 34800  // KiloJoules per 100 km (burnt)
+                * (vehicleSpeed_x100 / 100.0) / 100.0  // KiloJoules per hour
+                / 3600.0  // KiloJoules per second == KiloWatt
+                / 0.7457  // HPs burnt
+                * 0.2;  // HPs delivered
+        } // if
+    } // if
+
+    float deliveredTorque = -1.0;
+    if (deliveredPower >= 0.0 && IsEngineRpmValid())
+    {
+        // Torque (N.m) = 9548.8 x Power (kW) / Speed (RPM) = 7120.54 x Power (HP) / Speed (RPM)
+        deliveredTorque = 7120.54 * deliveredPower / (engineRpm_x8 / 8.0);
+    } // if
 
     const static char jsonFormatter1[] PROGMEM =
     "{\n"
@@ -1308,12 +1398,14 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             "\"small_screen\": \"%S\",\n"
             "\"exp_moving_avg_speed\": \"%u\",\n"
             "\"inst_consumption_lt_100\": \"%S\",\n"
+            "\"delivered_power\": \"%S\",\n"
+            "\"delivered_torque\": \"%S\",\n"
             "\"distance_to_empty\": \"%u\",\n"
             "\"avg_speed_1\": \"%u\",\n"
             "\"distance_1\": \"%S\",\n"
             "\"avg_consumption_lt_100_1\": \"%S\"";
 
-    char floatBuf[2][MAX_FLOAT_SIZE];
+    char floatBuf[4][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter1,
         data[7] & 0x80 ? openStr : closedStr,
         data[7] & 0x40 ? openStr : closedStr,
@@ -1337,11 +1429,15 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         //
         data[13],
 
-        instConsumptionLt100 == 0xFFFF ? PSTR("--.-") : FloatToStr(floatBuf[0], (float)instConsumptionLt100 / 10.0, 1),
+        instConsumptionValid ? FloatToStr(floatBuf[0], (float)instConsumptionLt100_x10 / 10.0, 1) : notApplicableFloatStr,
+        deliveredPower >= 0.0 ? FloatToStr(floatBuf[1], deliveredPower, 1) : notApplicableFloatStr,
+        deliveredTorque >= 0.0 ? FloatToStr(floatBuf[2], deliveredTorque, 1) : notApplicableFloatStr,
         (uint16_t)data[24] << 8 | data[25],
         avgSpeedTrip1,
-        distanceTrip1 == 0xFFFF ? notApplicable2Str : ToStr(distanceTrip1),
-        avgConsumptionLt100Trip1 == 0xFFFF ? PSTR("--.-") : FloatToStr(floatBuf[1], (float)avgConsumptionLt100Trip1 / 10.0, 1)
+        distanceTrip1 != 0xFFFF ? ToStr(distanceTrip1) : notApplicable2Str,
+        avgConsumptionLt100Trip1 != 0xFFFF ?
+            FloatToStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
+            notApplicableFloatStr
     );
 
     const static char jsonFormatter2[] PROGMEM =
@@ -1356,7 +1452,9 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         snprintf_P(buf + at, n - at, jsonFormatter2,
             avgSpeedTrip2,
             distanceTrip2 == 0xFFFF ? notApplicable2Str : ToStr(distanceTrip2),
-            avgConsumptionLt100Trip2 == 0xFFFF ? PSTR("--.-") : FloatToStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1)
+            avgConsumptionLt100Trip2 != 0xFFFF ?
+                FloatToStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1) :
+                notApplicableFloatStr
         );
 
     // JSON buffer overflow?
@@ -1619,12 +1717,12 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     const uint8_t* data = pkt.Data();
 
-    uint16_t engineRpm = (uint16_t)data[0] << 8 | data[1];
-    uint16_t vehicleSpeed = (uint16_t)data[2] << 8 | data[3];
+    engineRpm_x8 = (uint16_t)data[0] << 8 | data[1];
+    vehicleSpeed_x100 = (uint16_t)data[2] << 8 | data[3];
     uint32_t seq = (uint32_t)data[4] << 16 | (uint32_t)data[5] << 8 | data[6];  // What use?
 
-    static long prevEngineRpm = 0;
-    static long prevVehicleSpeed = 0;
+    static long prevEngineRpm_x8 = 0;
+    static long prevVehicleSpeed_x100 = 0;
     static uint32_t prevSeq = 0;
 
     // With engine running, there are about 20 or so of these packets per second. Limit the rate somewhat.
@@ -1634,19 +1732,19 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     static unsigned long lastUpdated = 0;
     unsigned long now = millis();
 
-    long diffEngineRpm = engineRpm - prevEngineRpm;
-    long diffVehicleSpeed = vehicleSpeed - prevVehicleSpeed;
+    long diffEngineRpm_x8 = engineRpm_x8 - prevEngineRpm_x8;
+    long diffVehicleSpeed_x100 = vehicleSpeed_x100 - prevVehicleSpeed_x100;
 
     // Arithmetic has safe roll-over
-    if (abs(diffEngineRpm) < 10 * 8 && abs(diffVehicleSpeed) < 100 * 1 && now - lastUpdated < 1000)
+    if (abs(diffEngineRpm_x8) < 10 * 8 && abs(diffVehicleSpeed_x100) < 100 * 1 && now - lastUpdated < 1000)
     {
         return VAN_PACKET_NO_CONTENT;
     } // if
 
     lastUpdated = now;
 
-    prevEngineRpm = engineRpm;
-    prevVehicleSpeed = vehicleSpeed;
+    prevEngineRpm_x8 = engineRpm_x8;
+    prevVehicleSpeed_x100 = vehicleSpeed_x100;
     prevSeq = seq;
 
     const static char jsonFormatter[] PROGMEM =
@@ -1661,16 +1759,16 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     char floatBuf[2][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
-        engineRpm == 0xFFFF ?
-            //PSTR("---.-") :
-            PSTR("---") :
-            //FloatToStr(floatBuf[0], engineRpm / 8.0, 1),
-            FloatToStr(floatBuf[0], engineRpm / 8.0, 0),
-        vehicleSpeed == 0xFFFF ?
-            //PSTR("---.--") :
-            PSTR("--") :
-            //FloatToStr(floatBuf[1], vehicleSpeed / 100.0, 2)
-            FloatToStr(floatBuf[1], vehicleSpeed / 100.0, 0)
+        IsEngineRpmValid() ?
+            //FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 1) :
+            FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 0) :
+            //PSTR("---.-"),
+            notApplicable3Str,
+        IsVehicleSpeedValid() ?
+            //FloatToStr(floatBuf[1], vehicleSpeed_x100 / 100.0, 2) :
+            FloatToStr(floatBuf[1], vehicleSpeed_x100 / 100.0, 0) :
+            //PSTR("---.--")
+            notApplicable2Str
     );
 
     // JSON buffer overflow?

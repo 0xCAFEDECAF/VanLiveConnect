@@ -142,6 +142,25 @@ textarea
   }
 }
 
+/* Style the "ice glow" effect */
+.glowIce
+{
+  color: #fff;
+  animation: glowIce 1s ease-in-out infinite alternate;
+}
+@-webkit-keyframes glowIce
+{
+  from
+  {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #0f00e6, 0 0 40px #0f00e6, 0 0 50px #0f00e6, 0 0 60px #0f00e6, 0 0 70px #0f00e6;
+  }
+  
+  to
+  {
+    text-shadow: 0 0 20px #fff, 0 0 30px #4d91ff, 0 0 40px #4d91ff, 0 0 50px #4d91ff, 0 0 60px #4d91ff, 0 0 70px #4d91ff, 0 0 80px #4d91ff;
+  }
+}
+
 /* Style the "icon" elements */
 .icon
 {

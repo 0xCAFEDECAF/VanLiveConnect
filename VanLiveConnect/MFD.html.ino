@@ -92,8 +92,8 @@ char mfd_html[] PROGMEM = R"=====(
            |  | `- div id="satnav_guidance"
            |  |
            |  |  # Popups in the "large" information panel
-           |  `- div id="notification_popup"  # Popup window with warning or information icon
            |  `- div id="door_open_popup"  # Door open popup
+           |  `- div id="notification_popup"  # Popup window with warning or information icon
            |  `- div id="satnav_initializing_popup"  # Sat nav initializing popup
            |  `- div id="satnav_input_stored_in_personal_dir_popup"
            |  `- div id="satnav_input_stored_in_professional_dir_popup"
@@ -623,8 +623,8 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <!-- Status LEDs -->
-        <div id="warning_led" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2; left:0px; top:410px; width:140px; height:140px;"></div>
-        <div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2; left:110px; top:410px; width:140px; height:140px;"></div>
+        <div id="warning_led" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; left:0px; top:390px; width:170px; height:160px;"></div>
+        <div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
         <div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
         <div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
 
@@ -634,7 +634,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="centerAligned fas fa-key"></div>
         </div>
 
-        <div id="contact_key_position" class="dots" style="padding-left:30px; line-height:2; left:110px; top:335px; width:260px; height:120px;"></div>
+        <div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;"></div>
 
         <!-- Dashboard illumination level -->
 
@@ -709,12 +709,20 @@ char mfd_html[] PROGMEM = R"=====(
         <div class="tag" style="text-align:left; left:840px; top:310px; width:140px;">rpm</div>
 
         <!-- Odometer -->
-        <div class="icon iconMedium" style="left:10px; top:400px; width:90px;">...</div>
-        <div class="icon iconMedium" style="left:100px; top:400px;">
+        <div class="icon iconMedium" style="left:10px; top:390px; width:90px;">...</div>
+        <div class="icon iconMedium" style="left:100px; top:390px;">
           <div class="fas fa-car-side"></div>
         </div>
-        <div id="odometer_1" class="dseg7" style="font-size:50px; left:220px; top:425px; width:300px;">--.-</div>
-        <div class="tag" style="text-align:left; left:530px; top:430px; width:80px;">km</div>
+        <div id="odometer_1" class="dseg7" style="font-size:50px; left:220px; top:415px; width:300px;">--.-</div>
+        <div class="tag" style="text-align:left; left:530px; top:420px; width:80px;">km</div>
+
+        <!-- Delivered power (estimation) -->
+        <div id="delivered_power" class="dseg7" style="font-size:50px; left:630px; top:415px; width:200px;">--.-</div>
+        <div class="tag" style="text-align:left; left:840px; top:417px; width:80px;">HP</div>
+
+        <!-- Delivered torque (estimation) -->
+        <div id="delivered_torque" class="dseg7" style="font-size:50px; left:630px; top:480px; width:200px;">--.-</div>
+        <div class="tag" style="text-align:left; left:840px; top:482px; width:80px;">Nm</div>
 
       </div>  <!-- Instrument cluster -->
 
@@ -1172,7 +1180,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_exit="unhighlightLetter();"
               class="dots buttonSelected"
               style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-                background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+                background:none; color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
             <div id="satnav_to_mfd_show_characters_line_2"
               UP_BUTTON="satnav_to_mfd_show_characters_line_1"
@@ -1184,7 +1192,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_exit="unhighlightLetter();"
               class="dots"
               style="left:25px; top:360px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-                background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ'</div>
+                background:none; color:#dfe7f2; border-style:none;">YZ'</div>
 
             <div
               button_orientation="horizontal"
@@ -1275,7 +1283,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_click="satnavListItemClicked();"
               style="font-size:40px; left:20px; top:180px; width:923px; height:360px;
                 overflow:hidden; white-space:nowrap;
-                background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">
+                background:none; color:#dfe7f2; border-style:none;">
             </div>
 
             <!-- Show spinning disk while text area is still empty, i.e. data is being retrieved -->
@@ -1316,7 +1324,7 @@ char mfd_html[] PROGMEM = R"=====(
               on_exit="unhighlightLetter();"
               class="dots buttonSelected"
               style="left:25px; top:310px; width:830px; line-height:1.5; display:inline-block; letter-spacing:25px;
-                background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">1234567890</div>
+                background:none; color:#dfe7f2; border-style:none;">1234567890</div>
 
             <div
               button_orientation="horizontal"
@@ -1621,7 +1629,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_exit="unhighlightLetter();"
             class="dots buttonSelected"
             style="left:25px; top:310px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+              background:none; color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
           <div id="satnav_archive_in_directory_characters_line_2"
             UP_BUTTON="satnav_archive_in_directory_characters_line_1"
@@ -1633,7 +1641,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_exit="unhighlightLetter();"
             class="dots"
             style="left:25px; top:380px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ0123456789_</div>
+              background:none; color:#dfe7f2; border-style:none;">YZ0123456789_</div>
 
           <div button_orientation="horizontal"
             style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
@@ -1693,7 +1701,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_exit="unhighlightLetter();"
             class="dots buttonSelected"
             style="left:25px; top:310px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+              background:none; color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
           <div id="satnav_rename_entry_in_directory_characters_line_2"
             UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
@@ -1705,7 +1713,7 @@ char mfd_html[] PROGMEM = R"=====(
             on_exit="unhighlightLetter();"
             class="dots"
             style="left:25px; top:380px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background-color:rgb(41,55,74); color:#dfe7f2; border-style:none;">YZ0123456789</div>
+              background:none; color:#dfe7f2; border-style:none;">YZ0123456789</div>
 
           <div button_orientation="horizontal"
             style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
@@ -2071,16 +2079,6 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- Popups in the "large" information panel -->
 
-      <!-- Notification popup, with warning or information icon -->
-      <div id="notification_popup" class="icon notificationPopup" style="display:none;">
-        <div id="notification_icon_warning" class="centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
-          style="display:none; position:absolute; left:30px;"></div>
-        <div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
-          style="display:block; position:absolute; left:30px;"></div>
-        <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
-        </div>
-      </div>
-
       <!-- Door open popup -->
 
       <div id="door_open_popup" class="icon notificationPopup" style="display:none;">
@@ -2110,6 +2108,16 @@ char mfd_html[] PROGMEM = R"=====(
           Door open!
         </div>
       </div>  <!-- "door_open_popup" -->
+
+      <!-- Notification popup, with warning or information icon -->
+      <div id="notification_popup" class="icon notificationPopup" style="display:none;">
+        <div id="notification_icon_warning" class="centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
+          style="display:none; position:absolute; left:30px;"></div>
+        <div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
+          style="display:block; position:absolute; left:30px;"></div>
+        <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
+        </div>
+      </div>
 
       <!-- Sat nav initializing popup -->
 
@@ -2470,8 +2478,6 @@ char mfd_html[] PROGMEM = R"=====(
     </div>  <!-- "system" -->
 
     <!-- "Status" line: fixed element in each screen -->
-    <div class="horizontalLine" style="left:0px; top:550px; width:1350px;"></div>
-
     <div id="comms_led" class="led ledOn" style="left:30px; top:590px; width:30px; height:30px;"></div>
 
     <div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
@@ -2486,9 +2492,11 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="distance_to_empty" class="dots" style="left:60px; top:15px; width:150px; font-size:50px; text-align:right;">---</div>
     </div>
 
-    <div gid="exterior_temperature" class="tab tabBottom" style="left:610px; top:550px; width:180px;">-- &deg;C</div>
-    <div id="date_small" class="tab tabBottom" style="left:795px; top:550px; width:320px;">---</div>
-    <div id="time_small" class="tab tabBottom" style="left:1120px; top:550px; width:180px;">--:--</div>
+    <div gid="exterior_temperature" class="tab tabBottom" style="left:610px; top:550px; width:200px;">-- &deg;C</div>
+    <div id="date_small" class="tab tabBottom" style="left:815px; top:550px; width:320px;">---</div>
+    <div id="time_small" class="tab tabBottom" style="left:1140px; top:550px; width:180px;">--:--</div>
+
+    <div class="horizontalLine" style="left:0px; top:550px; width:1350px;"></div>
 
   </body>
 </html>

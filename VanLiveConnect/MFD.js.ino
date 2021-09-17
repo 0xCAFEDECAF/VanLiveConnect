@@ -372,6 +372,8 @@ function changeLargeScreenTo(id)
 // Keep track of "engine running" condition
 var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 
+var engineCoolantTemperature = 80;  // In degrees Celsius
+
 var menuStack = [];
 
 function selectDefaultScreen(audioSource)
@@ -1536,6 +1538,8 @@ function showTunerPresetsPopup()
 // -----
 // Functions for satellite navigation menu and screen handling
 
+var satnavInitialized = false;
+
 // Current sat nav mode, saved as last reported in item "satnav_status_2"
 var satnavMode = "INITIALIZING";
 
@@ -1567,8 +1571,9 @@ function satnavShowDisclaimer()
 
 function satnavGotoMainMenu()
 {
-    // Show popup "Initializing navigator" as long as mode is "INITIALIZING"
-    if (satnavMode === "INITIALIZING")
+    // Show popup "Initializing navigator" as long as sat nav is not initialized
+    //if (satnavMode === "INITIALIZING")
+    if (! satnavInitialized)
     {
         showPopup("satnav_initializing_popup", 20000);
         return;
@@ -2513,6 +2518,18 @@ function satnavEscapeVocalSynthesisLevel()
     } // if
 } // satnavEscapeVocalSynthesisLevel
 
+function satnavPoweringOff()
+{
+    //$("#main_menu_goto_satnav_button").addClass("buttonDisabled");
+    //$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
+    //$("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
+    satnavInitialized = false;
+    $("#satnav_disc_recognized").addClass("ledOff");
+    handleItemChange.nSatNavDiscUnreadable = 1;
+    satnavDisclaimerAccepted = false;
+    satnavDestinationNotAccessibleByRoadPopupShown = false;
+} // function
+
 // -----
 // Handling of 'system' screen
 
@@ -3031,28 +3048,43 @@ function handleItemChange(item, value)
                 $("#cd_status_play").hide();
                 $("#cd_status_fast_forward").hide();
                 $("#cd_status_rewind").hide();
+                $("#cd_status_eject").hide();
             }
             else if (value === "CD_CHANGER")
             {
                 // Show the "loading" icon
-                $("#cd_changer_status_pause").hide();
-                $("#cd_changer_status_play").hide();
+                $("#cd_changer .icon").hide();
                 $("#cd_changer_status_loading").show();
-                $("#cd_changer_status_fast_forward").hide();
-                $("#cd_changer_status_rewind").hide();
-                //$("#cd_changer_status_next_track").hide();
-                //$("#cd_changer_status_previous_track").hide();
             } // if
 
             selectDefaultScreen(value);
         } // case
         break;
 
+        case "mute":
+        {
+            if (value !== "ON") break;
+
+            if (handleItemChange.currentAudioSource === "CD_CHANGER" && ! $("#cd_changer_status_pause").is(":visible"))
+            {
+                // Show the "pause" icon
+                $("#cd_changer .icon").hide();
+                $("#cd_changer_status_pause").show();
+            } // if
+        } // case
+        break;
+
         case "engine_rpm":
         {
             // If more than 3500 rpm or less than 500 rpm (but > 0), add glow effect
+
+            // Threshold of 3500 rpm is lowered with engine coolant temperature, but always at least 1700 rpm
+            var thresholdRpm = 3500;
+            if (engineCoolantTemperature < 80) thresholdRpm = 3500 - (80 - engineCoolantTemperature) * 30;
+            if (thresholdRpm < 1700) thresholdRpm = 1700;
+
             $('[gid="' + item + '"]').toggleClass("glow",
-                (parseInt(value) < 500 && parseInt(value) > 0) || parseInt(value) > 3500);
+                (parseInt(value) < 500 && parseInt(value) > 0) || parseInt(value) > thresholdRpm);
         } // case
         break;
 
@@ -3072,8 +3104,21 @@ function handleItemChange(item, value)
 
         case "water_temp":
         {
+            engineCoolantTemperature = parseFloat(value);
+
             // If more than 110 degrees, add glow effect
-            $('[gid="' + item + '"]').toggleClass("glow", parseInt(value) > 110);
+            $('[gid="' + item + '"]').toggleClass("glow", engineCoolantTemperature > 110);
+
+            // If less than 50 degrees, add "ice glow" effect
+            $('[gid="' + item + '"]').toggleClass("glowIce", engineCoolantTemperature < 50);
+        } // case
+        break;
+
+        case "exterior_temperature":
+        {
+            // If between -3 and +3 degrees Celsius, add "ice glow" effect
+            var temp10 = parseFloat(value) * 10;
+            $('[gid="' + item + '"]').toggleClass("glowIce", temp10 >= -30 && temp10 <= 30);
         } // case
         break;
 
@@ -3130,6 +3175,8 @@ function handleItemChange(item, value)
         {
             //console.log("Item '" + item + "' set to '" + value + "'");
 
+            // Note: If the system is in power save mode, "door_open" always reports "NO", even if a door is open
+
             // If on, add glow effect
             $("#" + item).removeClass("ledOn");
             $("#" + item).removeClass("ledOff");
@@ -3179,8 +3226,11 @@ function handleItemChange(item, value)
             var nDoorsOpen = 0;
             for (var id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
 
-            // All closed?
-            if (! isBootOpen && nDoorsOpen == 0)
+            // If on, add glow effect to "door_open" icon in the "pre_flight" screen
+            $("#door_open").toggleClass("glow", isBootOpen || nDoorsOpen > 0);
+
+            // All closed, or in the "pre_flight" screen?
+            if ((! isBootOpen && nDoorsOpen == 0) || currentLargeScreenId === "pre_flight")
             {
                 hidePopup("door_open_popup");
                 break;
@@ -3234,10 +3284,10 @@ function handleItemChange(item, value)
                     hidePopup();
                 } // if
 
-                if (localStorage.askForGuidanceContinuation === "YES")
+                if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES")
                 {
                     // Show popup "Continue guidance to destination? [Yes]/No"
-                    showPopup('satnav_continue_guidance_popup', 15000);
+                    showPopup("satnav_continue_guidance_popup", 15000);
 
                     localStorage.askForGuidanceContinuation = "NO";
                 } // if
@@ -3257,6 +3307,8 @@ function handleItemChange(item, value)
                         // "Continue guidance to destination?" the next time the contact key is turned "ON"
                         if (satnavMode === "IN_GUIDANCE_MODE") localStorage.askForGuidanceContinuation = "YES";
 
+                        satnavPoweringOff();
+
                         // Show the audio screen (or fallback to current location or clock)
                         selectDefaultScreen();
                         handleItemChange.contactKeyOffTimer = null;
@@ -3274,8 +3326,8 @@ function handleItemChange(item, value)
             // Only if not empty
             if (value === "") break;
 
-            var message = value.slice(0, -1);
             var isWarning = value.slice(-1) === "!";
+            var message = isWarning ? value.slice(0, -1) : value;
             showNotificationPopup(message, 10000, isWarning);
         } // case
         break;
@@ -3290,10 +3342,24 @@ function handleItemChange(item, value)
             if (satnavStatus1.match(/AUDIO/))
             {
                 // Turn on or off "satnav_audio" LED
-                // TODO - set timeout on LED, in case the "AUDIO OFF" packet is missed
                 var playingAudio = satnavStatus1.match(/START/) !== null;
                 $("#satnav_audio").toggleClass("ledOn", playingAudio);
                 $("#satnav_audio").toggleClass("ledOff", ! playingAudio);
+
+                clearInterval(handleItemChange.showSatnavAudioLed);
+                if (playingAudio)
+                {
+                    // Set timeout on LED, in case the "AUDIO OFF" packet is missed (yes, that does happen)
+                    handleItemChange.showSatnavAudioLed = setTimeout
+                    (
+                        function ()
+                        {
+                            $("#satnav_audio").removeClass("ledOn");
+                            $("#satnav_audio").addClass("ledOff");
+                        },
+                        5000
+                    );
+                } // if
             } // if
 
             // Show one or the other
@@ -3357,19 +3423,19 @@ function handleItemChange(item, value)
                 satnavRouteComputed = false;
             } // if
 
-            if (value === "INITIALIZING")
-            {
-                if (currentLargeScreenId === "satnav_main_menu" || currentLargeScreenId === "satnav_disclaimer")
-                {
-                    // In these screens, show the "Initializing navigator" popup as long as the mode is "INITIALIZING"
-                    showPopup("satnav_initializing_popup", 20000);
-                } // if
-            }
-            else
-            {
-                // Hide any popup "Navigation system being initialized" if no longer "INITIALIZING"
-                hidePopup("satnav_initializing_popup");
-            } // if
+            // if (value === "INITIALIZING")
+            // {
+                // if (currentLargeScreenId === "satnav_main_menu" || currentLargeScreenId === "satnav_disclaimer")
+                // {
+                    // // In these screens, show the "Initializing navigator" popup as long as the mode is "INITIALIZING"
+                    // showPopup("satnav_initializing_popup", 20000);
+                // } // if
+            // }
+            // else
+            // {
+                // // Hide any popup "Navigation system being initialized" if no longer "INITIALIZING"
+                // hidePopup("satnav_initializing_popup");
+            // } // if
         } // case
         break;
 
@@ -3381,13 +3447,7 @@ function handleItemChange(item, value)
             }
             else if (value === "POWERING_OFF")
             {
-                //$("#main_menu_goto_satnav_button").addClass("buttonDisabled");
-                //$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
-                //$("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
-                $("#satnav_disc_recognized").addClass("ledOff");
-                handleItemChange.nSatNavDiscUnreadable = 1;
-                satnavDisclaimerAccepted = false;
-                satnavDestinationNotAccessibleByRoadPopupShown = false;
+                satnavPoweringOff();
             }
             else if (value === "CALCULATING_ROUTE")
             {
@@ -3399,7 +3459,7 @@ function handleItemChange(item, value)
 
         case "satnav_guidance_status":
         {
-            if (value.match(/CALCULATING_ROUTE/))
+            if (value.match(/CALCULATING_ROUTE/) && value.match(/DISC_PRESENT/))
             {
                 satnavCalculatingRoute();
             }
@@ -3735,9 +3795,11 @@ function handleItemChange(item, value)
 
                     // Show the spinning disc after a second or so
                     clearInterval(handleItemChange.showCharactersSpinningDiscTimer);
-                    handleItemChange.showCharactersSpinningDiscTimer = setTimeout(
+                    handleItemChange.showCharactersSpinningDiscTimer = setTimeout
+                    (
                         function () { $("#satnav_to_mfd_show_characters_spinning_disc").show(); },
-                        1500);
+                        1500
+                    );
                 } // case
                 break;
 
@@ -3896,6 +3958,31 @@ function handleItemChange(item, value)
 
             // Save also in local (persistent) store
             localStorage.satnavGuidancePreference = value;
+        } // case
+        break;
+
+        case "satnav_system_id":
+        {
+            // console.log("Item '" + item + "' set to '" + value + "'");
+
+            // As soon as any value is received for this ID, the sat nav is considered "initialized"
+            satnavInitialized = true;
+
+            // Hide any popup "Navigation system being initialized" (if shown)
+            hidePopup("satnav_initializing_popup");
+
+            // Show "Continue guidance? (yes/no)" popup if applicable
+            if (handleItemChange.contactKeyPosition === "ON")
+            {
+                if (localStorage.askForGuidanceContinuation === "YES")
+                {
+                    // Show popup "Continue guidance to destination? [Yes]/No"
+                    showPopup("satnav_continue_guidance_popup", 15000);
+
+                    localStorage.askForGuidanceContinuation = "NO";
+                } // if
+            } // if
+
         } // case
         break;
 
@@ -4195,11 +4282,12 @@ function handleItemChange(item, value)
                 // Ignore the "Esc" button when in guidance mode
                 if ($("#satnav_guidance").is(":visible")) break;
 
-                // Very special situation... Escaping out of list of services after entering a "Select a Service"
+                // Very special situation... Escaping out of list of services after entering a new "Select a Service"
                 // address means escaping back all the way to the to the "Select a Service" address screen.
                 if (currentMenu === "satnav_choose_from_list"
                     && $("#mfd_to_satnav_request").text() === "Service"  // TODO - other language?
-                    && menuStack.indexOf("satnav_show_last_destination") >= 0)
+                    && menuStack.indexOf("satnav_show_last_destination") >= 0
+                    && menuStack[menuStack.length - 1] !== "satnav_show_last_destination")
                 {
                     exitMenu();
                     exitMenu();
@@ -4764,9 +4852,11 @@ function demoMode()
     $("#vin").text("VF38FRHZF80371XXX");
 
     // Instrument cluster
-    $('[gid="vehicle_speed"]').text("0");
-    $('[gid="engine_rpm"]').text("873");
+    $('[gid="vehicle_speed"]').text("95");
+    $('[gid="engine_rpm"]').text("1873");
     $("#odometer_1").text("65 803.2");
+    $("#delivered_power").text("30.7");
+    $("#delivered_torque").text("23.1");
 
     // Sat nav
     $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
