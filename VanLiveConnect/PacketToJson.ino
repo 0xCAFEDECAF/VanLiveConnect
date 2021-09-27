@@ -60,6 +60,9 @@ PGM_P dashStr = notApplicable1Str;
 // Defined in PacketFilter.ino
 bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter);
 
+// Defined in IRrecv.ino
+PGM_P LargeScreenStr(uint8_t idx);
+
 // Functions for (emulated) EEPROM
 void WriteEeprom(int const address, uint8_t const val);
 void CommitEeprom();
@@ -184,30 +187,14 @@ void PrintJsonText(const char* jsonBuffer)
     } // while
 } // PrintJsonText
 
-// Index of small screen
-enum SmallScreen_t
-{
-    SMALL_SCREEN_INVALID = 0xFF,
-    SMALL_SCREEN_FIRST = 0,
-
-    // Same order as the original MFD goes through as the driver short-presses the right stalk button
-    SMALL_SCREEN_TRIP_INFO_1 = SMALL_SCREEN_FIRST, // When the original MFD is plugged in, this is what it starts with
-    SMALL_SCREEN_TRIP_INFO_2,
-    SMALL_SCREEN_GPS_INFO, // Skipped when in guidance mode
-    SMALL_SCREEN_FUEL_CONSUMPTION,
-
-    SMALL_SCREEN_LAST = SMALL_SCREEN_FUEL_CONSUMPTION,
-    N_SMALL_SCREENS
-}; // enum SmallScreen_t
-
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-PGM_P SmallScreenStr(uint8_t data)
+PGM_P SmallScreenStr(uint8_t idx)
 {
     return
-        data == SMALL_SCREEN_TRIP_INFO_1 ? PSTR("TRIP_INFO_1") :
-        data == SMALL_SCREEN_TRIP_INFO_2 ? PSTR("TRIP_INFO_2") :
-        data == SMALL_SCREEN_GPS_INFO ? PSTR("GPS_INFO") :
-        data == SMALL_SCREEN_FUEL_CONSUMPTION ? PSTR("FUEL_CONSUMPTION") :
+        idx == SMALL_SCREEN_TRIP_INFO_1 ? PSTR("TRIP_INFO_1") :
+        idx == SMALL_SCREEN_TRIP_INFO_2 ? PSTR("TRIP_INFO_2") :
+        idx == SMALL_SCREEN_GPS_INFO ? PSTR("GPS_INFO") :
+        idx == SMALL_SCREEN_FUEL_CONSUMPTION ? PSTR("FUEL_CONSUMPTION") :
         notApplicable3Str;
 } // SmallScreenStr
 
@@ -669,7 +656,7 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
     return VAN_PACKET_PARSE_OK;
 } // ParseVinPkt
 
-static bool economyMode = false;
+bool economyMode = false;
 
 VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -1177,10 +1164,6 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
     return VAN_PACKET_PARSE_OK;
 } // ParseDeviceReportPkt
 
-// Keep track of the tab selected in the trip info popup (as shown during sat nav guidance mode, after pressing
-// the right stalk button)
-int tripInfoPopupTabIndex = -1;
-
 // Value stored in (emulated) EEPROM
 uint8_t smallScreenIndex = SMALL_SCREEN_INVALID;
 #define SMALL_SCREEN_EEPROM_POS (1)
@@ -1194,8 +1177,9 @@ void InitSmallScreenIndex()
 
     // TODO - remove
     Serial.printf_P(
-        PSTR("=====> Read value %u from EEPROM position %d\n"),
+        PSTR("=====> Read value %u (%S) from EEPROM position %d\n"),
         smallScreenIndex,
+        SmallScreenStr(smallScreenIndex),
         SMALL_SCREEN_EEPROM_POS);
 
     if (smallScreenIndex >= SMALL_SCREEN_FIRST && smallScreenIndex <= SMALL_SCREEN_LAST) return;
@@ -1205,6 +1189,10 @@ void InitSmallScreenIndex()
 
     WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
 } // InitSmallScreenIndex
+
+uint8_t largeScreenIndex = LARGE_SCREEN_CLOCK;
+uint8_t largeScreenIndexBeforeGoingIntoGuidanceMode = LARGE_SCREEN_CLOCK;
+uint8_t largeScreenIndexBeforeHeadUnitSwitchedOn = LARGE_SCREEN_CLOCK;
 
 uint16_t vehicleSpeed_x100 = 0xFFFF;  // in units of 0.01 km/h, i.e. 9000 = 90 km/h
 inline bool IsVehicleSpeedValid()
@@ -1218,7 +1206,8 @@ inline bool IsEngineRpmValid()
     return engineRpm_x8 != 0xFFFF;
 } // IsEngineRpmValid
 
-bool satnavGuidanceActive = false;
+bool isSatnavGuidanceActive = false;
+bool isCurrentStreetKnown = false;
 
 VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -1228,6 +1217,11 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     const uint8_t* data = pkt.Data();
     int dataLen = pkt.DataLen();
 
+    // Only continue parsing if actual content differs, not just the sequence number
+    static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
+    if (memcmp(data + 1, packetData, dataLen - 2) == 0) return VAN_PACKET_DUPLICATE;
+    memcpy(packetData, data + 1, dataLen - 2);
+
     InitSmallScreenIndex();
 
     // Keep track when the stalk was pressed, so that we can distinguish between short press and long press
@@ -1236,26 +1230,6 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     static bool stalkWasPressed = false;
 
     bool stalkIsPressed = data[10] & 0x01;
-
-    // Not in sat nav guidance mode?
-    if (! satnavGuidanceActive)
-    {
-        tripInfoPopupTabIndex = -1;
-    }
-    else
-    {
-        // In guidance mode
-
-        if (tripInfoPopupTabIndex < 0)
-        {
-            // Stay in the current small screen
-            tripInfoPopupTabIndex = smallScreenIndex;
-
-            // But if the GPS info screen was showing, go to the next screen (SMALL_SCREEN_FUEL_CONSUMPTION)
-            if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
-            tripInfoPopupTabIndex %= N_SMALL_SCREENS;
-        } // if
-    } // if
 
     while (! economyMode)
     {
@@ -1268,57 +1242,60 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         if (! stalkWasPressed && stalkIsPressed)
         {
             stalkLastPressed = now;
+
+            // TODO - remove
+            Serial.printf_P(
+                PSTR("=====> Right stalk button pressed; stalkLastPressed = %lu\n"), stalkLastPressed);
+
             break;
         } // if
 
         // Only continue if just released
         if (! stalkWasPressed || stalkIsPressed) break;
 
+        // TODO - remove
+        Serial.printf_P(PSTR("=====> Right stalk button released\n"));
+
         // Only continue if it was a short-press
         // Note: short-press = switch screen; long-press = reset trip counter currently shown (if any)
-        if (now - stalkLastPressed >= 1000) break; // TODO - exact time
+        if (now - stalkLastPressed >= 1000)  // TODO - exact time
+        {
+            // TODO - remove
+            Serial.printf_P(PSTR("=====> Right stalk button long-press detected\n"));
 
-        // Not in sat nav guidance mode?
-        if (! satnavGuidanceActive)
+            break;
+        } // if
+
+        // TODO - remove
+        Serial.printf_P(PSTR("=====> Right stalk button short-press detected\n"));
+
+        // Keep track of the cycling through the trip computer screens in the original MFD.
+        // Only cycle if any trip computer screen is showing (either in the small screen or in the large screen).
+        // Note: if the trip computer is shown in the popup, the index is kept as is.
+        if (! isSatnavGuidanceActive || largeScreenIndex == LARGE_SCREEN_TRIP_COMPUTER)
         {
             // Short-press of right stalk button selects next small screen
             smallScreenIndex++;
+
+            // In the trip computer showing on the large screen, skip the "GPS info" screen
+            if (largeScreenIndex == LARGE_SCREEN_TRIP_COMPUTER && smallScreenIndex == SMALL_SCREEN_GPS_INFO)
+            {
+                smallScreenIndex++;
+            } // if
+
             smallScreenIndex %= N_SMALL_SCREENS;
+
+            // TODO - remove
+            Serial.printf_P(
+                PSTR("=====> Right stalk button short-press; not in guidance mode; smallScreenIndex := %u (%S)\n"),
+                smallScreenIndex,
+                SmallScreenStr(smallScreenIndex)
+            );
 
             WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
 
             break;
         } // if
-
-        // In sat nav guidance mode, the logic is a bit weird:
-        // - The first short-press does not switch screen but simply triggers the trip info popup on the original MFD.
-        // - As long as the trip info popup is visible, the next short-press leads to the next tab on the original MFD.
-        //   Our implementation is to go to the next small screen (but skipping the SMALL_SCREEN_GPS_INFO screen).
-        // - Which tab is shown in the trip info popup is not stored; i.e., when leaving guidance mode,
-        //   the small screen (left on the MFD) goes back to the tab it was originally showing.
-
-        static unsigned long popupLastAppeared;
-
-        // Arithmetic has safe roll-over
-        if (now - popupLastAppeared > 8000)
-        {
-            // The popup is not visible: short-press simply triggers the popup on the original MFD.
-            // Our implementation is to stay in the current small screen.
-        }
-        else
-        {
-            // As long as the popup is visible on the original MFD, short-press cycles through the 2 trip counters
-            // and the fuel consumption tab
-            tripInfoPopupTabIndex++;
-
-            // Skip GPS info screen
-            if (tripInfoPopupTabIndex == SMALL_SCREEN_GPS_INFO) tripInfoPopupTabIndex++;
-
-            // Roll-over if necessary
-            tripInfoPopupTabIndex %= N_SMALL_SCREENS;
-        } // if
-
-        popupLastAppeared = now;
 
         break;
     } // while
@@ -1413,7 +1390,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         data[7] & 0x10 ? openStr : closedStr,
         data[7] & 0x08 ? openStr : closedStr,
         stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
-        SmallScreenStr(tripInfoPopupTabIndex >= 0 ? tripInfoPopupTabIndex : smallScreenIndex),
+        SmallScreenStr(smallScreenIndex),
 
         // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
         // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.
@@ -2199,14 +2176,10 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
             if (totalTracksValid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
 
             char totalTimeStr[7];
-            bool totalTimeValid = dataLen >= 12;
-            if (totalTimeValid)
-            {
-                uint8_t totalTimeMin = data[9];
-                uint8_t totalTimeSec = data[10];
-                totalTimeValid = totalTimeMin != 0xFF && totalTimeSec != 0xFF;
-                if (totalTimeValid) sprintf_P(totalTimeStr, PSTR("%X:%02X"), totalTimeMin, totalTimeSec);
-            } // if
+            uint8_t totalTimeMin = data[9];
+            uint8_t totalTimeSec = data[10];
+            bool totalTimeValid = totalTimeMin != 0xFF && totalTimeSec != 0xFF;
+            if (totalTimeValid) sprintf_P(totalTimeStr, PSTR("%X:%02X"), totalTimeMin, totalTimeSec);
 
             const static char jsonFormatter[] PROGMEM =
             "{\n"
@@ -2314,8 +2287,9 @@ VanPacketParseResult_t ParseTimePkt(TVanPacketRxDesc& pkt, char* buf, const int 
     return VAN_PACKET_PARSE_OK;
 } // ParseTimePkt
 
-static bool seenTapePresence = false;
-static bool seenCdPresence = false;
+bool isHeadUnitPowerOn = false;
+bool seenTapePresence = false;
+bool seenCdPresence = false;
 
 VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -2325,10 +2299,56 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
 
     const uint8_t* data = pkt.Data();
     uint8_t volume = data[5] & 0x7F;
-    bool tapePresent = data[4] & 0x20;
-    bool cdPresent = data[4] & 0x40;
-    seenTapePresence = seenTapePresence || tapePresent;
-    seenCdPresence = seenCdPresence || cdPresent;
+    isHeadUnitPowerOn = data[2] & 0x01;
+    bool isTapePresent = data[4] & 0x20;
+    bool isCdPresent = data[4] & 0x40;
+    seenTapePresence = seenTapePresence || isTapePresent;
+    seenCdPresence = seenCdPresence || isCdPresent;
+
+    static bool washeadUnitPowerOn = false;
+    if (! washeadUnitPowerOn && isHeadUnitPowerOn)
+    {
+        if (! isSatnavGuidanceActive)
+        {
+            // Turning on head unit and no guidance active: update to the correct large screen index
+            largeScreenIndex = LARGE_SCREEN_HEAD_UNIT;
+
+            // TODO - remove
+            Serial.printf_P(
+                PSTR("=====> Head unit powered on; largeScreenIndex := %u (%S)\n"),
+                largeScreenIndex,
+                LargeScreenStr(largeScreenIndex)
+            );
+        }
+        else
+        {
+            // Guidance active
+            //largeScreenIndexBeforeHeadUnitSwitchedOn = largeScreenIndex;
+            if (largeScreenIndex == LARGE_SCREEN_CLOCK) largeScreenIndex = LARGE_SCREEN_HEAD_UNIT;
+        } // if
+    }
+    else if (washeadUnitPowerOn && ! isHeadUnitPowerOn && largeScreenIndex == LARGE_SCREEN_HEAD_UNIT)
+    {
+        // Turning off head unit: update to the correct large screen index
+        if (isSatnavGuidanceActive)
+        {
+            // Go to trip computer if the guidance screen was no showing when the head unit was switched on
+            // if (largeScreenIndexBeforeHeadUnitSwitchedOn != LARGE_SCREEN_GUIDANCE) largeScreenIndex = LARGE_SCREEN_TRIP_COMPUTER;
+            // else largeScreenIndex = LARGE_SCREEN_GUIDANCE;
+            largeScreenIndex = LARGE_SCREEN_TRIP_COMPUTER;
+        }
+        else if (isCurrentStreetKnown) largeScreenIndex = LARGE_SCREEN_CURRENT_STREET;
+        else largeScreenIndex = LARGE_SCREEN_CLOCK;
+
+        // TODO - remove
+        Serial.printf_P(
+            PSTR("=====> Head unit powered off; largeScreenIndex := %u (%S)\n"),
+            largeScreenIndex,
+            LargeScreenStr(largeScreenIndex)
+        );
+    } // if
+    
+    washeadUnitPowerOn = isHeadUnitPowerOn;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2360,16 +2380,17 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"fader_update\": \"%S\",\n"
             "\"balance\": \"%+d\",\n"
             "\"balance_update\": \"%S\",\n"
-            "\"auto_volume\": \"%S\"\n"
+            "\"auto_volume\": \"%S\",\n"
+            "\"large_screen\": \"%S\"\n"
         "}\n"
     "}\n";
 
     char floatBuf[MAX_FLOAT_SIZE];
 
     int at = snprintf_P(buf, n, jsonFormatter,
-        data[2] & 0x01 ? onStr : offStr,  // Power
-        tapePresent ? yesStr : noStr,  // Tape present
-        cdPresent ? yesStr : noStr,  // CD present
+        isHeadUnitPowerOn ? onStr : offStr,  // Power
+        isTapePresent ? yesStr : noStr,  // Tape present
+        isCdPresent ? yesStr : noStr,  // CD present
 
         (data[4] & 0x0F) == 0x00 ? noneStr :  // Source of audio
         (data[4] & 0x0F) == 0x01 ? PSTR("TUNER") :
@@ -2411,7 +2432,8 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         data[7] & 0x80 ? yesStr : noStr,
         (sint8_t)(0x3F) - (data[6] & 0x7F),  // Balance
         data[6] & 0x80 ? yesStr : noStr,
-        data[1] & 0x04 ? onStr : offStr  // Auto volume
+        data[1] & 0x04 ? onStr : offStr,  // Auto volume
+        LargeScreenStr(largeScreenIndex)
     );
 
     // JSON buffer overflow?
@@ -2436,9 +2458,15 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         TRIP_COUTER_2_RESET = 0x60FF
     }; // enum MfdStatus_t
 
-    // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
-    // when the MFD is active and VAN packets are being received. VAN bus and SPIFFS don't work well together.
-    if (mfdStatus == MFD_SCREEN_OFF) CommitEeprom();
+    if (mfdStatus == MFD_SCREEN_OFF)
+    {
+        // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
+        // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system don't work well
+        // together.
+        CommitEeprom();
+
+        isCurrentStreetKnown = false;
+    } // if
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2464,10 +2492,18 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
     {
         // Force change to the appropriate small screen (left hand side of the display)
 
-        uint8_t smallScreenIdx = mfdStatus == TRIP_COUTER_1_RESET ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
-        if (smallScreenIndex != smallScreenIdx)
+        uint8_t newSmallScreenIndex = mfdStatus == TRIP_COUTER_1_RESET ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
+        if (smallScreenIndex != newSmallScreenIndex)
         {
-            smallScreenIndex = smallScreenIdx;
+            smallScreenIndex = newSmallScreenIndex;
+
+            // TODO - remove
+            Serial.printf_P(
+                PSTR("=====> Right stalk button long-press; smallScreenIndex := %u (%S)\n"),
+                smallScreenIndex,
+                SmallScreenStr(smallScreenIndex)
+            );
+
             WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
         } // if
 
@@ -2477,7 +2513,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
                     ",\n"
                     "\"small_screen\": \"%S\""
                 ),
-                SmallScreenStr(smallScreenIdx)
+                SmallScreenStr(smallScreenIndex)
             );
     } // if
 
@@ -2755,9 +2791,9 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
         data[2] == 0xC4 ? PSTR("FAST_FORWARD") :
         data[2] == 0xC5 ? PSTR("REWIND") :
         data[2] == 0xD3 ?
-            // "PLAY-SEARCHING" (data[2] == 0xD3) with discs found (data[10] > 0) and invalid values for currentDisc/
-            // currentTrack seems to indicate an error condition, e.g. disc inserted wrong way round.
-            data[10] >= 0 && currentDisc == 0xFF && currentTrack == 0xFF ? PSTR("ERROR") :
+            // "PLAY-SEARCHING" (data[2] == 0xD3) with invalid values for currentDisc and currentTrack indicates
+            // an error condition, e.g. disc inserted wrong way round
+            currentDisc == 0xFF && currentTrack == 0xFF ? PSTR("ERROR") :
             PSTR("PLAY-SEARCHING") :
         ToHexStr(data[2]),
 
@@ -2830,7 +2866,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0301 ? PSTR("IN_GUIDANCE_MODE_2") :
         status == 0x0320 ? PSTR("STOPPING_GUIDANCE") :
         status == 0x0400 ? PSTR("START_OF_AUDIO_MESSAGE") :
-        status == 0x0410 ? PSTR("ARRIVED_AT_DESTINATION_1") :
+        status == 0x0410 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :
         status == 0x0600 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x0700 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START_1") :
         status == 0x0701 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START_2") :
@@ -2838,7 +2874,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x4000 ? PSTR("GUIDANCE_STOPPED") :
         status == 0x4001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
-        status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_2") :
+        status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :
         status == 0x9000 ? PSTR("READING_DISC_2") :
         status == 0x9080 ? PSTR("START_CALCULATING_ROUTE") : // TODO - guessing
         status == 0xD001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
@@ -2862,6 +2898,7 @@ bool satnavEquipmentDetected = true;
 // Saved equipment status (volatile)
 PGM_P satnavStatus2Str = emptyStr;
 bool satnavDiscRecognized = false;
+bool satnavInitialized = false;
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -2943,7 +2980,8 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         satnavStatus2 == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
         emptyStr;
 
-    satnavGuidanceActive = satnavStatus2 == 0x05;
+    static bool wasSatnavGuidanceActive = false;
+    isSatnavGuidanceActive = satnavStatus2 == 0x05;
     satnavDiscRecognized = (data[2] & 0x70) == 0x30;
 
     const static char jsonFormatter[] PROGMEM =
@@ -3009,9 +3047,56 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     if (! satnavEquipmentDetected)
     {
+        // Large packet received, so sat nav equipment is obviously present. Add this to the JSON data.
+        // 'satnavEquipmentDetected' is set to 'true' after successful return; see below.
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_equipment_present\": \"YES\""));
     } // if
+
+    if (! wasSatnavGuidanceActive && isSatnavGuidanceActive)
+    {
+        // Going into guidance mode
+
+        largeScreenIndexBeforeGoingIntoGuidanceMode =
+            largeScreenIndex == LARGE_SCREEN_CURRENT_STREET ? LARGE_SCREEN_CURRENT_STREET : LARGE_SCREEN_CLOCK;
+
+        largeScreenIndex = LARGE_SCREEN_GUIDANCE;
+
+        // TODO - remove
+        Serial.printf_P(
+            PSTR("=====> Going into guidance mode; largeScreenIndex := %u (%S)\n"),
+            largeScreenIndex,
+            LargeScreenStr(largeScreenIndex)
+        );
+    }
+    else if (wasSatnavGuidanceActive && ! isSatnavGuidanceActive)
+    {
+        // Going out of guidance mode
+
+        if (largeScreenIndex == LARGE_SCREEN_GUIDANCE || largeScreenIndex == LARGE_SCREEN_TRIP_COMPUTER)
+        {
+            // at += at >= n ? 0 :
+                // snprintf_P(buf + at, n - at, PSTR(",\n\"small_screen\": \"%S\""), SmallScreenStr(smallScreenIndex));
+
+            if (isHeadUnitPowerOn) largeScreenIndex = LARGE_SCREEN_HEAD_UNIT;
+            else if (isCurrentStreetKnown) largeScreenIndex = largeScreenIndexBeforeGoingIntoGuidanceMode;
+            else largeScreenIndex = LARGE_SCREEN_CLOCK;
+
+            // TODO - remove
+            Serial.printf_P(
+                PSTR("=====> Going out of guidance mode; largeScreenIndex := %u (%S)\n"),
+                largeScreenIndex,
+                LargeScreenStr(largeScreenIndex)
+            );
+        } // if
+    } // if
+
+    wasSatnavGuidanceActive = isSatnavGuidanceActive;
+
+    at += at >= n ? 0 :
+        snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
+            LargeScreenStr(largeScreenIndex)
+        );
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
@@ -3036,8 +3121,9 @@ void InitSatnavGuidancePreference()
 
     // TODO - remove
     Serial.printf_P(
-        PSTR("=====> Read value %u from EEPROM position %d\n"),
+        PSTR("=====> Read value %u (%S) from EEPROM position %d\n"),
         satnavGuidancePreference,
+        SatNavGuidancePreferenceStr(satnavGuidancePreference),
         SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
 
     if (IsSatNavGuidancePreferenceValueValid(satnavGuidancePreference)) return;
@@ -3113,6 +3199,8 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
     else if (dataLen == 17 && data[0] == 0x20)
     {
         // Some set of ID strings. Stays the same even when the navigation CD is changed.
+
+        satnavInitialized = true;
 
         const static char jsonFormatter[] PROGMEM =
         "{\n"
@@ -3482,7 +3570,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                 if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
                 {
-                    // Warning on Serial output
+                    // Warning on serial output
                     Serial.print(F("--> WARNING: too many strings in record in satnav report!\n"));
                 } // if
             } // if
@@ -3519,6 +3607,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         case SR_CURRENT_STREET:
         case SR_NEXT_STREET:
         {
+            if (report == SR_CURRENT_STREET) isCurrentStreetKnown = true;
+
             if (records[0][6].length() == 0)
             {
                 // In this case, the original MFD says: "Street not listed"
@@ -4711,6 +4801,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             "\"cd_changer_cartridge_present\": \"%S\",\n"
             "\"satnav_equipment_present\": \"%S\",\n"
             "\"satnav_disc_recognized\": \"%S\",\n"
+            "\"satnav_initialized\": \"%S\",\n"
             "\"satnav_guidance_preference\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
@@ -4721,6 +4812,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         cdChangerCartridgePresent ? yesStr : noStr,
         satnavEquipmentDetected ? yesStr : noStr,
         satnavDiscRecognized ? yesStr : noStr,
+        satnavInitialized ? yesStr : noStr,
         SatNavGuidancePreferenceStr(satnavGuidancePreference)
     );
 
@@ -4768,7 +4860,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 extern uint16_t serialDumpFilter;
 
 // Check if the new packet data differs from the previous.
-// Optionally, print the new packet on Serial, highlighting the bytes that differ.
+// Optionally, print the new packet on serial port, highlighting the bytes that differ.
 bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 {
     uint16_t iden = pkt.Iden();
@@ -4786,6 +4878,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Don't repeatedly print the same packet
     if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print
 
+#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
@@ -4815,6 +4908,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             } // if
         } // if
     } // if
+#endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     if (handler->prevData == NULL) handler->prevData = (uint8_t*) malloc(VAN_MAX_DATA_BYTES);
 
@@ -4826,6 +4920,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         handler->prevDataLen = dataLen + 1;
     } // if
 
+#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         // Now print the new packet's data in full
@@ -4843,6 +4938,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             Serial.println("<no_data>");
         } // if
     } // if
+#endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return false;
 } // IsPacketDataDuplicate

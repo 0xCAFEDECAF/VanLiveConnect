@@ -39,6 +39,7 @@ char mfd_html[] PROGMEM = R"=====(
            |  `- div id="trip_info"
            |  `- div id="gps_info"
            |  `- div id="instrument_small"
+           |  `- div id="tuner_small"
            |
            `- Vertical separator line
            |
@@ -92,18 +93,25 @@ char mfd_html[] PROGMEM = R"=====(
            |  | `- div id="satnav_guidance"
            |  |
            |  |  # Popups in the "large" information panel
-           |  `- div id="door_open_popup"  # Door open popup
+           |  `- div id="audio_popup"
+           |  |  `- div id="tuner_popup"
+           |  |  `- div id="tape_popup"
+           |  |  `- div id="cd_player_popup"
+           |  |  `- div id="cd_changer_popup"
+           |  `- div id="satnav_reached_destination_popup"
+           |  `- div id="trip_computer_popup"
+           |  `- div id="door_open_popup"
            |  `- div id="notification_popup"  # Popup window with warning or information icon
-           |  `- div id="satnav_initializing_popup"  # Sat nav initializing popup
+           |  `- div id="satnav_initializing_popup"
            |  `- div id="satnav_input_stored_in_personal_dir_popup"
            |  `- div id="satnav_input_stored_in_professional_dir_popup"
            |  `- div id="satnav_delete_item_popup"
-           |  `- div id="satnav_calculating_route_popup"  # Sat nav computing route popup
+           |  `- div id="satnav_computing_route_popup"
            |  `- div id="satnav_guidance_preference_popup"  # Change navigation preference popup
            |  `- div id="satnav_delete_directory_data_popup"  # Delete sat nav directory data popup
            |  `- div id="satnav_continue_guidance_popup"
            |  `- div id="status_popup"  # Simple popup without icon
-           |  `- div id="audio_settings_popup"  # Audio settings popup
+           |  `- div id="audio_settings_popup"
            |
            |  # Full-screen popups
            `- div id="tuner_presets_popup"
@@ -125,10 +133,10 @@ char mfd_html[] PROGMEM = R"=====(
         <div class="tab" style="left:30px; top:27px; width:500px; height:100px;">
 
           <button id="trip_1_button" class="tablinks active" style="left:0px; top:8px; width:120px; height:60px;"
-            onclick="openTab(event, 'trip_1');">1</button>
+            onclick="openTripInfoTab(event, 'trip_1');">1</button>
 
           <button id="trip_2_button" class="tablinks" style="left:115px; top:8px; width:120px; height:60px;"
-            onclick="openTab(event, 'trip_2');">2</button>
+            onclick="openTripInfoTab(event, 'trip_2');">2</button>
 
         </div>
 
@@ -136,7 +144,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Tripcounter #1 -->
 
-        <div id="trip_1" class="tabcontent" style="display:block; left:20px; top:90px; width:330px; height:400px;">
+        <div id="trip_1" class="tabContent" style="display:block; left:20px; top:90px; width:330px; height:400px;">
 
           <div class="icon iconSmall" style="left:0px; top:30px;">
             <div class="fas fa-angle-double-right"></div>
@@ -144,38 +152,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="icon iconSmall" style="left:50px; top:30px;">
             <div class="fas fa-fire-alt"></div>
           </div>
-          <div id="avg_consumption_lt_100_1" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
-          <div class="tag" style="left:180px; top:75px; width:140px; font-size:35px;">l/100km</div>
-
-          <div class="icon iconSmall" style="left:00px; top:160px;">
-            <div class="fas fa-angle-double-right"></div>
-          </div>
-          <div class="icon iconSmall" style="left:50px; top:160px;">
-            <div class="fas fa-tachometer-alt"></div>
-          </div>
-          <div id="avg_speed_1" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
-          <div class="tag" style="left:180px; top:205px; width:140px; font-size:35px;">km/h</div>
-
-          <div class="icon iconSmall" style="left:0px; top:280px; width:80px;">...</div>
-          <div class="icon iconSmall" style="left:50px; top:280px;">
-            <div class="fas fa-car-side"></div>
-          </div>
-          <div id="distance_1" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
-          <div class="tag" style="left:180px; top:325px; width:140px; font-size:35px;">km</div>
-
-        </div>  <!-- Tripcounter #1 -->
-
-        <!-- Tripcounter #2 -->
-
-        <div id="trip_2" class="tabcontent" style="display:none; left:20px; top:90px; width:330px; height:400px;">
-
-          <div class="icon iconSmall" style="left:0px; top:30px;">
-            <div class="fas fa-angle-double-right"></div>
-          </div>
-          <div class="icon iconSmall" style="left:50px; top:30px;">
-            <div class="fas fa-fire-alt"></div>
-          </div>
-          <div id="avg_consumption_lt_100_2" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
+          <div gid="avg_consumption_lt_100_1" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
           <div class="tag" style="left:180px; top:75px; width:140px; font-size:35px;">l/100km</div>
 
           <div class="icon iconSmall" style="left:0px; top:160px;">
@@ -184,14 +161,45 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="icon iconSmall" style="left:50px; top:160px;">
             <div class="fas fa-tachometer-alt"></div>
           </div>
-          <div id="avg_speed_2" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
+          <div gid="avg_speed_1" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
           <div class="tag" style="left:180px; top:205px; width:140px; font-size:35px;">km/h</div>
 
           <div class="icon iconSmall" style="left:0px; top:280px; width:80px;">...</div>
           <div class="icon iconSmall" style="left:50px; top:280px;">
             <div class="fas fa-car-side"></div>
           </div>
-          <div id="distance_2" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
+          <div gid="distance_1" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
+          <div class="tag" style="left:180px; top:325px; width:140px; font-size:35px;">km</div>
+
+        </div>  <!-- Tripcounter #1 -->
+
+        <!-- Tripcounter #2 -->
+
+        <div id="trip_2" class="tabContent" style="display:none; left:20px; top:90px; width:330px; height:400px;">
+
+          <div class="icon iconSmall" style="left:0px; top:30px;">
+            <div class="fas fa-angle-double-right"></div>
+          </div>
+          <div class="icon iconSmall" style="left:50px; top:30px;">
+            <div class="fas fa-fire-alt"></div>
+          </div>
+          <div gid="avg_consumption_lt_100_2" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
+          <div class="tag" style="left:180px; top:75px; width:140px; font-size:35px;">l/100km</div>
+
+          <div class="icon iconSmall" style="left:0px; top:160px;">
+            <div class="fas fa-angle-double-right"></div>
+          </div>
+          <div class="icon iconSmall" style="left:50px; top:160px;">
+            <div class="fas fa-tachometer-alt"></div>
+          </div>
+          <div gid="avg_speed_2" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
+          <div class="tag" style="left:180px; top:205px; width:140px; font-size:35px;">km/h</div>
+
+          <div class="icon iconSmall" style="left:0px; top:280px; width:80px;">...</div>
+          <div class="icon iconSmall" style="left:50px; top:280px;">
+            <div class="fas fa-car-side"></div>
+          </div>
+          <div gid="distance_2" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
           <div class="tag" style="left:180px; top:325px; width:140px; font-size:35px;">km</div>
 
         </div>  <!-- Tripcounter #2 -->
@@ -207,7 +215,7 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <!-- Current street and city -->
-        <div id="satnav_curr_street_small" class="icon" style="left:00px; top:350px; width:390px; height:200px;">
+        <div id="satnav_curr_street_small" class="icon" style="left:0px; top:350px; width:390px; height:200px;">
           <div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
         </div>
 
@@ -239,9 +247,9 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="tuner_small" style="display:none;">
 
-        <div id="tuner_band" class="dots" style="left:30px; top:160px; width:250px;">---</div>
+        <div gid="tuner_band" class="dots" style="left:30px; top:160px; width:250px;">---</div>
 
-        <div id="tuner_memory" gid="tuner_memory" class="dseg7" style="font-size:80px; left:310px; top:130px;">-</div>
+        <div gid="tuner_memory" class="dseg7" style="font-size:80px; left:310px; top:130px;">-</div>
 
         <div gid="frequency" class="dseg7" style="font-size:70px; left:-20px; top:230px; width:240px;"></div>
         <div gid="frequency_h" class="dseg7" style="font-size:40px; left:195px; top:230px; width:60px;"></div>
@@ -261,7 +269,7 @@ char mfd_html[] PROGMEM = R"=====(
         Invisible "div" covering entire screen, handling "gorilla-style" taps that trigger a change to the
         next screen. Leaving top 100 pixels "uncovered" so that the trip info tabs can be reached.
       -->
-      <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div>
+      <!-- <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div> -->
     </div>  <!-- "Small" information panel -->
 
     <!-- "Large" information panel -->
@@ -280,8 +288,14 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="date" class="tag" style="font-size:80px; left:20px; top:140px; width:920px; text-align:center;">---</div>
         <div id="time" class="tag" style="font-size:80px; left:20px; top:250px; width:920px; text-align:center;">--:--</div>
 
+        <div id="splash_text" class="tag"
+          style="font-size:70px; left:20px; top:330px; width:920px; height:220px; line-height:3; text-align:center; text-shadow:5px 5px 30px white;">
+          PSA Live Display
+        </div>
+
         <!-- Also show exterior temperature -->
-        <div gid="exterior_temperature" class="tag" style="font-size:120px; left:20px; top:370px; width:920px; text-align:center;"></div>
+        <div gid="exterior_temperature" class="tag"
+          style="font-size:120px; left:20px; top:330px; width:920px; height:220px; line-height:1.8; text-align:center;"></div>
 
         <!-- Obviously, we would like some weather icon here... would need at least location data (GPS) -->
 
@@ -300,7 +314,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Head unit status LEDs -->
         <div id="head_unit_power" class="iconSmall led ledOn" style="left:870px; top:40px;">
-          <div class="centerAligned fa fa-power-off"></div>
+          <div class="centerAligned fas fa-power-off"></div>
         </div>
         <div id="cd_present" class="iconSmall led ledOn" style="left:870px; top:105px;">
           <div class="centerAligned fas fa-compact-disc"></div>
@@ -313,11 +327,11 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <div id="info_traffic" class="led ledOff" style="left:30px; top:490px; width:140px;">INFO</div>
-        <div id="ext_mute" class="led ledOff" style="left:210px; top:490px; width:110px;">EXT</div>
-        <div id="mute" class="led ledOff" style="left:330px; top:490px; width:150px;">MUTE</div>
+        <div gid="ext_mute" class="led ledOff" style="left:210px; top:490px; width:110px;">EXT</div>
+        <div gid="mute" class="led ledOff" style="left:330px; top:490px; width:150px;">MUTE</div>
 
-        <div id="ta_selected" class="led ledOn" style="left:670px; top:490px; width:100px;">TA</div>
-        <div id="ta_not_available" class="icon" style="position:absolute; left:670px; top:490px; width:100px;">
+        <div gid="ta_selected" class="led ledOn" style="left:670px; top:490px; width:100px;">TA</div>
+        <div gid="ta_not_available" class="icon" style="position:absolute; left:670px; top:490px; width:100px;">
           <svg>
             <line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
           </svg>
@@ -335,27 +349,27 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="fm_band_2" class="led ledOff" style="left:180px; top:83px; width:60px;">2</div>
           <div id="fm_band_ast" class="led ledOff" style="left:250px; top:83px; width:110px;">AST</div>
 
-          <div id="frequency_data_small" style="display:block;">
+          <div gid="frequency_data_small" style="display:block;">
             <div gid="frequency" class="dseg7" style="font-size:80px; left:385px; top:40px; width:260px;"></div>
             <div gid="frequency_h" class="dseg7" style="font-size:50px; left:630px; top:40px; width:60px;"></div>
             <div gid="frequency_khz" class="led ledOff" style="left:700px; top:40px; width:120px;">KHz</div>
             <div gid="frequency_mhz" class="led ledOff" style="left:700px; top:83px; width:120px;">MHz</div>
           </div>
 
-          <div id="frequency_data_large" style="display:none;">
+          <div gid="frequency_data_large" style="display:none;">
             <div gid="frequency" class="dseg14" style="font-size:120px; left:10px; top:150px; width:400px; text-align:right;">---.-</div>
             <div gid="frequency_h" class="dseg14" style="font-size:120px; left:410px; top:150px; width:90px; text-align:left;">-</div>
             <div gid="frequency_unit" class="dseg14" style="font-size:120px; left:540px; top:150px; width:280px; text-align:right;">MHz</div>
           </div>
 
           <!-- Icons involved in station searching -->
-          <div id="search_manual" class="led ledOff" style="left:380px; top:290px; width:120px;">MAN</div>
+          <div gid="search_manual" class="led ledOff" style="left:380px; top:290px; width:120px;">MAN</div>
           <div id="search_sensitivity_dx" class="led ledOff" style="left:530px; top:290px; width:80px;">Dx</div>
           <div id="search_sensitivity_lo" class="led ledOff" style="left:620px; top:290px; width:80px;">Lo</div>
-          <div id="search_direction_up" class="led ledOff fa fa-caret-up" style="left:730px; top:290px; width:40px; height:37px;"></div>
-          <div id="search_direction_down" class="led ledOff fa fa-caret-down" style="left:780px; top:290px; width:40px; height:37px;"></div>
+          <div gid="search_direction_up" class="led ledOff fas fa-caret-up" style="left:730px; top:290px; width:40px; height:37px;"></div>
+          <div gid="search_direction_down" class="led ledOff fas fa-caret-down" style="left:780px; top:290px; width:40px; height:37px;"></div>
 
-          <div id="fm_tuner_data" style="display:block;">
+          <div gid="fm_tuner_data" style="display:block;">
             <div id="rds_text" gid="rds_text" class="dseg14" style="font-size:120px; left:10px; top:150px; width:815px; text-align:right;"></div>
 
             <div class="tag" style="left:20px; top:360px; width:150px;">PTY</div>
@@ -366,18 +380,19 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div class="tag" style="left:20px; top:420px; width:150px;">PI</div>
             <div gid="pi_country" class="dots" style="left:190px; top:420px; width:150px;">--</div>
+
+            <div id="regional" class="led ledOn" style="left:510px; top:490px; width:140px;">REG</div>
+            <div gid="rds_selected" class="led ledOff" style="left:795px; top:490px; width:140px;">RDS</div>
+            <div gid="rds_not_available" class="icon" style="position:absolute; left:795px; top:490px; width:140px;">
+              <svg>
+                <line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
+              </svg>
+            </div>
           </div>
 
           <div class="tag" style="left:690px; top:420px; width:160px;">Signal</div>
           <div id="signal_strength" class="dots" style=" left:870px; top:420px;">--</div>
 
-          <div id="regional" class="led ledOn" style="left:510px; top:490px; width:140px;">REG</div>
-          <div id="rds_selected" class="led ledOff" style="left:795px; top:490px; width:140px;">RDS</div>
-          <div id="rds_not_available" class="icon" style="position:absolute; left:795px; top:490px; width:140px;">
-            <svg>
-              <line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
-            </svg>
-          </div>
         </div>  <!-- Tuner -->
 
         <!-- Removable media -->
@@ -393,27 +408,27 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="dots" style="left:270px; top:45px; width:450px;">Tape</div>
 
             <div class="tag" style="left:50px; top:218px; width:200px;">Side</div>
-            <div id="tape_side" class="dseg7" style="font-size:120px; left:280px; top:145px; width:140px;">-</div>
+            <div gid="tape_side" class="dseg7" style="font-size:120px; left:280px; top:145px; width:140px;">-</div>
 
-            <div id="tape_status_stopped" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_stopped" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-stop"></div>
             </div>
-            <div id="tape_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
-            <div id="tape_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <div id="tape_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-forward"></div>
             </div>
-            <div id="tape_status_next_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_next_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-fast-forward"></div>
             </div>
-            <div id="tape_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-backward"></div>
             </div>
-            <div id="tape_status_previous_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_previous_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-fast-backward"></div>
             </div>
 
@@ -424,27 +439,27 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div class="dots" style="left:270px; top:45px; width:450px;">CD</div>
 
-            <div id="cd_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
+            <div gid="cd_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-            <div id="cd_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-pause"></div>
             </div>
-            <div id="cd_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <div id="cd_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-forward"></div>
             </div>
-            <div id="cd_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-backward"></div>
             </div>
-            <div id="cd_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
-            <div id="cd_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
-            <div id="cd_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-eject"></div>
             </div>
 
@@ -452,13 +467,13 @@ char mfd_html[] PROGMEM = R"=====(
             <div id="cd_total_time" class="dots" style="left:180px; top:315px; width:200px; text-align:right;">--:--</div>
 
             <div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
-            <div id="cd_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
+            <div gid="cd_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
             <div class="tag" style="left:625px; top:320px; width:50px;">/</div>
-            <div id="cd_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
+            <div gid="cd_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
 
             <div id="cd_status_error" class="tag" style="display:none; left:60px; top:400px; width:700px; text-align:left;">DISC ERROR</div>
 
-            <div id="cd_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
+            <div gid="cd_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
               <div class="centerAligned fas fa-random"></div>
             </div>
 
@@ -469,50 +484,42 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div class="dots" style="left:270px; top:45px; width:450px;">CD Changer</div>
 
-            <div id="cd_changer_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
+            <div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-            <div id="cd_changer_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-pause"></div>
             </div>
-            <div id="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px; line-height:1;">
+            <div gid="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <div id="cd_changer_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
-            <div id="cd_changer_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-forward"></div>
             </div>
-            <div id="cd_changer_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-backward"></div>
             </div>
-            <!--
-            <div id="cd_changer_status_next_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
-              <div class="centerAligned fas fa-fast-forward"></div>
-            </div>
-            <div id="cd_changer_status_previous_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
-              <div class="centerAligned fas fa-fast-backward"></div>
-            </div>
-            -->
-            <div id="cd_changer_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
-            <div id="cd_changer_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
               <div class="centerAligned fas fa-eject"></div>
             </div>
 
             <div id="cd_changer_disc_not_present" class="tag" style="display:none; left:0px; top:320px; width:205px;">No</div>
             <div class="tag" style="left:65px; top:320px; width:235px;">CD</div>
             <div id="cd_changer_selected_disc" class="dots" style="display:none; left:300px; top:315px; width:90px; text-align:right;">-</div>
-            <div id="cd_changer_current_disc" class="dots" style="left:300px; top:315px; width:90px; text-align:right;">-</div>
+            <div id="cd_changer_current_disc" gid="cd_changer_current_disc" class="dots" style="left:300px; top:315px; width:90px; text-align:right;">-</div>
             <div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
-            <div id="cd_changer_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
+            <div gid="cd_changer_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
             <div class="tag" style="left:625px; top:320px; width:50px;">/</div>
-            <div id="cd_changer_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
+            <div gid="cd_changer_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
 
             <div id="cd_changer_status_error" class="tag" style="display:none; left:0px; top:320px; width:205px;">ERROR</div>
 
-            <div id="cd_changer_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
+            <div gid="cd_changer_random" class="iconSmall led ledOff" style="left:870px; top:300px;">
               <div class="centerAligned fas fa-random"></div>
             </div>
 
@@ -1075,13 +1082,11 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected"
-            on_click="satnavGotoListScreen();"
-            goto_id="satnav_choose_from_list">Personal directory</div>
+            on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');">Personal directory</div>
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button"
-            on_click="satnavGotoListScreen();"
-            goto_id="satnav_choose_from_list">Professional directory</div>
+            on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');">Professional directory</div>
         </div>  <!-- "satnav_directory_management_menu" -->
 
         <!-- Sat nav guidance tools (context) menu -->
@@ -1206,7 +1211,6 @@ char mfd_html[] PROGMEM = R"=====(
                 Validate
               </div>
 
-              <!-- TODO - special behaviour for "UP" button? -->
               <div id="satnav_enter_characters_correction_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 class="icon button buttonDisabled"
@@ -1217,7 +1221,7 @@ char mfd_html[] PROGMEM = R"=====(
               <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_list_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
-                on_click="satnavGotoListScreen();"
+                on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');"
                 class="icon button buttonDisabled"
                 style="left:470px; top:0px; width:240px; height:40px;">
                 List <span gid="satnav_to_mfd_list_size"></span>
@@ -1526,22 +1530,22 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- TODO - Might need the full screen width for long city / street names -->
           <div id="satnav_show_programmed_destination"
-            on_enter="$('#satnav_last_destination_city').text(''); $('#satnav_last_destination_street_shown').text(''); $('#satnav_last_destination_house_number_shown').text('');"
+            on_enter="satnavClearLastDestination();"
             on_esc="satnavSwitchToGuidanceScreen();"
             style="display:none;">
 
             <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Programmed destination</div>
 
             <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_last_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
+            <div gid="satnav_last_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
             <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_last_destination_street_shown" gid="satnav_last_destination_street_shown"
+            <div gid="satnav_last_destination_street_shown"
               class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
             <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_last_destination_house_number_shown" gid="satnav_last_destination_house_number_shown"
+            <div gid="satnav_last_destination_house_number_shown"
               class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
             </div>
 
@@ -1581,7 +1585,7 @@ char mfd_html[] PROGMEM = R"=====(
               style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
 
               <div
-                on_click="satnavGotoListScreen();"
+                on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');"
                 class="icon button buttonSelected"
                 style="left:0px; top:0px; width:180px; height:40px;">
                 Validate
@@ -2079,6 +2083,288 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- Popups in the "large" information panel -->
 
+      <!-- Audio popup -->
+
+      <div id="audio_popup"
+        class="icon notificationPopup" style="top:100px; height:350px; display:none;">
+
+        <!-- Status LEDs -->
+
+        <div gid="ext_mute" class="led ledOff" style="left:10px; top:290px; width:110px;">EXT</div>
+        <div gid="mute" class="led ledOff" style="left:130px; top:290px; width:150px;">MUTE</div>
+        <div gid="ta_selected" class="led ledOn" style="left:500px; top:290px; width:100px;">TA</div>
+        <div gid="ta_not_available" class="icon" style="position:absolute; left:500px; top:290px; width:100px;">
+          <svg>
+            <line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
+          </svg>
+        </div>
+        <div gid="loudness" class="led ledOff" style="left:625px; top:290px; width:140px;">LOUD</div>
+
+        <!-- Tuner popup -->
+        <div id="tuner_popup" style="display:none;">
+
+          <div gid="tuner_memory" class="dseg7" style="font-size:80px; left:25px; top:20px;">-</div>
+
+          <div gid="tuner_band" class="dots" style="left:120px; top:20px; width:250px; text-align:left;">---</div>
+
+          <!-- Icons involved in station searching -->
+          <div gid="search_manual" class="led ledOff" style="left:280px; top:90px; width:120px;">MAN</div>
+          <div gid="search_direction_up" class="led ledOff fas fa-caret-up" style="left:440px; top:20px; width:40px; height:37px;"></div>
+          <div gid="search_direction_down" class="led ledOff fas fa-caret-down" style="left:440px; top:65px; width:40px; height:37px;"></div>
+
+          <div gid="frequency_data_small" style="display:block;">
+            <div gid="frequency" class="dseg7" style="font-size:80px; left:455px; top:20px; width:260px;"></div>
+            <div gid="frequency_h" class="dseg7" style="font-size:50px; left:700px; top:20px; width:60px;"></div>
+          </div>
+
+          <div gid="frequency_data_large" style="display:none;">
+            <div gid="frequency" class="dseg14" style="font-size:120px; left:270px; top:150px; width:400px; text-align:right;">---.-</div>
+            <div gid="frequency_h" class="dseg14" style="font-size:120px; left:670px; top:150px; width:90px; text-align:left;">-</div>
+          </div>
+
+          <div gid="fm_tuner_data" style="display:block;">
+            <div gid="rds_text" class="dseg14" style="font-size:110px; left:10px; top:150px; width:755px; text-align:right;"></div>
+            <div gid="rds_selected" class="led ledOff" style="left:335px; top:290px; width:140px;">RDS</div>
+            <div gid="rds_not_available" class="icon" style="position:absolute; left:335px; top:290px; width:140px;">
+              <svg>
+                <line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
+              </svg>
+            </div>
+          </div>
+
+        </div>  <!-- "tuner_popup" -->
+
+        <!-- Tape popup -->
+        <div id="tape_popup" style="display:none;">
+
+          <div class="icon fas fa-vr-cardboard" style="left:20px; top:25px; font-size:160px; color:#576171;"></div>
+
+          <div class="tag" style="left:180px; top:113px; width:200px;">Side</div>
+          <div gid="tape_side" class="dseg7" style="font-size:120px; left:380px; top:40px; width:140px;">-</div>
+
+          <div gid="tape_status_stopped" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-stop"></div>
+          </div>
+          <div gid="tape_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-sign-in-alt"></div>
+          </div>
+          <div gid="tape_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-play"></div>
+          </div>
+          <div gid="tape_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-forward"></div>
+          </div>
+          <div gid="tape_status_next_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-fast-forward"></div>
+          </div>
+          <div gid="tape_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-backward"></div>
+          </div>
+          <div gid="tape_status_previous_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-fast-backward"></div>
+          </div>
+
+        </div>  <!-- "tape_popup" -->
+
+        <!-- CD player popup -->
+
+        <div id="cd_player_popup" style="display:none;">
+
+          <div class="icon fas fa-compact-disc" style="left:20px; top:25px; font-size:160px; color:#576171;"></div>
+
+          <div gid="cd_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
+
+          <div gid="cd_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-pause"></div>
+          </div>
+          <div gid="cd_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-play"></div>
+          </div>
+          <div gid="cd_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-forward"></div>
+          </div>
+          <div gid="cd_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-backward"></div>
+          </div>
+          <div gid="cd_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-compact-disc"></div>
+          </div>
+          <div gid="cd_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-sign-in-alt"></div>
+          </div>
+          <div gid="cd_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-eject"></div>
+          </div>
+
+          <div class="tag" style="left:365px; top:200px; width:200px;">Track</div>
+          <div gid="cd_current_track" class="dots" style="left:565px; top:195px; width:90px; text-align:right;">--</div>
+          <div class="tag" style="left:625px; top:200px; width:50px;">/</div>
+          <div gid="cd_total_tracks" class="dots" style="left:685px; top:195px; width:90px; text-align:right;">--</div>
+
+          <div gid="cd_random" class="iconSmall led ledOff" style="left:350px; top:280px;">
+            <div class="centerAligned fas fa-random"></div>
+          </div>
+
+        </div>  <!-- "cd_player_popup" -->
+
+        <!-- CD changer popup -->
+
+        <div id="cd_changer_popup" style="display:none;">
+
+          <div class="icon fas fa-compact-disc" style="left:20px; top:25px; font-size:70px; color:#576171;"></div>
+          <div class="icon fas fa-compact-disc" style="left:65px; top:70px; font-size:70px; color:#576171;"></div>
+          <div class="icon fas fa-compact-disc" style="left:110px; top:115px; font-size:70px; color:#576171;"></div>
+
+          <div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
+
+          <div gid="cd_changer_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-pause"></div>
+          </div>
+          <div gid="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-play"></div>
+          </div>
+          <div gid="cd_changer_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-compact-disc"></div>
+          </div>
+          <div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-forward"></div>
+          </div>
+          <div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-backward"></div>
+          </div>
+          <div gid="cd_changer_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-sign-in-alt"></div>
+          </div>
+          <div gid="cd_changer_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+            <div class="centerAligned fas fa-eject"></div>
+          </div>
+
+          <div class="tag" style="left:65px; top:200px; width:235px;">CD</div>
+          <div gid="cd_changer_current_disc" class="dots" style="left:300px; top:195px; width:90px; text-align:right;">-</div>
+          <div class="tag" style="left:365px; top:200px; width:200px;">Track</div>
+          <div gid="cd_changer_current_track" class="dots" style="left:565px; top:195px; width:90px; text-align:right;">--</div>
+          <div class="tag" style="left:625px; top:200px; width:50px;">/</div>
+          <div gid="cd_changer_total_tracks" class="dots" style="left:685px; top:195px; width:90px; text-align:right;">--</div>
+
+          <div gid="cd_changer_random" class="iconSmall led ledOff" style="left:350px; top:280px;">
+            <div class="centerAligned fas fa-random"></div>
+          </div>
+
+        </div>  <!-- "cd_changer_popup" -->
+
+      </div>  <!-- "audio_popup" -->
+
+      <!-- Destination reached popup -->
+
+      <div id="satnav_reached_destination_popup"
+        class="icon notificationPopup" style="top:160px; height:280px; display:none;">
+
+        <div class="centerAligned" style="position:absolute; left:10px; width:780px; height:200px;">
+          Destination reached
+          <div gid="satnav_last_destination_city" class="dots"
+            style="top:90px; width:780px; height:90px; font-size:40px; white-space:normal;">
+          </div>
+          <div class="dots"
+            style="top:140px; width:780px; height:90px; font-size:40px; white-space:normal;">
+            <span gid="satnav_last_destination_street_shown"></span> - <span gid="satnav_last_destination_house_number_shown"></span>
+          </div>
+        </div>
+      </div>  <!-- "satnav_reached_destination_popup" -->
+
+      <!-- Trip computer popup -->
+
+      <div id="trip_computer_popup"
+        on_enter="initTripComputerPopup();"
+        class="icon notificationPopup" style="top:160px; height:280px; display:none;">
+
+        <!-- Tabs -->
+        <div class="tab" style="left:30px; top:10px; width:740px; height:250px;">
+
+          <!-- Tab buttons -->
+          <div id="trip_computer_popup_fuel_data_button" class="tabLeft" style="left:0px; top:10px; width:100px;">
+            <div class="iconSmall fas fa-gas-pump"></div>
+          </div>
+          <div id="trip_computer_popup_trip_1_button" class="tabLeft" style="left:0px; top:75px; width:100px;">1</div>
+          <div id="trip_computer_popup_trip_2_button" class="tabLeft" style="left:0px; top:140px; width:100px;">2</div>
+
+          <!-- Tab contents -->
+          <div id="trip_computer_popup_fuel_data" class="tabContent"
+            style="display:none; position:absolute; left:100px; top:5px; width:600px; height:230px;">
+
+            <div class="icon iconSmall" style="left:20px; top:35px;">
+              <div class="fas fa-fire-alt"></div>
+            </div>
+
+            <div gid="inst_consumption_lt_100" class="dots" style="left:80px; top:35px; width:200px; text-align:right;">--.-</div>
+            <div class="tag" style="left:300px; top:35px; text-align:left;">l/100 km</div>
+
+            <div class="icon iconSmall" style="left:20px; top:120px;">
+              <div class="fas fa-gas-pump"></div>
+            </div>
+            <div gid="distance_to_empty" class="dots" style="left:80px; top:120px; width:200px; text-align:right;">---</div>
+            <div class="tag" style="left:300px; top:120px; text-align:left;">km</div>
+          </div>
+
+          <div id="trip_computer_popup_trip_1" class="tabContent"
+            style="display:none; position:absolute; left:100px; top:5px; width:600px; height:230px;">
+
+            <div class="icon iconSmall" style="left:20px; top:20px;">
+              <div class="fas fa-angle-double-right"></div>
+            </div>
+            <div class="icon iconSmall" style="left:70px; top:20px;">
+              <div class="fas fa-fire-alt"></div>
+            </div>
+            <div gid="avg_consumption_lt_100_1" class="dots" style="left:130px; top:20px; width:220px; text-align:right;">--.-</div>
+            <div class="tag" style="left:360px; top:20px;">l/100km</div>
+
+            <div class="icon iconSmall" style="left:20px; top:90px;">
+              <div class="fas fa-angle-double-right"></div>
+            </div>
+            <div class="icon iconSmall" style="left:70px; top:90px;">
+              <div class="fas fa-tachometer-alt"></div>
+            </div>
+            <div gid="avg_speed_1" class="dots" style="left:130px; top:90px; width:220px; text-align:right;">--</div>
+            <div class="tag" style="left:360px; top:90px;">km/h</div>
+
+            <div class="icon iconSmall" style="left:20px; top:160px; width:70px;">...</div>
+            <div class="icon iconSmall" style="left:70px; top:160px;">
+              <div class="fas fa-car-side"></div>
+            </div>
+            <div gid="distance_1" class="dots" style="left:130px; top:160px; width:220px; text-align:right;">--</div>
+            <div class="tag" style="left:360px; top:160px;">km</div>
+          </div>
+
+          <div id="trip_computer_popup_trip_2" class="tabContent"
+            style="display:none; position:absolute; left:100px; top:5px; width:600px; height:230px;">
+
+            <div class="icon iconSmall" style="left:20px; top:20px;">
+              <div class="fas fa-angle-double-right"></div>
+            </div>
+            <div class="icon iconSmall" style="left:70px; top:20px;">
+              <div class="fas fa-fire-alt"></div>
+            </div>
+            <div gid="avg_consumption_lt_100_2" class="dots" style="left:130px; top:20px; width:220px; text-align:right;">--.-</div>
+            <div class="tag" style="left:360px; top:20px;">l/100km</div>
+
+            <div class="icon iconSmall" style="left:20px; top:90px;">
+              <div class="fas fa-angle-double-right"></div>
+            </div>
+            <div class="icon iconSmall" style="left:70px; top:90px;">
+              <div class="fas fa-tachometer-alt"></div>
+            </div>
+            <div gid="avg_speed_2" class="dots" style="left:130px; top:90px; width:220px; text-align:right;">--</div>
+            <div class="tag" style="left:360px; top:90px;">km/h</div>
+
+            <div class="icon iconSmall" style="left:20px; top:160px; width:70px;">...</div>
+            <div class="icon iconSmall" style="left:70px; top:160px;">
+              <div class="fas fa-car-side"></div>
+            </div>
+            <div gid="distance_2" class="dots" style="left:130px; top:160px; width:220px; text-align:right;">--</div>
+            <div class="tag" style="left:360px; top:160px;">km</div>
+          </div>
+        </div>
+      </div>  <!-- "trip_computer_popup" -->
+
       <!-- Door open popup -->
 
       <div id="door_open_popup" class="icon notificationPopup" style="display:none;">
@@ -2111,8 +2397,8 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- Notification popup, with warning or information icon -->
       <div id="notification_popup" class="icon notificationPopup" style="display:none;">
-        <div id="notification_icon_warning" class="centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
-          style="display:none; position:absolute; left:30px;"></div>
+        <div id="notification_icon_warning" class="glow centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
+          style="display:none; position:absolute; line-height:2.2; left:0px; width:260px; height:260px"></div>
         <div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
           style="display:block; position:absolute; left:30px;"></div>
         <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
@@ -2177,16 +2463,18 @@ char mfd_html[] PROGMEM = R"=====(
       <!-- Sat nav calculating route popup -->
 
       <!-- on_exit="satnavSwitchToGuidanceScreen();" -->
-      <div id="satnav_calculating_route_popup" class="icon notificationPopup"
+      <div id="satnav_computing_route_popup"
+        on_exit="showOrTimeoutDestinationNotAccessiblePopup();"
+        class="icon notificationPopup"
         style="display:none;">
         <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
           Computing route<br />in progress
         </div>
-      </div>  <!-- "satnav_calculating_route_popup" -->
+      </div>  <!-- "satnav_computing_route_popup" -->
 
       <!--
         Sat nav popup with question: Keep criteria "Fastest route?" (Yes/No) .
-        Note: this popup can be placed on top of the "satnav_calculating_route_popup"
+        Note: this popup can be placed on top of the "satnav_computing_route_popup"
       -->
 
       <div id="satnav_guidance_preference_popup"
@@ -2204,7 +2492,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
             <div id="satnav_guidance_preference_popup_no_button"
               class="icon button"
-              on_click="hidePopup('satnav_guidance_preference_popup'); hidePopup('satnav_calculating_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu'); satnavGuidancePreferenceSelectTickedButton();"
+              on_click="hidePopup('satnav_guidance_preference_popup'); hidePopup('satnav_computing_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu'); satnavGuidancePreferenceSelectTickedButton();"
               style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>
@@ -2270,7 +2558,7 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="audio_settings_popup" class="icon notificationPopup" style="display:none; top:80px; height:430px;">
 
         <div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
-        <div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;">Tuner</div>
+        <div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
 
         <div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
         <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
@@ -2320,7 +2608,7 @@ char mfd_html[] PROGMEM = R"=====(
       full-screen mode.
       TODO - indicate in some way that this area is sensitive to tapping?
     -->
-    <div style="display:block; position:absolute; left:800px; top:00px; width:550px; height:250px;" onclick="goFullScreen();"></div>
+    <div style="display:block; position:absolute; left:800px; top:0px; width:550px; height:250px;" onclick="goFullScreen();"></div>
 
     <!-- Full-screen popups -->
 
@@ -2421,11 +2709,13 @@ char mfd_html[] PROGMEM = R"=====(
 
     <!-- System -->
 
-    <div id="system" style="position:absolute; font-size:30px; background-color:rgba(41,55,74,0.95); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;">
+    <div id="system" style="position:absolute; font-size:30px; background-color:rgba(41,55,74,0.95); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
+      on_enter="$('#websocket_server_host').text(websocketServerHost);">
+
       <div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
 
       <div class="tabTop tabActive" style="position:absolute; font-size:40px; left:30px; top:80px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
-      <div class="iconBorder" style="display:block; position:absolute; left:20px; top:130px; width:380px; height:180px;">
+      <div class="iconBorder" style="display:block; position:absolute; left:20px; top:130px; width:380px; height:270px;">
         <div class="tag" style="left:130px; top:10px; width:120px;">Width</div>
         <div class="tag" style="left:240px; top:10px; width:120px;">Height</div>
         <div class="tag" style="left:0px; top:60px; width:150px;">Screen</div>
@@ -2437,6 +2727,9 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="screen_height" class="tag" style="left:240px; top:60px; width:120px;">---</div>
         <div id="viewport_height" class="tag" style="left:240px; top:100px; width:120px;">---</div>
         <div id="window_height" class="tag" style="left:240px; top:140px; width:120px;">---</div>
+
+        <div class="tag" style="left:10px; top:200px; width:370px; text-align:left; font-size:25px;">Websocket server host:</div>
+        <div id="websocket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
       </div>
 
       <div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:80px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
@@ -2471,6 +2764,11 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="esp_free_ram" class="tag" style="left:630px; top:180px; text-align:left;">---</div>
       </div>
 
+      <div id="van_bus_stats" class="tag"
+        style="left:30px; top:480px; width:1200px; text-align:left; font-size:25px; white-space:normal;">
+        VAN Rx Stats: received pkts: ---, corrupt: -- (-.---%), repaired: -- (--%) [SB_err: --, DCB_err: -], overall: - (-.---%)
+      </div>
+
       <!-- "Back" icon in the bottom right corner -->
       <div class="iconSmall led ledOn" style="left:1260px; top:480px;">
         <div class="centerAligned fas fa-undo" onclick="gearIconAreaClicked();"></div>
@@ -2481,7 +2779,7 @@ char mfd_html[] PROGMEM = R"=====(
     <div id="comms_led" class="led ledOn" style="left:30px; top:590px; width:30px; height:30px;"></div>
 
     <div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
-      <div id="inst_consumption_lt_100" class="dots" style="left:0px; top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>
+      <div gid="inst_consumption_lt_100" class="dots" style="left:0px; top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>
       <div class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
     </div>
 
@@ -2489,7 +2787,7 @@ char mfd_html[] PROGMEM = R"=====(
       <div class="icon iconSmall" style="left:0px; top:5px;">
         <div class="fas fa-gas-pump"></div>
       </div>
-      <div id="distance_to_empty" class="dots" style="left:60px; top:15px; width:150px; font-size:50px; text-align:right;">---</div>
+      <div gid="distance_to_empty" class="dots" style="left:60px; top:15px; width:150px; font-size:50px; text-align:right;">---</div>
     </div>
 
     <div gid="exterior_temperature" class="tab tabBottom" style="left:610px; top:550px; width:200px;">-- &deg;C</div>

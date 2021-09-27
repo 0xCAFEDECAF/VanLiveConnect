@@ -43,13 +43,6 @@ body
   background-blend-mode: multiply;
   /*background-blend-mode: lighten;*/
 }
-/*
-textarea
-{
-  background-color:rgb(41,55,74);
-  color:#dfe7f2;
-}
-*/
 /* Breaking of lines is prevented by setting 'white-space:pre', but in IE, that shoud *NOT* be set to achieve
    the same */
 /*
@@ -133,11 +126,13 @@ textarea
 {
   from
   {
+    /* Alternative (more orange) color: #e66c00 */
     text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
   }
   
   to
   {
+    /* Alternative (more orange) color: #ff6e4d */
     text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
   }
 }
@@ -168,9 +163,6 @@ textarea
   overflow:hidden;
   color:#dfe7f2;
   text-align:center;
-  /*font-size:80px;*/
-  /*line-height:1.3;*/
-  /*background-color:rgb(41,55,74);*/
 }
 .iconLed
 {
@@ -209,16 +201,6 @@ textarea
 /*  height:160px;*/
   line-height:1.2;
 }
-/*.iconNoBorder
-{
-  position:absolute;
-  overflow:hidden;
-  color:#dfe7f2;
-  text-align:center;
-  font-size:80px;
-  line-height:1.3;
-}
-*/
 
 /* Style the tab */
 .tab
@@ -247,11 +229,22 @@ textarea
   border-bottom-right-radius:15px;
   line-height:1.5;
 }
+.tabLeft
+{
+  position:absolute;
+  height:60px;
+  border-top:5px solid #dfe7f2;
+  border-left:5px solid #dfe7f2;
+  border-bottom:5px solid #dfe7f2;
+  border-top-left-radius:15px;
+  border-bottom-left-radius:15px;
+  line-height:1.15;
+}
 /* Style of the buttons inside the tab */
 .tab button
 {
   position:absolute;
-  background-color:rgb(41,55,74);
+  background:none;
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
   color:#dfe7f2;
   font-size:50px;
@@ -265,14 +258,13 @@ textarea
   border-top-left-radius:15px;
   border-top-right-radius:15px;
 }
-/* Create an active/current tablink class */
 .tab button.active
 {
   color:rgb(41,55,74);
   background-color:#dfe7f2;
 }
 /* Style the tab content */
-.tabcontent
+.tabContent
 {
   display:none;
   border:5px solid #dfe7f2;
@@ -290,13 +282,11 @@ textarea
 }
 .horizontalLine
 {
-/*  height:10px; */
   position:absolute;
   border-top:5px solid #dfe7f2;
 }
 .verticalLine
 {
-/*  height:10px; */
   position:absolute;
   border-left:5px solid #dfe7f2;
 }
@@ -336,7 +326,6 @@ textarea
 }
 .notificationPopup
 {
-/*  background-color:rgba(41,55,74,0.95); */
   background-color:rgba(15,19,23,0.95);
   border:5px solid #dfe7f2;
   border-radius:15px;

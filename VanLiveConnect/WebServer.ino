@@ -274,16 +274,14 @@ void HandleNotFound()
     if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
 
 #ifdef WIFI_AP_MODE
-    // If webServer.uri() ends with '.html' or '.txt', then redirect to the main HTML page ('/MFD.html').
+    // Redirect to the main HTML page ('/MFD.html').
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
-    // http://detectportal.firefox.com/success.txt
-    if (webServer.uri().endsWith(".html") || webServer.uri().endsWith(".txt"))
-    {
-        webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
-        webServer.sendHeader(F("Cache-Control"), F("no-store"), true);
-        webServer.send(301, F("text/plain"), F("Redirect"));
-        return;
-    } // if
+    // http://detectportal.firefox.com/success.txt ; Android tries to load https://www.gstatic.com/generate_204 .
+    webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
+    webServer.sendHeader(F("Cache-Control"), F("no-store"), true);
+    //webServer.send(301, F("text/plain"), F("Redirect"));
+    webServer.send(302, F("text/plain"), F("Found"));
+    return;
 #endif // WIFI_AP_MODE
 
     // Gold-plated response

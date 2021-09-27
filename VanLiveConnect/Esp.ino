@@ -34,7 +34,7 @@ void PrintSystemSpecs()
     Serial.println(md5Checksum);
 } // PrintSystemSpecs
 
-const char* EspDataToJson(char* buf, const int n)
+const char* EspSystemDataToJson(char* buf, const int n)
 {
     uint32_t flashSizeReal = ESP.getFlashChipRealSize();
     uint32_t flashSizeIde = ESP.getFlashChipSize();
@@ -98,5 +98,43 @@ const char* EspDataToJson(char* buf, const int n)
     // JSON buffer overflow?
     if (at >= n) return "";
 
+    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+
+    Serial.print(F("Parsed to JSON object:\n"));
+    PrintJsonText(buf);
+
+    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
     return buf;
-} // EspDataToJson
+} // EspSystemDataToJson
+
+const char* EspRuntimeDataToJson(char* buf, const int n)
+{
+    const static char jsonFormatter[] PROGMEM =
+    "{\n"
+        "\"event\": \"display\",\n"
+        "\"data\":\n"
+        "{\n"
+            "\"esp_wifi_rssi\": \"%d dB\",\n"
+            "\"esp_free_ram\": \"%u bytes\"\n"
+        "}\n"
+    "}\n";
+
+    int at = snprintf_P(buf, n, jsonFormatter,
+        WiFi.RSSI(),
+        system_get_free_heap_size()
+    );
+
+    // JSON buffer overflow?
+    if (at >= n) return "";
+
+
+    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+
+    Serial.print(F("Parsed to JSON object:\n"));
+    PrintJsonText(buf);
+
+    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
+    return buf;
+} // EspRuntimeDataToJson

@@ -72,7 +72,7 @@
 // -----
 // Infrared receiver
 
-// Choose by uncommenting one of these #defines below (or define your own)
+// Choose one of these #defines below (or define your own IR_RECV_PIN, IR_VCC and IR_GND)
 #define IR_TSOP48XX
 //#define IR_TSOP312XX
 
@@ -107,10 +107,15 @@
 // -----
 // Debugging
 
-// Uncomment to see JSON buffers printed on the Serial port
+// Define to see infrared key hash values and timing on the serial port
+//#define PRINT_IR_DEBUG_DATA_ON_SERIAL
+
+#define SHOW_VAN_RX_STATS
+
+// Define to see JSON buffers printed on the serial port
 #define PRINT_JSON_BUFFERS_ON_SERIAL
 
-// Which type of packets will be printed on Serial?
+// Which type of packets will be printed on the serial port?
 
 #define SELECTED_PACKETS VAN_PACKETS_ALL
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC

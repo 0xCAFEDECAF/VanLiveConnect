@@ -3,7 +3,7 @@
  *
  * Written by Erik Tromp
  *
- * Version 0.0.1 - June, 2021
+ * Version 0.0.1 - September, 2021
  *
  * MIT license, all text above must be included in any redistribution.
  *
@@ -56,7 +56,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Defined in Esp.ino
 void PrintSystemSpecs();
-const char* EspDataToJson(char* buf, const int n);
+const char* EspSystemDataToJson(char* buf, const int n);
+const char* EspRuntimeDataToJson(char* buf, const int n);
 
 // Defined in Wifi.ino
 void SetupWifi();
@@ -114,6 +115,56 @@ const char* EquipmentStatusDataToJson(char* buf, const int n);
 const char* SatnavEquipmentDetection(char* buf, const int n);
 void PrintJsonText(const char* jsonBuffer);
 
+#ifdef SHOW_VAN_RX_STATS
+
+#include <PrintEx.h>
+
+const char* VanBusStatsToStr()
+{
+    #define BUFFER_SIZE 120
+    static char buffer[BUFFER_SIZE];
+
+    GString str(buffer);
+    PrintAdapter streamer(str);
+
+    VanBusRx.DumpStats(streamer);
+
+    // Replace '\n' by string terminator '\0'
+    buffer[BUFFER_SIZE - 1] = '\0';
+    char *p = strchr(buffer, '\n');
+    if (p != NULL) *p = '\0';
+
+    return buffer;
+} // VanBusStatsToStr
+
+const char* VanBusStatsToJson(char* buf, const int n)
+{
+    const static char jsonFormatter[] PROGMEM =
+    "{\n"
+        "\"event\": \"display\",\n"
+        "\"data\":\n"
+        "{\n"
+            "\"van_bus_stats\": \"VAN Rx Stats: %s\"\n"
+        "}\n"
+    "}\n";
+
+    int at = snprintf_P(buf, n, jsonFormatter, VanBusStatsToStr());
+
+    // JSON buffer overflow?
+    if (at >= n) return "";
+
+    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+
+    Serial.print(F("Parsed to JSON object:\n"));
+    PrintJsonText(buf);
+
+    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
+    return buf;
+} // VanBusStatsToJson
+
+#endif // SHOW_VAN_RX_STATS
+
 uint8_t websocketNum = 0xFF;
 
 // Broadcast a (JSON) message to all websocket clients
@@ -126,8 +177,10 @@ void BroadcastJsonText(const char* json)
 
     unsigned long start = millis();
 
+    digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
     webSocket.broadcastTXT(json);
     //webSocket.sendTXT(websocketNum, json); // Alternative
+    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
     // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
     // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
@@ -169,13 +222,13 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             #define STATUS_JSON_BUFFER_SIZE 1024
             char jsonBuffer[STATUS_JSON_BUFFER_SIZE];
 
-            // Dump ESP system data to client
-            BroadcastJsonText(EspDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
+            // Send ESP system data to client
+            BroadcastJsonText(EspSystemDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
 
-            // Dump Wi-Fi and IP data to client
+            // Send Wi-Fi and IP data to client
             BroadcastJsonText(WifiDataToJson(clientIp, jsonBuffer, STATUS_JSON_BUFFER_SIZE));
 
-            // Dump equipment status data, e.g. presence of sat nav and other devices
+            // Send equipment status data, e.g. presence of sat nav and other devices
             BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
         }
         break;
@@ -185,7 +238,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 // For prototyping on Sonoff board
 #if defined ARDUINO_ESP8266_GENERIC || defined ARDUINO_ESP8266_ESP01
 #define LED_BUILTIN 13
-#endif
+#endif // defined ARDUINO_ESP8266_GENERIC || defined ARDUINO_ESP8266_ESP01
 
 void setup()
 {
@@ -260,11 +313,21 @@ void loop()
     if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
     if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
-    // Print statistics every 5 seconds
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
     {
         lastUpdate = millis();
+
+        // Print statistics
         VanBusRx.DumpStats(Serial);
+
+        // Send ESP runtime data to client
+        char jsonBuffer[STATUS_JSON_BUFFER_SIZE];
+        BroadcastJsonText(EspRuntimeDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
+
+        #ifdef SHOW_VAN_RX_STATS
+        // Send VAN bus receiver status string to client
+        BroadcastJsonText(VanBusStatsToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
+        #endif // SHOW_VAN_RX_STATS
     } // if
 } // loop
