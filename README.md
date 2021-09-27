@@ -96,9 +96,6 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 * The SSID of the Wi-Fi access point is: "PSA display AP" (with the spaces, without the quotes)
 * No password is needed.
 
-> 👉 Note: it is better to setup the ESP hardware as Wi-Fi client instead of access point. For an explanation,
-    see [Limitations, Caveats](#limits) below.
-
 Of course you can modify the SSID and choose your own password by editing the [``Config.h``](VanLiveConnect/Config.h)
 file.
 
@@ -299,12 +296,6 @@ Not all VAN bus packets are received error-free; see [this explanation](https://
 
 When using the sat nav, this sometimes causes a screen to stay empty. If that happens, try again by using the "Esc"
 button on the remote control and going into the same screen again.
-
-Unfortunately, it seems that configuring the EPS8266 hardware as Wi-Fi access point increases the number
-of CRC errors. Therefore, in my own configuration, I turn on the
-[Wi-Fi hotspot](https://support.google.com/android/answer/9059108?hl=en) of my daily (Android) smartphone (so it
-becomes a Wi-Fi access point). The ESP8266 software has been configured to connect to that hotspot as
-Wi-Fi client, using a fixed IP address (192.168.43.2); see also the [``Config.h``](VanLiveConnect/Config.h) file.
 
 I am investigating how to improve on the error-free reception of VAN bus frames.
 
