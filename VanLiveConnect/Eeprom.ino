@@ -1,4 +1,6 @@
 
+// Functions for (emulated) EEPROM
+
 // Needed to prevent unnecessary invocations to EEPROM.commit(), which needs to be surrounded by VanBusRx.Disable()
 // resp. VanBusRx.Enable() to prevent crashes; VanBusRx.Disable() / VanBusRx.Enable() seem to increase the VAN packet
 // CRC errors quite a bit... :-(
