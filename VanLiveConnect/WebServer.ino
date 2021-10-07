@@ -1,5 +1,5 @@
 
-#include "FS.h"
+#include <ESP8266WebServer.h>
 
 // Use the following #defines to serve (part of) the web documents from SPI flash file system (SPIFFS)
 // Note: unfortunately, the more is served from SPIFFS, the more VAN packets have CRC errors :-(
@@ -7,6 +7,8 @@
 //#define SERVE_FROM_SPIFFS
 
 #ifdef SERVE_FROM_SPIFFS
+
+#include "FS.h"
 
 //#define SERVE_FRONTS_FROM_SPIFFS
 //#define SERVE_JAVASCRIPT_FROM_SPIFFS
@@ -119,9 +121,7 @@ String getMd5(const String& path)
 // Print all HTTP request details on Serial
 void printHttpRequest()
 {
-    // TODO - remove
-    return;
-
+#ifdef DEBUG_WEBSERVER
     Serial.print(F("[webServer] Received request from "));
     String ip = webServer.client().remoteIP().toString();
     Serial.print(ip);
@@ -139,6 +139,7 @@ void printHttpRequest()
     } // for
 
     Serial.println(F("'"));
+#endif // DEBUG_WEBSERVER
 } // printHttpRequest
 
 // Returns true if the actual Etag is equal to the received Etag in an 'If-None-Match' header field.
@@ -160,8 +161,10 @@ bool checkETag(const String& etag)
                 webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
 
                 webServer.send(304, "text/plain", F("Not Modified"));
+            #ifdef DEBUG_WEBSERVER
                 Serial.println(
                     String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified"));
+            #endif // DEBUG_WEBSERVER
                 return true;
             } // if
         } // if
@@ -269,7 +272,9 @@ void ServeMainHtml();
 
 void HandleNotFound()
 {
+#ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), webServer.uri().c_str());
+#endif // DEBUG_WEBSERVER
 
     if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
 
@@ -309,9 +314,11 @@ void ServeFont(PGM_P content, unsigned int content_len)
 
     webServer.send_P(200, fontWoffStr, content, content_len);
 
+#ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] Serving font '%S' took: %lu msec\n"),
         webServer.uri().c_str(),
         millis() - start);
+#endif // DEBUG_WEBSERVER
 } // ServeFont
 
 #ifdef SERVE_FROM_SPIFFS
@@ -334,9 +341,11 @@ void ServeFontFromFile(const char* path)
     file.close();
     VanBusRx.Enable();
 
+#ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] Serving font '%s' from file system took: %lu msec\n"),
         webServer.uri().c_str(),
         millis() - start);
+#endif // DEBUG_WEBSERVER
 } // ServeFontFromFile
 
 #endif // SERVE_FROM_SPIFFS
@@ -353,10 +362,12 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
         webServer.send_P(200, mimeType, content);
     } // if
 
+#ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] %S '%s' took: %lu msec\n"),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         webServer.uri().c_str(),
         millis() - start);
+#endif // DEBUG_WEBSERVER
 } // ServeDocument
 
 // Convert the file extension to the MIME type
@@ -389,7 +400,9 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
         md5 = getMd5(path + ".gz");
         if (md5.length() == 0)
         {
+        #ifdef DEBUG_WEBSERVER
             Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), path.c_str());
+        #endif // DEBUG_WEBSERVER
             return HandleNotFound();
         } // if
 
@@ -412,10 +425,12 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
         VanBusRx.Enable();
     } // if
 
+#ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] %S '%S' from file system took: %lu msec\n"),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         path.c_str(),
         millis() - start);
+#endif // DEBUG_WEBSERVER
 } // ServeDocumentFromFile
 
 #endif // SERVE_FROM_SPIFFS

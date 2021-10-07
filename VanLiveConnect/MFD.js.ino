@@ -6,10 +6,10 @@ char mfd_js[] PROGMEM = R"=====(
 // -----
 // General
 
-function numberWithSpaces(x)
+function addThousandsSeparator(x)
 {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-} // numberWithSpaces
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+} // addThousandsSeparator
 
 function clamp(num, min, max)
 {
@@ -79,7 +79,7 @@ function showViewportSizes()
 } // showViewportSizes
 
 // -----
-// Functions for parsing and handling JSON data as it comes in on a websocket
+// Functions for parsing and handling JSON data as it comes in on a WebSocket
 
 // Inspired by https://gist.github.com/ismasan/299789
 var FancyWebSocket = function(url)
@@ -97,6 +97,11 @@ var FancyWebSocket = function(url)
         return this;  // chainable
     }; // function
 
+    this.send = function(data)
+    {
+        if (conn.readyState === 1) conn.send(data);
+    }; // function
+
     // Dispatch to the right handlers
     conn.onmessage = function(evt)
     {
@@ -107,13 +112,13 @@ var FancyWebSocket = function(url)
     conn.onopen = function()
     {
         clearInterval(retryTimerId);
-        console.log("// Connected to websocket '" + url + "'!");
+        console.log("// Connected to WebSocket '" + url + "'!");
         dispatch('open', null);
     };
 
     conn.onclose = function(event)
     {
-        console.log("// Connection to websocket '" + url + "' died!");
+        console.log("// Connection to WebSocket '" + url + "' died!");
         dispatch('close', null);
         // TODO - uncomment the following line. Currently it will crash the ESP.
         //retryTimerId = setInterval(() => { conn = new WebSocket(_url); }, 2000);
@@ -291,19 +296,21 @@ function writeToDom(jsonObj)
     } // for
 } // writeToDom
 
-var websocketServerHost = window.location.hostname;
+var webSocketServerHost = window.location.hostname;
+
+var webSocket;
 
 // For stability, connect to the web socket server only after a few seconds
 var connectToWebsocketTimer = setTimeout(
     function ()
     {
-        console.log("// Connecting to websocket 'ws://" + websocketServerHost + ":81/'");
+        console.log("// Connecting to WebSocket 'ws://" + webSocketServerHost + ":81/'");
 
         // WebSocket class instance
-        var socket = new FancyWebSocket("ws://" + websocketServerHost + ":81/");
+        webSocket = new FancyWebSocket("ws://" + webSocketServerHost + ":81/");
 
         // Bind to WebSocket to server events
-        socket.bind('display', function(data) { writeToDom(data); });
+        webSocket.bind('display', function(data) { writeToDom(data); });
         //socket.bind('open', function () { inDemoMode = false; });
         //socket.bind('close', function () { demoMode(); });
     }, // function
@@ -333,10 +340,8 @@ function setVisibilityOfElementAndParents(id, value)
     } // while
 } // setVisibilityOfElementAndParents
 
-// Currently shown large screen
-var currentLargeScreenId = "clock";  // Make sure this is the first screen visible
-
-var lastScreenChangedAt;  // Last time the large screen changed
+var currentLargeScreenId = "clock";  // Currently shown large screen; make sure this is the first screen visible
+var lastScreenChangedAt = 0;  // Last time the large screen changed
 
 // Switch to a specific screen on the right hand side of the display
 function changeLargeScreenTo(id)
@@ -362,6 +367,9 @@ function changeLargeScreenTo(id)
     // Perform new screen's "on_enter" action, if specified
     var onEnter = $("#" + currentLargeScreenId).attr("on_enter");
     if (onEnter) eval(onEnter);
+
+    // Report back that user is browsing the menus
+    if (! inMenu() && typeof webSocket !== "undefined") webSocket.send("in_menu:NO");
 } // changeLargeScreenTo
 
 // Keep track of "engine running" condition
@@ -415,8 +423,11 @@ function selectDefaultScreen(audioSource)
     {
         selectedScreen = "satnav_current_location";
 
-        // But don't switch away from instrument screen
-        if (currentLargeScreenId === "instruments") return;
+        // But don't switch away from instrument screen, if that is showing useful information
+        if (currentLargeScreenId === "instruments")
+        {
+            if (engineRunning !== "NO" && $('[gid="engine_rpm"]').first().text() !== "---") return;
+        } // if
     } // if
 
     // Fall back to instrument screen if engine is running
@@ -736,7 +747,7 @@ function showPopup(id, msec)
     {
         popup.show();
 
-        // A popup can appear under another. In that case, don't register the time
+        // A popup can appear under another. In that case, don't register the time.
         var topLevelPopup = $(".notificationPopup:visible").slice(-1)[0];
         if (id === topLevelPopup.id) lastScreenChangedAt = Date.now();
 
@@ -752,7 +763,16 @@ function showPopup(id, msec)
     showPopup.popupTimer = setTimeout(function () { hidePopup(id); }, msec);
 } // showPopup
 
-// Hide the specified popup. If not specified, hide the current
+// Show a popup and send an update on the web socket
+function showPopupAndNotifyServer(id, msec, message)
+{
+    showPopup(id, msec);
+
+    var messageText = typeof message !== "undefined" ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
+    webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
+} // showPopupAndNotifyServer
+
+// Hide the specified or the current popup
 function hidePopup(id)
 {
     var popup;
@@ -769,6 +789,8 @@ function hidePopup(id)
     // Perform "on_exit" action, if specified
     var onExit = popup.attr("on_exit");
     if (onExit) eval(onExit);
+
+    webSocket.send("mfd_popup_showing:NO");
 
     return true;
 } // hidePopup
@@ -788,7 +810,7 @@ function showNotificationPopup(message, msec, isWarning)
     $("#last_notification_message_on_mfd").html(message);
 
     // Show the notification popup
-    showPopup("notification_popup", msec);
+    showPopupAndNotifyServer("notification_popup", msec, message);
 } // showNotificationPopup
 
 // Show a simple status popup (no icon) with a message and an optional timeout
@@ -800,7 +822,7 @@ function showStatusPopup(message, msec)
     //console.log("showStatusPopup('" + $("#status_popup_text").text() + "')");
 
     // Show the popup
-    showPopup("status_popup", msec);
+    showPopupAndNotifyServer("status_popup", msec);
 } // showStatusPopup
 
 function showAudioPopup(id)
@@ -819,7 +841,7 @@ function showAudioPopup(id)
     if (! id) return;
 
     if (! $("#audio_popup").is(":visible")) hidePopup();  // Hide other popup, if showing
-    showPopup("audio_popup", 7000);
+    showPopupAndNotifyServer("audio_popup", 8000);
     $("#" + id).siblings("div[id$=popup]").hide();
     $("#" + id).show();
 } // showAudioPopup
@@ -913,6 +935,9 @@ function gotoTopLevelMenu(menu)
     {
         menu = "main_menu";
     } // if
+
+    // Report back that user is not browsing the menus
+    if (typeof webSocket !== "undefined") webSocket.send("in_menu:YES");
 
     // This is the screen we want to go back to when pressing "Esc" on the remote control inside the top level menu
     currentMenu = currentLargeScreenId;
@@ -1618,6 +1643,8 @@ var satnavRouteComputed = false;
 var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
+var satnavDestinationReachable = true;
+var satnavOnMap = false;
 var satnavStatus1 = "";
 var satnavDestinationAccessible = true;
 
@@ -2464,7 +2491,7 @@ function satnavCalculatingRoute()
     // Don't pop up in the guidance preference screen
     if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
 
-    showPopup("satnav_computing_route_popup", 30000);
+    showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 } // satnavCalculatingRoute
 
 // Show the "Destination is not accessible by road" popup, if applicable
@@ -2479,7 +2506,8 @@ function showDestinationNotAccessiblePopupIfApplicable()
     if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
 
     // But only if the curent location is known (to emulate behaviour of MFD)
-    if (satnavCurrentStreet !== "")
+    //if (satnavCurrentStreet !== "")
+    if (satnavOnMap)
     {
         hidePopup();
         showStatusPopup("Destination is not<br />accessible by road", 8000);
@@ -2797,7 +2825,7 @@ function handleItemChange(item, value)
 
             if (audioSource === "CD_CHANGER")
             {
-                if (! $("#cd_changer").is(":visible")) showAudioPopup("cd_changer_popup");
+                if (! $("#cd_changer").is(":visible")) showAudioPopup();
 
                 var selector = "#cd_changer_disc_" + value + "_present";
                 if ($(selector).hasClass("ledOn")) break;
@@ -2845,7 +2873,7 @@ function handleItemChange(item, value)
 
             hideAudioSettingsPopup();
 
-            if ($("#audio_source").text() === "TAPE" && ! $("#tape").is(":visible")) showAudioPopup("tape_popup");
+            if (! $("#tape").is(":visible")) showAudioPopup();
         } // case
         break;
 
@@ -2857,7 +2885,7 @@ function handleItemChange(item, value)
 
             hideAudioSettingsPopup();
 
-            if ($("#audio_source").text() === "TAPE" && ! $("#tape").is(":visible")) showAudioPopup("tape_popup");
+            if (! $("#tape").is(":visible")) showAudioPopup();
         } // case
         break;
 
@@ -2871,7 +2899,7 @@ function handleItemChange(item, value)
             hideTunerPresetsPopup();
             hideAudioSettingsPopup();
 
-            if ($("#audio_source").text() === "TUNER" && ! $("#tuner").is(":visible")) showAudioPopup("tuner_popup");
+            if (! $("#tuner").is(":visible")) showAudioPopup();
         } // case
         break;
 
@@ -2986,7 +3014,7 @@ function handleItemChange(item, value)
             hideAudioSettingsPopup();
             hideTunerPresetsPopup();
 
-            if ($("#audio_source").text() === "TUNER" && ! $("#tuner").is(":visible")) showAudioPopup("tuner_popup");
+            if (! $("#tuner").is(":visible")) showAudioPopup();
 
             var rdsText = $("#rds_text").text();
             var showRdsText = $("#fm_band").hasClass("ledOn") && rdsText !== "" && value !== "MANUAL_TUNING";
@@ -3054,7 +3082,7 @@ function handleItemChange(item, value)
                     || value ===  "FAST_FORWARD" || value === "REWIND"
                 )
             {
-                if ($("#audio_source").text() === "CD" && ! $("#cd_player").is(":visible")) showAudioPopup();
+                if (! $("#cd_player").is(":visible")) showAudioPopup();
             } // if
         } // case
         break;
@@ -3086,7 +3114,7 @@ function handleItemChange(item, value)
                     || value ===  "FAST_FORWARD" || value === "REWIND"
                 )
             {
-                if ($("#audio_source").text() === "CD_CHANGER" && ! $("#cd_changer").is(":visible")) showAudioPopup();
+                if (! $("#cd_changer").is(":visible")) showAudioPopup();
             } // if
         } // case
         break;
@@ -3098,7 +3126,7 @@ function handleItemChange(item, value)
 
             //console.log("Item '" + item + "' set to '" + value + "'");
 
-            if ($("#audio_source").text() === "CD_CHANGER" && ! $("#cd_changer").is(":visible")) showAudioPopup();
+            if (! $("#cd_changer").is(":visible")) showAudioPopup();
 
             if (cdChangerCurrentDisc != null && cdChangerCurrentDisc.match(/^[1-6]$/))
             {
@@ -3197,13 +3225,14 @@ function handleItemChange(item, value)
 
         case "engine_rpm":
         {
-            //if (value === "---" && $('[gid="vehicle_speed"]').first().text() === "--")
             if (value === "---")
             {
                 // Engine just stopped. If currently in "instruments" screen, then switch to default screen.
                 if ($("#instruments").is(":visible")) selectDefaultScreen();
                 break;
             } // if
+
+            if ($("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
 
             // If more than 3500 rpm or less than 500 rpm (but > 0), add glow effect
 
@@ -3220,6 +3249,8 @@ function handleItemChange(item, value)
         case "vehicle_speed":
         {
             if (value === "---") break;
+
+            if ($("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
 
             // If 130 km/h or more, add glow effect
             $('[gid="' + item + '"]').toggleClass("glow", parseInt(value) >= 130);
@@ -3265,7 +3296,7 @@ function handleItemChange(item, value)
         case "remaining_km_to_service":
         {
             // Add a space between hundreds and thousands for better readability
-            $("#" + item).text(numberWithSpaces(value));
+            $("#" + item).text(addThousandsSeparator(value));
 
             // If zero or negative, add glow effect
             $("#" + item).toggleClass("glow", parseInt(value) <= 0);
@@ -3275,7 +3306,7 @@ function handleItemChange(item, value)
         case "odometer_1":
         {
             // Add a space between hundreds and thousands for better readability
-            $("#" + item).text(numberWithSpaces(value));
+            $("#" + item).text(addThousandsSeparator(value));
         } // case
         break;
 
@@ -3303,7 +3334,7 @@ function handleItemChange(item, value)
         case "door_open":
         {
             // Note: If the system is in power save mode, "door_open" always reports "NO", even if a door is open.
-            // That situation is handled below (around line 3329).
+            // That situation is handled in the next case clause, below.
 
             // If on, add glow effect
             $("#" + item).removeClass("ledOn");
@@ -3314,7 +3345,7 @@ function handleItemChange(item, value)
             if (value === "YES" && currentLargeScreenId !== "pre_flight")
             {
                 $("#door_open_popup_text").text("Door open");
-                showPopup("door_open_popup", 8000);
+                showPopupAndNotifyServer("door_open_popup", 8000);
             }
             else
             {
@@ -3377,7 +3408,7 @@ function handleItemChange(item, value)
 
             // Set the correct text and show the "door open" popup
             $("#door_open_popup_text").text(popupText);
-            showPopup("door_open_popup", 8000);
+            showPopupAndNotifyServer("door_open_popup", 8000);
         } // case
         break;
 
@@ -3458,7 +3489,7 @@ function handleItemChange(item, value)
 
             var isWarning = value.slice(-1) === "!";
             var message = isWarning ? value.slice(0, -1) : value;
-            showNotificationPopup(message, 10000, isWarning);
+            showNotificationPopup(message, 8000, isWarning);
         } // case
         break;
 
@@ -3643,6 +3674,18 @@ function handleItemChange(item, value)
                     if (! $("#satnav_guidance_preference_menu").is(":visible")) satnavSwitchToGuidanceScreen();
                 } // if
             } // if
+        } // case
+        break;
+
+        case "satnav_destination_reachable":
+        {
+            satnavDestinationReachable = value === "YES";
+        } // case
+        break;
+
+        case "satnav_on_map":
+        {
+            satnavOnMap = value === "YES";
         } // case
         break;
 
@@ -4312,9 +4355,9 @@ function handleItemChange(item, value)
                 // Hide the "Computing route in progress" popup, if showing
                 hidePopup("satnav_computing_route_popup");
 
-                //satnavCurrentStreet = "";
-
                 $("#satnav_guidance_next_street").text("Follow the heading");
+
+                //satnavCurrentStreet = ""; // Original MFD clears currently known street in this situation...
 
                 // To replicate a bug in the original MFD; in fact the current street is usually known
                 $("#satnav_guidance_curr_street").text("Not digitized area");
@@ -4363,18 +4406,26 @@ function handleItemChange(item, value)
             if (value !== "PRESSED") break;
             if (satnavMode !== "IN_GUIDANCE_MODE") break;
 
-            var isTripComputerPopupAlreadyVisible = $("#trip_computer_popup").is(":visible");
-            if (isTripComputerPopupAlreadyVisible) cycleTabInTripComputerPopup();
+            // var isTripComputerPopupAlreadyVisible = $("#trip_computer_popup").is(":visible");
+            // if (isTripComputerPopupAlreadyVisible) cycleTabInTripComputerPopup();
+
+            // // Will either start showing the popup, or restart its timer if it is already showing
+            // showPopup("trip_computer_popup", 8000);
+
+            // if (! isTripComputerPopupAlreadyVisible)
+            // {
+                // // If the original MFD is showing the trip computer in the large (right hand side) screen, the first
+                // // press of the stalk button will cycle to the next trip counter tab, instead of triggering the
+                // // popup.
+                // if (mfdLargeScreen === "TRIP_COMPUTER") cycleTabInTripComputerPopup();
+            // } // if
+
+            if (mfdLargeScreen === "TRIP_COMPUTER") break;
+
+            if ($("#trip_computer_popup").is(":visible")) cycleTabInTripComputerPopup();
 
             // Will either start showing the popup, or restart its timer if it is already showing
             showPopup("trip_computer_popup", 8000);
-
-            if (! isTripComputerPopupAlreadyVisible)
-            {
-                // If the original MFD is showing the trip computer in the large (right hand side) screen, the first
-                // stalk button press cycles to the next trip counter tab, instead of triggering the popup.
-                if (mfdLargeScreen === "TRIP_COMPUTER") cycleTabInTripComputerPopup();
-            } // if
         } // case
         break;
 
@@ -4387,12 +4438,18 @@ function handleItemChange(item, value)
             localStorage.smallScreen = value;
 
             gotoSmallScreen(value);
+
+            // Show the first three letters of the screen name
+            $("#original_mfd_current_screen").text(value.substring(0, 3));
         } // case
         break;
 
         case "large_screen":
         {
             mfdLargeScreen = value;
+
+            // Show the first three letters of the screen name
+            $("#original_mfd_current_screen").text(value.substring(0, 3));
         } // case
         break;
 
@@ -4402,13 +4459,16 @@ function handleItemChange(item, value)
             var contactKeyPosition = $("#contact_key_position").text();
             if (contactKeyPosition === "OFF") break;
 
-            // Ignore remote control buttons when in power-save mode
+            // Ignore also when in power-save mode
             if (handleItemChange.economyMode === "ON") break;
 
             var parts = value.split(" ");
             var button = parts[0];
 
             //console.log("// Item '" + item + "' set to '" + button + "'");
+
+            // Show the first three letters of the button just pressed
+            $("#ir_button_pressed").text(button.substring(0, 3));
 
             if (button === "MENU_BUTTON")
             {
@@ -4447,6 +4507,7 @@ function handleItemChange(item, value)
                 if (hidePopup("trip_computer_popup")) break;
                 if (hidePopup("satnav_reached_destination_popup")) break;
                 if (hidePopup("audio_popup")) break;
+                if (hidePopup("climate_control_popup")) break;
 
                 // Ignore the "Esc" button when guidance screen is showing
                 if ($("#satnav_guidance").is(":visible")) break;
@@ -4509,6 +4570,7 @@ function handleItemChange(item, value)
                 if (hidePopup("trip_computer_popup")) break;
                 if (hidePopup("satnav_reached_destination_popup")) break;
                 if (hidePopup("audio_popup")) break;
+                if (hidePopup("climate_control_popup")) break;
 
                 // In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
                 if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
@@ -4562,6 +4624,29 @@ function handleItemChange(item, value)
             {
                 hidePopup();
             } // if
+        } // case
+        break;
+
+        case "set_fan_speed":
+        case "rear_heater_2":
+        case "ac_enabled":
+        {
+            // Has anything changed?
+            if (value === handleItemChange[item]) break;
+            handleItemChange[item] = value;
+
+            if (item === "set_fan_speed")
+            {
+                var on = value !== "0";
+                $("#fan_icon").toggleClass("ledOn", on);
+                $("#fan_icon").toggleClass("ledOff", ! on);
+            } // if
+
+            if (inMenu() || currentLargeScreenId === "pre_flight") break;
+            if (engineRunning === "NO") break;
+            if (Date.now() - lastScreenChangedAt < 500) break;  // No popup if just changed screen
+
+            showPopup("climate_control_popup", 5000);
         } // case
         break;
 
@@ -5012,8 +5097,9 @@ function demoMode()
     // Pre-flight checks
     $('[gid="fuel_level_filtered"]').text("51.6");
     $('[gid="fuel_level_filtered_perc"]').css("transform", "scaleX(0.645)");
-    $('[gid="water_temp"]').text("65.0");
-    $('[gid="water_temp_perc"]').css("transform", "scaleX(0.5)");
+    $("#water_temp").text("65.0");
+    $("#water_temp_perc").css("transform", "scaleX(0.5)");
+    $("#water_temp").addClass("glowIce");
     $("#oil_level_raw").text("80");
     $("#oil_level_raw_perc").css("transform", "scaleX(0.94)");
     $("#remaining_km_to_service").text("27 500");
@@ -5027,9 +5113,9 @@ function demoMode()
     // Instrument cluster
     $('[gid="vehicle_speed"]').text("95");
     $('[gid="engine_rpm"]').text("1873");
-    $("#odometer_1").text("65 803.2");
-    $("#delivered_power").text("30.7");
-    $("#delivered_torque").text("23.1");
+    $("#odometer_1").text("65,803.2");
+    $("#delivered_power").text("27.0");
+    $("#delivered_torque").text("102.8");
 
     // Sat nav
     satnavInitialized = true;
@@ -5207,6 +5293,19 @@ function demoMode()
     $("#radio_preset_FM1_5").text("Radio 538");
     $("#radio_preset_FM1_6").text("Veronica");
     $("#presets_memory_5_select").show();
+
+    // Climate control
+    $("#ac_enabled").addClass("ledOn");
+    $("#ac_enabled").removeClass("ledOff");
+    $("#ac_compressor").addClass("ledOn");
+    $("#ac_compressor").removeClass("ledOff");
+    $("#rear_heater_2").addClass("ledOn");
+    $("#rear_heater_2").removeClass("ledOff");
+    $("#fan_icon").addClass("ledOn");
+    $("#fan_icon").removeClass("ledOff");
+    $("#set_fan_speed").text("6");
+    $("#condenser_temperature").text("40");
+    $("#evaporator_temperature").text("8.4");
 } // demoMode
 
 //demoMode();

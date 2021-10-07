@@ -13,19 +13,11 @@
 #include "Config.h"
 
 #include <EEPROM.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
 #include <VanBusRx.h>
 
 #ifdef USE_MDNS
 #include <ESP8266mDNS.h>
 #endif // USE_MDNS
-
-// Either this for "WebSockets" (https://github.com/Links2004/arduinoWebSockets):
-#include <WebSocketsServer.h>
-
-// Or this for "WebSockets_Generic" (https://github.com/khoih-prog/WebSockets_Generic):
-//#include <WebSocketsServer_Generic.h>
 
 #ifdef WIFI_AP_MODE
 
@@ -51,12 +43,13 @@ void SetupStore();
 void SetupWebServer();
 void LoopWebServer();
 
-// Create a web socket server on port 81
-WebSocketsServer webSocket = WebSocketsServer(81);
+// Defined in WebSocket.ino
+void BroadcastJsonText(const char* json);
+void SetupWebSocket();
+void LoopWebSocket();
 
 // Defined in Esp.ino
 void PrintSystemSpecs();
-const char* EspSystemDataToJson(char* buf, const int n);
 const char* EspRuntimeDataToJson(char* buf, const int n);
 
 // Defined in Wifi.ino
@@ -100,7 +93,7 @@ void SetupVanReceiver()
     // Looks like it should be set to at least 100.
     #define VAN_PACKET_QUEUE_SIZE 100
 
-    // Set to GPIO pin connected to VAN bus transceiver output
+    // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
 
     if (VanBusRx.Setup(RX_PIN, VAN_PACKET_QUEUE_SIZE))
@@ -114,6 +107,10 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
 const char* EquipmentStatusDataToJson(char* buf, const int n);
 const char* SatnavEquipmentDetection(char* buf, const int n);
 void PrintJsonText(const char* jsonBuffer);
+
+// TODO - reduce size of large JSON packets like the ones containing guidance instruction icons
+#define JSON_BUFFER_SIZE 4096
+char jsonBuffer[JSON_BUFFER_SIZE];
 
 #ifdef SHOW_VAN_RX_STATS
 
@@ -165,81 +162,6 @@ const char* VanBusStatsToJson(char* buf, const int n)
 
 #endif // SHOW_VAN_RX_STATS
 
-uint8_t websocketNum = 0xFF;
-
-// Broadcast a (JSON) message to all websocket clients
-void BroadcastJsonText(const char* json)
-{
-    if (strlen(json) <= 0) return;
-    if (websocketNum == 0xFF) return;
-
-    delay(1); // Give some time to system to process other things?
-
-    unsigned long start = millis();
-
-    digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
-    webSocket.broadcastTXT(json);
-    //webSocket.sendTXT(websocketNum, json); // Alternative
-    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
-
-    // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
-    // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
-    // a single-thread system).
-    unsigned long duration = millis() - start;
-    if (duration > 100)
-    {
-        Serial.printf_P(
-            PSTR("Sending %zu JSON bytes via 'webSocket.broadcastTXT' took: %lu msec\n"),
-            strlen(json),
-            duration);
-
-        Serial.print(F("JSON object:\n"));
-        PrintJsonText(json);
-    } // if
-} // BroadcastJsonText
-
-void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
-{
-    switch(type)
-    {
-        case WStype_DISCONNECTED:
-        {
-            Serial.printf("Websocket [%u] Disconnected!\n", num);
-            websocketNum = 0xFF;
-        }
-        break;
-
-        case WStype_CONNECTED:
-        {
-            IPAddress clientIp = webSocket.remoteIP(num);
-            Serial.printf("Websocket [%u] Connected from %d.%d.%d.%d url: %s\n",
-                num,
-                clientIp[0], clientIp[1], clientIp[2], clientIp[3],
-                payload);
-
-            websocketNum = num;
-
-            #define STATUS_JSON_BUFFER_SIZE 1024
-            char jsonBuffer[STATUS_JSON_BUFFER_SIZE];
-
-            // Send ESP system data to client
-            BroadcastJsonText(EspSystemDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
-
-            // Send Wi-Fi and IP data to client
-            BroadcastJsonText(WifiDataToJson(clientIp, jsonBuffer, STATUS_JSON_BUFFER_SIZE));
-
-            // Send equipment status data, e.g. presence of sat nav and other devices
-            BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
-        }
-        break;
-    } // switch
-} // WebSocketEvent
-
-// For prototyping on Sonoff board
-#if defined ARDUINO_ESP8266_GENERIC || defined ARDUINO_ESP8266_ESP01
-#define LED_BUILTIN 13
-#endif // defined ARDUINO_ESP8266_GENERIC || defined ARDUINO_ESP8266_ESP01
-
 void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -275,9 +197,7 @@ void setup()
 #endif // USE_MDNS
 
     SetupWebServer();
-
-    webSocket.begin();
-    webSocket.onEvent(WebSocketEvent);
+    SetupWebSocket();
 
 #ifdef WIFI_AP_MODE
     Serial.print(F("Please surf to: http://"));
@@ -300,7 +220,7 @@ void loop()
 
     LoopOta();
 
-    webSocket.loop();
+    LoopWebSocket();
     LoopWebServer();
 
     // IR receiver
@@ -322,12 +242,11 @@ void loop()
         VanBusRx.DumpStats(Serial);
 
         // Send ESP runtime data to client
-        char jsonBuffer[STATUS_JSON_BUFFER_SIZE];
-        BroadcastJsonText(EspRuntimeDataToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
+        BroadcastJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
 
-        #ifdef SHOW_VAN_RX_STATS
+    #ifdef SHOW_VAN_RX_STATS
         // Send VAN bus receiver status string to client
-        BroadcastJsonText(VanBusStatsToJson(jsonBuffer, STATUS_JSON_BUFFER_SIZE));
-        #endif // SHOW_VAN_RX_STATS
+        BroadcastJsonText(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
+    #endif // SHOW_VAN_RX_STATS
     } // if
 } // loop

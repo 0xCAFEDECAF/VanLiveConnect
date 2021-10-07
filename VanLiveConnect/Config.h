@@ -108,19 +108,25 @@
 // Debugging
 
 // Define to see infrared key hash values and timing on the serial port
-//#define PRINT_IR_DEBUG_DATA_ON_SERIAL
+//#define DEBUG_IR_RECV
 
+//#define DEBUG_WEBSERVER
+//#define DEBUG_WEBSOCKET
+//#define DEBUG_ORIGINAL_MFD
+
+// Define to show the VAN bus statistics on the "system" screen
 #define SHOW_VAN_RX_STATS
 
 // Define to see JSON buffers printed on the serial port
-#define PRINT_JSON_BUFFERS_ON_SERIAL
+//#define PRINT_JSON_BUFFERS_ON_SERIAL
 
-// Which type of packets will be printed on the serial port?
-
+// If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of packets will be printed on the serial port?
 #define SELECTED_PACKETS VAN_PACKETS_ALL
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC
 //#define SELECTED_PACKETS VAN_PACKETS_HEAD_UNIT
 //#define SELECTED_PACKETS VAN_PACKETS_SAT_NAV
 //#define SELECTED_PACKETS VAN_PACKETS_NONE
+
+//#define PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
 
 #endif // Config_h

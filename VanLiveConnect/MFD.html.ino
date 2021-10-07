@@ -1,4 +1,35 @@
 
+
+#ifdef DEBUG_ORIGINAL_MFD
+
+// Three-letter tag indicating what is currently visible on the original MFD
+#define ORIGINAL_MFD_CURRENT_SCREEN_NAME \
+R"=====(<div id="original_mfd_current_screen" class="led ledOn" style="left:20px; top:560px; width:100px; height:37px;"></div>)====="
+
+#else
+#define ORIGINAL_MFD_CURRENT_SCREEN_NAME ""
+#endif // DEBUG_ORIGINAL_MFD
+
+#ifdef DEBUG_IR_RECV
+
+// Three-letter tag indicating the button pressed on the IR remote control
+#define IR_BUTTON_PRESSED \
+R"=====(<div id="ir_button_pressed" class="led ledOn" style="left:20px; top:600px; width:100px; height:37px;"></div>)====="
+
+#else
+#define IR_BUTTON_PRESSED ""
+#endif // DEBUG_IR_RECV
+
+#ifdef DEBUG_WEBSOCKET
+
+// Flashing LED indicating web socket activity
+#define COMMS_LED \
+R"=====(<div id="comms_led" class="led ledOn" style="left:125px; top:560px; width:20px; height:77px;"></div>)====="
+
+#else
+#define COMMS_LED ""
+#endif // DEBUG_WEBSOCKET
+
 char mfd_html[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html lang="en">
@@ -93,6 +124,7 @@ char mfd_html[] PROGMEM = R"=====(
            |  | `- div id="satnav_guidance"
            |  |
            |  |  # Popups in the "large" information panel
+           |  `- div id="climate_control_popup"
            |  `- div id="audio_popup"
            |  |  `- div id="tuner_popup"
            |  |  `- div id="tape_popup"
@@ -536,9 +568,7 @@ char mfd_html[] PROGMEM = R"=====(
         </div>  <!-- Removable media -->
       </div>  <!-- Audio equipment -->
 
-      <!-- "Pre-flight" checks -->
-
-      <div id="pre_flight" style="display:none;">
+      <div style="display:none;">
 
         <!-- Fuel level, both as number (in litres) and as linear gauge -->
 
@@ -550,137 +580,23 @@ char mfd_html[] PROGMEM = R"=====(
         <div class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
 
         <div style="position:absolute; left:20px; top:130px; width:350px; height:60px;">
-          <div gid="fuel_level_filtered_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.9); transform-origin:left center;">
-            <svg style="width:324px;">
-              <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+          <div style="position:absolute; left:8px; top:0px; width:332px; height:60px;">
+            <svg style="width:334px;">
+              <line style="stroke:#c40000; stroke-width:24;" x1="0" y1="20" x2="44" y2="20"></line> <!-- 10 litres -->
+              <line style="stroke:#066a0c; stroke-width:24;" x1="45" y1="20" x2="333" y2="20"></line>
             </svg>
           </div>
-          <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
-            <svg style="width:348px;">
-              <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Engine coolant temperature, both as number (in degrees Celsius) and as linear gauge -->
-
-        <div class="icon iconMedium" style="left:580px; top:25px;">
-          <div class="centerAligned fas fa-thermometer-half"></div>
-        </div>
-
-        <div gid="water_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
-        <div class="tag" style="text-align:left; left:880px; top:70px; width:60px;">&deg;C</div>
-
-        <div style="position:absolute; left:590px; top:130px; width:350px; height:60px;">
-          <div gid="water_temp_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
-            <svg style="width:324px;">
-              <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
-            </svg>
-          </div>
-          <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
-            <svg style="width:348px;">
-              <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Oil level, both as number and as linear gauge -->
-
-        <div class="icon iconMedium" style="left:20px; top:190px;">
-          <div class="centerAligned fas fa-oil-can"></div>
-        </div>
-
-        <div id="oil_level_raw" class="dseg7" style="font-size:50px; left:125px; top:215px; width:240px;">--</div>
-
-        <div style="position:absolute; left:20px; top:280px; width:350px; height:60px;">
-          <div id="oil_level_raw_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
-            <svg style="width:324px;">
-              <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
-            </svg>
-          </div>
-          <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
-            <svg style="width:348px;">
-              <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Service interval, both as number (in km) and as linear gauge -->
-
-        <div class="icon iconMedium" style="left:440px; top:195px;">...</div>
-
-        <div class="icon iconMedium" style="left:520px; top:180px;">
-          <div class="centerAligned fas fa-tools"></div>
-        </div>
-
-        <div id="remaining_km_to_service" class="dseg7" style="font-size:50px; left:620px; top:215px; width:230px;">---</div>
-        <div class="tag" style="text-align:left; left:870px; top:220px; width:80px;">km</div>
-
-        <div style="position:absolute; left:590px; top:280px; width:350px; height:60px;">
-          <div id="remaining_km_to_service_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.95); transform-origin:left center;">
-            <svg style="width:324px;">
-              <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
-            </svg>
-          </div>
-          <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
-            <svg style="width:348px;">
-              <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Status LEDs -->
-        <div id="warning_led" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; left:0px; top:390px; width:170px; height:160px;"></div>
-        <div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
-        <div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
-        <div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
-
-        <!-- Contact key position -->
-
-        <div class="icon iconSmall" style="left:20px; top:366px;">
-          <div class="centerAligned fas fa-key"></div>
-        </div>
-
-        <div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;"></div>
-
-        <!-- Dashboard illumination level -->
-
-        <div class="icon iconSmall" style="left:710px; top:366px;">
-          <div class="centerAligned fas fa-tachometer-alt"></div>
-        </div>
-        <div class="icon iconSmall" style="left:770px; top:363px;">
-          <div class="centerAligned fas fa-sun"></div>
-        </div>
-
-        <div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:365px; width:130px;">--</div>
-
-        <!-- VIN number (very small) -->
-        <div id="vin" class="tag" style="font-size:30px; left:480px; top:477px; width:460px; text-align:right;"></div>
-
-      </div>  <!-- "Pre-flight" checks -->
-
-      <!-- Instrument cluster -->
-
-      <div id="instruments" style="display:none;">
-
-        <!-- Fuel level, both as number (in litres) and as linear gauge -->
-
-        <div class="icon iconMedium" style="left:20px; top:25px;">
-          <div class="centerAligned fas fa-gas-pump"></div>
-        </div>
-
-        <div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:70px; top:65px; width:240px;">--.-</div>
-        <div class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
-
-        <div style="position:absolute; left:20px; top:130px; width:350px; height:60px;">
           <div gid="fuel_level_filtered_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
             <svg style="width:324px;">
-              <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+              <line style="stroke:#dfe7f2; stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
             </svg>
           </div>
           <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
             <svg style="width:348px;">
               <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
+              <line style="stroke:#dfe7f2; stroke-width:5;" x1="170" y1="8" x2="170" y2="32"></line>
+              <line style="stroke:#dfe7f2; stroke-width:5;" x1="85" y1="8" x2="85" y2="32"></line>
+              <line style="stroke:#dfe7f2; stroke-width:5;" x1="255" y1="8" x2="255" y2="32"></line>
             </svg>
           </div>
         </div>
@@ -691,47 +607,140 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="centerAligned fas fa-thermometer-half"></div>
         </div>
 
-        <div gid="water_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
+        <div id="water_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
         <div class="tag" style="text-align:left; left:880px; top:70px; width:60px;">&deg;C</div>
 
         <div style="position:absolute; left:590px; top:130px; width:350px; height:60px;">
-          <div gid="water_temp_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
+          <div style="position:absolute; left:8px; top:0px; width:332px; height:60px;">
+            <svg style="width:334px;">
+              <line style="stroke:#00588c; stroke-width:24;" x1="0" y1="20" x2="176" y2="20"></line>
+              <line style="stroke:#066a0c; stroke-width:24;" x1="177" y1="20" x2="251" y2="20"></line>
+              <line style="stroke:#c40000; stroke-width:24;" x1="252" y1="20" x2="333" y2="20"></line>
+            </svg>
+          </div>
+          <div id="water_temp_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
             <svg style="width:324px;">
-              <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+              <line style="stroke:#dfe7f2; stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
             </svg>
           </div>
           <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
             <svg style="width:348px;">
               <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
+              <line style="stroke:#dfe7f2; stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
+              <line style="stroke:#dfe7f2; stroke-width:5;" x1="259" y1="8" x2="259" y2="32"></line> <!-- 100 degrees -->
             </svg>
           </div>
         </div>
 
-        <!-- Vehicle speed -->
-        <div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:235px; width:300px;">0</div>
-        <div class="tag" style="text-align:left; left:310px; top:310px; width:140px;">km/h</div>
+        <!-- "Pre-flight" checks -->
 
-        <!-- Engine rpm -->
-        <div gid="engine_rpm" class="dseg7" style="font-size:120px; left:440px; top:235px; width:400px;">0</div>
-        <div class="tag" style="text-align:left; left:840px; top:310px; width:140px;">rpm</div>
+        <div id="pre_flight" style="display:none;">
 
-        <!-- Odometer -->
-        <div class="icon iconMedium" style="left:10px; top:390px; width:90px;">...</div>
-        <div class="icon iconMedium" style="left:100px; top:390px;">
-          <div class="fas fa-car-side"></div>
-        </div>
-        <div id="odometer_1" class="dseg7" style="font-size:50px; left:220px; top:415px; width:300px;">--.-</div>
-        <div class="tag" style="text-align:left; left:530px; top:420px; width:80px;">km</div>
+          <!-- Oil level, both as number and as linear gauge -->
 
-        <!-- Delivered power (estimation) -->
-        <div id="delivered_power" class="dseg7" style="font-size:50px; left:630px; top:415px; width:200px;">--.-</div>
-        <div class="tag" style="text-align:left; left:840px; top:417px; width:80px;">HP</div>
+          <div class="icon iconMedium" style="left:20px; top:190px;">
+            <div class="centerAligned fas fa-oil-can"></div>
+          </div>
 
-        <!-- Delivered torque (estimation) -->
-        <div id="delivered_torque" class="dseg7" style="font-size:50px; left:630px; top:480px; width:200px;">--.-</div>
-        <div class="tag" style="text-align:left; left:840px; top:482px; width:80px;">Nm</div>
+          <div id="oil_level_raw" class="dseg7" style="font-size:50px; left:125px; top:215px; width:240px;">--</div>
 
-      </div>  <!-- Instrument cluster -->
+          <div style="position:absolute; left:20px; top:280px; width:350px; height:60px;">
+            <div id="oil_level_raw_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
+              <svg style="width:324px;">
+                <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+              </svg>
+            </div>
+            <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
+              <svg style="width:348px;">
+                <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Service interval, both as number (in km) and as linear gauge -->
+
+          <div class="icon iconMedium" style="left:440px; top:195px;">...</div>
+
+          <div class="icon iconMedium" style="left:520px; top:180px;">
+            <div class="centerAligned fas fa-tools"></div>
+          </div>
+
+          <div id="remaining_km_to_service" class="dseg7" style="font-size:50px; left:620px; top:215px; width:230px;">---</div>
+          <div class="tag" style="text-align:left; left:870px; top:220px; width:80px;">km</div>
+
+          <div style="position:absolute; left:590px; top:280px; width:350px; height:60px;">
+            <div id="remaining_km_to_service_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.95); transform-origin:left center;">
+              <svg style="width:324px;">
+                <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+              </svg>
+            </div>
+            <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
+              <svg style="width:348px;">
+                <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Status LEDs -->
+          <div id="warning_led" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; left:0px; top:390px; width:170px; height:160px;"></div>
+          <div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
+          <div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
+          <div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
+
+          <!-- Contact key position -->
+
+          <div class="icon iconSmall" style="left:20px; top:366px;">
+            <div class="centerAligned fas fa-key"></div>
+          </div>
+
+          <div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;"></div>
+
+          <!-- Dashboard illumination level -->
+
+          <div class="icon iconSmall" style="left:710px; top:366px;">
+            <div class="centerAligned fas fa-tachometer-alt"></div>
+          </div>
+          <div class="icon iconSmall" style="left:770px; top:363px;">
+            <div class="centerAligned fas fa-sun"></div>
+          </div>
+
+          <div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:365px; width:130px;">--</div>
+
+          <!-- VIN number (very small) -->
+          <div id="vin" class="tag" style="font-size:30px; left:480px; top:477px; width:460px; text-align:right;"></div>
+
+        </div>  <!-- "Pre-flight" checks -->
+
+        <!-- Instrument cluster -->
+
+        <div id="instruments" style="display:none;">
+
+          <!-- Vehicle speed -->
+          <div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:235px; width:300px;">0</div>
+          <div class="tag" style="text-align:left; left:310px; top:310px; width:140px;">km/h</div>
+
+          <!-- Engine rpm -->
+          <div gid="engine_rpm" class="dseg7" style="font-size:120px; left:440px; top:235px; width:400px;">0</div>
+          <div class="tag" style="text-align:left; left:840px; top:310px; width:140px;">rpm</div>
+
+          <!-- Odometer -->
+          <div class="icon iconSmall" style="left:10px; top:475px; width:90px;">...</div>
+          <div class="icon iconSmall" style="left:70px; top:475px;">
+            <div class="fas fa-car-side"></div>
+          </div>
+          <div id="odometer_1" class="dseg7" style="font-size:40px; left:120px; top:480px; width:280px;">--.-</div>
+          <div class="tag" style="font-size:40px; text-align:left; left:415px; top:482px; width:80px;">km</div>
+
+          <!-- Delivered power (estimation) -->
+          <div id="delivered_power" class="dseg7" style="font-size:40px; left:630px; top:415px; width:200px;">--.-</div>
+          <div class="tag" style="font-size:40px; text-align:left; left:840px; top:417px; width:80px;">HP</div>
+
+          <!-- Delivered torque (estimation) -->
+          <div id="delivered_torque" class="dseg7" style="font-size:40px; left:630px; top:480px; width:200px;">--.-</div>
+          <div class="tag" style="font-size:40px; text-align:left; left:840px; top:482px; width:80px;">Nm</div>
+
+        </div>  <!-- Instrument cluster -->
+      </div>
 
       <!-- MFD main menu -->
 
@@ -2083,6 +2092,31 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- Popups in the "large" information panel -->
 
+      <div id="climate_control_popup"
+        class="icon notificationPopup" style="display:none;">
+
+        <!-- Status LEDs -->
+        <div id="ac_enabled" class="iconSmall led ledOff" style="left:350px; top:125px;">
+          <div class="centerAligned fas fa-wind"></div>
+        </div>
+        <div id="ac_compressor" class="iconSmall led ledOff" style="left:700px; top:125px;">
+          <div class="centerAligned fas fa-snowflake"></div>
+        </div>
+        <div id="rear_heater_2" class="iconSmall led ledOff" style="left:700px; top:45px;">
+          <div class="centerAligned fas fa-bars"></div>
+        </div>
+        <div id="fan_icon" class="iconSmall led ledOn" style="left:350px; top:45px;">
+          <div class="centerAligned fas fa-fan"></div>
+        </div>
+
+        <!-- Data -->
+        <div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:10px; width:100px;">0</div>
+        <div id="condenser_temperature" class="tag" style="font-size:60px; left:100px; top:120px; width:160px;">--</div>
+        <div class="tag" style="font-size:60px; left:270px; top:120px; width:90px; text-align:left;">&deg;C</div>
+        <div id="evaporator_temperature" class="tag" style="font-size:60px; left:380px; top:120px; width:230px;">-.-</div>
+        <div class="tag" style="font-size:60px; left:620px; top:120px; width:90px; text-align:left;">&deg;C</div>
+      </div>
+
       <!-- Audio popup -->
 
       <div id="audio_popup"
@@ -2275,10 +2309,12 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="trip_computer_popup"
         on_enter="initTripComputerPopup();"
-        class="icon notificationPopup" style="top:160px; height:280px; display:none;">
+        class="icon notificationPopup" style="left:30px; top:160px; height:280px; width:850px; display:none;">
+
+        <div class="verticalLine" style="left:130px; top:0px; height:280px;"></div>
 
         <!-- Tabs -->
-        <div class="tab" style="left:30px; top:10px; width:740px; height:250px;">
+        <div class="tab" style="left:30px; top:10px; width:800px; height:250px;">
 
           <!-- Tab buttons -->
           <div id="trip_computer_popup_fuel_data_button" class="tabLeft" style="left:0px; top:10px; width:100px;">
@@ -2289,78 +2325,78 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- Tab contents -->
           <div id="trip_computer_popup_fuel_data" class="tabContent"
-            style="display:none; position:absolute; left:100px; top:5px; width:600px; height:230px;">
+            style="display:none; border:none; position:absolute; left:100px; top:5px; width:700px; height:230px;">
 
-            <div class="icon iconSmall" style="left:20px; top:35px;">
+            <div class="icon iconSmall" style="left:180px; top:20px;">
               <div class="fas fa-fire-alt"></div>
             </div>
 
-            <div gid="inst_consumption_lt_100" class="dots" style="left:80px; top:35px; width:200px; text-align:right;">--.-</div>
-            <div class="tag" style="left:300px; top:35px; text-align:left;">l/100 km</div>
+            <div gid="inst_consumption_lt_100" class="dots" style="left:100px; top:100px; width:220px; text-align:center;">--.-</div>
+            <div class="tag" style="left:100px; top:170px; width:220px; text-align:center;">l/100 km</div>
 
-            <div class="icon iconSmall" style="left:20px; top:120px;">
+            <div class="icon iconSmall" style="left:500px; top:20px;">
               <div class="fas fa-gas-pump"></div>
             </div>
-            <div gid="distance_to_empty" class="dots" style="left:80px; top:120px; width:200px; text-align:right;">---</div>
-            <div class="tag" style="left:300px; top:120px; text-align:left;">km</div>
+            <div gid="distance_to_empty" class="dots" style="left:430px; top:100px; width:220px; text-align:center;">---</div>
+            <div class="tag" style="left:430px; top:170px; width:220px; text-align:center;">km</div>
           </div>
 
           <div id="trip_computer_popup_trip_1" class="tabContent"
-            style="display:none; position:absolute; left:100px; top:5px; width:600px; height:230px;">
+            style="display:none; border:none; position:absolute; left:100px; top:5px; width:700px; height:230px;">
 
-            <div class="icon iconSmall" style="left:20px; top:20px;">
+            <div class="icon iconSmall" style="left:70px; top:20px;">
               <div class="fas fa-angle-double-right"></div>
             </div>
-            <div class="icon iconSmall" style="left:70px; top:20px;">
+            <div class="icon iconSmall" style="left:120px; top:20px;">
               <div class="fas fa-fire-alt"></div>
             </div>
-            <div gid="avg_consumption_lt_100_1" class="dots" style="left:130px; top:20px; width:220px; text-align:right;">--.-</div>
-            <div class="tag" style="left:360px; top:20px;">l/100km</div>
+            <div gid="avg_consumption_lt_100_1" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
+            <div class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100km</div>
 
-            <div class="icon iconSmall" style="left:20px; top:90px;">
+            <div class="icon iconSmall" style="left:290px; top:20px;">
               <div class="fas fa-angle-double-right"></div>
             </div>
-            <div class="icon iconSmall" style="left:70px; top:90px;">
+            <div class="icon iconSmall" style="left:340px; top:20px;">
               <div class="fas fa-tachometer-alt"></div>
             </div>
-            <div gid="avg_speed_1" class="dots" style="left:130px; top:90px; width:220px; text-align:right;">--</div>
-            <div class="tag" style="left:360px; top:90px;">km/h</div>
+            <div gid="avg_speed_1" class="dots" style="left:250px; top:100px; width:220px; text-align:center;">--</div>
+            <div class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
 
-            <div class="icon iconSmall" style="left:20px; top:160px; width:70px;">...</div>
-            <div class="icon iconSmall" style="left:70px; top:160px;">
+            <div class="icon iconSmall" style="left:510px; top:20px; width:70px;">...</div>
+            <div class="icon iconSmall" style="left:560px; top:20px;">
               <div class="fas fa-car-side"></div>
             </div>
-            <div gid="distance_1" class="dots" style="left:130px; top:160px; width:220px; text-align:right;">--</div>
-            <div class="tag" style="left:360px; top:160px;">km</div>
+            <div gid="distance_1" class="dots" style="left:465px; top:100px; width:230px; text-align:center;">--</div>
+            <div class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
           </div>
 
           <div id="trip_computer_popup_trip_2" class="tabContent"
-            style="display:none; position:absolute; left:100px; top:5px; width:600px; height:230px;">
+            style="display:none; border:none; position:absolute; left:100px; top:5px; width:700px; height:230px;">
 
-            <div class="icon iconSmall" style="left:20px; top:20px;">
+            <div class="icon iconSmall" style="left:70px; top:20px;">
               <div class="fas fa-angle-double-right"></div>
             </div>
-            <div class="icon iconSmall" style="left:70px; top:20px;">
+            <div class="icon iconSmall" style="left:120px; top:20px;">
               <div class="fas fa-fire-alt"></div>
             </div>
-            <div gid="avg_consumption_lt_100_2" class="dots" style="left:130px; top:20px; width:220px; text-align:right;">--.-</div>
-            <div class="tag" style="left:360px; top:20px;">l/100km</div>
+            <div gid="avg_consumption_lt_100_2" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
+            <div class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100km</div>
 
-            <div class="icon iconSmall" style="left:20px; top:90px;">
+            <div class="icon iconSmall" style="left:290px; top:20px;">
               <div class="fas fa-angle-double-right"></div>
             </div>
-            <div class="icon iconSmall" style="left:70px; top:90px;">
+            <div class="icon iconSmall" style="left:340px; top:20px;">
               <div class="fas fa-tachometer-alt"></div>
             </div>
-            <div gid="avg_speed_2" class="dots" style="left:130px; top:90px; width:220px; text-align:right;">--</div>
-            <div class="tag" style="left:360px; top:90px;">km/h</div>
+            <div gid="avg_speed_2" class="dots" style="left:250px; top:100px; width:220px; text-align:center;">--</div>
+            <div class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
 
-            <div class="icon iconSmall" style="left:20px; top:160px; width:70px;">...</div>
-            <div class="icon iconSmall" style="left:70px; top:160px;">
+            <div class="icon iconSmall" style="left:510px; top:20px; width:70px;">...</div>
+            <div class="icon iconSmall" style="left:560px; top:20px;">
               <div class="fas fa-car-side"></div>
             </div>
-            <div gid="distance_2" class="dots" style="left:130px; top:160px; width:220px; text-align:right;">--</div>
-            <div class="tag" style="left:360px; top:160px;">km</div>
+            <div gid="distance_2" class="dots" style="left:465px; top:100px; width:230px; text-align:center;">--</div>
+            <div class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
           </div>
         </div>
       </div>  <!-- "trip_computer_popup" -->
@@ -2710,7 +2746,7 @@ char mfd_html[] PROGMEM = R"=====(
     <!-- System -->
 
     <div id="system" style="position:absolute; font-size:30px; background-color:rgba(41,55,74,0.95); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
-      on_enter="$('#websocket_server_host').text(websocketServerHost);">
+      on_enter="$('#web_socket_server_host').text(webSocketServerHost);">
 
       <div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
 
@@ -2729,7 +2765,7 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="window_height" class="tag" style="left:240px; top:140px; width:120px;">---</div>
 
         <div class="tag" style="left:10px; top:200px; width:370px; text-align:left; font-size:25px;">Websocket server host:</div>
-        <div id="websocket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
+        <div id="web_socket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
       </div>
 
       <div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:80px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
@@ -2776,8 +2812,14 @@ char mfd_html[] PROGMEM = R"=====(
     </div>  <!-- "system" -->
 
     <!-- "Status" line: fixed element in each screen -->
-    <div id="comms_led" class="led ledOn" style="left:30px; top:590px; width:30px; height:30px;"></div>
 
+)====="
+
+"    " ORIGINAL_MFD_CURRENT_SCREEN_NAME "\n"
+"    " IR_BUTTON_PRESSED "\n"
+"    " COMMS_LED "\n"
+
+R"=====(
     <div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
       <div gid="inst_consumption_lt_100" class="dots" style="left:0px; top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>
       <div class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>

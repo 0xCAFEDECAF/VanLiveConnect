@@ -1,4 +1,6 @@
 
+#include <ESP8266WiFi.h>
+
 #include "Config.h"
 
 const char* GetHostname()

@@ -32,63 +32,22 @@ typedef struct
     uint8_t rawlen;  // counter of entries in rawbuf
 } TIrParams;
 
+// Defined in WebSocket.ino
+extern bool inMenu;
+
 // Defined in PacketToJson.ino
 extern const char emptyStr[];
-extern const char notApplicable3Str[];
+extern const char yesStr[];
+extern const char noStr[];
 extern bool economyMode;
-extern bool isSatnavGuidanceActive;
-extern bool isCurrentStreetKnown;
-extern bool isHeadUnitPowerOn;
-extern uint8_t smallScreenIndex;
-extern uint8_t largeScreenIndexBeforeGoingIntoGuidanceMode;
-extern uint8_t largeScreenIndex;
-PGM_P SmallScreenStr(uint8_t idx);
 void PrintJsonText(const char* jsonBuffer);
 
-// Index of small screen
-enum SmallScreen_t
-{
-    SMALL_SCREEN_INVALID = 0xFF,
-    SMALL_SCREEN_FIRST = 0,
-
-    // Same order as the original MFD goes through as the driver short-presses the right stalk button
-    SMALL_SCREEN_TRIP_INFO_1 = SMALL_SCREEN_FIRST, // When the original MFD is plugged in, this is what it starts with
-    SMALL_SCREEN_TRIP_INFO_2,
-    SMALL_SCREEN_GPS_INFO, // Skipped when in guidance mode
-    SMALL_SCREEN_FUEL_CONSUMPTION,
-
-    SMALL_SCREEN_LAST = SMALL_SCREEN_FUEL_CONSUMPTION,
-    N_SMALL_SCREENS
-}; // enum SmallScreen_t
-
-// Index of large screen
-enum LargeScreen_t
-{
-    LARGE_SCREEN_INVALID = 0xFF,
-    LARGE_SCREEN_FIRST = 0,
-
-    // Same order as the original MFD goes through as the driver presses the "MOD" button on the IR controller
-    LARGE_SCREEN_CLOCK = LARGE_SCREEN_FIRST,  // When the original MFD is plugged in, this is what it starts with
-    LARGE_SCREEN_GUIDANCE,  // Skipped when not in guidance mode
-    LARGE_SCREEN_HEAD_UNIT,  // Skipped when head unit is powered off
-    LARGE_SCREEN_CURRENT_STREET,  // Skipped when in guidance mode
-    LARGE_SCREEN_TRIP_COMPUTER,  // Skipped when not in guidance mode
-
-    LARGE_SCREEN_LAST = LARGE_SCREEN_TRIP_COMPUTER,
-    N_LARGE_SCREENS
-}; // enum LargeScreen_t
-
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
-PGM_P LargeScreenStr(uint8_t idx)
-{
-    return
-        idx == LARGE_SCREEN_CLOCK ? PSTR("CLOCK") :
-        idx == LARGE_SCREEN_GUIDANCE ? PSTR("GUIDANCE") :
-        idx == LARGE_SCREEN_HEAD_UNIT ? PSTR("HEAD_UNIT") :
-        idx == LARGE_SCREEN_CURRENT_STREET ? PSTR("CURRENT_STREET") :
-        idx == LARGE_SCREEN_TRIP_COMPUTER ? PSTR("TRIP_COMPUTER") :
-        notApplicable3Str;
-} // LargeScreenStr
+// Defined in OriginalMfd.ino
+extern unsigned long popupShowingSince;
+extern long popupDuration;
+PGM_P SmallScreenStr();
+PGM_P LargeScreenStr();
+void CycleLargeScreen();
 
 // Main class for receiving IR
 class IRrecv
@@ -265,7 +224,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
 
     if (strlen_P(pkt.buttonStr) == 0) return "";
 
-    PGM_P heldStr = pkt.held ? PSTR(" (held)") : PSTR("");
+    PGM_P heldStr = pkt.held ? PSTR(" (held)") : emptyStr;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -277,58 +236,28 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, pkt.buttonStr, heldStr);
 
     // "MOD" button pressed?
-    if (pkt.value == IB_MODE && ! economyMode)
+    if (pkt.value == IB_MODE && ! inMenu && ! economyMode)
     {
-        // TODO - ignore as long as "audio_popup" is visible
-
-        largeScreenIndexBeforeGoingIntoGuidanceMode = LARGE_SCREEN_CLOCK;
-
-        // Keep track of the cycling through the large screens in the original MFD
-        largeScreenIndex++;
-
-        if (largeScreenIndex == LARGE_SCREEN_GUIDANCE && ! isSatnavGuidanceActive) largeScreenIndex++;
-
-        if (largeScreenIndex == LARGE_SCREEN_HEAD_UNIT && ! isHeadUnitPowerOn) largeScreenIndex++;
-
-        if (largeScreenIndex == LARGE_SCREEN_CURRENT_STREET && (isSatnavGuidanceActive || ! isCurrentStreetKnown))
-        {
-            // TODO - even when the current street is known, the original MFD does not always cycle through it.
-            // What is the additional condition on which the original MFD decides to start showing the current screen?
-            largeScreenIndex++;
-        } // if
-
-        if (largeScreenIndex == LARGE_SCREEN_TRIP_COMPUTER && ! isSatnavGuidanceActive) largeScreenIndex++;
-
-        largeScreenIndex %= N_LARGE_SCREENS;
-
-        // TODO - remove
-        Serial.printf_P(
-            PSTR("=====> \"MOD\" button press; largeScreenIndex := %u (%S)\n"),
-            largeScreenIndex,
-            LargeScreenStr(largeScreenIndex)
-        );
-
-        if (largeScreenIndex == LARGE_SCREEN_TRIP_COMPUTER && smallScreenIndex == SMALL_SCREEN_GPS_INFO)
-        {
-            smallScreenIndex = SMALL_SCREEN_FUEL_CONSUMPTION;
-
-            at += at >= IR_JSON_BUFFER_SIZE ? 0 :
-                snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR(",\n\"small_screen\": \"%S\""),
-                    SmallScreenStr(smallScreenIndex)
-                );
-
-            // TODO - remove
-            Serial.printf_P(
-                PSTR("=====> Switched large screen to trip computer; smallScreenIndex := %u (%S)\n"),
-                smallScreenIndex,
-                SmallScreenStr(smallScreenIndex)
-            );
-        } // if
+        // May update 'LargeScreenStr()' and 'SmallScreenStr()'
+        CycleLargeScreen();
 
         at += at >= IR_JSON_BUFFER_SIZE ? 0 :
-            snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR(",\n\"large_screen\": \"%S\""),
-                LargeScreenStr(largeScreenIndex)
+            snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR(
+                    ",\n"
+                    "\"large_screen\": \"%S\",\n"
+                    "\"small_screen\": \"%S\""
+                ),
+                LargeScreenStr(),
+                SmallScreenStr()
             );
+    } // while
+
+    // "Esc" button hides any visible popup
+    // TODO - also "Val" button?
+    if (pkt.value == IB_ESC)
+    {
+        popupShowingSince = 0;
+        popupDuration = 0;
     } // if
 
     at += at >= IR_JSON_BUFFER_SIZE ? 0 : snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR("\n}\n}\n"));
@@ -404,10 +333,10 @@ bool IrReceive(TIrPacket& irPacket)
     lastValue = irPacket.value;
     lastUpdate = millis();
 
-#ifdef PRINT_IR_DEBUG_DATA_ON_SERIAL
-    Serial.printf_P(PSTR("=====> irPacket.value = 0x%lX (%S), lastValue = 0x%lX, lastInterval = %lu, held = %S\n"),
-        irPacket.value, irPacket.buttonStr, lastValue, lastInterval, irPacket.held ? PSTR("YES") : PSTR("NO"));
-#endif // PRINT_IR_DEBUG_DATA_ON_SERIAL
+#ifdef DEBUG_IR_RECV
+    Serial.printf_P(PSTR("[irRecv] irPacket.value = 0x%lX (%S), lastValue = 0x%lX, lastInterval = %lu, held = %S\n"),
+        irPacket.value, irPacket.buttonStr, lastValue, lastInterval, irPacket.held ? yesStr : noStr);
+#endif // DEBUG_IR_RECV
 
     // "MENU_BUTTON", "MODE_BUTTON" and "ENTER_BUTTON" are never "held". They fire only once.
     if (irPacket.held
