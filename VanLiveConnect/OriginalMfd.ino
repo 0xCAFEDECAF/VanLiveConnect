@@ -260,6 +260,26 @@ void CycleTripInfo()
     } // if
 } // CycleTripInfo
 
+void UpdateLargeScreenForCurrentStreetKnown()
+{
+    if (! isSatnavGuidanceActive)
+    {
+        if (largeScreenIndex == LARGE_SCREEN_CLOCK)
+        {
+            // The original MFD also waits for something else to happen before it autonomously switches to the
+            // curret street in the large screen. But it is not clear what that "something else" is.
+            largeScreenIndex = LARGE_SCREEN_CURRENT_STREET;
+        } // if
+    } // if
+
+#ifdef DEBUG_ORIGINAL_MFD
+    Serial.printf_P(
+        PSTR("[originalMfd] current street known; largeScreenIndex := %S\n"),
+        LargeScreenStr()
+    );
+#endif // DEBUG_ORIGINAL_MFD
+} // UpdateLargeScreenForCurrentStreetKnown
+
 void UpdateLargeScreenForHeadUnitOn()
 {
     if (isSatnavGuidanceActive)

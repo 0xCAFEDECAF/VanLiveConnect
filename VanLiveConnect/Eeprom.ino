@@ -11,7 +11,7 @@ void WriteEeprom(int const address, uint8_t const val)
     EEPROM.write(address, val);
     _eepromDirty = true;
 
-    Serial.printf_P(PSTR("=====> Written value %u to EEPROM\n"), val);  // TODO - remove
+    Serial.printf_P(PSTR("=====> Written value %u to EEPROM position %d\n"), val, address);  // TODO - remove
 } // WriteEeprom
 
 void CommitEeprom()

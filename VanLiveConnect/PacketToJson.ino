@@ -2931,19 +2931,24 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     {
         // Going into guidance mode
         UpdateLargeScreenForGuidanceModeOn();
+
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
+                LargeScreenStr()
+            );
     }
     else if (wasSatnavGuidanceActive && ! isSatnavGuidanceActive)
     {
         // Going out of guidance mode
         UpdateLargeScreenForGuidanceModeOff();
+
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
+                LargeScreenStr()
+            );
     } // if
 
     wasSatnavGuidanceActive = isSatnavGuidanceActive;
-
-    at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
-            LargeScreenStr()
-        );
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
@@ -3449,6 +3454,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
     int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(report));
 
+    bool wasCurrentStreetKnown = isCurrentStreetKnown;
+
     switch(report)
     {
         case SR_CURRENT_STREET:
@@ -3787,6 +3794,16 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         break;
 
     } // switch
+
+    if (! wasCurrentStreetKnown && isCurrentStreetKnown)
+    {
+        UpdateLargeScreenForCurrentStreetKnown();
+
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
+                LargeScreenStr()
+            );
+    } // if
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 

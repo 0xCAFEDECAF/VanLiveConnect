@@ -136,42 +136,6 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
             // Process the message
             ProcessWebSocketClientMessage((char*)payload);
-
-            // Parse reports back from the browser (client) side
-/*
-            if (strncmp((char*)payload, "in_menu:", 8) == 0)
-            {
-                inMenu = strncmp((char*)payload + 8, "NO", 2) != 0;
-            }
-            else if (strncmp((char*)payload, "mfd_popup_showing:", 18) == 0)
-            {
-                popupShowingSince = strncmp((char*)payload + 18, "NO", 2) != 0 ? millis() : 0;
-            } // if
-*/
-/*
-            String message((char*)payload);
-
-            Serial.println(message);  // TODO - remove
-
-            if (message.startsWith("in_menu:"))
-            {
-                inMenu = message.endsWith(":YES");
-            }
-            else if (message.startsWith("mfd_popup_showing:"))
-            {
-                if (message.endsWith(":NO"))
-                {
-                    popupShowingSince = 0;
-                    popupDuration = 0;
-                }
-                else
-                {
-// TODO - crashes ESP
-//                    popupShowingSince = millis();
-//                    popupDuration = message.substring(18).toInt();
-                } // if
-            } // if
-*/
         }
         break;
     } // switch

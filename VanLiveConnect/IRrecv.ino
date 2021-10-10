@@ -147,7 +147,7 @@ PGM_P IrButtonStr(unsigned long data)
         data == IB_LEFT ? PSTR("LEFT_BUTTON") :
         data == IB_RIGHT ? PSTR("RIGHT_BUTTON") :
         data == IB_UP ? PSTR("UP_BUTTON") :
-        data == IB_ENTER ? PSTR("ENTER_BUTTON") :
+        data == IB_ENTER ? PSTR("VAL_BUTTON") :  // "Enter" button
         emptyStr;
 } // IrButtonStr
 
@@ -338,7 +338,7 @@ bool IrReceive(TIrPacket& irPacket)
         irPacket.value, irPacket.buttonStr, lastValue, lastInterval, irPacket.held ? yesStr : noStr);
 #endif // DEBUG_IR_RECV
 
-    // "MENU_BUTTON", "MODE_BUTTON" and "ENTER_BUTTON" are never "held". They fire only once.
+    // "MENU_BUTTON", "MODE_BUTTON" and "VAL_BUTTON" are never "held". They fire only once.
     if (irPacket.held
         && (
             irPacket.value == IB_MENU

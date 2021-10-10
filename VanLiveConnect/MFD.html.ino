@@ -1,20 +1,23 @@
 
+// Following DOM elements are compiled conditionally
 
 #ifdef DEBUG_ORIGINAL_MFD
 
-// Three-letter tag indicating what is currently visible on the original MFD
-#define ORIGINAL_MFD_CURRENT_SCREEN_NAME \
-R"=====(<div id="original_mfd_current_screen" class="led ledOn" style="left:20px; top:560px; width:100px; height:37px;"></div>)====="
+// Tags indicating what is currently showing on the original MFD
+#define ORIGINAL_MFD_SCREEN_NAMES \
+"    <div id='original_mfd_small_screen' class='led ledOn' style='left:20px; top:505px; width:130px; height:37px;'></div>\n" \
+"    <div id='original_mfd_large_screen' class='led ledOn' style='left:160px; top:505px; width:200px; height:37px;'></div>\n" \
+"    <div id='original_mfd_debug_1' class='led ledOn' style='left:20px; top:600px; width:100px; height:37px;'></div>\n"
 
 #else
-#define ORIGINAL_MFD_CURRENT_SCREEN_NAME ""
+#define ORIGINAL_MFD_SCREEN_NAMES ""
 #endif // DEBUG_ORIGINAL_MFD
 
 #ifdef DEBUG_IR_RECV
 
 // Three-letter tag indicating the button pressed on the IR remote control
 #define IR_BUTTON_PRESSED \
-R"=====(<div id="ir_button_pressed" class="led ledOn" style="left:20px; top:600px; width:100px; height:37px;"></div>)====="
+"    <div id='ir_button_pressed' class='led ledOn' style='left:20px; top:560px; width:100px; height:37px;'></div>\n"
 
 #else
 #define IR_BUTTON_PRESSED ""
@@ -24,7 +27,7 @@ R"=====(<div id="ir_button_pressed" class="led ledOn" style="left:20px; top:600p
 
 // Flashing LED indicating web socket activity
 #define COMMS_LED \
-R"=====(<div id="comms_led" class="led ledOn" style="left:125px; top:560px; width:20px; height:77px;"></div>)====="
+"    <div id='comms_led' class='led ledOn' style='left:125px; top:560px; width:20px; height:77px;'></div>\n"
 
 #else
 #define COMMS_LED ""
@@ -2801,7 +2804,7 @@ char mfd_html[] PROGMEM = R"=====(
       </div>
 
       <div id="van_bus_stats" class="tag"
-        style="left:30px; top:480px; width:1200px; text-align:left; font-size:25px; white-space:normal;">
+        style="left:420px; top:480px; width:830px; text-align:left; font-size:25px; white-space:normal;">
         VAN Rx Stats: received pkts: ---, corrupt: -- (-.---%), repaired: -- (--%) [SB_err: --, DCB_err: -], overall: - (-.---%)
       </div>
 
@@ -2815,9 +2818,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 )====="
 
-"    " ORIGINAL_MFD_CURRENT_SCREEN_NAME "\n"
-"    " IR_BUTTON_PRESSED "\n"
-"    " COMMS_LED "\n"
+ORIGINAL_MFD_SCREEN_NAMES
+IR_BUTTON_PRESSED
+COMMS_LED
 
 R"=====(
     <div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
