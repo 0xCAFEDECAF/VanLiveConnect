@@ -1637,7 +1637,7 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     static uint32_t prevSeq = 0;
 
     // With engine running, there are about 20 or so of these packets per second. Limit the rate somewhat.
-    // Send only if any of the reported values changes with more than 10 /min (engine_rpm), 1 km/h (vehicle_speed),
+    // Send only if any of the reported values changes with more than 10 rpm (engine_rpm), 1 km/h (vehicle_speed),
     // or after 1 second.
 
     static unsigned long lastUpdated = 0;
@@ -1671,14 +1671,10 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     char floatBuf[2][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
         IsEngineRpmValid() ?
-            //FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 1) :
             FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 0) :
-            //PSTR("---.-"),
             notApplicable3Str,
         IsVehicleSpeedValid() ?
-            //FloatToStr(floatBuf[1], vehicleSpeed_x100 / 100.0, 2) :
             FloatToStr(floatBuf[1], vehicleSpeed_x100 / 100.0, 0) :
-            //PSTR("---.--")
             notApplicable2Str
     );
 
@@ -2354,16 +2350,6 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
     const uint8_t* data = pkt.Data();
     uint16_t mfdStatus = (uint16_t)data[0] << 8 | data[1];
 
-    if (mfdStatus == MFD_SCREEN_OFF)
-    {
-        // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
-        // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
-        // don't work well together.
-        CommitEeprom();
-
-        isCurrentStreetKnown = false;
-    } // if
-
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -2389,6 +2375,22 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         ResetTripInfo(mfdStatus);
 
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"small_screen\": \"%S\""), SmallScreenStr());
+    } // if
+
+    if (mfdStatus == MFD_SCREEN_OFF)
+    {
+        // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
+        // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
+        // don't work well together.
+        CommitEeprom();
+
+        isSatnavGuidanceActive = false;
+        isCurrentStreetKnown = false;
+        isHeadUnitPowerOn = false;
+
+        UpdateLargeScreenForMfdOff();
+
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""), LargeScreenStr());
     } // if
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
@@ -4445,7 +4447,12 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
 
         at = snprintf_P(buf, n, jsonFormatter,
             data[1] == 0x01 ? PSTR("TUNER") :
-            data[1] == 0x02 ? PSTR("INTERNAL_CD_OR_TAPE") :
+
+            data[1] == 0x02 ?
+                seenTapePresence ? PSTR("TAPE") :
+                seenCdPresence ? PSTR("CD") :
+                PSTR("INTERNAL_CD_OR_TAPE") :
+
             data[1] == 0x03 ? PSTR("CD_CHANGER") :
 
             // This is the "default" mode for the head unit, to sit there and listen to the navigation
@@ -4473,7 +4480,12 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
 
                 (data[4] & 0x0F) == 0x00 ? noneStr :  // source
                 (data[4] & 0x0F) == 0x01 ? PSTR("TUNER") :
-                (data[4] & 0x0F) == 0x02 ? PSTR("INTERNAL_CD_OR_TAPE") :
+
+                (data[4] & 0x0F) == 0x02 ?
+                    seenTapePresence ? PSTR("TAPE") :
+                    seenCdPresence ? PSTR("CD") :
+                    PSTR("INTERNAL_CD_OR_TAPE") :
+
                 (data[4] & 0x0F) == 0x03 ? PSTR("CD_CHANGER") :
 
                 // This is the "default" mode for the head unit, to sit there and listen to the navigation

@@ -298,14 +298,24 @@ var connectToWebsocketTimer = setTimeout(
 var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 var engineCoolantTemperature = 80;  // In degrees Celsius
 
+var suppressClimateControlPopup = null;
+
 function setEngineRunning(newValue)
 {
     // Has anything changed?
     if (newValue === engineRunning) return;
     engineRunning = newValue;
 
-    // If engine just started, and currently in "pre_flight" screen, then switch to "instruments"
-    if (engineRunning === "YES" && $("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
+    // If engine just started?
+    if (engineRunning === "YES")
+    {
+        // If currently in "pre_flight" screen, then switch to "instruments"
+        if ($("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
+
+        // Suppress climate control popup during the next 2 seconds
+        clearInterval(suppressClimateControlPopup);
+        suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
+    } // if
 
     // If engine just stopped, and currently in "instruments" screen, then switch to default screen
     if (engineRunning === "NO" && $("#instruments").is(":visible")) selectDefaultScreen();
@@ -344,8 +354,6 @@ function changeLargeScreenTo(id)
 
     hidePopup("audio_popup");
 
-    //console.log("// changeLargeScreenTo('" + id + "')");
-
     // Perform current screen's "on_exit" action, if specified
     var onExit = $("#" + currentLargeScreenId).attr("on_exit");
     if (onExit) eval(onExit);
@@ -381,11 +389,10 @@ function selectDefaultScreen(audioSource)
     // Explicitly passed a value for 'audioSource'?
     if (typeof audioSource !== "undefined")
     {
-        // TODO - do we ever get audioSource "INTERNAL_CD_OR_TAPE"?
         selectedScreenId =
             audioSource === "TUNER" ? "tuner" :
             audioSource === "TAPE" ? "tape" :
-            audioSource === "CD" ? "cd_player" :
+            audioSource === "CD" || audioSource === "INTERNAL_CD_OR_TAPE" ? "cd_player" :
             audioSource === "CD_CHANGER" ? "cd_changer" :
             "";
     } // if
@@ -402,7 +409,7 @@ function selectDefaultScreen(audioSource)
         selectedScreenId =
             audioSource === "TUNER" ? "tuner" :
             audioSource === "TAPE" ? "tape" :
-            audioSource === "CD" ? "cd_player" :
+            audioSource === "CD" || audioSource === "INTERNAL_CD_OR_TAPE" ? "cd_player" :
             audioSource === "CD_CHANGER" ? "cd_changer" :
             "";
     } // if
@@ -492,8 +499,7 @@ function nextLargeScreen()
 
     var idIndex = screenIds.indexOf(currentLargeScreenId);  // -1 if not found
 
-    // Get the ID of the next screen in the sequence
-    idIndex = (idIndex + 1) % screenIds.length;
+    idIndex = (idIndex + 1) % screenIds.length;  // ID of the next screen in the sequence
 
     // In "demo mode" we can cycle through all the screens, otherwise to a limited set of screens
     if (inDemoMode)
@@ -506,8 +512,7 @@ function nextLargeScreen()
     }
     else
     {
-        // Don't cycle through menu screens
-        if (inMenu()) return;
+        if (inMenu()) return;  // Don't cycle through menu screens
 
         var audioSource = $("#audio_source").text();
 
@@ -703,8 +708,6 @@ function goFullScreen()
 // Show the specified popup, with an optional timeout
 function showPopup(id, msec)
 {
-    //console.log("// showPopup('" + id + "'," + msec + ")");
-
     var popup = $("#" + id);
     if (! popup.is(":visible"))
     {
@@ -1439,7 +1442,7 @@ function highlightPreviousLine(id)
 //
 // - For a right-hand roundabout, write the following in code Javascript:
 //   document.getElementById("arc1").setAttribute("d", describeArc(200, 400, 100, <angle_to_go_round> - 180, 180));
-
+//
 function polarToCartesian(centerX, centerY, radius, angleInDegrees)
 {
     var angleInRadians = (angleInDegrees-90) * Math.PI / 180.0;
@@ -1620,15 +1623,15 @@ function satnavGotoMainMenu()
         return;
     } // if
 
-    if (satnavStatus1.match(/DISC_UNREADABLE/))
-    {
-        showStatusPopup("Navigation CD-ROM<br />is unreadable", 10000);
-        return;
-    } // if
-
     if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
     {
         showStatusPopup("Navigation CD-ROM is<br />missing", 8000);
+        return;
+    } // if
+
+    if (satnavStatus1.match(/DISC_UNREADABLE/))
+    {
+        showStatusPopup("Navigation CD-ROM<br />is unreadable", 10000);
         return;
     } // if
 
@@ -2562,6 +2565,14 @@ function satnavEscapeVocalSynthesisLevel()
 
 function satnavPoweringOff()
 {
+    // If in guidance mode while turning off contact key, remember to show popup
+    // "Continue guidance to destination?" the next time the contact key is turned "ON"
+    if (satnavMode === "IN_GUIDANCE_MODE")
+    {
+        localStorage.askForGuidanceContinuation = "YES";
+        webSocket.send("ask_for_guidance_continuation:YES");
+    } // if
+
     satnavInitialized = false;
     $("#satnav_disc_recognized").addClass("ledOff");
     handleItemChange.nSatNavDiscUnreadable = 1;
@@ -3359,16 +3370,16 @@ function handleItemChange(item, value)
                     {
                         handleItemChange.contactKeyOffTimer = null;
 
-                        // If in guidance mode while turning off contact key, remember to show popup
-                        // "Continue guidance to destination?" the next time the contact key is turned "ON"
-                        if (satnavMode === "IN_GUIDANCE_MODE")
-                        {
-                            localStorage.askForGuidanceContinuation = "YES";
-                            webSocket.send("ask_for_guidance_continuation:YES");
-                        } // if
+                        // // If in guidance mode while turning off contact key, remember to show popup
+                        // // "Continue guidance to destination?" the next time the contact key is turned "ON"
+                        // if (satnavMode === "IN_GUIDANCE_MODE")
+                        // {
+                            // localStorage.askForGuidanceContinuation = "YES";
+                            // webSocket.send("ask_for_guidance_continuation:YES");
+                        // } // if
 
                         selectDefaultScreen();
-                        satnavPoweringOff();
+                        //satnavPoweringOff();
                     },
                     500
                 );
@@ -3445,8 +3456,7 @@ function handleItemChange(item, value)
 
         case "satnav_status_2":
         {
-            // Only if valid
-            if (value === "") break;
+            if (value === "") break;  // Only if valid
 
             // Has anything changed?
             if (value === satnavMode) break;
@@ -3516,10 +3526,11 @@ function handleItemChange(item, value)
             else if (value === "POWERING_OFF")
             {
                 satnavPoweringOff();
-            }
-            else if (value === "CALCULATING_ROUTE")
-            {
-                satnavCalculatingRoute();
+            // }
+            // else if (value === "CALCULATING_ROUTE")
+            // {
+                //satnavCalculatingRoute();
+                //showPopup('satnav_guidance_preference_popup', 8000);
             } // if
         } // case
         break;
@@ -3793,7 +3804,7 @@ function handleItemChange(item, value)
                 // TODO - make this work
                 //document.getElementById("satnav_list").style.display = "none";
                 break;
-            }
+            } // if
 
             // Has anything changed?
             if (value === currentLargeScreenId) break;
@@ -3808,7 +3819,7 @@ function handleItemChange(item, value)
                 else gotoMenu(value);
 
                 break;
-            }
+            } // if
 
             if (value === "satnav_enter_street_characters")
             {
@@ -3818,7 +3829,7 @@ function handleItemChange(item, value)
                 else satnavGotoEnterStreetOrNumber();
 
                 break;
-            }
+            } // if
 
             if (value === "satnav_current_destination_house_number")
             {
@@ -3843,7 +3854,6 @@ function handleItemChange(item, value)
 
         case "mfd_to_satnav_request":
         {
-            if (value === handleItemChange.mfdToSatnavRequest) break;
             handleItemChange.mfdToSatnavRequest = value;
         } // case
         break;
@@ -3898,7 +3908,6 @@ function handleItemChange(item, value)
 
         case "satnav_to_mfd_response":
         {
-            // Remember the last response topic
             satnavToMfdResponse = value;
         } // case
         break;
@@ -4489,8 +4498,9 @@ function handleItemChange(item, value)
             } // if
 
             if (inMenu() || currentLargeScreenId === "pre_flight") break;
-            if (engineRunning === "NO") break;
-            if (Date.now() - lastScreenChangedAt < 500) break;  // No popup if just changed screen
+            if (engineRunning !== "YES") break;
+            //if (Date.now() - lastScreenChangedAt < 500) break;  // No popup if just changed screen
+            if (suppressClimateControlPopup != null) break;  // Suppress timer still running?
 
             showPopup("climate_control_popup", 5000);
         } // case

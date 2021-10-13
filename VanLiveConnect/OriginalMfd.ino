@@ -1,6 +1,6 @@
 
 // Functions, types and variables involved in keeping track of what the original multi-function display (MFD) is 
-// showing (the small left side panel, the larger right side panel and any popup).
+// showing (the small left side panel, the larger right side panel, and any popup).
 //
 // The original MFD has pretty weird logic for showing its various screens.
 
@@ -11,9 +11,11 @@ void WriteEeprom(int const address, uint8_t const val);
 extern const char yesStr[];
 extern const char noStr[];
 extern const char notApplicable3Str[];
-extern bool isHeadUnitPowerOn;
+
+// The following flags drive the behaviour of the MFD regarding the large (right side) screen
 extern bool isSatnavGuidanceActive;
 extern bool isCurrentStreetKnown;
+extern bool isHeadUnitPowerOn;
 
 // Index of small screen
 enum SmallScreen_t
@@ -146,6 +148,7 @@ void InitSmallScreenIndex()
     WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreenIndex);
 } // InitSmallScreenIndex
 
+// Called when an MFD status is received indicating a reset of one of the trip computers
 void ResetTripInfo(uint16_t mfdStatus)
 {
     // Force change to the appropriate small screen (left hand side of the display)
@@ -260,6 +263,7 @@ void CycleTripInfo()
     } // if
 } // CycleTripInfo
 
+// Called when the current street becomes known
 void UpdateLargeScreenForCurrentStreetKnown()
 {
     if (! isSatnavGuidanceActive)
@@ -280,6 +284,7 @@ void UpdateLargeScreenForCurrentStreetKnown()
 #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForCurrentStreetKnown
 
+// Called when the head unit is powered on (tuner, tape, internal CD or CD changer)
 void UpdateLargeScreenForHeadUnitOn()
 {
     if (isSatnavGuidanceActive)
@@ -310,6 +315,7 @@ void UpdateLargeScreenForHeadUnitOn()
 #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForHeadUnitOn
 
+// Called when the head unit is powered off
 void UpdateLargeScreenForHeadUnitOff()
 {
     popupShowingSince = 0;
@@ -335,6 +341,7 @@ void UpdateLargeScreenForHeadUnitOff()
 #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForHeadUnitOff
 
+// Called when going into sat nav guidance mode
 void UpdateLargeScreenForGuidanceModeOn()
 {
     largeScreenIndexBeforeGoingIntoGuidanceMode = largeScreenIndex;  // To return to later, when guidance ends
@@ -349,6 +356,7 @@ void UpdateLargeScreenForGuidanceModeOn()
 #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForGuidanceModeOn
 
+// Called when going out of sat nav guidance mode
 void UpdateLargeScreenForGuidanceModeOff()
 {
     // Stay in clock, if showing
@@ -378,6 +386,12 @@ void UpdateLargeScreenForGuidanceModeOff()
     );
 #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForGuidanceModeOff
+
+// Called after receiving an MFD status "MFD_SCREEN_OFF" packet
+void UpdateLargeScreenForMfdOff()
+{
+    largeScreenIndex = LARGE_SCREEN_CLOCK;
+} // UpdateLargeScreenForMfdOff
 
 // Called after receiving a "MOD" button press from the IR remote control. Variables 'largeScreenIndex' will be
 // updated; variable 'smallScreenIndex' may also be updated.
