@@ -1264,7 +1264,7 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <div id="satnav_enter_street_characters"
-              on_enter="highlightFirstLine('satnav_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
+              on_enter="satnavEnterStreetCharactersScreen();"
               on_esc="satnavConfirmCityMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
               style="display:none;">
 
@@ -1289,7 +1289,8 @@ char mfd_html[] PROGMEM = R"=====(
             <!-- What is being entered? (city, street) -->
             <div id="mfd_to_satnav_request" class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter city</div>
 
-            <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div>
+            <!-- <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div> -->
+            <div id="mfd_to_satnav_length" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div>
 
             <!-- TODO - id="satnav_software_modules_list": show this? -->
 

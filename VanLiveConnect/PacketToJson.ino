@@ -1045,6 +1045,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // 07-01-03
         // 07-06-00 - MFD requests "satnav_guidance_data" and "satnav_guidance"
         // 07-10-00 - User pressed "Val" on remote control
+        // 07-11-00 - User pressed "Val" on remote control
         // 07-20-00 - MFD requests next "satnav_report" packet
         // 07-21-00 - MFD requests "satnav_status_1" and next "satnav_report" packet ?
         // 07-21-01 - User selected city from list. MFD requests "satnav_status_1" and next "satnav_report" packet ?
@@ -1061,7 +1062,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // & 0x01: Requesting "satnav_status_1" (IDEN 0x54E)
         // & 0x02: Requesting "satnav_guidance" (IDEN 0x64E)
         // & 0x04: Requesting "satnav_guidance_data" (IDEN 0x9CE)
-        // & 0x10: User pressing "Val" on remote control, requesting "satnav_to_mfd_response" (IDEN 0x74E)
+        // & 0x10: Requesting "satnav_to_mfd_response" (IDEN 0x74E) (happens when user presses "Val" on remote control)
         // & 0x20: Requesting next "satnav_report" (IDEN 0x6CE) in sequence
         // & 0x40: Requesting "satnav_status_2" (IDEN 0x7CE)
         //
@@ -1102,7 +1103,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
             // User selects a menu entry or letter? User pressed "Val" (middle button on IR remote control).
             // Always followed by 0x0100.
-            code == 0x1000 ? PSTR("Val") :
+            code == 0x1000 || code == 0x1100 ? PSTR("Val") :
 
             // MFD requests sat nav for next report packet (IDEN 0x6CE) in sequence
             // (Or: select from list using "Val"?)
@@ -2752,7 +2753,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :
         status == 0x9000 ? PSTR("READING_DISC_2") :
-        status == 0x9080 ? PSTR("START_CALCULATING_ROUTE") : // TODO - guessing
+        status == 0x9080 ? PSTR("START_COMPUTING_ROUTE") : // TODO - guessing
         status == 0xD001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         ToHexStr(status),
 
@@ -2915,7 +2916,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
                 data[17] & 0x02 ? PSTR("AUDIO_OUTPUT ") : emptyStr,
                 data[17] & 0x04 ? PSTR("NEW_GUIDANCE_INSTRUCTION ") : emptyStr,
                 data[17] & 0x08 ? PSTR("READING_DISC ") : emptyStr,
-                data[17] & 0x10 ? PSTR("CALCULATING_ROUTE ") : emptyStr,
+                data[17] & 0x10 ? PSTR("COMPUTING_ROUTE ") : emptyStr,
                 data[17] & 0x20 ? PSTR("DISC_PRESENT ") : emptyStr,
                 data[17] & 0x80 ? PSTR("REACHED_DESTINATION ") : emptyStr
             );
@@ -3014,7 +3015,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         at = snprintf_P(buf, n, jsonFormatter,
 
-            status == 0x0000 ? PSTR("CALCULATING_ROUTE") :
+            status == 0x0000 ? PSTR("COMPUTING_ROUTE") :
             status == 0x0001 ? PSTR("STOPPING_NAVIGATION") :
             status == 0x0101 ? ToHexStr(status) :
 
@@ -4127,8 +4128,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         } // if
     } // if
 
-    at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
@@ -4148,16 +4148,31 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     uint8_t request = data[1];
     sint16_t listSize = (sint16_t)(data[4] << 8 | data[5]);
 
+    // Sometimes there is a second list size. The first list size (bytes 4 and 5) is the number of items *containing*
+    // the selected characters, the second list size (bytes 11 and 12) is the number of items *starting* with the
+    // selected characters.
+    sint16_t list2Size = (sint16_t)(data[11] << 8 | data[12]);
+
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
             "\"satnav_to_mfd_response\": \"%S\",\n"
-            "\"satnav_to_mfd_list_size\": \"%d\",\n"
-            "\"satnav_to_mfd_show_characters\": \"";  // TODO - rename to "satnav_to_mfd_available_characters"
+            "\"satnav_to_mfd_list_size\": \"%d\"";
 
     int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request), listSize);
+
+    // data[10] is some "flags" byte. Values seen:
+    // - 0x41 : Second list
+    // - 0x48 : No second list
+    // - 0xF1 : Second list with same length as first list
+    if (data[10] == 0x41)
+    {
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_2_size\": \"%d\""), list2Size);
+    } // if
+
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_show_characters\": \""));
 
     // Store number of services; it must be reported to the websocket client upon connection, so that it can
     // enable the "Select a service" menu item

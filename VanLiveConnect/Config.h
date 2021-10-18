@@ -118,7 +118,9 @@
 #define SHOW_VAN_RX_STATS
 
 // Define to see JSON buffers printed on the serial port
-//#define PRINT_JSON_BUFFERS_ON_SERIAL
+// Note: for some reason, having JSON buffers printed on the serial port reduces the number of CRC errors in the
+// VAN bus packets
+#define PRINT_JSON_BUFFERS_ON_SERIAL
 
 // If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of packets will be printed on the serial port?
 #define SELECTED_PACKETS VAN_PACKETS_ALL

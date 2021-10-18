@@ -1588,6 +1588,7 @@ var satnavDestinationReachable = true;
 var satnavOnMap = false;
 var satnavStatus1 = "";
 var satnavDestinationAccessible = true;
+var satnavComputingRoute = false;
 
 // Show this popup only once at start of guidance or after recalculation
 var satnavDestinationNotAccessibleByRoadPopupShown = false;
@@ -1705,12 +1706,23 @@ function satnavSelectFirstAvailableCharacter()
     unhighlightLetter("satnav_to_mfd_show_characters_line_2");
 } // satnavSelectFirstAvailableCharacter
 
+function satnavEnterStreetCharactersScreen()
+{
+    highlightFirstLine("satnav_list");
+    $("#satnav_to_mfd_show_characters_spinning_disc").hide();
+    $("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
+} // satnavEnterStreetCharactersScreen
+
+var satnavAvailableCharactersStack = [];
+
 // Puts the "Enter city" screen into the mode where the user simply has to confirm the current destination city
 function satnavConfirmCityMode()
 {
     // Clear the character-by-character entry string
-    $("#satnav_entered_string").text("");
+    $("#satnav_entered_string").empty();
     satnavLastEnteredChar = null;
+
+    satnavAvailableCharactersStack = [];
 
     // No entered characters, so disable the "Correction" button
     $("#satnav_enter_characters_correction_button").addClass("buttonDisabled");
@@ -1749,8 +1761,10 @@ var userHadOpportunityToEnterStreet = false;
 function satnavConfirmStreetMode()
 {
     // Clear the character-by-character entry string
-    $("#satnav_entered_string").text("");
+    $("#satnav_entered_string").empty();
     satnavLastEnteredChar = null;
+
+    satnavAvailableCharactersStack = [];
 
     // No entered characters, so disable the "Correction" button
     $("#satnav_enter_characters_correction_button").addClass("buttonDisabled");
@@ -1839,10 +1853,13 @@ function satnavGotoEnterStreetOrNumber()
     }
     else
     {
-        gotoMenu("satnav_current_destination_house_number");
+        if ($("#satnav_current_destination_street").text() === "") satnavGotoListScreen();
+        else gotoMenu("satnav_current_destination_house_number");
     } // if
 } // satnavGotoEnterStreetOrNumber
 
+// Scrape the entered character from the screen (from the DOM). Used as a last-resort if the
+// "mfd_to_satnav_enter_character" packet is missed.
 function satnavGrabSelectedCharacter()
 {
     if (currentMenu !== "satnav_enter_city_characters" && currentMenu !== "satnav_enter_street_characters") return;
@@ -1854,8 +1871,6 @@ function satnavGrabSelectedCharacter()
 
 function satnavEnterCharacter()
 {
-    clearInterval(handleItemChange.enterCharacterTimer);
-
     if (satnavLastEnteredChar === null) return;
 
     // The user is pressing "Val" on the remote control, to enter the chosen character.
@@ -1867,9 +1882,7 @@ function satnavEnterCharacter()
     highlightFirstLine("satnav_list");  // Go to the first line in the "satnav_list" screen
 } // satnavEnterCharacter
 
-// Boolean to indicate if the user has pressed 'Esc' within a list of cities or streets; in that case the entered
-// characters are removed until there is more than one character to choose from.
-var satnavRollingBackEntryByCharacter = false;
+var showAvailableCharactersTimer = null;
 
 // Handler for the "Correction" button in the "satnav_enter_characters" screen.
 // Removes the last entered character.
@@ -1881,6 +1894,21 @@ function satnavRemoveEnteredCharacter()
 
     //satnavLastEnteredChar = null;
 
+    // Just in case we miss the "satnav_to_mfd_show_characters" packet
+    if (satnavAvailableCharactersStack.length >= 2)
+    {
+        var availableCharacters = satnavAvailableCharactersStack[satnavAvailableCharactersStack.length - 2];
+
+        clearInterval(showAvailableCharactersTimer);
+        showAvailableCharactersTimer = setTimeout(
+            function ()
+            {
+                writeToDom({"satnav_to_mfd_show_characters":availableCharacters});
+            },
+            1500
+        );
+    } // if
+
     // If the entered string has become empty, disable the "Correction" button
     $("#satnav_enter_characters_correction_button").toggleClass("buttonDisabled", currentText.length === 0);
 
@@ -1888,10 +1916,14 @@ function satnavRemoveEnteredCharacter()
     if (currentText.length === 0) satnavSelectFirstAvailableCharacter();
 } // satnavRemoveEnteredCharacter
 
+// Boolean to indicate if the user has pressed 'Esc' within a list of cities or streets; in that case the entered
+// characters are removed until there is more than one character to choose from.
+var satnavRollingBackEntryByCharacter = false;
+
 // State while entering sat nav destination in character-by-character mode
-// 0 = "Val" button pressed
-// 1 = "satnav_to_mfd_show_characters"
-// 2 = "mfd_to_satnav_enter_character"
+// 0 = "mfd_to_satnav_instruction=Val" packet received
+// 1 = "satnav_to_mfd_show_characters" packet received
+// 2 = "mfd_to_satnav_enter_character" packet received
 var satnavEnterOrDeleteCharacterExpectedState = 2;
 
 function satnavEnterOrDeleteCharacter(newState)
@@ -2408,7 +2440,7 @@ function satnavGuidancePreferenceValidate()
     {
         // Return to the guidance screen (bit clumsy)
         exitMenu();
-        showDestinationNotAccessiblePopupIfApplicable();
+        if (satnavComputingRoute) satnavCalculatingRoute(); else showDestinationNotAccessiblePopupIfApplicable();
     }
     else
     {
@@ -2420,15 +2452,14 @@ function satnavCalculatingRoute()
 {
     localStorage.askForGuidanceContinuation = "NO";
 
-    // No popups while driving
-    if (satnavVehicleMoving()) return;
-
     // If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
     // start, but not any more during the guidance.
     satnavDestinationNotAccessibleByRoadPopupShown = false;
 
     // Don't pop up in the guidance preference screen
     if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
+
+    if (satnavVehicleMoving()) return;  // No popups while driving
 
     showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 } // satnavCalculatingRoute
@@ -3526,9 +3557,10 @@ function handleItemChange(item, value)
             else if (value === "POWERING_OFF")
             {
                 satnavPoweringOff();
-            // }
-            // else if (value === "CALCULATING_ROUTE")
-            // {
+            }
+            else if (value === "COMPUTING_ROUTE")
+            {
+                satnavComputingRoute = true;
                 //satnavCalculatingRoute();
                 //showPopup('satnav_guidance_preference_popup', 8000);
             } // if
@@ -3551,12 +3583,14 @@ function handleItemChange(item, value)
 
         case "satnav_guidance_status":
         {
-            if (value.match(/CALCULATING_ROUTE/) && value.match(/DISC_PRESENT/))
+            if (value.match(/COMPUTING_ROUTE/) && value.match(/DISC_PRESENT/))
             {
+                satnavComputingRoute = true;
                 satnavCalculatingRoute();
             }
             else
             {
+                satnavComputingRoute = false;
                 hidePopup("satnav_computing_route_popup");
             } // if
         } // case
@@ -3950,6 +3984,20 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_to_mfd_list_2_size":
+        {
+            // Sometimes there is a second list size. "satnav_to_mfd_list_size" (above) is the number of items
+            // *containing* the selected characters; "satnav_to_mfd_list_2_size" (this one) is the number of items
+            // *starting* with the selected characters.
+
+            // If there is a second list size, enable the "Validate" button
+            if (value !== "" && value !== "0")
+            {
+                $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
+            } // if
+        } // case
+        break;
+
         case "satnav_list":
         {
             satnavCheckIfCityCenterMustBeAdded();
@@ -4131,9 +4179,17 @@ function handleItemChange(item, value)
 
         case "satnav_to_mfd_show_characters":
         {
-            if ($("#satnav_enter_characters").is(":visible")) satnavEnterOrDeleteCharacter(1);
-
             if (value === "") break;
+
+            clearInterval(showAvailableCharactersTimer);
+
+            if ($("#satnav_enter_characters").is(":visible"))
+            {
+                satnavEnterOrDeleteCharacter(1);
+
+                if (satnavRollingBackEntryByCharacter) satnavAvailableCharactersStack.pop()
+                else satnavAvailableCharactersStack.push(value);
+            } // if
 
             // if (value.length > 1)
             // {
@@ -4143,7 +4199,8 @@ function handleItemChange(item, value)
             if (value.length == 1)
             {
                 // Save for later: this character can be automatically selected by the MFD without the user explicitly
-                // pressing the "Val" button on the remote control. See code at 'case "mfd_to_satnav_instruction"'.
+                // pressing the "Val" button on the remote control. See code at 'case "mfd_to_satnav_instruction"'
+                // above.
                 satnavLastEnteredChar = value;
             } // if
 
@@ -4182,7 +4239,8 @@ function handleItemChange(item, value)
                 // character.
                 if ($("#satnav_to_mfd_show_characters_line_1").hasClass("buttonSelected")
                     || $("#satnav_to_mfd_show_characters_line_2").hasClass("buttonSelected")
-                    || $("#satnav_enter_characters_list_button").hasClass("buttonSelected"))
+                    || $("#satnav_enter_characters_list_button").hasClass("buttonSelected")
+                    || $("#satnav_enter_characters_validate_button").hasClass("buttonSelected"))
                 {
                     satnavSelectFirstAvailableCharacter();
                 }
