@@ -272,6 +272,8 @@ void ServeMainHtml();
 
 void HandleNotFound()
 {
+    printHttpRequest();
+
 #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), webServer.uri().c_str());
 #endif // DEBUG_WEBSERVER
@@ -326,7 +328,6 @@ void ServeFont(PGM_P content, unsigned int content_len)
 // Serve a specified font from the SPI Flash File System (SPIFFS)
 void ServeFontFromFile(const char* path)
 {
-    printHttpRequest();
     unsigned long start = millis();
 
     VanBusRx.Disable();
@@ -335,6 +336,8 @@ void ServeFontFromFile(const char* path)
         VanBusRx.Enable();
         return HandleNotFound();
     } // if
+
+    printHttpRequest();
 
     File file = SPIFFS.open(path, "r");
     size_t sent = webServer.streamFile(file, fontWoffStr);
@@ -388,8 +391,6 @@ const char* getContentType(const String& path)
 // Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
 void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 {
-    printHttpRequest();
-
     String path(urlPath == 0 ? webServer.uri() : urlPath);
     String md5 = getMd5(path);
     if (md5.length() == 0)
@@ -408,6 +409,8 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 
         path += ".gz";
     } // if
+
+    printHttpRequest();
 
     unsigned long start = millis();
 

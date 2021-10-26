@@ -1304,9 +1304,9 @@ char mfd_html[] PROGMEM = R"=====(
             </div>
 
             <!-- Show spinning disk while text area is still empty, i.e. data is being retrieved -->
-            <!-- TODO - make visible as long as there is no data in the list -->
-            <div id="satnav_busy_icon" class="icon iconLarge" style="display:none; left:300px; top:130px; width:320px; height:280px; font-size:150px;">
-              <div class="centerAligned fas fa-compact-disc"></div>
+            <div id="satnav_choose_from_list_spinning_disc"
+              style="display:none; position:absolute; left:400px; top:320px; transform:scaleX(2);">
+              <div class="fas fa-compact-disc" style="font-size:100px;"></div>
             </div>
 
           </div>  <!-- "satnav_choose_from_list" -->
