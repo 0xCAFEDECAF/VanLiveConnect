@@ -304,7 +304,7 @@ char mfd_html[] PROGMEM = R"=====(
         Invisible "div" covering entire screen, handling "gorilla-style" taps that trigger a change to the
         next screen. Leaving top 100 pixels "uncovered" so that the trip info tabs can be reached.
       -->
-      <!-- <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div> -->
+      <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div>
     </div>  <!-- "Small" information panel -->
 
     <!-- "Large" information panel -->

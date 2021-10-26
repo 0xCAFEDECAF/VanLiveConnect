@@ -826,14 +826,12 @@ function inMenu()
         "clock",
         "instruments", "pre_flight",
         "tuner", "cd_player", "cd_changer",
+        "satnav_current_location",
         "satnav_guidance", "satnav_curr_turn_icon"
     ];
 
-    var notInMenu =
-        currentMenu == null  // Not in any menu?
-        || mainScreenIds.indexOf(currentLargeScreenId) >= 0;  // Or in one of the "main" screens (not a menu)?
-
-    return ! notInMenu;
+    return currentMenu !== null
+        && mainScreenIds.indexOf(currentLargeScreenId) < 0;  // And not in one of the "main" screens?
 } // inMenu
 
 // TODO - there are now three algorithms for selecting the first menu item resp. button:
