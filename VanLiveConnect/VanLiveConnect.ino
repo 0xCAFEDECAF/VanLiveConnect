@@ -79,6 +79,7 @@ typedef struct
     volatile unsigned int* rawbuf;  // Raw intervals in 50 usec ticks
     int rawlen;  // Number of records in rawbuf
     bool held;
+    unsigned long millis_;
 } TIrPacket;
 
 // Defined in IRrecv.ino
@@ -124,7 +125,11 @@ const char* VanBusStatsToStr()
     GString str(buffer);
     PrintAdapter streamer(str);
 
+#if defined VAN_BUX_RX_VERSION && VAN_BUX_RX_VERSION >= 000002004
+    VanBusRx.DumpStats(streamer, false);
+#else
     VanBusRx.DumpStats(streamer);
+#endif
 
     // Replace '\n' by string terminator '\0'
     buffer[BUFFER_SIZE - 1] = '\0';
@@ -238,13 +243,15 @@ void loop()
     {
         lastUpdate = millis();
 
+    #ifdef SHOW_ESP_RUNTIME_STATS
+        // Send ESP runtime data to client
+        BroadcastJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+    #endif // SHOW_ESP_RUNTIME_STATS
+
+    #ifdef SHOW_VAN_RX_STATS
         // Print statistics
         VanBusRx.DumpStats(Serial);
 
-        // Send ESP runtime data to client
-        BroadcastJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
-
-    #ifdef SHOW_VAN_RX_STATS
         // Send VAN bus receiver status string to client
         BroadcastJsonText(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
     #endif // SHOW_VAN_RX_STATS

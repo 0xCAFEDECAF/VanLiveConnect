@@ -6,6 +6,8 @@
  * MIT license, all text above must be included in any redistribution.
  */
 
+#include "Notifications.h"
+
 enum VanPacketParseResult_t
 {
     VAN_PACKET_NO_CONTENT  = 2, // Packet is OK but contains no useful (new) content
@@ -53,13 +55,20 @@ const char PROGMEM notApplicable3Str[] = "---";
 const char PROGMEM notApplicableFloatStr[] = "--.-";
 PGM_P dashStr = notApplicable1Str;
 
+// Defined in WebSocket.ino
+extern bool inMenu;
+
 // Defined in PacketFilter.ino
 bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter);
 
 // Defined in OriginalMfd.ino
+extern uint8_t mfdLanguage;
+extern int tripComputerPopupTab;
+PGM_P TripComputerStr(uint8_t idx);
+PGM_P TripComputerStr();
 PGM_P SmallScreenStr();
 PGM_P LargeScreenStr();
-void InitSmallScreenIndex();
+void InitSmallScreen();
 void ResetTripInfo(uint16_t mfdStatus);
 void CycleTripInfo();
 
@@ -1183,29 +1192,28 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     if (memcmp(data + 1, packetData, dataLen - 2) == 0) return VAN_PACKET_DUPLICATE;
     memcpy(packetData, data + 1, dataLen - 2);
 
-    InitSmallScreenIndex();
+    InitSmallScreen();
 
     // Keep track when the stalk was pressed, so that we can distinguish between short press and long press
-
     static unsigned long stalkLastPressed;
     static bool stalkWasPressed = false;
-
     bool stalkIsPressed = data[10] & 0x01;
 
-    while (! economyMode)
+    while (! economyMode && ! inMenu)
     {
         // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset)
         // happens on the correct trip counter
 
-        unsigned long now = millis();
+    #if defined VAN_BUX_RX_VERSION && VAN_BUX_RX_VERSION >= 000002004
+        unsigned long now = pkt.Millis();  // Retrieve packet reception time stamp from ISR
+    #else
+        unsigned long now = millis();  // May be delayed a bit
+    #endif
 
         // Just pressed?
         if (! stalkWasPressed && stalkIsPressed)
         {
             stalkLastPressed = now;
-
-            // TODO - remove
-            //Serial.printf_P(PSTR("=====> Right stalk button pressed; stalkLastPressed = %lu\n"), stalkLastPressed);
 
             break;
         } // if
@@ -1213,23 +1221,12 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         // Only continue if just released
         if (! stalkWasPressed || stalkIsPressed) break;
 
-        // TODO - remove
-        //Serial.printf_P(PSTR("=====> Right stalk button released\n"));
-
         // Only continue if it was a short-press
         // Note: short-press = switch screen; long-press = reset trip counter currently shown (if any)
-        if (now - stalkLastPressed >= 1000)  // TODO - exact duration
-        {
-            // TODO - remove
-            //Serial.printf_P(PSTR("=====> Right stalk button long-press detected\n"));
+        if (now - stalkLastPressed >= 1000) break;
 
-            break;
-        } // if
-
-        // TODO - remove
-        //Serial.printf_P(PSTR("=====> Right stalk button short-press detected\n"));
-
-        // May update 'SmallScreenStr()'
+        // May update the value of 'tripComputerPopupTab' and the values as reported by 'TripComputerStr()'
+        // and 'SmallScreenStr()' below
         CycleTripInfo();
 
         break;
@@ -1301,13 +1298,37 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"right_stalk_button\": \"%S\",\n"
+            "\"small_screen\": \"%S\",\n"
+            "\"trip_computer_screen_tab\": \"%S\",\n"
+            "\"mfd_popup\": \"%S\"";
+
+    int at = snprintf_P(buf, n, jsonFormatter1,
+        stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
+        SmallScreenStr(),  // Possibly updated if the stalk was short-pressed
+        TripComputerStr(),  // Updated if the stalk was short-pressed
+        PopupStr()  // Possibly updated if the stalk was short-pressed
+    );
+
+    if (tripComputerPopupTab >= 0)
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at,
+                PSTR(
+                    ",\n"
+                    "\"trip_computer_popup_tab\": \"%S\""
+                ),
+                TripComputerStr(tripComputerPopupTab)
+            );
+    } // if
+
+    const static char jsonFormatter2[] PROGMEM =
+            ",\n"
             "\"door_front_right\": \"%S\",\n"
             "\"door_front_left\": \"%S\",\n"
             "\"door_rear_right\": \"%S\",\n"
             "\"door_rear_left\": \"%S\",\n"
             "\"door_boot\": \"%S\",\n"
-            "\"right_stalk_button\": \"%S\",\n"
-            "\"small_screen\": \"%S\",\n"
             "\"exp_moving_avg_speed\": \"%u\",\n"
             "\"inst_consumption_lt_100\": \"%S\",\n"
             "\"delivered_power\": \"%S\",\n"
@@ -1318,41 +1339,42 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             "\"avg_consumption_lt_100_1\": \"%S\"";
 
     char floatBuf[4][MAX_FLOAT_SIZE];
-    int at = snprintf_P(buf, n, jsonFormatter1,
-        data[7] & 0x80 ? openStr : closedStr,
-        data[7] & 0x40 ? openStr : closedStr,
-        data[7] & 0x20 ? openStr : closedStr,
-        data[7] & 0x10 ? openStr : closedStr,
-        data[7] & 0x08 ? openStr : closedStr,
-        stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
-        SmallScreenStr(),  // Updated if the stalk was pressed
+    at += at >= n ? 0 :
+        snprintf_P(buf + at, n - at, jsonFormatter2,
+            data[7] & 0x80 ? openStr : closedStr,
+            data[7] & 0x40 ? openStr : closedStr,
+            data[7] & 0x20 ? openStr : closedStr,
+            data[7] & 0x10 ? openStr : closedStr,
+            data[7] & 0x08 ? openStr : closedStr,
 
-        // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
-        // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.
-        // Looking at the time stamps when this value changes, it looks like this is an exponential moving
-        // average (EMA) of the recent vehicle speed. When the actual speed is 0, the value is seen to decrease
-        // about 12% per minute. If the actual vehicle speed is sampled every second, then, in the
-        // following formula, K would be around 12% / 60 = 0.2% = 0.002 :
-        //
-        //   exp_moving_avg_speed := exp_moving_avg_speed * (1 − K) + actual_vehicle_speed * K
-        //
-        // Often used in EMA is the constant N, where K = 2 / (N + 1). That means N would be around 1000 (given
-        // a sampling time of 1 second).
-        //
-        data[13],
+            // When engine running but stopped (actual vehicle speed is 0), this value counts down by 1 every
+            // 10 - 20 seconds or so. When driving, this goes up and down slowly toward the current speed.
+            // Looking at the time stamps when this value changes, this seems to be an exponential moving
+            // average (EMA) of the recent vehicle speed. When the actual speed is 0, the value is seen to decrease
+            // about 12% per minute. If the actual vehicle speed is sampled every second, then, in the
+            // following formula, K would be around 12% / 60 = 0.2% = 0.002 :
+            //
+            //   exp_moving_avg_speed := exp_moving_avg_speed * (1 − K) + actual_vehicle_speed * K
+            //
+            // Often used in EMA is the constant N, where K = 2 / (N + 1). That means N would be around 1000 (given
+            // a sampling time of 1 second).
+            //
+            data[13],
 
-        instConsumptionValid ? FloatToStr(floatBuf[0], (float)instConsumptionLt100_x10 / 10.0, 1) : notApplicableFloatStr,
-        deliveredPower >= 0.0 ? FloatToStr(floatBuf[1], deliveredPower, 1) : notApplicableFloatStr,
-        deliveredTorque >= 0.0 ? FloatToStr(floatBuf[2], deliveredTorque, 1) : notApplicableFloatStr,
-        (uint16_t)data[24] << 8 | data[25],
-        avgSpeedTrip1,
-        distanceTrip1 != 0xFFFF ? ToStr(distanceTrip1) : notApplicable2Str,
-        avgConsumptionLt100Trip1 != 0xFFFF ?
-            FloatToStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
-            notApplicableFloatStr
-    );
+            instConsumptionValid ?
+                FloatToStr(floatBuf[0], (float)instConsumptionLt100_x10 / 10.0, 1) :
+                notApplicableFloatStr,
+            deliveredPower >= 0.0 ? FloatToStr(floatBuf[1], deliveredPower, 1) : notApplicableFloatStr,
+            deliveredTorque >= 0.0 ? FloatToStr(floatBuf[2], deliveredTorque, 1) : notApplicableFloatStr,
+            (uint16_t)data[24] << 8 | data[25],
+            avgSpeedTrip1,
+            distanceTrip1 != 0xFFFF ? ToStr(distanceTrip1) : notApplicable2Str,
+            avgConsumptionLt100Trip1 != 0xFFFF ?
+                FloatToStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
+                notApplicableFloatStr
+        );
 
-    const static char jsonFormatter2[] PROGMEM =
+    const static char jsonFormatter3[] PROGMEM =
             ",\n"
             "\"avg_speed_2\": \"%u\",\n"
             "\"distance_2\": \"%S\",\n"
@@ -1361,7 +1383,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     "}\n";
 
     at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, jsonFormatter2,
+        snprintf_P(buf + at, n - at, jsonFormatter3,
             avgSpeedTrip2,
             distanceTrip2 == 0xFFFF ? notApplicable2Str : ToStr(distanceTrip2),
             avgConsumptionLt100Trip2 != 0xFFFF ?
@@ -1385,189 +1407,6 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     int dataLen = pkt.DataLen();
     if (dataLen != 14 && dataLen != 16) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
-    // All known notifications, as literally retrieved from my vehicle (406 year 2003, DAM number 9586; your vehicle
-    // may have other notification texts). Retrieving was done with the example sketch:
-    // "VanBus/examples/DisplayNotifications/DisplayNotifications.ino".
-
-    // By convention, warning notifications end with "!"; information notifications do not.
-    // TODO - translate into all languages
-
-    // Byte 0, 0x00...0x07
-    static const char msg_0_0[] PROGMEM = "Tyre pressure too low!";
-    static const char msg_0_1[] PROGMEM = "";
-    static const char msg_0_2[] PROGMEM = "Automatic gearbox temperature too high!";
-    static const char msg_0_3[] PROGMEM = "Brake fluid level low!"; // and exclamation mark on instrument cluster
-    static const char msg_0_4[] PROGMEM = "Hydraulic suspension pressure defective!";
-    static const char msg_0_5[] PROGMEM = "Suspension defective!";
-    static const char msg_0_6[] PROGMEM = "Engine oil temperature too high!"; // and oil can on instrument cluster
-    static const char msg_0_7[] PROGMEM = "Engine temperature too high!";
-
-    // Byte 1, 0x08...0x0F
-    static const char msg_1_0[] PROGMEM = "Clear diesel filter (FAP) URGENT"; // and mil icon on instrument cluster
-    static const char msg_1_1[] PROGMEM = "";
-    static const char msg_1_2[] PROGMEM = "Min level additive gasoil!";
-    static const char msg_1_3[] PROGMEM = "Fuel cap open!";
-    static const char msg_1_4[] PROGMEM = "Puncture(s) detected!";
-    static const char msg_1_5[] PROGMEM = "Cooling circuit level too low!"; // and icon on instrument cluster
-    static const char msg_1_6[] PROGMEM = "Oil pressure insufficient!";
-    static const char msg_1_7[] PROGMEM = "Engine oil level too low!";
-
-    // Byte 2, 0x10...0x17
-    static const char msg_2_0[] PROGMEM = "Engine antipollution system defective!";
-    static const char msg_2_1[] PROGMEM = "Brake pads worn!";
-    static const char msg_2_2[] PROGMEM = "Check Control OK";  // Wow... bad translation
-    static const char msg_2_3[] PROGMEM = "Automatic gearbox defective!";
-    static const char msg_2_4[] PROGMEM = "ASR / ESP system defective!"; // and icon on instrument cluster
-    static const char msg_2_5[] PROGMEM = "ABS brake system defective!";
-    static const char msg_2_6[] PROGMEM = "Suspension and power steering defective!";
-    static const char msg_2_7[] PROGMEM = "Brake system defective!";
-
-    // Byte 3, 0x18...0x1F
-    static const char msg_3_0[] PROGMEM = "Airbag defective!";
-    static const char msg_3_1[] PROGMEM = "Airbag defective!";
-    static const char msg_3_2[] PROGMEM = "";
-    static const char msg_3_3[] PROGMEM = "Engine temperature high!";
-    static const char msg_3_4[] PROGMEM = "";
-    static const char msg_3_5[] PROGMEM = "";
-    static const char msg_3_6[] PROGMEM = "";
-    static const char msg_3_7[] PROGMEM = "Water in Diesel fuel filter"; // and icon on instrument cluster
-
-    // Byte 4, 0x20...0x27
-    static const char msg_4_0[] PROGMEM = "";
-    static const char msg_4_1[] PROGMEM = "Automatic beam adjustment defective!";
-    static const char msg_4_2[] PROGMEM = "";
-    static const char msg_4_3[] PROGMEM = "";
-    static const char msg_4_4[] PROGMEM = "Service battery charge low!";
-    static const char msg_4_5[] PROGMEM = "Battery charge low!"; // and battery icon on instrument cluster
-    static const char msg_4_6[] PROGMEM = "Diesel antipollution system (FAP) defective!";
-    static const char msg_4_7[] PROGMEM = "Engine antipollution system inoperative!"; // MIL icon flashing on instrument cluster
-
-    // Byte 5, 0x28...0x2F
-    static const char msg_5_0[] PROGMEM = "Handbrake on!";
-    static const char msg_5_1[] PROGMEM = "Safety belt not fastened!";
-    static const char msg_5_2[] PROGMEM = "Passenger airbag neutralized"; // and icon on instrument cluster
-    static const char msg_5_3[] PROGMEM = "Windshield liquid level too low";
-    static const char msg_5_4[] PROGMEM = "Current speed too high";
-    static const char msg_5_5[] PROGMEM = "Ignition key still inserted";
-    static const char msg_5_6[] PROGMEM = "Lights not on";
-    static const char msg_5_7[] PROGMEM = "";
-
-    // Byte 6, 0x30...0x37
-    static const char msg_6_0[] PROGMEM = "Impact sensor defective";
-    static const char msg_6_1[] PROGMEM = "";
-    static const char msg_6_2[] PROGMEM = "Tyre pressure sensor battery low";
-    static const char msg_6_3[] PROGMEM = "Plip remote control battery low";
-    static const char msg_6_4[] PROGMEM = "";
-    static const char msg_6_5[] PROGMEM = "Place automatic gearbox in P position";
-    static const char msg_6_6[] PROGMEM = "Testing stop lamps : brake gently";
-    static const char msg_6_7[] PROGMEM = "Fuel level low!";
-
-    // Byte 7, 0x38...0x3F
-    static const char msg_7_0[] PROGMEM = "Automatic headlight activation system disabled";
-    static const char msg_7_1[] PROGMEM = "Turn-headlight defective!";
-    static const char msg_7_2[] PROGMEM = "Turn-headlight disable";
-    static const char msg_7_3[] PROGMEM = "Turn-headlight enable";
-    static const char msg_7_4[] PROGMEM = "";
-    static const char msg_7_5[] PROGMEM = "7 tyre pressure sensors missing!";
-    static const char msg_7_6[] PROGMEM = "7 tyre pressure sensors missing!";
-    static const char msg_7_7[] PROGMEM = "7 tyre pressure sensors missing!";
-
-    // Byte 8, 0x40...0x47
-    static const char msg_8_0[] PROGMEM = "Doors locked";
-    static const char msg_8_1[] PROGMEM = "ASR / ESP system disabled";
-    static const char msg_8_2[] PROGMEM = "Child safety lock enabled";
-    static const char msg_8_3[] PROGMEM = "Door self locking system enabled";
-    static const char msg_8_4[] PROGMEM = "Automatic headlight activation system enabled";
-    static const char msg_8_5[] PROGMEM = "Automatic wiper system enabled";
-    static const char msg_8_6[] PROGMEM = "Electronic anti-theft system defective";
-    static const char msg_8_7[] PROGMEM = "Sport suspension mode enabled";
-
-    // Byte 9 is the index of the current message
-
-    // Byte 10, 0x50...0x57
-    static const char msg_10_0[] PROGMEM = "";
-    static const char msg_10_1[] PROGMEM = "";
-    static const char msg_10_2[] PROGMEM = "";
-    static const char msg_10_3[] PROGMEM = "";
-    static const char msg_10_4[] PROGMEM = "";
-    static const char msg_10_5[] PROGMEM = "";
-    static const char msg_10_6[] PROGMEM = "";
-    static const char msg_10_7[] PROGMEM = "";
-
-    // Byte 11, 0x58...0x5F
-    static const char msg_11_0[] PROGMEM = "";
-    static const char msg_11_1[] PROGMEM = "";
-    static const char msg_11_2[] PROGMEM = "";
-    static const char msg_11_3[] PROGMEM = "";
-    static const char msg_11_4[] PROGMEM = "";
-    static const char msg_11_5[] PROGMEM = "";
-    static const char msg_11_6[] PROGMEM = "";
-    static const char msg_11_7[] PROGMEM = "";
-
-    // Byte 12, 0x60...0x67
-    static const char msg_12_0[] PROGMEM = "";
-    static const char msg_12_1[] PROGMEM = "";
-    static const char msg_12_2[] PROGMEM = "";
-    static const char msg_12_3[] PROGMEM = "";
-    static const char msg_12_4[] PROGMEM = "";
-    static const char msg_12_5[] PROGMEM = "";
-    static const char msg_12_6[] PROGMEM = "";
-    static const char msg_12_7[] PROGMEM = "";
-
-    // Byte 13, 0x68...0x6F
-    static const char msg_13_0[] PROGMEM = "";
-    static const char msg_13_1[] PROGMEM = "";
-    static const char msg_13_2[] PROGMEM = "";
-    static const char msg_13_3[] PROGMEM = "";
-    static const char msg_13_4[] PROGMEM = "";
-    static const char msg_13_5[] PROGMEM = "";
-    static const char msg_13_6[] PROGMEM = "";
-    static const char msg_13_7[] PROGMEM = "";
-
-    // On vehicles made after 2004
-
-    // Byte 14, 0x70...0x77
-    static const char msg_14_0[] PROGMEM = "";
-    static const char msg_14_1[] PROGMEM = "";
-    static const char msg_14_2[] PROGMEM = "";
-    static const char msg_14_3[] PROGMEM = "";
-    static const char msg_14_4[] PROGMEM = "";
-    static const char msg_14_5[] PROGMEM = "";
-    static const char msg_14_6[] PROGMEM = "";
-    static const char msg_14_7[] PROGMEM = "";
-
-    // Byte 15, 0x78...0x7F
-    static const char msg_15_0[] PROGMEM = "";
-    static const char msg_15_1[] PROGMEM = "";
-    static const char msg_15_2[] PROGMEM = "";
-    static const char msg_15_3[] PROGMEM = "";
-    static const char msg_15_4[] PROGMEM = "";
-    static const char msg_15_5[] PROGMEM = "";
-    static const char msg_15_6[] PROGMEM = "";
-    static const char msg_15_7[] PROGMEM = "";
-
-    // To save precious RAM, we use a PROGMEM array of PROGMEM strings
-    // See also: https://arduino-esp8266.readthedocs.io/en/latest/PROGMEM.html
-    static const char *const msgTable[] PROGMEM =
-    {
-        msg_0_0, msg_0_1, msg_0_2, msg_0_3, msg_0_4, msg_0_5, msg_0_6, msg_0_7,
-        msg_1_0, msg_1_1, msg_1_2, msg_1_3, msg_1_4, msg_1_5, msg_1_6, msg_1_7,
-        msg_2_0, msg_2_1, msg_2_2, msg_2_3, msg_2_4, msg_2_5, msg_2_6, msg_2_7,
-        msg_3_0, msg_3_1, msg_3_2, msg_3_3, msg_3_4, msg_3_5, msg_3_6, msg_3_7,
-        msg_4_0, msg_4_1, msg_4_2, msg_4_3, msg_4_4, msg_4_5, msg_4_6, msg_4_7,
-        msg_5_0, msg_5_1, msg_5_2, msg_5_3, msg_5_4, msg_5_5, msg_5_6, msg_5_7,
-        msg_6_0, msg_6_1, msg_6_2, msg_6_3, msg_6_4, msg_6_5, msg_6_6, msg_6_7,
-        msg_7_0, msg_7_1, msg_7_2, msg_7_3, msg_7_4, msg_7_5, msg_7_6, msg_7_7,
-        msg_8_0, msg_8_1, msg_8_2, msg_8_3, msg_8_4, msg_8_5, msg_8_6, msg_8_7,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        msg_10_0, msg_10_1, msg_10_2, msg_10_3, msg_10_4, msg_10_5, msg_10_6, msg_10_7,
-        msg_11_0, msg_11_1, msg_11_2, msg_11_3, msg_11_4, msg_11_5, msg_11_6, msg_11_7,
-        msg_12_0, msg_12_1, msg_12_2, msg_12_3, msg_12_4, msg_12_5, msg_12_6, msg_12_7,
-        msg_13_0, msg_13_1, msg_13_2, msg_13_3, msg_13_4, msg_13_5, msg_13_6, msg_13_7,
-        msg_14_0, msg_14_1, msg_14_2, msg_14_3, msg_14_4, msg_14_5, msg_14_6, msg_14_7,
-        msg_15_0, msg_15_1, msg_15_2, msg_15_3, msg_15_4, msg_15_5, msg_15_6, msg_15_7
-    };
-
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -1579,6 +1418,15 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     int at = snprintf_P(buf, n, jsonFormatter);
 
     const uint8_t* data = pkt.Data();
+
+    // Select the correct table, based on the chosen MFD language
+    const char* const* msgTable =
+        mfdLanguage == MFD_LANGUAGE_FRENCH ? msgTable_fr :
+        mfdLanguage == MFD_LANGUAGE_GERMAN ? msgTable_ger :
+        mfdLanguage == MFD_LANGUAGE_SPANISH ? msgTable_spa :
+        mfdLanguage == MFD_LANGUAGE_ITALIAN ? msgTable_ita :
+        mfdLanguage == MFD_LANGUAGE_DUTCH ? msgTable_dut :
+        msgTable_eng;
 
     bool first = true;
     for (int byte = 0; byte < dataLen; byte++)
@@ -2236,7 +2084,6 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
     seenTapePresence = seenTapePresence || isTapePresent;
     seenCdPresence = seenCdPresence || isCdPresent;
 
-    unsigned long now = millis();
     static bool washeadUnitPowerOn = false;
     if (! washeadUnitPowerOn && isHeadUnitPowerOn)
     {
@@ -2282,7 +2129,8 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"balance\": \"%+d\",\n"
             "\"balance_update\": \"%S\",\n"
             "\"auto_volume\": \"%S\",\n"
-            "\"large_screen\": \"%S\"\n"
+            "\"large_screen\": \"%S\",\n"
+            "\"mfd_popup\": \"%S\"\n"
         "}\n"
     "}\n";
 
@@ -2334,7 +2182,8 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         (sint8_t)(0x3F) - (data[6] & 0x7F),  // Balance
         data[6] & 0x80 ? yesStr : noStr,
         data[1] & 0x04 ? onStr : offStr,  // Auto volume
-        LargeScreenStr()
+        LargeScreenStr(),
+        PopupStr()
     );
 
     // JSON buffer overflow?
@@ -2375,7 +2224,28 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
     {
         ResetTripInfo(mfdStatus);
 
-        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"small_screen\": \"%S\""), SmallScreenStr());
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at,
+                PSTR(
+                    ",\n"
+                    "\"small_screen\": \"%S\",\n"
+                    "\"trip_computer_screen_tab\": \"%S\""
+                ),
+                SmallScreenStr(),
+                TripComputerStr()
+            );
+
+        if (tripComputerPopupTab >= 0)
+        {
+            at += at >= n ? 0 :
+                snprintf_P(buf + at, n - at,
+                    PSTR(
+                        ",\n"
+                        "\"trip_computer_popup_tab\": \"%S\""
+                    ),
+                    TripComputerStr(tripComputerPopupTab)
+                );
+        } // if
     } // if
 
     if (mfdStatus == MFD_SCREEN_OFF)
@@ -2794,9 +2664,20 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         // packet is sent by the MFD over and over again.
 
         static unsigned long lastPacketReceived = 0;
-        unsigned long now = millis();
+
+    #if defined VAN_BUX_RX_VERSION && VAN_BUX_RX_VERSION >= 000002004
+        unsigned long now = pkt.Millis();  // Retrieve packet reception time stamp from ISR
+    #else
+        unsigned long now = millis();  // May be delayed a bit
+    #endif
         unsigned long packetInterval = now - lastPacketReceived;  // Arithmetic has safe roll-over
         lastPacketReceived = now;
+
+        // TODO - remove
+        // Serial.printf_P(
+            // PSTR("--> Received empty SatNavStatus2 packet (IDEN 7CE): packetInterval = %lu\n"),
+            // packetInterval
+        // );
 
         if (packetInterval < 500)
         {
@@ -2930,28 +2811,36 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_equipment_present\": \"YES\""));
     } // if
 
+    bool updateScreen = false;
     if (! wasSatnavGuidanceActive && isSatnavGuidanceActive)
     {
         // Going into guidance mode
         UpdateLargeScreenForGuidanceModeOn();
-
-        at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
-                LargeScreenStr()
-            );
+        updateScreen = true;
     }
     else if (wasSatnavGuidanceActive && ! isSatnavGuidanceActive)
     {
         // Going out of guidance mode
         UpdateLargeScreenForGuidanceModeOff();
-
-        at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
-                LargeScreenStr()
-            );
+        updateScreen = true;
     } // if
 
     wasSatnavGuidanceActive = isSatnavGuidanceActive;
+
+    if (updateScreen)
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at,
+                PSTR
+                (
+                    ",\n"
+                    "\"small_screen\": \"%S\",\n"
+                    "\"large_screen\": \"%S\""
+                ),
+                SmallScreenStr(),
+                LargeScreenStr()
+            );
+    } // if
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
@@ -3367,7 +3256,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // Missed the expected fragment?
         if (packetFragmentNo != expectedFragmentNo)
         {
-            Serial.printf_P(PSTR("--> packetFragmentNo = %u ; expectedFragmentNo = %u\n"), packetFragmentNo, expectedFragmentNo);
+            Serial.printf_P(
+                PSTR("--> packetFragmentNo = %u ; expectedFragmentNo = %u\n"),
+                packetFragmentNo,
+                expectedFragmentNo
+            );
             report = INVALID_SATNAV_REPORT;
             return VAN_PACKET_PARSE_FRAGMENT_MISSED;
         } // if
@@ -3422,6 +3315,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                 // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
                 AsciiToHtml(records[currentRecord][currentString]);
+
+                // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
+                records[currentRecord][currentString].replace("#", "&shy;");
 
                 if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
                 {
@@ -4680,7 +4576,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
 // update of this data as received thus far, instead of having to wait for this data to appear on the bus.
 const char* EquipmentStatusDataToJson(char* buf, const int n)
 {
-    InitSmallScreenIndex();
+    InitSmallScreen();
     InitSatnavGuidancePreference();
 
     const static char jsonFormatter[] PROGMEM =
@@ -4689,6 +4585,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "\"data\":\n"
         "{\n"
             "\"small_screen\": \"%S\",\n"
+            "\"trip_computer_screen_tab\": \"%S\",\n"
             "\"cd_changer_cartridge_present\": \"%S\",\n"
             "\"satnav_equipment_present\": \"%S\",\n"
             "\"satnav_disc_recognized\": \"%S\",\n"
@@ -4699,6 +4596,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 
         // Small screen (left hand side of the display) to start with
         SmallScreenStr(),
+        TripComputerStr(),
 
         cdChangerCartridgePresent ? yesStr : noStr,
         satnavEquipmentDetected ? yesStr : noStr,

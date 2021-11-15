@@ -5,9 +5,10 @@
 
 // Tags indicating what is currently showing on the original MFD
 #define ORIGINAL_MFD_SCREEN_NAMES \
-"    <div id='original_mfd_small_screen' class='led ledOn' style='left:20px; top:505px; width:130px; height:37px;'></div>\n" \
-"    <div id='original_mfd_large_screen' class='led ledOn' style='left:160px; top:505px; width:200px; height:37px;'></div>\n" \
-"    <div id='original_mfd_debug_1' class='led ledOn' style='left:20px; top:600px; width:100px; height:37px;'></div>\n"
+"    <div id='original_mfd_small_screen' class='led ledOn' style='left:20px; top:505px; width:110px; height:37px;'></div>\n" \
+"    <div id='original_mfd_large_screen' class='led ledOn' style='left:140px; top:505px; width:240px; height:37px;'></div>\n" \
+"    <div id='original_mfd_popup' class='led ledOn' style='left:80px; top:460px; width:150px; height:37px;'></div>\n" \
+"    <div id='original_mfd_curr_street' class='led ledOn' style='left:20px; top:600px; width:100px; height:37px;'></div>\n"
 
 #else
 #define ORIGINAL_MFD_SCREEN_NAMES ""
@@ -250,7 +251,8 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <!-- Current street and city -->
-        <div id="satnav_curr_street_small" class="icon" style="left:0px; top:350px; width:390px; height:200px;">
+        <div id="satnav_curr_street_small" class="icon"
+          style="word-wrap:break-word; left:0px; top:270px; width:390px; height:280px;">
           <div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
         </div>
 
@@ -304,7 +306,7 @@ char mfd_html[] PROGMEM = R"=====(
         Invisible "div" covering entire screen, handling "gorilla-style" taps that trigger a change to the
         next screen. Leaving top 100 pixels "uncovered" so that the trip info tabs can be reached.
       -->
-      <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div>
+      <!-- <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div> -->
     </div>  <!-- "Small" information panel -->
 
     <!-- "Large" information panel -->
@@ -870,7 +872,7 @@ char mfd_html[] PROGMEM = R"=====(
       </div>  <!-- "set_date_time" -->
 
       <div id="set_language"
-        on_goto="$('#set_language').find('.button').removeClass('buttonSelected'); $('#set_language_english').addClass('buttonSelected');"
+        on_goto="languageSelectTickedButton();"
         class="tag menuTitle" style="display:none; left:20px; top:50px; width:920px; height:410px;">
         Select a language<br />
         <small>[Not yet implemented]</small>
@@ -930,7 +932,7 @@ char mfd_html[] PROGMEM = R"=====(
         <div id="set_language_validate_button"
           class="button"
           UP_BUTTON="set_language_english"
-          on_click="exitMenu(); exitMenu(); exitMenu();"
+          on_click="languageValidate();"
           style="position:absolute; left:0px; top:340px; width:180px; height:40px;">Validate</div>
 
       </div>  <!-- "set_language" -->
@@ -1082,7 +1084,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="button" on_click="showPopup('satnav_delete_directory_data_popup');">Delete directories</div>
 
           <div id="satnav_navigation_options_menu_stop_guidance_button" class="button"
-            on_click="localStorage.askForGuidanceContinuation = 'NO'; selectDefaultScreen();">Resume guidance</div>
+            on_click="satnavNavigationOptionsStopOrResumeGuidanceButton();">Resume guidance</div>
 
         </div>  <!-- "satnav_navigation_options_menu" -->
 
@@ -2441,7 +2443,7 @@ char mfd_html[] PROGMEM = R"=====(
           style="display:none; position:absolute; line-height:2.2; left:0px; width:260px; height:260px"></div>
         <div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
           style="display:block; position:absolute; left:30px;"></div>
-        <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:500px;">
+        <div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:180px; width:600px;">
         </div>
       </div>
 
@@ -2526,13 +2528,13 @@ char mfd_html[] PROGMEM = R"=====(
           <div button_orientation="horizontal">
             <div id="satnav_guidance_preference_popup_yes_button"
               class="icon button"
-              on_click="hidePopup('satnav_guidance_preference_popup'); if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();"
+              on_click="satnavGuidancePreferencePopupYesButton();"
               style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
             <div id="satnav_guidance_preference_popup_no_button"
               class="icon button"
-              on_click="hidePopup('satnav_guidance_preference_popup'); hidePopup('satnav_computing_route_popup'); changeLargeScreenTo('satnav_guidance_preference_menu'); satnavGuidancePreferenceSelectTickedButton();"
+              on_click="satnavGuidancePreferencePopupNoButton();"
               style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>

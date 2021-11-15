@@ -115,7 +115,10 @@
 //#define DEBUG_ORIGINAL_MFD
 
 // Define to show the VAN bus statistics on the "system" screen
-#define SHOW_VAN_RX_STATS
+//#define SHOW_VAN_RX_STATS
+
+// Define to show the ESP RAM and Wi-Fi statistics on the "system" screen
+//#define SHOW_ESP_RUNTIME_STATS
 
 // Define to see JSON buffers printed on the serial port
 // Note: for some reason, having JSON buffers printed on the serial port reduces the number of CRC errors in the

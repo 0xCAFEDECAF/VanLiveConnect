@@ -11,8 +11,9 @@ extern const char noStr[];
 void PrintJsonText(const char* jsonBuffer);
 
 // Defined in OriginalMfd.ino
-extern unsigned long popupShowingSince;
-extern long popupDuration;
+extern uint8_t mfdLanguage;
+void NoPopup();
+void NotificationPopupShowing(unsigned long since, long duration);
 
 // Defined in Esp.ino
 const char* EspSystemDataToJson(char* buf, const int n);
@@ -75,24 +76,20 @@ void ProcessWebSocketClientMessage(const char* payload)
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
-        if (clientMessage.endsWith(":NO"))
-        {
-            popupShowingSince = 0;
-            popupDuration = 0;
+        if (clientMessage.endsWith(":NO")) NoPopup();
+        else NotificationPopupShowing(millis(), clientMessage.substring(18).toInt());
+    }
+    else if (clientMessage.startsWith("mfd_language:"))
+    {
+        String value = clientMessage.substring(13);
 
-#ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("[webSocket] isPopupShowing: NO\n"));
-#endif // DEBUG_WEBSOCKET
-        }
-        else
-        {
-            popupShowingSince = millis();
-            popupDuration = clientMessage.substring(18).toInt();
-
-#ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("[webSocket] isPopupShowing: YES (%ld msec)\n"), popupDuration);
-#endif // DEBUG_WEBSOCKET
-        } // if
+        mfdLanguage =
+            value == "set_language_french" ? MFD_LANGUAGE_FRENCH :
+            value == "set_language_german" ? MFD_LANGUAGE_GERMAN :
+            value == "set_language_spanish" ? MFD_LANGUAGE_SPANISH :
+            value == "set_language_italian" ? MFD_LANGUAGE_ITALIAN :
+            value == "set_language_dutch" ? MFD_LANGUAGE_DUTCH :
+            MFD_LANGUAGE_ENGLISH;
     } // if
 } // ProcessWebSocketClientMessage
 

@@ -286,8 +286,8 @@ var connectToWebsocketTimer = setTimeout(
 
         // Bind to WebSocket to server events
         webSocket.bind('display', function(data) { writeToDom(data); });
-        //socket.bind('open', function () { inDemoMode = false; });
-        //socket.bind('close', function () { demoMode(); });
+        webSocket.bind('open', function () { webSocket.send("mfd_language:" + localStorage.mfdLanguage); });
+        //webSocket.bind('close', function () { demoMode(); });
     }, // function
     2000
 );
@@ -297,6 +297,8 @@ var connectToWebsocketTimer = setTimeout(
 
 var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 var engineCoolantTemperature = 80;  // In degrees Celsius
+var vehicleSpeed = 0;
+var wasRiskOfIceWarningShown = false; // This warning is shown at most once per ride
 
 var suppressClimateControlPopup = null;
 
@@ -582,7 +584,16 @@ function changeToTripCounter(id)
     openTripInfoTab(event, id);
 } // changeToTripCounter
 
-// Change to the correct screen and trip counter, given the reported value of "small_screen"
+function tripComputerShortStr(tripComputerStr)
+{
+    return tripComputerStr === "TRIP_INFO_1" ? "TR1" :
+        tripComputerStr === "TRIP_INFO_2" ? "TR2" :
+        tripComputerStr === "GPS_INFO" ? "GPS" :
+        tripComputerStr === "FUEL_CONSUMPTION" ? "FUE" :
+        "??";
+} // tripComputerShortStr
+
+// Change to the correct screen and trip counter, given the reported value of "trip_computer_screen_tab"
 function gotoSmallScreen(smallScreenName)
 {
     switch(smallScreenName)
@@ -614,40 +625,9 @@ function gotoSmallScreen(smallScreenName)
         } // case
         break;
     } // switch
-
-    // Show three letters of the screen name
-    $("#original_mfd_small_screen").text(
-        smallScreenName === "TRIP_INFO_1" ? "TR1" :
-        smallScreenName === "TRIP_INFO_2" ? "TR2" :
-        smallScreenName === "GPS_INFO" ? "GPS" :
-        smallScreenName === "FUEL_CONSUMPTION" ? "FUE" :
-        "??"
-    );
 } // gotoSmallScreen
 
 gotoSmallScreen(localStorage.smallScreen);
-
-// In the "trip_computer_popup", cycle to the next tab
-function cycleTabInTripComputerPopup()
-{
-    // Retrieve all tab buttons and content elements
-    var tabs = $("#trip_computer_popup").find(".tabContent");
-    var tabButtons = $("#trip_computer_popup").find(".tabLeft");
-
-    // Retrieve current tab button and content element
-    var currActiveTab = $("#trip_computer_popup .tabContent:visible");
-    var currActiveButton = $("#trip_computer_popup .tabLeft.tabActive");
-
-    var currTabIdx = tabs.index(currActiveTab);
-    var currButtonIdx = tabButtons.index(currActiveButton);
-    var nTabs = tabButtons.length;
-
-    // Cycle to the next tab
-    currActiveTab.hide();
-    currActiveButton.removeClass("tabActive");
-    $(tabs[(currTabIdx + 1) % nTabs]).show();
-    $(tabButtons[(currButtonIdx + 1) % nTabs]).addClass("tabActive");
-} // cycleTabInTripComputerPopup
 
 // If the "trip_computer_popup" is has no tab selected, select that of the current small screen
 function initTripComputerPopup()
@@ -680,6 +660,21 @@ function resetTripComputerPopup()
     $("#trip_computer_popup .tabContent").hide();
     $("#trip_computer_popup .tabLeft").removeClass("tabActive");
 } // resetTripComputerPopup
+
+// In the "trip_computer_popup", select a specific tab
+function selectTabInTripComputerPopup(index)
+{
+    // Unselect the current tab
+    resetTripComputerPopup();
+
+    // Retrieve all tab buttons and content elements
+    var tabs = $("#trip_computer_popup").find(".tabContent");
+    var tabButtons = $("#trip_computer_popup").find(".tabLeft");
+
+    // Select the specified tab
+    $(tabs[index]).show();
+    $(tabButtons[index]).addClass("tabActive");
+} // selectTabInTripComputerPopup
 
 // Go full-screen
 //
@@ -739,6 +734,8 @@ function showPopupAndNotifyServer(id, msec, message)
 
     var messageText = typeof message !== "undefined" ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
     webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
+
+    $("#original_mfd_popup").text("N_POP"); // TODO - remove
 } // showPopupAndNotifyServer
 
 // Hide the specified or the current (top) popup
@@ -757,6 +754,7 @@ function hidePopup(id)
     if (onExit) eval(onExit);
 
     webSocket.send("mfd_popup_showing:NO");
+    $("#original_mfd_popup").empty(); // TODO - remove
 
     return true;
 } // hidePopup
@@ -1585,6 +1583,59 @@ function showTunerPresetsPopup()
 } // showTunerPresetsPopup
 
 // -----
+// Functions for selecting MFD language
+
+// Find the ticked button and select it
+function languageSelectTickedButton()
+{
+    var foundTick = false;
+
+    $("#set_language").find(".tickBox").each(
+        function()
+        {
+            var isTicked = $(this).text().trim() !== "";
+            $(this).toggleClass("buttonSelected", isTicked);
+            if (isTicked) foundTick = true;
+        }
+    );
+
+    // If nothing is ticked, retrieve from local store
+    if (! foundTick)
+    {
+        var lang = localStorage.mfdLanguage;
+        var id = "set_language_english";  // Default
+
+        // Puppy powerrrrrr :-)
+        if ($("#set_language").find(".tickBox").map(function() { return this.id; }).get().indexOf(lang) >= 0)
+        {
+            id = lang;
+        }
+        else
+        {
+            localStorage.mfdLanguage = id;
+        } // if
+
+        setTick(id);
+        $("#" + id).addClass("buttonSelected");
+    } // if
+
+    $("#set_language_validate_button").removeClass("buttonSelected");
+} // languageSelectTickedButton
+
+function languageValidate()
+{
+    // Save selected id in local (persistent) store
+    localStorage.mfdLanguage =
+        $("#set_language").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+
+    webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+
+    exitMenu();
+    exitMenu();
+    exitMenu();
+} // languageValidate
+
+// -----
 // Functions for satellite navigation menu and screen handling
 
 var satnavInitialized = false;
@@ -1674,7 +1725,8 @@ function satnavGotoListScreen()
 
     gotoMenu("satnav_choose_from_list");
 
-    if (handleItemChange.mfdToSatnavRequestType === "REQ_ITEMS")
+    if (handleItemChange.mfdToSatnavRequestType === "REQ_ITEMS"
+        || handleItemChange.mfdToSatnavRequestType === "REQ_N_ITEMS")
     {
         switch(handleItemChange.mfdToSatnavRequest)
         {
@@ -2407,6 +2459,17 @@ function satnavDeleteDirectories()
     localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
 } // satnavDeleteDirectories
 
+function satnavSwitchToGuidanceScreen()
+{
+    hidePopup("satnav_computing_route_popup");
+
+    if (! inMenu()) return;  // Only switch from a menu screen; don't switch away from any main screen
+
+    menuStack = [];
+    currentMenu = "satnav_guidance";
+    changeLargeScreenTo(currentMenu);
+} // satnavSwitchToGuidanceScreen
+
 function satnavGuidanceSetPreference(value)
 {
     if (typeof value === "undefined" || value === "---") return;
@@ -2449,12 +2512,26 @@ function satnavGuidancePreferenceSelectTickedButton()
     // If nothing is ticked, select the top one
     if (! foundTick)
     {
-        $("#satnav_guidance_preference_fastest").html("<b>&#10004;</b>");
+        setTick("satnav_guidance_preference_fastest");
         $("#satnav_guidance_preference_fastest").addClass("buttonSelected");
     } // if
 
     $("#satnav_guidance_preference_menu_validate_button").removeClass("buttonSelected");
 } // satnavGuidancePreferenceSelectTickedButton
+
+function satnavGuidancePreferencePopupYesButton()
+{
+    hidePopup('satnav_guidance_preference_popup');
+    if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
+} // satnavGuidancePreferencePopupYesButton
+
+function satnavGuidancePreferencePopupNoButton()
+{
+    hidePopup('satnav_guidance_preference_popup');
+    hidePopup('satnav_computing_route_popup');
+    changeLargeScreenTo('satnav_guidance_preference_menu');
+    satnavGuidancePreferenceSelectTickedButton();
+} // satnavGuidancePreferencePopupNoButton
 
 function satnavGuidancePreferenceValidate()
 {
@@ -2521,18 +2598,6 @@ function showOrTimeoutDestinationNotAccessiblePopup()
         10000
     );
 } // showOrTimeoutDestinationNotAccessiblePopup 
-
-function satnavSwitchToGuidanceScreen()
-{
-    hidePopup("satnav_computing_route_popup");
-
-    // Don't switch away from any main screen
-    if (! inMenu()) return;
-
-    menuStack = [];
-    currentMenu = "satnav_guidance";
-    changeLargeScreenTo(currentMenu);
-} // satnavSwitchToGuidanceScreen
 
 // Format a string like "45 km" or "7000 m" or "60 m". Return an array [distance, unit]
 function satnavFormatDistance(distanceStr)
@@ -2618,6 +2683,19 @@ function satnavEscapeVocalSynthesisLevel()
         changeLargeScreenTo(currentMenu);
     } // if
 } // satnavEscapeVocalSynthesisLevel
+
+function satnavNavigationOptionsStopOrResumeGuidanceButton()
+{
+    if ($("#satnav_navigation_options_menu_stop_guidance_button").text() === "Stop guidance") 
+    {
+        localStorage.askForGuidanceContinuation = 'NO';
+        selectDefaultScreen();
+    }
+    else
+    {
+        satnavSwitchToGuidanceScreen();
+    } // if
+} // satnavNavigationOptionsStopOrResumeGuidanceButton
 
 function satnavPoweringOff()
 {
@@ -3218,8 +3296,17 @@ function handleItemChange(item, value)
         {
             if (value === "--") break;
 
+            vehicleSpeed = parseInt(value);
+
             // If 130 km/h or more, add glow effect
-            $("#oil_level_raw").toggleClass("glow", parseInt(value) >= 130);
+            $("#oil_level_raw").toggleClass("glow", vehicleSpeed >= 130);
+
+            if (exteriorTemp >= -3.0 && exteriorTemp <= 3.0 && ! wasRiskOfIceWarningShown && vehicleSpeed >= 5)
+            {
+                // Show warning popup
+                showNotificationPopup("Risk of ice!", 10000);
+                wasRiskOfIceWarningShown = true;
+            } // if
         } // case
         break;
 
@@ -3247,8 +3334,22 @@ function handleItemChange(item, value)
             $("#splash_text").hide();
 
             // If between -3.0 and +3.0 degrees Celsius, add "ice glow" effect
-            var temp10 = parseFloat(value) * 10;
-            $('[gid="exterior_temperature"]').toggleClass("glowIce", temp10 >= -30 && temp10 <= 30);
+            var exteriorTemp = parseFloat(value);
+            $('[gid="exterior_temperature"]').toggleClass("glowIce", exteriorTemp >= -3.0 && exteriorTemp <= 3.0);
+
+            if (exteriorTemp >= -3.0 && exteriorTemp <= 3.0)
+            {
+                if (! wasRiskOfIceWarningShown && vehicleSpeed >= 5)
+                {
+                    // Show warning popup
+                    showNotificationPopup("Risk of ice!", 10000);
+                    wasRiskOfIceWarningShown = true;
+                } // if
+            }
+            else
+            {
+                wasRiskOfIceWarningShown = false;
+            } // if
         } // case
         break;
 
@@ -3412,6 +3513,10 @@ function handleItemChange(item, value)
                     localStorage.askForGuidanceContinuation = "NO";
                 } // if
             }
+            else if (value === "START")
+            {
+                wasRiskOfIceWarningShown = false;
+            }
             else if (value === "ACC")
             {
                 clearInterval(handleItemChange.contactKeyOffTimer);
@@ -3492,10 +3597,6 @@ function handleItemChange(item, value)
                 // TODO - show popup not directly, but only after a few times this status
                 showStatusPopup("Navigation CD-ROM<br />is unreadable", 5000);
             } // if
-            else if (satnavStatus1.match(/ARRIVED_AT_DESTINATION_POPUP/))
-            {
-                showPopup("satnav_reached_destination_popup", 10000);
-            } // if
         } // case
         break;
 
@@ -3529,7 +3630,7 @@ function handleItemChange(item, value)
                 satnavSwitchToGuidanceScreen();
 
                 break;
-            }
+            } // if
 
             // Just left guidance mode?
             if (previousSatnavMode === "IN_GUIDANCE_MODE")
@@ -3674,6 +3775,15 @@ function handleItemChange(item, value)
         } // case
         break;
 
+        case "satnav_last_destination_city":
+        {
+            if (satnavStatus1.match(/ARRIVED_AT_DESTINATION_POPUP/))
+            {
+                showPopup("satnav_reached_destination_popup", 10000);
+            } // if
+        } // case
+        break;
+
         case "satnav_personal_address_street":
         case "satnav_professional_address_street":
         {
@@ -3706,7 +3816,7 @@ function handleItemChange(item, value)
             satnavCurrentStreet = value;
 
             // Show the first three letters in the debug box. TODO - remove
-            $("#original_mfd_debug_1").text(satnavCurrentStreet.substring(0, 3));
+            $("#original_mfd_curr_street").text(satnavCurrentStreet.substring(0, 3));
 
             if (satnavMode === "IN_GUIDANCE_MODE")
             {
@@ -4334,20 +4444,47 @@ function handleItemChange(item, value)
             if (satnavMode !== "IN_GUIDANCE_MODE") break;
             if (mfdLargeScreen === "TRIP_COMPUTER") break;
 
-            if ($("#trip_computer_popup").is(":visible")) cycleTabInTripComputerPopup();
-
             // Will either start showing the popup, or restart its timer if it is already showing
             showPopup("trip_computer_popup", 8000);
         } // case
         break;
 
-        case "small_screen":
+        case "trip_computer_screen_tab":
         {
             // Has anything changed?
             if (value === localStorage.smallScreen) break;
             localStorage.smallScreen = value;
 
+            // Regardless where the original MFD is showing its trip computer data (small screen or large screen),
+            // we show it always in the small screen.
             gotoSmallScreen(value);
+
+            if (mfdLargeScreen === "TRIP_COMPUTER")
+            {
+                // Show the first few letters of the screen name plus the first few letters of the trip computer tab
+                $("#original_mfd_large_screen").text(
+                    mfdLargeScreen.substring(0, 4) + " " + tripComputerShortStr(localStorage.smallScreen)
+                );
+            }
+        } // case
+        break;
+
+        case "trip_computer_popup_tab":
+        {
+            // Apply mapping from string to index
+            var tabIndex =
+                value === "TRIP_INFO_1" ? 1 :
+                value === "TRIP_INFO_2" ? 2 : 0;
+            selectTabInTripComputerPopup(tabIndex);
+
+            $("#original_mfd_popup").text(tripComputerShortStr(value)); // TODO - remove
+        } // case
+        break;
+
+        case "small_screen":
+        {
+            // Show three letters of the screen name
+            $("#original_mfd_small_screen").text(tripComputerShortStr(value));
         } // case
         break;
 
@@ -4355,8 +4492,18 @@ function handleItemChange(item, value)
         {
             mfdLargeScreen = value;
 
-            // Show the first letters of the screen name
-            $("#original_mfd_large_screen").text(value.substring(0, 6));
+            if (mfdLargeScreen === "TRIP_COMPUTER")
+            {
+                // Show the first few letters of the screen name plus the first few letters of the trip computer tab
+                $("#original_mfd_large_screen").text(
+                    mfdLargeScreen.substring(0, 4) + " " + tripComputerShortStr(localStorage.smallScreen)
+                );
+            }
+            else
+            {
+                // Show the first few letters of the screen name
+                $("#original_mfd_large_screen").text(mfdLargeScreen.substring(0, 6));
+            } // if
         } // case
         break;
 
@@ -4395,22 +4542,8 @@ function handleItemChange(item, value)
                 // If a popup is showing, hide it and break
                 if (hideTunerPresetsPopup()) break;
                 if (hideAudioSettingsPopup()) break;
-                if (hidePopup("status_popup")) break;
-                if (hidePopup("satnav_continue_guidance_popup")) break;
-                if (hidePopup("satnav_delete_directory_data_popup")) break;
 
-                // Hiding this popup might make the underlying "Computing route in progress" popup visible
-                if (hidePopup("satnav_guidance_preference_popup")) break;
-
-                if (hidePopup("satnav_delete_item_popup")) break;
-                if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
-                if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
-                if (hidePopup("satnav_initializing_popup")) break;
-                if (hidePopup("notification_popup")) break;
-                if (hidePopup("trip_computer_popup")) break;
-                if (hidePopup("satnav_reached_destination_popup")) break;
-                if (hidePopup("audio_popup")) break;
-                if (hidePopup("climate_control_popup")) break;
+                if (hidePopup()) break;
 
                 // Ignore the "Esc" button when guidance screen is showing
                 if ($("#satnav_guidance").is(":visible")) break;
@@ -4524,6 +4657,12 @@ function handleItemChange(item, value)
             {
                 hidePopup();
             } // if
+        } // case
+        break;
+
+        case "mfd_popup":
+        {
+            $("#original_mfd_popup").text(value);
         } // case
         break;
 
@@ -5051,7 +5190,7 @@ function demoMode()
 
     // Sat nav guidance preference
     $("#satnav_guidance_preference_fastest").html("");
-    $("#satnav_guidance_preference_shortest").html("<b>&#10004;</b>");
+    setTick("satnav_guidance_preference_shortest");
     satnavGuidancePreferenceSelectTickedButton();
 
     // Sat nav enter destination city
