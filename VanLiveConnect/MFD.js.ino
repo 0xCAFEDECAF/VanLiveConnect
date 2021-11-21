@@ -5088,10 +5088,10 @@ function demoMode()
     $("#treble").text("+3");
     $("#fader").text("-1");
     $("#balance").text("0");
-    $("#loudness").removeClass("ledOn");
-    $("#loudness").addClass("ledOff");
-    $("#auto_volume").removeClass("ledOff");
-    $("#auto_volume").addClass("ledOn");
+    $('[gid="loudness"]').addClass("ledOn");
+    $('[gid="loudness"]').removeClass("ledOff");
+    $("#auto_volume").removeClass("ledOn");
+    $("#auto_volume").addClass("ledOff");
     $("#bass_select").show();
 
     // Tape player
@@ -5099,7 +5099,7 @@ function demoMode()
     $('[gid="tape_status_play"]').show();
 
     // Internal CD player
-    $('[gid="audio_source"]').text("CD");
+    $("#audio_source").text("CD");
     $('[gid="cd_track_time"]').text("2:17");
     $('[gid="cd_status_play"]').show();
     $("#cd_total_time").text("43:16");
@@ -5157,6 +5157,9 @@ function demoMode()
     $("#delivered_power").text("27.0");
     $("#delivered_torque").text("102.8");
 
+    // Main menu
+    languageSelectTickedButton();
+
     // Sat nav
     satnavInitialized = true;
     $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
@@ -5195,6 +5198,7 @@ function demoMode()
 
     // Sat nav enter destination city
     $("#satnav_current_destination_city").text("Amsterdam");
+    $("#satnav_to_mfd_show_characters_line_1").removeClass("buttonSelected");
     $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
     $("#satnav_enter_characters_validate_button").addClass("buttonSelected");
     $('[gid="satnav_to_mfd_list_size"]').text("35");
@@ -5248,7 +5252,7 @@ function demoMode()
     $("#satnav_professional_address_street_shown").text("Westzijde");
     $("#satnav_professional_address_house_number_shown").text("1118");
 
-    // Sat nav place of interest address entry
+    // Sat nav service address entry
     $("#satnav_service_address_entry").text("P1 Short-term parking");
     $("#satnav_service_address_city").text("Schiphol");
     $("#satnav_service_address_street").text("Boulevard");
@@ -5256,6 +5260,12 @@ function demoMode()
     $("#satnav_service_address_distance_unit").text("km");
     $("#satnav_service_address_entry_number").text("3");
     $("#satnav_to_mfd_list_size").text("17");
+
+    // Sat nav show personal address
+    $("#satnav_show_personal_address_validate_button").addClass("buttonSelected");
+
+    // Sat nav show professional address
+    $("#satnav_show_professional_address_validate_button").addClass("buttonSelected");
 
     // Sat nav programmed (current) destination
     $('[gid="satnav_current_destination_city"]').text("Amsterdam");
@@ -5346,6 +5356,14 @@ function demoMode()
     $("#set_fan_speed").text("6");
     $("#condenser_temperature").text("40");
     $("#evaporator_temperature").text("8.4");
+
+    // Misc
+    $("#original_mfd_small_screen").hide();
+    $("#original_mfd_large_screen").hide();
+    $("#original_mfd_popup").hide();
+    $("#original_mfd_curr_street").hide();
+    $("#ir_button_pressed").hide();
+    $("#comms_led").hide();
 } // demoMode
 
 //demoMode();
