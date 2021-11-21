@@ -2605,17 +2605,17 @@ char mfd_html[] PROGMEM = R"=====(
         <div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
         <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
 
-        <div class="tag" style="left:50px; top:220px; width:200px;">Bass</div>
+        <div class="tag" style="left:50px; top:210px; width:200px;">Bass</div>
         <div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
         <div class="tag" style="left:50px; top:280px; width:200px;">Treble</div>
-        <div id="treble" class="dots" style="left:260px; top:275px; width:100px; text-align:right;">-</div>
+        <div id="treble" class="dots" style="left:260px; top:285px; width:100px; text-align:right;">-</div>
 
         <div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
 
-        <div class="tag" style="left:430px; top:220px; width:200px;">Fader</div>
+        <div class="tag" style="left:430px; top:210px; width:200px;">Fader</div>
         <div id="fader" class="dots" style="left:640px; top:215px; width:100px; text-align:right;">-</div>
         <div class="tag" style="left:430px; top:280px; width:200px;">Balance</div>
-        <div id="balance" class="dots" style="left:640px; top:275px; width:100px; text-align:right;">-</div>
+        <div id="balance" class="dots" style="left:640px; top:285px; width:100px; text-align:right;">-</div>
 
         <div id="auto_volume" class="led ledOff" style="left:475px; top:360px; width:260px;">AUTO-VOL</div>
 
