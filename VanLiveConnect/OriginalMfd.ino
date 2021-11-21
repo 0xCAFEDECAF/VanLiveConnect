@@ -298,12 +298,12 @@ void CycleTripInfo()
         smallScreen = (smallScreen + 1) % N_SMALL_SCREENS;  // Select next tab
         SetAllTabIndexes();  // Copy tab index to trip computer popup and large screen
 
-#ifdef DEBUG_ORIGINAL_MFD
+    #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] Right stalk button short-press; smallScreen := %S\n"),
             SmallScreenStr()
         );
-#endif // DEBUG_ORIGINAL_MFD
+    #endif // DEBUG_ORIGINAL_MFD
 
         WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen);
     }
@@ -317,12 +317,12 @@ void CycleTripInfo()
 
         tripComputerPopupTab = tripComputerLargeScreenTab;  // Copy tab index to trip computer popup
 
-#ifdef DEBUG_ORIGINAL_MFD
+    #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] Right stalk button short-press; tripComputerLargeScreenTab := %S\n"),
             TripComputerStr(tripComputerLargeScreenTab)
         );
-#endif // DEBUG_ORIGINAL_MFD
+    #endif // DEBUG_ORIGINAL_MFD
 
     }
     else // isSatnavGuidanceActive && largeScreen != LARGE_SCREEN_TRIP_COMPUTER
@@ -341,7 +341,7 @@ void CycleTripInfo()
         {
             // The trip computer popup was not visible: the stalk button triggers the trip computer popup to appear
 
-#ifdef DEBUG_ORIGINAL_MFD
+        #ifdef DEBUG_ORIGINAL_MFD
             Serial.printf_P(
                 PSTR(
                     "[originalMfd] Right stalk button short-press; trip computer popup appeared;"
@@ -349,7 +349,7 @@ void CycleTripInfo()
                 ),
                 TripComputerStr(tripComputerPopupTab)
             );
-#endif // DEBUG_ORIGINAL_MFD
+        #endif // DEBUG_ORIGINAL_MFD
         }
         else
         {
@@ -361,7 +361,7 @@ void CycleTripInfo()
 
             tripComputerLargeScreenTab = tripComputerPopupTab;  // Copy tab index to large screen
 
-#ifdef DEBUG_ORIGINAL_MFD
+        #ifdef DEBUG_ORIGINAL_MFD
             Serial.printf_P(
                 PSTR(
                     "[originalMfd] Right stalk button short-press; next tab in trip computer popup;"
@@ -369,7 +369,7 @@ void CycleTripInfo()
                 ),
                 TripComputerStr(tripComputerPopupTab)
             );
-#endif // DEBUG_ORIGINAL_MFD
+        #endif // DEBUG_ORIGINAL_MFD
         } // if
 
         TripComputerPopupShowing(now, 8000);  // (Re-)start the timer
@@ -483,12 +483,23 @@ void UpdateLargeScreenForGuidanceModeOff()
 
     #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
-            PSTR("[originalMfd] Switched small screen to trip computer; smallScreen := %S\n"),
+            PSTR("[originalMfd] Going out of guidance; switched small screen to trip computer; smallScreen := %S\n"),
             SmallScreenStr()
         );
     #endif // DEBUG_ORIGINAL_MFD
 
         WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen);
+    }
+    else
+    {
+        SetAllTabIndexes();
+
+    #ifdef DEBUG_ORIGINAL_MFD
+        Serial.printf_P(
+            PSTR("[originalMfd] Going out of guidance; tripComputerPopupTab := %S\n"),
+            TripComputerStr(tripComputerPopupTab)
+        );
+    #endif // DEBUG_ORIGINAL_MFD
     } // if
 
     // Large screen stays in clock, if showing
