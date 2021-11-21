@@ -121,8 +121,8 @@
 //#define SHOW_ESP_RUNTIME_STATS
 
 // Define to see JSON buffers printed on the serial port
-// Note: for some reason, having JSON buffers printed on the serial port reduces the number of CRC errors in the
-// VAN bus packets
+// Note: for some reason, having JSON buffers printed on the serial port seems to reduce the number
+//   of CRC errors in the received VAN bus packets
 #define PRINT_JSON_BUFFERS_ON_SERIAL
 
 // If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of packets will be printed on the serial port?
