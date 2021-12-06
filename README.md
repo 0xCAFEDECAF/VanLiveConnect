@@ -114,13 +114,13 @@ See also the [screen shots](#screenshots) above.
 * CD changer unit
 * Notifications and warnings
 * Satellite Navigation (maps are out of date but it's a nice gimmick 😇)
+* Setting format and units
+* Multiple languages (but some menus and screens are only in English)
 
 Note: availability will depend on your vehicle's configuration.
 
 Not yet supported:
-* Multiple languages (currently only English)
 * Setting brightness and contrast
-* Setting format and units (currently only degrees Celsius and kilometres)
 
 Will not support:
 * Setting date and time: your smartphone already knows...
@@ -301,8 +301,7 @@ I am investigating how to improve on the error-free reception of VAN bus frames.
 
 ## 👷 Work to be Done<a name = "todo"></a>
 
-* Some menus and screens still need to be completed.
-* Support other languages
+* Some menus and screens need to be translated to other languages than English.
 
 ## ❓ Frequently Asked Questions<a name = "faq"></a>
 
