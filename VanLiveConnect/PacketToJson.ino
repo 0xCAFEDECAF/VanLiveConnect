@@ -76,12 +76,84 @@ void CycleTripInfo();
 void WriteEeprom(int const address, uint8_t const val);
 void CommitEeprom();
 
+// Default, and unless otherwise specified, the following units are used:
+// - Distance: kilometers
+// - Contents: litres
+// - Temperature: degrees Celsius
+
+// Index of user-selected distance unit
+enum MFD_DistanceUnit_t
+{
+    MFD_DISTANCE_UNIT_METRIC,
+    MFD_DISTANCE_UNIT_IMPERIAL
+}; // enum MFD_DistanceUnit_t
+
+uint8_t mfdDistanceUnit = MFD_DISTANCE_UNIT_METRIC;
+
+// Index of user-selected temperature unit
+enum MFD_TemperatureUnit_t
+{
+    MFD_TEMPERATURE_UNIT_CELSIUS,
+    MFD_TEMPERATURE_UNIT_FAHRENHEIT
+}; // enum MFD_TemperatureUnit_t
+
+uint8_t mfdTemperatureUnit = MFD_TEMPERATURE_UNIT_CELSIUS;
+
+// Index of user-selected time unit
+enum MFD_TimeUnit_t
+{
+    MFD_TIME_UNIT_24H,
+    MFD_TIME_UNIT_12H
+}; // enum MFD_TimeUnit_t
+
+uint8_t mfdTimeUnit = MFD_TIME_UNIT_24H;
+
 // Round downwards (even if negative) to nearest multiple of d. Safe for negative values of n and d, and for
 // values of n around 0.
 sint32_t _floor(sint32_t n, sint32_t d)
 {
     return (n / d - (((n > 0) ^ (d > 0)) && (n % d))) * d;
 } // _floor
+
+uint16_t ToMiles(uint16_t km)
+{
+    return (uint32_t)km * 1000 / 1609;
+} // ToMiles
+
+sint32_t ToMiles(sint32_t km)
+{
+    return (sint32_t)km * 1000 / 1609;
+} // ToMiles
+
+float ToMiles(float km)
+{
+    return km * 1.609;
+} // ToMiles
+
+float ToYards(float m)
+{
+    return m * 1.094;
+} // ToYards
+
+float ToMilesPerGallon(float consumptionLt100_x10)
+{
+    return 2824.8 / consumptionLt100_x10;  // Assuming imperial gallons
+} // ToMilesPerGallon
+
+float ToFahrenheit(float temp_C)
+{
+    return temp_C * 1.8 + 32.0;
+} // ToFahrenheit
+
+sint16_t ToFahrenheit(sint16_t temp_C)
+{
+    return temp_C * 9 / 5 + 32;
+} // ToFahrenheit
+
+float ToGallons(float litres)
+{
+    return litres / 4.546;  // Assuming imperial gallons
+} // ToGallons
 
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(uint8_t data)
@@ -665,11 +737,13 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
     // Coolant water temperature value often falls back to 'invalid' (0xFF), even if a valid value was previously
     // found. Keep the last reported valid value.
-    static uint8_t lastValidWaterTempRaw = 0xFF;
-    uint8_t waterTempRaw = data[2];
-    if (waterTempRaw != 0xFF) lastValidWaterTempRaw = waterTempRaw;  // Copy only if packet value is valid
-    bool isWaterTempValid = lastValidWaterTempRaw != 0xFF;
-    sint16_t waterTemp = (uint16_t)lastValidWaterTempRaw - 39;
+    static uint8_t lastValidCoolantTempRaw = 0xFF;
+    uint8_t coolantTempRaw = data[2];
+    if (coolantTempRaw != 0xFF) lastValidCoolantTempRaw = coolantTempRaw;  // Copy only if packet value is valid
+    bool isCoolantTempValid = lastValidCoolantTempRaw != 0xFF;
+    sint16_t coolantTemp = (uint16_t)lastValidCoolantTempRaw - 39;
+    float odometer = ((uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5]) / 10.0;
+    float extTemp = data[6] / 2.0 - 40;
 
     economyMode = data[1] & 0x10;
 
@@ -685,8 +759,8 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
             "\"economy_mode\": \"%S\",\n"
             "\"in_reverse\": \"%S\",\n"
             "\"trailer\": \"%S\",\n"
-            "\"water_temp\": \"%S\",\n"
-            "\"water_temp_perc\":\n"
+            "\"coolant_temp\": \"%S\",\n"
+            "\"coolant_temp_perc\":\n"
             "{\n"
                 "\"style\":\n"
                 "{\n"
@@ -694,7 +768,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
                 "}\n"
             "},\n"
             "\"odometer_1\": \"%s\",\n"
-            "\"exterior_temperature\": \"%s &deg;C\"\n"
+            "\"exterior_temp\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -714,16 +788,25 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         economyMode ? onStr : offStr,
         data[1] & 0x20 ? yesStr : noStr,
         data[1] & 0x40 ? presentStr : notPresentStr,
-        isWaterTempValid ? ToStr(waterTemp) : notApplicable3Str,
+
+        ! isCoolantTempValid ? notApplicable3Str :
+            mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+                ToStr(coolantTemp) :
+                ToStr(ToFahrenheit(coolantTemp)),
 
         // TODO - hard coded value 130 degrees Celsius for 100%
         #define MAX_COOLANT_TEMP (130)
-        ! isWaterTempValid || waterTemp <= 0 ? PSTR("0") :
-            waterTemp >= MAX_COOLANT_TEMP ? PSTR("1") :
-                FloatToStr(floatBuf[0], (float)waterTemp / MAX_COOLANT_TEMP, 2),
+        ! isCoolantTempValid || coolantTemp <= 0 ? PSTR("0") :
+            coolantTemp >= MAX_COOLANT_TEMP ? PSTR("1") :
+                FloatToStr(floatBuf[0], (float)coolantTemp / MAX_COOLANT_TEMP, 2),
 
-        FloatToStr(floatBuf[1], ((uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5]) / 10.0, 1),
-        FloatToStr(floatBuf[2], (data[6] - 80) / 2.0, 1)
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            FloatToStr(floatBuf[1], odometer, 1) :
+            FloatToStr(floatBuf[1], ToMiles(odometer), 1),
+
+        mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+            FloatToStr(floatBuf[2], extTemp, 1) :
+            FloatToStr(floatBuf[2], ToFahrenheit(extTemp), 0)
     );
 
     // JSON buffer overflow?
@@ -796,12 +879,12 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         "{\n"
             "\"instrument_cluster\": \"%SENALED\",\n"
             "\"speed_regulator_wheel\": \"%S\",\n"
-            "\"warning_led\": \"%S\",\n"
+            "\"hazard_lights\": \"%S\",\n"
             "\"diesel_glow_plugs\": \"%S\",\n"
             "\"door_open\": \"%S\",\n"
-            "\"remaining_km_to_service\": \"%ld\",\n"
-            "\"remaining_km_to_service_dash\": \"%ld\",\n"
-            "\"remaining_km_to_service_perc\":\n"
+            "\"distance_to_service\": \"%ld\",\n"
+            "\"distance_to_service_dash\": \"%ld\",\n"
+            "\"distance_to_service_perc\":\n"
             "{\n"
                 "\"style\":\n"
                 "{\n"
@@ -819,8 +902,15 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         data[0] & 0x04 ? onStr : offStr,
         data[1] & 0x01 ? yesStr : noStr,
 
-        remainingKmToService,
-        _floor(remainingKmToService, 100),  // Round downwards (even if negative) to nearest multiple of 100 kms
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            remainingKmToService :
+            ToMiles(remainingKmToService),
+
+        // Round downwards (even if negative) to nearest multiple of 100
+        // TODO - not sure if the "miles" type instrument cluster also rounds down like this; I don't have one
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            _floor(remainingKmToService, 100) :
+            _floor(ToMiles(remainingKmToService), 100),
 
         // TODO - hard coded value 30,000 kms for 100%
         #define SERVICE_INTERVAL (30000)
@@ -860,7 +950,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     if (data[6] != 0xFF)
     {
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"oil_temperature\": \"%d\""), (int)data[6] - 40);  // Never seen this
+            snprintf_P(buf + at, n - at, PSTR(",\n\"oil_temp\": \"%d\""), (int)data[6] - 40);  // Never seen this
     } // if
 
     if (data[7] != 0xFF)
@@ -1234,13 +1324,14 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
     stalkWasPressed = stalkIsPressed;
 
-    uint8_t avgSpeedTrip1 = data[11];
-    uint8_t avgSpeedTrip2 = data[12];
+    uint16_t avgSpeedTrip1 = data[11];
+    uint16_t avgSpeedTrip2 = data[12];
     uint16_t distanceTrip1 = (uint16_t)data[14] << 8 | data[15];
     uint16_t avgConsumptionLt100Trip1 = (uint16_t)data[16] << 8 | data[17];
     uint16_t distanceTrip2 = (uint16_t)data[18] << 8 | data[19];
     uint16_t avgConsumptionLt100Trip2 = (uint16_t)data[20] << 8 | data[21];
     uint16_t instConsumptionLt100_x10 = (uint16_t)data[22] << 8 | data[23];
+    uint16_t distanceToEmpty = (uint16_t)data[24] << 8 | data[25];
 
     bool instConsumptionValid = instConsumptionLt100_x10 != 0xFFFF;
 
@@ -1330,13 +1421,13 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             "\"door_rear_left\": \"%S\",\n"
             "\"door_boot\": \"%S\",\n"
             "\"exp_moving_avg_speed\": \"%u\",\n"
-            "\"inst_consumption_lt_100\": \"%S\",\n"
             "\"delivered_power\": \"%S\",\n"
             "\"delivered_torque\": \"%S\",\n"
+            "\"inst_consumption\": \"%S\",\n"
             "\"distance_to_empty\": \"%u\",\n"
             "\"avg_speed_1\": \"%u\",\n"
             "\"distance_1\": \"%S\",\n"
-            "\"avg_consumption_lt_100_1\": \"%S\"";
+            "\"avg_consumption_1\": \"%S\"";
 
     char floatBuf[4][MAX_FLOAT_SIZE];
     at += at >= n ? 0 :
@@ -1359,36 +1450,61 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             // Often used in EMA is the constant N, where K = 2 / (N + 1). That means N would be around 1000 (given
             // a sampling time of 1 second).
             //
-            data[13],
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? (uint16_t)data[13] : ToMiles((uint16_t)data[13]),
 
-            instConsumptionValid ?
-                FloatToStr(floatBuf[0], (float)instConsumptionLt100_x10 / 10.0, 1) :
-                notApplicableFloatStr,
-            deliveredPower >= 0.0 ? FloatToStr(floatBuf[1], deliveredPower, 1) : notApplicableFloatStr,
-            deliveredTorque >= 0.0 ? FloatToStr(floatBuf[2], deliveredTorque, 1) : notApplicableFloatStr,
-            (uint16_t)data[24] << 8 | data[25],
-            avgSpeedTrip1,
-            distanceTrip1 != 0xFFFF ? ToStr(distanceTrip1) : notApplicable2Str,
-            avgConsumptionLt100Trip1 != 0xFFFF ?
-                FloatToStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
-                notApplicableFloatStr
+            deliveredPower >= 0.0 ? FloatToStr(floatBuf[0], deliveredPower, 1) : notApplicableFloatStr,
+            deliveredTorque >= 0.0 ? FloatToStr(floatBuf[1], deliveredTorque, 1) : notApplicableFloatStr,
+
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                ! instConsumptionValid ? notApplicableFloatStr :
+                    FloatToStr(floatBuf[2], (float)instConsumptionLt100_x10 / 10.0, 1) :
+                ! instConsumptionValid ? notApplicable2Str :
+                    instConsumptionLt100_x10 <= 2 ? PSTR("&infin;") :
+                    FloatToStr(floatBuf[2], ToMilesPerGallon(instConsumptionLt100_x10), 0),
+
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                distanceToEmpty :
+                ToMiles(distanceToEmpty),
+
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? avgSpeedTrip1 : ToMiles(avgSpeedTrip1),
+
+            distanceTrip1 == 0xFFFF ? notApplicable2Str :
+                mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                    ToStr(distanceTrip1) :
+                    ToStr(ToMiles(distanceTrip1)),
+
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                avgConsumptionLt100Trip1 == 0xFFFF ? notApplicableFloatStr :
+                    FloatToStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
+                avgConsumptionLt100Trip1 == 0xFFFF ? notApplicable2Str :
+                    avgConsumptionLt100Trip1 <= 1 ? PSTR("&infin;") :
+                    FloatToStr(floatBuf[3], ToMilesPerGallon(avgConsumptionLt100Trip1), 0)
         );
 
     const static char jsonFormatter3[] PROGMEM =
             ",\n"
             "\"avg_speed_2\": \"%u\",\n"
             "\"distance_2\": \"%S\",\n"
-            "\"avg_consumption_lt_100_2\": \"%S\"\n"
+            "\"avg_consumption_2\": \"%S\"\n"
         "}\n"
     "}\n";
 
     at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, jsonFormatter3,
-            avgSpeedTrip2,
-            distanceTrip2 == 0xFFFF ? notApplicable2Str : ToStr(distanceTrip2),
-            avgConsumptionLt100Trip2 != 0xFFFF ?
-                FloatToStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1) :
-                notApplicableFloatStr
+
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? avgSpeedTrip2 : ToMiles(avgSpeedTrip2),
+
+            distanceTrip2 == 0xFFFF ? notApplicable2Str :
+                mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                    ToStr(distanceTrip2) :
+                    ToStr(ToMiles(distanceTrip2)),
+
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                avgConsumptionLt100Trip2 == 0xFFFF ? notApplicableFloatStr :
+                    FloatToStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1) :
+                avgConsumptionLt100Trip2 == 0xFFFF ? notApplicable2Str :
+                    avgConsumptionLt100Trip2 <= 1 ? PSTR("&infin;") :
+                    FloatToStr(floatBuf[0], ToMilesPerGallon(avgConsumptionLt100Trip2), 0)
         );
 
     // JSON buffer overflow?
@@ -1507,6 +1623,8 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     prevVehicleSpeed_x100 = vehicleSpeed_x100;
     prevSeq = seq;
 
+    float vehicleSpeed = vehicleSpeed_x100 / 100.0;
+
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -1519,12 +1637,14 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     char floatBuf[2][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
-        IsEngineRpmValid() ?
-            FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 0) :
-            notApplicable3Str,
-        IsVehicleSpeedValid() ?
-            FloatToStr(floatBuf[1], vehicleSpeed_x100 / 100.0, 0) :
-            notApplicable2Str
+        ! IsEngineRpmValid() ?
+            notApplicable3Str :
+            FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 0),
+        ! IsVehicleSpeedValid() ?
+            notApplicable2Str :
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                FloatToStr(floatBuf[1], vehicleSpeed, 0) :
+                FloatToStr(floatBuf[1], ToMiles(vehicleSpeed), 0)
     );
 
     // JSON buffer overflow?
@@ -1543,6 +1663,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
 
     const uint8_t* data = pkt.Data();
     float fuelLevelFiltered = data[4] / 2.0;
+    float fuelLevelRaw = data[5] / 2.0;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -1575,14 +1696,20 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         data[3] & 0x02 ? onStr : offStr,
 
         // Surely fuel level. Test with tank full shows definitely level is in litres.
-        data[4] == 0xFF || data[4] == 0x00 ? notApplicable3Str : FloatToStr(floatBuf[0], fuelLevelFiltered, 1),
+        data[4] == 0xFF || data[4] == 0x00 ? notApplicable3Str :
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                FloatToStr(floatBuf[0], fuelLevelFiltered, 1) :
+                FloatToStr(floatBuf[0], ToGallons(fuelLevelFiltered), 1),
 
         #define FULL_TANK_LITRES (73.0)
         data[4] == 0xFF ? PSTR("0") :
             fuelLevelFiltered >= FULL_TANK_LITRES ? PSTR("1") :
                 FloatToStr(floatBuf[1], fuelLevelFiltered / FULL_TANK_LITRES, 2),
 
-        data[5] == 0xFF || data[5] == 0x00 ? notApplicable3Str : FloatToStr(floatBuf[2], data[5] / 2.0, 1)
+        data[5] == 0xFF || data[5] == 0x00 ? notApplicable3Str :
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                FloatToStr(floatBuf[2], fuelLevelRaw, 1) :
+                FloatToStr(floatBuf[2], ToGallons(fuelLevelRaw), 1)
     );
 
     // JSON buffer overflow?
@@ -2418,8 +2545,8 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
             "\"rear_heater_2\": \"%S\",\n"
             "\"ac_compressor\": \"%S\",\n"
             "\"contact_key_position_ac\": \"%S\",\n"
-            "\"condenser_temperature\": \"%S\",\n"
-            "\"evaporator_temperature\": \"%s\"\n"
+            "\"condenser_temp\": \"%S\",\n"
+            "\"evaporator_temp\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -2989,11 +3116,11 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
     uint16_t currHeading = (uint16_t)data[1] << 8 | data[2];  // in compass degrees (0...359)
     uint16_t headingToDestination = (uint16_t)data[3] << 8 | data[4];  // in compass degrees (0...359)
     uint16_t roadDistanceToDestination = (uint16_t)(data[5] & 0x7F) << 8 | data[6];
-    bool roadDistanceToDestinationInKms = data[5] & 0x80;
+    bool roadDistanceToDestinationInKmsMiles = data[5] & 0x80;
     uint16_t gpsDistanceToDestination = (uint16_t)(data[7] & 0x7F) << 8 | data[8];
-    bool gpsDistanceToDestinationInKms = data[7] & 0x80;
+    bool gpsDistanceToDestinationInKmsMiles = data[7] & 0x80;
     uint16_t distanceToNextTurn = (uint16_t)(data[9] & 0x7F) << 8 | data[10];
-    bool distanceToNextTurnInKms = data[9] & 0x80;
+    bool distanceToNextTurnInKmsMiles = data[9] & 0x80;
     uint16_t headingOnRoundabout = (uint16_t)data[11] << 8 | data[12];
 
     // TODO - Not sure, just guessing. Could also be number of instructions still to be done.
@@ -3022,9 +3149,9 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
                 "}\n"
             "},\n"
             "\"satnav_heading_to_dest\": \"%u\",\n"  // degrees
-            "\"satnav_distance_to_dest_via_road\": \"%S %Sm\",\n"
-            "\"satnav_distance_to_dest_via_straight_line\": \"%S %Sm\",\n"
-            "\"satnav_turn_at\": \"%S %Sm\",\n"
+            "\"satnav_distance_to_dest_via_road\": \"%S %S\",\n"
+            "\"satnav_distance_to_dest_via_straight_line\": \"%S %S\",\n"
+            "\"satnav_turn_at\": \"%S %S\",\n"
             "\"satnav_heading_on_roundabout_as_text\": \"%S\",\n"  // degrees
             "\"satnav_minutes_to_travel\": \"%u\"\n"
         "}\n"
@@ -3041,13 +3168,22 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
         headingToDestination,
 
         FloatToStr(floatBuf[0], roadDistanceToDestination, 0),
-        roadDistanceToDestinationInKms ? PSTR("k") : emptyStr,
+
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            roadDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
+            roadDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("y"),
 
         FloatToStr(floatBuf[1], gpsDistanceToDestination, 0),
-        gpsDistanceToDestinationInKms ? PSTR("k") : emptyStr,
+
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            gpsDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
+            gpsDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("y"),
 
         FloatToStr(floatBuf[2], distanceToNextTurn, 0),
-        distanceToNextTurnInKms ? PSTR("k") : emptyStr,
+
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            distanceToNextTurnInKmsMiles ? PSTR("km") : PSTR("m") :
+            distanceToNextTurnInKmsMiles ? PSTR("mile") : PSTR("y"),
 
         headingOnRoundabout == 0x7FFF ? notApplicable3Str : FloatToStr(floatBuf[3], headingOnRoundabout, 0),
         minutesToTravel
@@ -3547,7 +3683,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "\"satnav_service_address_province\": \"%s\",\n"
                 "\"satnav_service_address_city\": \"%s%S%s\",\n"
                 "\"satnav_service_address_street\": \"%s%s\",\n"
-                "\"satnav_service_address_distance\": \"%s m\"";
+                "\"satnav_service_address_distance\": \"%s %s\"";
 
             // Chosen service address is in first (and only) record. Copy at least city [3], district [4]
             // (if any), street [5, 6], entry name [9] and distance [11]; skip the other strings.
@@ -3574,8 +3710,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     records[0][5].c_str() + 1,  // Skip the fixed first letter ('G' or 'I')
                     records[0][6].c_str(),
 
-                    // Distance (in metres) to the service address
-                    records[0][11].c_str()
+                    // Distance to the service address (sat nav reports in kms or in yards)
+                    records[0][11].c_str(),
+                    mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? PSTR("m") : PSTR("y")
                 );
         }
         break;
@@ -4164,6 +4301,8 @@ VanPacketParseResult_t ParseOdometerPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
     const uint8_t* data = pkt.Data();
 
+    float odometer = ((uint32_t)data[1] << 16 | (uint32_t)data[2] << 8 | data[3]) / 10.0;
+
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -4176,7 +4315,9 @@ VanPacketParseResult_t ParseOdometerPkt(TVanPacketRxDesc& pkt, char* buf, const 
     char floatBuf[MAX_FLOAT_SIZE];
 
     int at = snprintf_P(buf, n, jsonFormatter,
-        FloatToStr(floatBuf, ((uint32_t)data[1] << 16 | (uint32_t)data[2] << 8 | data[3]) / 10.0, 1)
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            FloatToStr(floatBuf, odometer, 1) :
+            FloatToStr(floatBuf, ToMiles(odometer), 1)
     );
 
     // JSON buffer overflow?

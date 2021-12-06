@@ -121,8 +121,7 @@ PGM_P TripComputerStr(uint8_t idx)
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
 PGM_P TripComputerStr()
 {
-    return TripComputerStr(
-        largeScreen == LARGE_SCREEN_TRIP_COMPUTER ? tripComputerLargeScreenTab : smallScreen);
+    return TripComputerStr(largeScreen == LARGE_SCREEN_TRIP_COMPUTER ? tripComputerLargeScreenTab : smallScreen);
 } // TripComputerStr
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
@@ -177,15 +176,7 @@ void NotificationPopupShowing(unsigned long since, long duration)
 bool IsNotificationPopupShowing()
 {
     // Arithmetic has safe roll-over
-    bool result = popupDuration != 0 && millis() - NotificationPopupShowingSince < popupDuration;
-
-#ifdef DEBUG_ORIGINAL_MFD
-    Serial.print(F("[originalMfd] IsNotificationPopupShowing(): "));
-    if (result) Serial.printf_P(PSTR("YES (%ld msec)\n"), popupDuration);
-    else Serial.print(F("NO\n"));
-#endif // DEBUG_ORIGINAL_MFD
-
-    return result;
+    return popupDuration != 0 && millis() - NotificationPopupShowingSince < popupDuration;
 } // IsNotificationPopupShowing
 
 // Register the fact that the trip computer popup showing
@@ -201,7 +192,6 @@ void TripComputerPopupShowing(unsigned long since, long duration)
         popupDuration,
         TripComputerStr(tripComputerPopupTab)
     );
-
 #endif // DEBUG_ORIGINAL_MFD
 } // TripComputerPopupShowing
 
@@ -209,15 +199,7 @@ void TripComputerPopupShowing(unsigned long since, long duration)
 bool IsTripComputerPopupShowing()
 {
     // Arithmetic has safe roll-over
-    bool result = popupDuration != 0 && millis() - TripComputerPopupShowingSince < popupDuration;
-
-#ifdef DEBUG_ORIGINAL_MFD
-    Serial.print(F("[originalMfd] IsTripComputerPopupShowing(): "));
-    if (result) Serial.printf_P(PSTR("YES (%ld msec)\n"), popupDuration);
-    else Serial.print(F("NO\n"));
-#endif // DEBUG_ORIGINAL_MFD
-
-    return result;
+    return popupDuration != 0 && millis() - TripComputerPopupShowingSince < popupDuration;
 } // IsTripComputerPopupShowing
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
@@ -232,8 +214,7 @@ PGM_P PopupStr()
 // Copy the tab index from the small screen into the trip computer popup and the trip computer on the large screen
 void SetAllTabIndexes()
 {
-    tripComputerPopupTab =
-        smallScreen == SMALL_SCREEN_GPS_INFO ? SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen;
+    tripComputerPopupTab = smallScreen == SMALL_SCREEN_GPS_INFO ? SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen;
     tripComputerLargeScreenTab = tripComputerPopupTab;
 } // SetAllTabIndexesEqual
 
@@ -509,17 +490,11 @@ void UpdateLargeScreenForGuidanceModeOff()
         {
             largeScreen = largeScreenBeforeGoingIntoGuidanceMode;
             if (largeScreen == LARGE_SCREEN_HEAD_UNIT && ! isHeadUnitPowerOn) largeScreen = LARGE_SCREEN_CLOCK;
-            if (largeScreen == LARGE_SCREEN_CLOCK && isCurrentStreetKnown) largeScreen = LARGE_SCREEN_CURRENT_STREET;
         }
         else if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
         {
             largeScreen = LARGE_SCREEN_HEAD_UNIT;
-
-            if (! isHeadUnitPowerOn)
-            {
-                largeScreen = LARGE_SCREEN_CLOCK;
-                if (isCurrentStreetKnown) largeScreen = LARGE_SCREEN_CURRENT_STREET;
-            } // if
+            if (! isHeadUnitPowerOn) largeScreen = LARGE_SCREEN_CLOCK;
         } // if
     } // if
 

@@ -19,23 +19,51 @@ function clamp(num, min, max)
 // -----
 // On-screen clocks
 
+// Capitalize first letter
+function CapFirstLetter(string)
+{
+    firstLetter = string.charAt(0);
+    if (string.charCodeAt(0) == 8206)  // IE11-special
+    {
+        firstLetter = string.charAt(1);
+        return firstLetter.toUpperCase() + string.slice(2);
+    } // if
+    return firstLetter.toUpperCase() + string.slice(1);
+} // CapFirstLetter
+
 // Show the current date and time
 function updateDateTime()
 {
-    var date = new Date().toLocaleDateString('en-gb', {weekday: 'short', day: 'numeric', month: 'short'});
-    date = date.replace(/,\s*0/, ", ");  // IE11 incorrectly shows leading "0"
-    $("#date_small").text(date);
+    var locale = 
+        localStorage.mfdLanguage === "set_language_french" ? 'fr' :
+        localStorage.mfdLanguage === "set_language_german" ? 'de-DE' :
+        localStorage.mfdLanguage === "set_language_spanish" ? 'es-ES' :
+        localStorage.mfdLanguage === "set_language_italian" ? 'it' :
+        localStorage.mfdLanguage === "set_language_dutch" ? 'nl' :
+        'en-GB';
 
-    var date = new Date().toLocaleDateString('en-gb', {weekday: 'long'});
-    $("#date_weekday").text(date + ",");
+    var date = new Date().toLocaleDateString(locale, {weekday: 'short', day: 'numeric', month: 'short'});
+    date = date.replace(/0(\d)/, "$1");  // IE11 incorrectly shows leading "0"
+    date = date.replace(/,/, "");
+    $("#date_small").text(CapFirstLetter(date));
 
-    date = new Date().toLocaleDateString('en-gb', {day: 'numeric', month: 'long', year: 'numeric'});
-    date = date.replace(/^.0/, "");  // IE11 incorrectly shows leading "0"
+    date = new Date().toLocaleDateString(locale, {weekday: 'long'});
+    $("#date_weekday").text(CapFirstLetter(date) + ",");
+
+    date = new Date().toLocaleDateString(locale, {day: 'numeric', month: 'long', year: 'numeric'});
+    date = date.replace(/0(\d )/, "$1");  // IE11 incorrectly shows leading "0"
     $("#date").text(date);
 
-    var time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    var time = new Date().toLocaleTimeString(
+        [],  // When 12-hour time unit is chosen, 'a.m.' / 'p.m.' will be with dots, and in lower case
+        {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: localStorage.mfdTimeUnit === "set_units_12h"
+        }
+    );
     $("#time").text(time);
-    $("#time_small").text(time);
+    $("#time_small").text(time.replace(/.m.$/, ""));  // Remove trailing '.m.' if present
 } // updateDateTime
 
 // Update now and every next second
@@ -295,9 +323,11 @@ var connectToWebsocketTimer = setTimeout(
 // -----
 // Handling of vehicle data
 
+var economyMode= "UNKNOWN";
 var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 var engineCoolantTemperature = 80;  // In degrees Celsius
 var vehicleSpeed = 0;
+var icyConditions = false;
 var wasRiskOfIceWarningShown = false; // This warning is shown at most once per ride
 
 var suppressClimateControlPopup = null;
@@ -735,12 +765,15 @@ function showPopupAndNotifyServer(id, msec, message)
     var messageText = typeof message !== "undefined" ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
     webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
 
-    $("#original_mfd_popup").text("N_POP"); // TODO - remove
+    $("#original_mfd_popup").text("N_POP");  // Debug info
 } // showPopupAndNotifyServer
 
 // Hide the specified or the current (top) popup
 function hidePopup(id)
 {
+    webSocket.send("mfd_popup_showing:NO");
+    $("#original_mfd_popup").empty();  // Debug info
+
     var popup;
     if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
     if (popup.length === 0 || ! popup.is(":visible")) return false;
@@ -752,9 +785,6 @@ function hidePopup(id)
     // Perform "on_exit" action, if specified
     var onExit = popup.attr("on_exit");
     if (onExit) eval(onExit);
-
-    webSocket.send("mfd_popup_showing:NO");
-    $("#original_mfd_popup").empty(); // TODO - remove
 
     return true;
 } // hidePopup
@@ -1497,7 +1527,8 @@ function hideAudioSettingsPopup()
     isAudioMenuVisible = false;
 
     if (! $("#audio_settings_popup").is(":visible")) return false;
-    $("#audio_settings_popup").hide();
+    //$("#audio_settings_popup").hide();
+    hidePopup("audio_settings_popup");
     return true;
 } // hideAudioSettingsPopup
 
@@ -1628,12 +1659,89 @@ function languageValidate()
     localStorage.mfdLanguage =
         $("#set_language").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
 
+    setLanguage(localStorage.mfdLanguage);
+
     webSocket.send("mfd_language:" + localStorage.mfdLanguage);
 
     exitMenu();
     exitMenu();
     exitMenu();
 } // languageValidate
+
+// -----
+// Functions for selecting MFD formats and units
+
+function unitsSelectTickedButtons()
+{
+    $("#set_units").find(".tickBox").removeClass("buttonSelected");
+
+    var distUnit = localStorage.mfdDistanceUnit;
+    var id = "set_units_km_h";  // Default
+
+    if ($("#set_distance_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(distUnit) >= 0)
+    {
+        id = distUnit;
+    }
+    else
+    {
+        localStorage.mfdDistanceUnit = id;
+    } // if
+
+    setTick(id);
+    $("#" + id).addClass("buttonSelected");
+
+    var tempUnit = localStorage.mfdTemperatureUnit;
+    var id = "set_units_deg_celsius";  // Default
+
+    if ($("#set_temperature_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(tempUnit) >= 0)
+    {
+        id = tempUnit;
+    }
+    else
+    {
+        localStorage.mfdTemperatureUnit = id;
+    } // if
+
+    setTick(id);
+
+
+    var timeUnit = localStorage.mfdTimeUnit;
+    id = "set_units_24h";  // Default
+
+    if ($("#set_time_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(timeUnit) >= 0)
+    {
+        id = timeUnit;
+    }
+    else
+    {
+        localStorage.mfdTimeUnit = id;
+    } // if
+
+    setTick(id);
+
+    $("#set_units_validate_button").removeClass("buttonSelected");
+} // unitsSelectTickedButtons
+
+function unitsValidate()
+{
+    // Save selected ids in local (persistent) store
+    localStorage.mfdDistanceUnit =
+        $("#set_distance_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+    localStorage.mfdTemperatureUnit =
+        $("#set_temperature_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+    localStorage.mfdTimeUnit =
+        $("#set_time_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+
+    setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+
+    webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
+    webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
+    webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
+
+    exitMenu();
+    exitMenu();
+    exitMenu();
+} // unitsValidate
 
 // -----
 // Functions for satellite navigation menu and screen handling
@@ -1765,6 +1873,13 @@ function satnavGotoListScreen()
     // We could get here via "Esc" and then the currently selected line must be highlighted
     highlightLine("satnav_list");
 } // satnavGotoListScreen
+
+function satnavGotoListScreenEmpty()
+{
+    satnavGotoListScreen();
+    $('#satnav_list').empty();
+    highlightFirstLine('satnav_list');
+} // satnavGotoListScreenEmpty
 
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
 function satnavSelectFirstAvailableCharacter()
@@ -2363,8 +2478,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
     $("#satnav_rename_entry_in_directory_validate_button").toggleClass("buttonDisabled", entryExists);
     $("#satnav_archive_in_directory_personal_button").toggleClass("buttonDisabled", entryExists);
     $("#satnav_archive_in_directory_professional_button").toggleClass("buttonDisabled", entryExists);
-    $("#satnav_rename_entry_in_directory_entry_exists").toggle(entryExists);
-    $("#satnav_archive_in_directory_entry_exists").toggle(entryExists);
+    $(".satNavEntryExistsTag" ).toggle(entryExists);
 } // satnavDirectoryEntryEnterCharacter
 
 // Handles pressing the "Validate" button in the sat nav directory rename entry screen
@@ -2614,6 +2728,11 @@ function satnavFormatDistance(distanceStr)
         // Note that 'toFixed' also performs rounding. So we need to add only 49.
         return [ ((+distance + 49) / 1000).toFixed(1), "km" ];
     }
+    else if (unit === "y" && +distance >= 880)
+    {
+        // Reported in yards, and 880 yards or more: show in miles, with decimal notation. Round upwards.
+        return [ ((+distance + 87) / 1760).toFixed(1), "mile" ];
+    }
     else
     {
         return [ distance, unit ];
@@ -2684,18 +2803,23 @@ function satnavEscapeVocalSynthesisLevel()
     } // if
 } // satnavEscapeVocalSynthesisLevel
 
-function satnavNavigationOptionsStopOrResumeGuidanceButton()
+function satnavStopGuidance()
+{
+    localStorage.askForGuidanceContinuation = 'NO';
+    selectDefaultScreen();
+} // satnavStopGuidance
+
+function satnavStopOrResumeGuidance()
 {
     if ($("#satnav_navigation_options_menu_stop_guidance_button").text() === "Stop guidance") 
     {
-        localStorage.askForGuidanceContinuation = 'NO';
-        selectDefaultScreen();
+        satnavStopGuidance();
     }
     else
     {
         satnavSwitchToGuidanceScreen();
     } // if
-} // satnavNavigationOptionsStopOrResumeGuidanceButton
+} // satnavStopOrResumeGuidance
 
 function satnavPoweringOff()
 {
@@ -3193,6 +3317,7 @@ function handleItemChange(item, value)
             // Only if valid value (can be "--" if cartridge is not present)
             if (value.match(/^[1-6]$/))
             {
+                // The LED of the current disc is shown a bit larger than the others
                 var selector = "#cd_changer_disc_" + value + "_present";
                 $(selector).addClass("ledActive");
                 $(selector).css({marginTop: '-=25px'});
@@ -3298,10 +3423,19 @@ function handleItemChange(item, value)
 
             vehicleSpeed = parseInt(value);
 
-            // If 130 km/h or more, add glow effect
-            $("#oil_level_raw").toggleClass("glow", vehicleSpeed >= 130);
+            var isDriving = vehicleSpeed >= 5;
+            var isDrivingFast = vehicleSpeed >= 130;
 
-            if (exteriorTemp >= -3.0 && exteriorTemp <= 3.0 && ! wasRiskOfIceWarningShown && vehicleSpeed >= 5)
+            if (localStorage.mfdDistanceUnit === "set_units_mph")
+            {
+                isDriving = vehicleSpeed >= 3;
+                isDrivingFast = vehicleSpeed >= 85;
+            } // if
+
+            // If 130 km/h (85 mph) or more, add glow effect
+            $("#oil_level_raw").toggleClass("glow", isDrivingFast);
+
+            if (icyConditions && ! wasRiskOfIceWarningShown && isDriving)
             {
                 // Show warning popup
                 showNotificationPopup("Risk of ice!", 10000);
@@ -3312,32 +3446,80 @@ function handleItemChange(item, value)
 
         case "fuel_level_filtered":
         {
-            // If less than 5 litres left, add glow effect
-            $('[gid="fuel_level_filtered"]').toggleClass("glow", parseInt(value) < 5);
+            var level = parseFloat(value);
+
+            var lowFuelCondition = false;
+            if (localStorage.mfdDistanceUnit === "set_units_mph") lowFuelCondition = level <= 1;  // 1 gallon left
+            else lowFuelCondition = level <= 5;  // 5 litres left
+
+            $('[gid="fuel_level_filtered"]').toggleClass("glow", lowFuelCondition);
         } // case
         break;
 
-        case "water_temp":
+        case "coolant_temp":
         {
-            engineCoolantTemperature = parseFloat(value);
+            var temp = parseFloat(value);
 
-            // If more than 110 degrees Celsius, add glow effect
-            $("#water_temp").toggleClass("glow", engineCoolantTemperature > 110);
+            if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit")
+            {
+                // If more than 230 degrees, add glow effect
+                $("#coolant_temp").toggleClass("glow", temp > 230);
 
-            // If less than 70 degrees, add "ice glow" effect
-            $("#water_temp").toggleClass("glowIce", engineCoolantTemperature < 70);
+                // If less than 160 degrees, add "ice glow" effect
+                $("#coolant_temp").toggleClass("glowIce", temp < 160);
+            }
+            else
+            {
+                // If more than 110 degrees, add glow effect
+                $("#coolant_temp").toggleClass("glow", temp > 110);
+
+                // If less than 70, add "ice glow" effect
+                $("#coolant_temp").toggleClass("glowIce", temp < 70);
+            } // if
         } // case
         break;
 
-        case "exterior_temperature":
+        case "distance_to_empty":
+        {
+            var dist = parseFloat(value);
+
+            if (localStorage.mfdDistanceUnit === "set_units_mph")
+            {
+                // If less than 60 miles, add glow effect
+                $('[gid="distance_to_empty"]').toggleClass("glow", dist < 60);
+            }
+            else
+            {
+                // If less than 90 kms, add glow effect
+                $('[gid="distance_to_empty"]').toggleClass("glow", dist < 90);
+            } // if
+        } // case
+        break;
+
+        case "exterior_temp":
         {
             $("#splash_text").hide();
 
-            // If between -3.0 and +3.0 degrees Celsius, add "ice glow" effect
-            var exteriorTemp = parseFloat(value);
-            $('[gid="exterior_temperature"]').toggleClass("glowIce", exteriorTemp >= -3.0 && exteriorTemp <= 3.0);
+            var temp = parseFloat(value);
 
-            if (exteriorTemp >= -3.0 && exteriorTemp <= 3.0)
+            if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit") 
+            {
+                icyConditions = temp >= 26.0 && temp <= 38;
+            }
+            else
+            {
+                icyConditions = temp >= -3.0 && temp <= 3.0;
+            } // if
+
+            $('[gid="exterior_temp_shown"]').html(
+                localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit" ?
+                    value + " &deg;F" : value + " &deg;C"
+                );
+
+            // If icy conditions, add "ice glow" effect
+            $('[gid="exterior_temp_shown"]').toggleClass("glowIce", icyConditions);
+
+            if (icyConditions)
             {
                 if (! wasRiskOfIceWarningShown && vehicleSpeed >= 5)
                 {
@@ -3360,13 +3542,13 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "remaining_km_to_service":
+        case "distance_to_service":
         {
             // Add a space between hundreds and thousands for better readability
-            $("#remaining_km_to_service").text(addThousandsSeparator(value));
+            $("#distance_to_service").text(addThousandsSeparator(value));
 
             // If zero or negative, add glow effect
-            $("#remaining_km_to_service").toggleClass("glow", parseInt(value) <= 0);
+            $("#distance_to_service").toggleClass("glow", parseInt(value) <= 0);
         } // case
         break;
 
@@ -3380,8 +3562,8 @@ function handleItemChange(item, value)
         case "economy_mode":
         {
             // Check if anything actually changed
-            if (value === handleItemChange.economyMode) break;
-            handleItemChange.economyMode = value;
+            if (value === economyMode) break;
+            economyMode = value;
 
             if (value !== "ON") break;
             if (currentLargeScreenId === "pre_flight") break;
@@ -3390,12 +3572,12 @@ function handleItemChange(item, value)
         } // case
         break;
 
-        case "warning_led":
+        case "hazard_lights":
         {
             // If on, add glow effect
-            $("#warning_led").removeClass("ledOn");
-            $("#warning_led").removeClass("ledOff");
-            $("#warning_led").toggleClass("glow", value === "ON");
+            $("#hazard_lights").removeClass("ledOn");
+            $("#hazard_lights").removeClass("ledOff");
+            $("#hazard_lights").toggleClass("glow", value === "ON");
         } // case
         break;
 
@@ -3412,7 +3594,7 @@ function handleItemChange(item, value)
             // Show or hide the "door open" popup, but not in the "pre_flight" screen
             if (value === "YES" && currentLargeScreenId !== "pre_flight")
             {
-                $("#door_open_popup_text").text("Door open");
+                $("#door_open_popup_text").text("Door open");  // TODO - language
                 showPopupAndNotifyServer("door_open_popup", 8000);
             }
             else
@@ -3462,6 +3644,7 @@ function handleItemChange(item, value)
             } // if
 
             // Compose gold-plated popup text
+            // TODO - language
 
             var popupText = " open";
             if (isBootOpen) popupText = "boot" + popupText;
@@ -3505,7 +3688,7 @@ function handleItemChange(item, value)
                     hideAllPopups("satnav_continue_guidance_popup");
                 } // if
 
-                if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES")
+                if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES" && economyMode === "OFF")
                 {
                     // Show popup "Continue guidance to destination? [Yes]/No"
                     showPopup("satnav_continue_guidance_popup", 15000);
@@ -3552,7 +3735,7 @@ function handleItemChange(item, value)
             satnavStatus1 = value;
 
             // No further handling when in power-save mode
-            if (handleItemChange.economyMode === "ON") break;
+            if (economyMode === "ON") break;
 
             if (satnavStatus1.match(/AUDIO/))
             {
@@ -3615,10 +3798,11 @@ function handleItemChange(item, value)
             if (satnavInitialized) hidePopup("satnav_initializing_popup");
 
             // Button texts in menus
+            // TODO - depends on 'localStorage.mfdLanguage'
             $("#satnav_navigation_options_menu_stop_guidance_button").text(
                 value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
-            $("#satnav_tools_menu_stop_guidance_button").text(
-                value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
+            // $("#satnav_tools_menu_stop_guidance_button").text(
+                // value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
 
             // Just entered guidance mode?
             if (value === "IN_GUIDANCE_MODE")
@@ -3730,7 +3914,7 @@ function handleItemChange(item, value)
             if (handleItemChange.nSatNavDiscUnreadable === undefined) handleItemChange.nSatNavDiscUnreadable = 0;
 
             // No further handling when in power-save mode
-            if (handleItemChange.economyMode === "ON") break;
+            if (economyMode === "ON") break;
 
             if (value === "YES") handleItemChange.nSatNavDiscUnreadable = 0;
             else handleItemChange.nSatNavDiscUnreadable++;
@@ -4477,7 +4661,7 @@ function handleItemChange(item, value)
                 value === "TRIP_INFO_2" ? 2 : 0;
             selectTabInTripComputerPopup(tabIndex);
 
-            $("#original_mfd_popup").text(tripComputerShortStr(value)); // TODO - remove
+            $("#original_mfd_popup").text(tripComputerShortStr(value));  // Debug info
         } // case
         break;
 
@@ -4512,7 +4696,7 @@ function handleItemChange(item, value)
             // Ignore remote control buttons if contact key is off
             if ($("#contact_key_position").text() === "OFF") break;
 
-            if (handleItemChange.economyMode === "ON") break;  // Ignore also when in power-save mode
+            if (economyMode === "ON") break;  // Ignore also when in power-save mode
 
             var parts = value.split(" ");
             var button = parts[0];
@@ -4533,11 +4717,11 @@ function handleItemChange(item, value)
                 // Ignore if just changed screen; sometimes the screen change is triggered by the system, not the
                 // remote control. If the user wanted pressed a button on the previous screen, it will end up
                 // being handled by the current screen, which is confusing.
-                if (Date.now() - lastScreenChangedAt < 250)
-                {
-                    console.log("// mfd_remote_control - ESC_BUTTON: ignored");
-                    break;
-                } // if
+                // if (Date.now() - lastScreenChangedAt < 250)
+                // {
+                    // console.log("// mfd_remote_control - ESC_BUTTON: ignored");
+                    // break;
+                // } // if
 
                 // If a popup is showing, hide it and break
                 if (hideTunerPresetsPopup()) break;
@@ -4648,7 +4832,7 @@ function handleItemChange(item, value)
         {
             if (value === "MFD_SCREEN_ON")
             {
-                if (handleItemChange.economyMode === "ON" && currentLargeScreenId !== "pre_flight")
+                if (economyMode === "ON" && currentLargeScreenId !== "pre_flight")
                 {
                     showNotificationPopup("Changing to<br />power-save mode", 15000);
                 } // if
@@ -4662,7 +4846,7 @@ function handleItemChange(item, value)
 
         case "mfd_popup":
         {
-            $("#original_mfd_popup").text(value);
+            $("#original_mfd_popup").text(value);  // Debug info
         } // case
         break;
 
@@ -4695,676 +4879,319 @@ function handleItemChange(item, value)
 } // handleItemChange
 
 // -----
-// Functions for demo
+// Functions for localization (language, units)
 
-// Head unit OFF
-function headUnitOff()
+function setLanguage(language)
 {
-    writeToDom
-    (
-        {
-            "head_unit_power":"OFF",
-            "tape_present":"NO",
-            "cd_present":"YES",
-            "audio_source":"NONE",
-            "ext_mute":"OFF",
-            "mute":"OFF",
-            "volume":"0",
-            "volume_update":"NO",
-            "volume_perc":{"style":{"transform":"scaleX(0.00)"}},
-            "audio_menu":"CLOSED",
-            "bass":"+4",
-            "bass_update":"NO",
-            "treble":"+4",
-            "treble_update":"NO",
-            "loudness":"ON",
-            "fader":"+0",
-            "fader_update":"NO",
-            "balance":"+0",
-            "balance_update":"NO",
-            "auto_volume":"ON"
-        }
-    );
-} // headUnitOff
+    var languageSelections =
+        "<span class='languageIcon'>D</span>" +
+        "<span class='languageIcon'>E</span>" +
+        "<span class='languageIcon'>F</span>" +
+        "<span class='languageIcon'>GB</span>" +
+        "<span class='languageIcon'>NL</span>" +
+        "<span class='languageIcon'>I</span>";
 
-// Handle key down events in demo mode
-function onKeyDown(event)
-{
-    // Do nothing if the event was already processed
-    if (event.defaultPrevented) return;
-
-    switch (event.key)
+    switch(language)
     {
-        case "m":
-        case "M":
+        case "set_language_english":
         {
-            writeToDom({"mfd_remote_control":"MENU_BUTTON"});
+            $("#audio_settings_popup .tag:eq(0)").text("Source");
+            $("#audio_settings_popup .tag:eq(1)").text("Volume");
+            $("#audio_settings_popup .tag:eq(2)").text("Bass");
+            $("#audio_settings_popup .tag:eq(3)").text("Treble");
+            $("#audio_settings_popup .tag:eq(4)").text("Fader");
+            $("#audio_settings_popup .tag:eq(5)").text("Balance");
+
+            $("#tape_popup .tag").text("Side");
+            $("#cd_player_popup .tag:eq(0)").text("Track");
+            $("#cd_changer_popup .tag:eq(1)").text("Track");
+
+            $("#main_menu .menuTitleLine").html("Main menu<br />");
+            $("#main_menu_goto_satnav_button").text("Navigation / Guidance");
+            $("#main_menu_goto_screen_configuration_button").text("Configure display");
+
+            $("#screen_configuration_menu .menuTitleLine").html("Configure display<br />");
+            $("#screen_configuration_menu .button:eq(0)").text("Set brightness");
+            $("#screen_configuration_menu .button:eq(1)").text("Set date and time");
+            $("#screen_configuration_menu .button:eq(2)").html("Select a language " + languageSelections);
+            $("#screen_configuration_menu .button:eq(3)").text("Set format and units");
+
+            $("#set_screen_brightness .menuTitleLine").html("Set brightness<br />");
+            $("#set_date_time .menuTitleLine").html("Set date and time<br />");
+            $("#set_language .menuTitleLine").html("Select a language<br />");
+            $("#set_units .menuTitleLine").html("Set format and units<br />");
+
+            $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
+            $("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
+                Input has been stored in<br />the personal<br />directory");
+            $("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
+                Input has been stored in<br />the professional<br />directory");
+            $("#satnav_computing_route_popup .messagePopupArea").html("Computing route<br />in progress");
+
+            $("#satnav_disclaimer_text").html("\
+                Navigation is an electronic help system. It<br>\
+                cannot replace the driver's decisions. All<br>\
+                guidance instructions must be carefully<br>\
+                checked by the user.<br>");
+
+            $("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
+            $("#satnav_main_menu .button:eq(0)").text("Enter new destination");
+            $("#satnav_main_menu .button:eq(1)").text("Select a service");
+            $("#satnav_main_menu .button:eq(2)").text("Select destination from memory");
+            $("#satnav_main_menu .button:eq(3)").text("Navigation options");
+
+            $("#satnav_select_from_memory_menu .menuTitleLine").html("Select from memory<br />");
+            $("#satnav_select_from_memory_menu .button:eq(0)").text("Personal directory");
+            $("#satnav_select_from_memory_menu .button:eq(1)").text("Professional directory");
+
+            $("#satnav_navigation_options_menu .menuTitleLine").html("Navigation options<br />");
+            $("#satnav_navigation_options_menu .button:eq(0)").text("Directory management");
+            $("#satnav_navigation_options_menu .button:eq(1)").text("Vocal synthesis volume");
+            $("#satnav_navigation_options_menu .button:eq(2)").text("Delete directories");
+            $("#satnav_navigation_options_menu .button:eq(3)").text("Resume guidance");
+
+            $("#satnav_directory_management_menu .menuTitleLine").html("Directory management<br />");
+            $("#satnav_directory_management_menu .button:eq(0)").text("Personal directory");
+            $("#satnav_directory_management_menu .button:eq(1)").text("Professional directory");
+
+            $("#satnav_guidance_tools_menu .menuTitleLine").html("Guidance tools<br />");
+            $("#satnav_guidance_tools_menu .button:eq(0)").text("Guidance criteria");
+            $("#satnav_guidance_tools_menu .button:eq(1)").text("Programmed destination");
+            $("#satnav_guidance_tools_menu .button:eq(2)").text("Vocal synthesis volume");
+            $("#satnav_guidance_tools_menu .button:eq(3)").text("Stop guidance");
+
+            $("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Fastest route<br />");
+            $("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Shortest route<br />");
+            $("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Avoid highway route<br />");
+            $("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Fast/short compromise route<br />");
+
+            $("#satnav_vocal_synthesis_level .menuTitleLine").html("Vocal synthesis level<br />");
+            $("#satnav_vocal_synthesis_level .tag").text("Level");
+
+            $("#satnav_enter_city_characters .tag").text("Enter city");
+            $("#satnav_enter_street_characters .tag").text("Enter street");
+
+            $("#satnav_enter_characters .tag:eq(0)").text("Choose next letter");
+            $("#satnav_enter_characters .tag:eq(1)").text("Enter city");
+            $("#satnav_enter_characters .tag:eq(2)").text("Enter street");
+
+            $("#satnav_choose_from_list .tag").text("Enter city");
+
+            $("#satnav_enter_house_number .tag").text("Enter number");
+
+            $("#satnav_show_personal_address .tag:eq(0)").text("City");
+            $("#satnav_show_personal_address .tag:eq(1)").text("Street");
+            $("#satnav_show_personal_address .tag:eq(2)").text("Number");
+
+            $("#satnav_show_professional_address .tag:eq(0)").text("City");
+            $("#satnav_show_professional_address .tag:eq(1)").text("Street");
+            $("#satnav_show_professional_address .tag:eq(3)").text("Number");
+
+            $("#satnav_show_service_address .tag:eq(0)").text("City");
+            $("#satnav_show_service_address .tag:eq(1)").text("Street");
+
+            $("#satnav_show_current_destination .tag:eq(0)").text("Programmed destination");
+            $("#satnav_show_current_destination .tag:eq(1)").text("City");
+            $("#satnav_show_current_destination .tag:eq(2)").text("Street");
+            $("#satnav_show_current_destination .tag:eq(3)").text("Number");
+
+            $("#satnav_show_programmed_destination .tag:eq(0)").text("Programmed destination");
+            $("#satnav_show_programmed_destination .tag:eq(1)").text("City");
+            $("#satnav_show_programmed_destination .tag:eq(2)").text("Street");
+            $("#satnav_show_programmed_destination .tag:eq(3)").text("Number");
+
+            $("#satnav_show_last_destination .tag:eq(0)").text("Select a service");
+            $("#satnav_show_last_destination .tag:eq(1)").text("City");
+            $("#satnav_show_last_destination .tag:eq(2)").text("Street");
+
+            $("#satnav_archive_in_directory_title").text("Archive in directory");
+            $("#satnav_archive_in_directory .satNavEntryNameTag").text("Name");
+            $("#satnav_archive_in_directory .button:eq(0)").text("Correction");
+            $("#satnav_archive_in_directory .button:eq(1)").text("Personal dir");
+            $("#satnav_archive_in_directory .button:eq(2)").text("Professional d");
+
+            $("#satnav_rename_entry_in_directory_title").text("Rename entry");
+            $("#satnav_rename_entry_in_directory .satNavEntryNameTag").text("Name");
+            $("#satnav_rename_entry_in_directory .button:eq(1)").text("Correction");
+
+            $("#satnav_guidance .tag").text("To dest");
+
+            $("#satnav_reached_destination_popup_title").text("Destination reached");
+            $("#satnav_delete_item_popup_title").html("Delete item ?<br />");
+            $("#satnav_guidance_preference_popup_title").html("Keep criteria");
+            $("#satnav_delete_directory_data_popup_title").text("This will delete all data in directories");
+            $("#satnav_continue_guidance_popup_title").text("Continue guidance to destination ?");
+
+            $(".yesButton").text("Yes");
+            $(".noButton").text("No");
+
+            $(".validateButton").text("Validate");
+            $("#satnav_disclaimer_validate_button").text("Validate");
+            $("#satnav_manage_personal_address_rename_button").text("Rename");
+            $("#satnav_manage_personal_address_delete_button").text("Delete");
+            $("#satnav_manage_professional_address_rename_button").text("Rename");
+            $("#satnav_manage_professional_address_delete_button").text("Delete");
+            $("#satnav_service_address_previous_button").text("Previous");
+            $("#satnav_service_address_next_button").text("Next");
+
+            $(".correctionButton").text("Change");
+            $("#satnav_enter_characters_correction_button").text("Correction");
+            $("#satnav_archive_in_directory_entry").text("Store");
+
+            $(".satNavEntryExistsTag").text("This entry already exists");
         } // case
         break;
 
-        case "Down": // IE/Edge specific value
-        case "ArrowDown":
+        case "set_language_french":
         {
-            writeToDom({"mfd_remote_control":"DOWN_BUTTON"});
-            break;
-        } // case
+            $("#main_menu .menuTitleLine").html("Menu général<br />");
+            $("#main_menu_goto_satnav_button").text("Navigation / Guidage");
+            $("#main_menu_goto_screen_configuration_button").text("Configuration afficheur");
 
-        case "Up": // IE/Edge specific value
-        case "ArrowUp":
-        {
-            writeToDom({"mfd_remote_control":"UP_BUTTON"});
-            break;
-        } // case
+            $("#screen_configuration_menu .menuTitleLine").html("Configuration afficheur<br />");
+            $("#screen_configuration_menu .button:eq(0)").text("Réglage luminosité");
+            $("#screen_configuration_menu .button:eq(1)").text("Réglage de date et heure");
+            $("#screen_configuration_menu .button:eq(2)").html("Choix de la langue " + languageSelections);
+            $("#screen_configuration_menu .button:eq(3)").text("Réglage des formats et unités");
 
-        case "Left": // IE/Edge specific value
-        case "ArrowLeft":
-        {
-            writeToDom({"mfd_remote_control":"LEFT_BUTTON"});
-            break;
-        } // case
+            $("#set_screen_brightness .menuTitleLine").html("Réglage luminosité<br />");
+            $("#set_date_time .menuTitleLine").html("Réglage de date et heure<br />");
+            $("#set_language .menuTitleLine").html("Choix de la langue<br />");
+            $("#set_units .menuTitleLine").html("Réglage des formats et unités<br />");
 
-        case "Right": // IE/Edge specific value
-        case "ArrowRight":
-        {
-            writeToDom({"mfd_remote_control":"RIGHT_BUTTON"});
-            break;
-        } // case
-
-        case "Tab":
-        {
-            var wasInDemoMode = inDemoMode;
-            inDemoMode = false;  // To cycle through the screens like the remote control "MOD" button would
-            writeToDom({"mfd_remote_control":"MODE_BUTTON"});
-            inDemoMode = wasInDemoMode;
-            break;
-        } // case
-
-        case "Enter":
-        {
-            writeToDom({"mfd_remote_control":"VAL_BUTTON"});
-            break;
-        } // case
-
-        case "Esc": // IE/Edge specific value
-        case "Escape":
-        {
-            writeToDom({"mfd_remote_control":"ESC_BUTTON"});
-            break;
-        } // case
-
-        case "n":
-        case "N":
-        {
-            if (satnavMode !== "IN_GUIDANCE_MODE") satnavMode = "IN_GUIDANCE_MODE";
-            else satnavMode = "IDLE";
-
-            console.log("// satnavMode set to '" + satnavMode + "'");
-
-            break;
-        } // case
-
-        case "t":
-        case "T":
-        {
-            if ($("#audio_source").text() !== "TUNER")
-            {
-                // Tuner ON
-                writeToDom
-                (
-                    {
-                        "head_unit_power":"ON",
-                        "tape_present":"NO",
-                        "cd_present":"YES",
-                        "audio_source":"TUNER",
-                        "ext_mute":"OFF",
-                        "mute":"OFF",
-                        "volume":"0",
-                        "volume_update":"NO",
-                        "volume_perc":{"style":{"transform":"scaleX(0.00)"}},
-                        "audio_menu":"CLOSED",
-                        "bass":"+4",
-                        "bass_update":"NO",
-                        "treble":"+4",
-                        "treble_update":"NO",
-                        "loudness":"ON",
-                        "fader":"+0",
-                        "fader_update":"NO",
-                        "balance":"+0",
-                        "balance_update":"NO",
-                        "auto_volume":"ON"
-                    }
-                );
-                writeToDom
-                (
-                    {
-                        "tuner_band":"FM1",
-                        "fm_band":"ON",
-                        "fm_band_1":"ON",
-                        "fm_band_2":"OFF",
-                        "fm_band_ast":"OFF",
-                        "am_band":"OFF",
-                        "tuner_memory":"5",
-                        "frequency":"100.1",
-                        "frequency_h":"0",
-                        "frequency_unit":"MHz",
-                        "frequency_khz":"OFF",
-                        "frequency_mhz":"ON",
-                        "signal_strength":"8",
-                        "search_mode":"NOT_SEARCHING",
-                        "search_manual":"OFF",
-                        "search_sensitivity":"",
-                        "search_sensitivity_lo":"OFF",
-                        "search_sensitivity_dx":"OFF",
-                        "search_direction":"",
-                        "search_direction_up":"OFF",
-                        "search_direction_down":"OFF",
-                        "pty_selection_menu":"OFF",
-                        "selected_pty_8":"Pop M",
-                        "selected_pty_16":"Pop Music",
-                        "selected_pty_full":"Pop Music",
-                        "pty_standby_mode":"NO",
-                        "pty_match":"NO",
-                        "pty_8":"News",
-                        "pty_16":"News",
-                        "pty_full":"News",
-                        "pi_code":"83D1",
-                        "pi_country":"NL",
-                        "pi_area_coverage":"supra-regional",
-                        "regional":"OFF",
-                        "ta_selected":"YES",
-                        "ta_not_available":"NO",
-                        "rds_selected":"YES",
-                        "rds_not_available":"NO",
-                        "rds_text":"BNR     ",
-                        "info_traffic":"NO"
-                    }
-                );
-            }
-            else
-            {
-                headUnitOff();
-            } // if
+            $(".validateButton").text("Valider");
+            $("#satnav_disclaimer_validate_button").text("Valider");
         } // case
         break;
 
-        case "i":
-        case "I":
+        case "set_language_german":
         {
-            if ($("#audio_source").text() !== "CD")
-            {
-                // CD player ON
-                writeToDom
-                (
-                    {
-                        "head_unit_power":"ON",
-                        "tape_present":"NO",
-                        "cd_present":"YES",
-                        "audio_source":"CD",
-                        "ext_mute":"OFF",
-                        "mute":"OFF",
-                        "volume":"1",
-                        "volume_update":"NO",
-                        "volume_perc":{"style":{"transform":"scaleX(0.03)"}},
-                        "audio_menu":"CLOSED",
-                        "bass":"+3",
-                        "bass_update":"NO",
-                        "treble":"+3",
-                        "treble_update":"NO",
-                        "loudness":"ON",
-                        "fader":"+0",
-                        "fader_update":"NO",
-                        "balance":"+0",
-                        "balance_update":"NO",
-                        "auto_volume":"ON"
-                    }
-                );
-                writeToDom
-                (
-                    {
-                        "cd_status":"PLAY",
-                        "cd_status_loading":"OFF",
-                        "cd_status_eject":"OFF",
-                        "cd_status_pause":"OFF",
-                        "cd_status_play":"ON",
-                        "cd_status_fast_forward":"OFF",
-                        "cd_status_rewind":"OFF",
-                        "cd_status_searching":"OFF",
-                        "cd_track_time":"3:08",
-                        "cd_current_track":"9",
-                        "cd_total_tracks":"15",
-                        "cd_total_time":"--:--",
-                        "cd_random":"OFF"
-                    }
-                );
-            }
-            else
-            {
-                headUnitOff();
-            } // if
+            $("#main_menu .menuTitleLine").html("Hauptmenü<br />");
+            $("#main_menu_goto_satnav_button").text("Navigation / Führung");
+            $("#main_menu_goto_screen_configuration_button").text("Display konfigurieren");
+
+            $("#screen_configuration_menu .menuTitleLine").html("Display konfigurieren<br />");
+            $("#screen_configuration_menu .button:eq(0)").text("Helligkeit einstellen");
+            $("#screen_configuration_menu .button:eq(1)").text("Datum und Uhrzeit einstellen");
+            $("#screen_configuration_menu .button:eq(2)").html("Sprache wählen " + languageSelections);
+            $("#screen_configuration_menu .button:eq(3)").text("Einstellen der Einheiten");
+
+            $("#set_screen_brightness .menuTitleLine").html("Helligkeit einstellen<br />");
+            $("#set_date_time .menuTitleLine").html("Datum und Uhrzeit einstellen<br />");
+            $("#set_language .menuTitleLine").html("Sprache wählen<br />");
+            $("#set_units .menuTitleLine").html("Einstellen der Einheiten<br />");
+
+            $(".validateButton").text("Bestätigen");
+            $("#satnav_disclaimer_validate_button").text("Bestätigen");
         } // case
         break;
 
-        case "c":
-        case "C":
+        case "set_language_spanish":
         {
-            if ($("#audio_source").text() !== "CD_CHANGER")
-            {
-                // CD player ON
-                writeToDom
-                (
-                    {
-                        "head_unit_power":"ON",
-                        "tape_present":"NO",
-                        "cd_present":"YES",
-                        "audio_source":"CD_CHANGER",
-                        "ext_mute":"OFF",
-                        "mute":"OFF",
-                        "volume":"1",
-                        "volume_update":"NO",
-                        "volume_perc":{"style":{"transform":"scaleX(0.03)"}},
-                        "audio_menu":"CLOSED",
-                        "bass":"+3",
-                        "bass_update":"NO",
-                        "treble":"+3",
-                        "treble_update":"NO",
-                        "loudness":"ON",
-                        "fader":"+0",
-                        "fader_update":"NO",
-                        "balance":"+0",
-                        "balance_update":"NO",
-                        "auto_volume":"ON"
-                    }
-                );
-                writeToDom
-                (
-                    {
-                        "cd_changer_present":"YES",
-                        "cd_changer_status_loading":"NO",
-                        "cd_changer_status_eject":"NO",
-                        "cd_changer_status_operational":"YES",
-                        "cd_changer_status_searching":"ON",
-                        "cd_changer_status":"PLAY-SEARCHING",
-                        "cd_changer_status_pause":"OFF",
-                        "cd_changer_status_play":"OFF",
-                        "cd_changer_status_fast_forward":"OFF",
-                        "cd_changer_status_rewind":"OFF",
-                        "cd_changer_cartridge_present":"YES",
-                        "cd_changer_track_time":"--:--",
-                        "cd_changer_current_track":"13",
-                        "cd_changer_total_tracks":"15",
-                        "cd_changer_disc_1_present":"YES",
-                        "cd_changer_disc_2_present":"YES",
-                        "cd_changer_disc_3_present":"YES",
-                        "cd_changer_disc_4_present":"YES",
-                        "cd_changer_disc_5_present":"NO",
-                        "cd_changer_disc_6_present":"NO",
-                        "cd_changer_current_disc":cdChangerCurrentDisc,
-                        "cd_changer_random":"OFF"
-                    }
-                );
-            }
-            else
-            {
-                headUnitOff();
-            } // if
+            $("#main_menu .menuTitleLine").html("Menú general<br />");
+            $("#main_menu_goto_satnav_button").text("Navigacion / Guiado");
+            $("#main_menu_goto_screen_configuration_button").text("Configuración de pantalla");
+
+            $("#screen_configuration_menu .menuTitleLine").html("Configuración de pantalla<br />");
+            $("#screen_configuration_menu .button:eq(0)").text("Ajustar luminosidad");
+            $("#screen_configuration_menu .button:eq(1)").text("Ajustar hora y fecha");
+            $("#screen_configuration_menu .button:eq(2)").html("Seleccionar idioma " + languageSelections);
+            $("#screen_configuration_menu .button:eq(3)").text("Ajustar formatos y unidades");
+
+            $("#set_screen_brightness .menuTitleLine").html("Ajustar luminosidad<br />");
+            $("#set_date_time .menuTitleLine").html("Ajustar hora y fecha<br />");
+            $("#set_language .menuTitleLine").html("Seleccionar idioma<br />");
+            $("#set_units .menuTitleLine").html("Ajustar formatos y unidades<br />");
+
+            $(".validateButton").text("Aceptar");
+            $("#satnav_disclaimer_validate_button").text("Aceptar");
+        } // case
+        break;
+
+        case "set_language_italian":
+        {
+            $("#main_menu .menuTitleLine").html("Menù generale<br />");
+            $("#main_menu_goto_satnav_button").text("Navigazione / Guida");
+            $("#main_menu_goto_screen_configuration_button").text("Configurazione monitor");
+
+            $("#screen_configuration_menu .menuTitleLine").html("Configurazione monitor<br />");
+            $("#screen_configuration_menu .button:eq(0)").text("Regolazione luminosita");
+            $("#screen_configuration_menu .button:eq(1)").text("Regolazione date e ora");
+            $("#screen_configuration_menu .button:eq(2)").html("Scelta della lingua " + languageSelections);
+            $("#screen_configuration_menu .button:eq(3)").text("Regolazione formato e unita");
+
+            $("#set_screen_brightness .menuTitleLine").html("Regolazione luminosita<br />");
+            $("#set_date_time .menuTitleLine").html("Regolazione hora y fecha<br />");
+            $("#set_language .menuTitleLine").html("Scelta della lingua<br />");
+            $("#set_units .menuTitleLine").html("Regolazione formato e unita<br />");
+
+            $(".validateButton").text("Convalidar");
+            $("#satnav_disclaimer_validate_button").text("Convalidar");
+        } // case
+        break;
+
+        case "set_language_dutch":
+        {
+            $("#main_menu .menuTitleLine").html("Hoofdmenu<br />");
+            $("#main_menu_goto_satnav_button").text("Navigatie / Begeleiding");
+            $("#main_menu_goto_screen_configuration_button").text("Beeldschermconfiguratie");
+
+            $("#screen_configuration_menu .menuTitleLine").html("Beeldschermconfiguratie<br />");
+            $("#screen_configuration_menu .button:eq(0)").text("Instelling helderheid");
+            $("#screen_configuration_menu .button:eq(1)").text("Instelling datum en tijd");
+            $("#screen_configuration_menu .button:eq(2)").html("Taalkeuze " + languageSelections);
+            $("#screen_configuration_menu .button:eq(3)").text("Instelling van eenheden");
+
+            $("#set_screen_brightness .menuTitleLine").html("Instelling helderheid<br />");
+            $("#set_date_time .menuTitleLine").html("Instelling datum en tijd<br />");
+            $("#set_language .menuTitleLine").html("Taalkeuze<br />");
+            $("#set_units .menuTitleLine").html("Instelling van eenheden<br />");
+
+            $(".validateButton").text("Bevestigen");
+            $("#satnav_disclaimer_validate_button").text("Bevestigen");
         } // case
         break;
 
         default:
-            return;  // Quit when this doesn't handle the key event
+        break;
     } // switch
+} // setLanguage
 
-    // Cancel the default action to avoid it being handled twice
-    event.preventDefault();
-} // onKeyDown
+setLanguage(localStorage.mfdLanguage);
 
-function demoMode()
+function setUnits(distanceUnit, temperatureUnit, timeUnit)
 {
-    // Set "demo mode" on to prevent certain fields from being overwritten; fill DOM elements with demo values
-    inDemoMode = true;
+    if (distanceUnit === "set_units_mph")
+    {
+        $('[gid="fuel_level_filtered_unit"]').text("gl");
+        $('[gid="fuel_consumption_unit"]').text("mpg");
+        $("#fuel_consumption_unit_sm").text("mpg");
+        $('[gid="speed_unit"]').text("mph");
+        $('[gid="distance_unit"]').text("mile");
+    }
+    else
+    {
+        $('[gid="fuel_level_filtered_unit"]').text("lt");
+        $('[gid="fuel_consumption_unit"]').text("l/100 km");
+        $("#fuel_consumption_unit_sm").text("/100");
+        $('[gid="speed_unit"]').text("km/h");
+        $('[gid="distance_unit"]').text("km");
+    } // if
 
-    // In demo mode, we can type keys to simulate remote control buttons
-    window.addEventListener("keydown", onKeyDown, true);
+    if (temperatureUnit === "set_units_deg_fahrenheit")
+    {
+        $("#coolant_temp_unit").html("&deg;F");
+        $("#climate_control_popup .tag:eq(1)").html("&deg;F");
+        $("#climate_control_popup .tag:eq(3)").html("&deg;F");
+    }
+    else
+    {
+        $("#coolant_temp_unit").html("&deg;C");
+        $("#climate_control_popup .tag:eq(1)").html("&deg;C");
+        $("#climate_control_popup .tag:eq(3)").html("&deg;C");
+    } // if
+} // setUnits
 
-    $("#splash_text").hide();
+setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
 
-    // Small information panel (left)
-    $("#trip_1_button").addClass("active");
-    $("#trip_2_button").removeClass("active");
-    $("#trip_1").show();
-    $("#trip_2").hide();
-    $('[gid="avg_consumption_lt_100_1"]').text("5.7");
-    $('[gid="avg_speed_1"]').text("63");
-    $('[gid="distance_1"]').text("2370");
-    $('[gid="avg_consumption_lt_100_2"]').text("6.3");
-    $('[gid="avg_speed_2"]').text("72");
-    $('[gid="distance_2"]').text("1325");
-
-    // Large information panel (right)
-
-    // Multimedia
-    $("#power").removeClass("ledOff");
-    $("#power").addClass("ledOn");
-    $("#cd_present").removeClass("ledOff");
-    $("#cd_present").addClass("ledOn");
-    $("#tape_present").removeClass("ledOn");
-    $("#tape_present").addClass("ledOff");
-    $("#cd_changer_cartridge_present").removeClass("ledOff");
-    $("#cd_changer_cartridge_present").addClass("ledOn");
-
-    $("#info_traffic").removeClass("ledOn");
-    $("#info_traffic").addClass("ledOff");
-    $('[gid="ext_mute"]').removeClass("ledOn");
-    $('[gid="ext_mute"]').addClass("ledOff");
-    $('[gid="mute"]').removeClass("ledOn");
-    $('[gid="mute"]').addClass("ledOff");
-
-    // Tuner
-    $('[gid="ta_selected"]').removeClass("ledOff");
-    $('[gid="ta_selected"]').addClass("ledOn");
-    $('[gid="ta_not_available"]').hide();
-    $('[gid="tuner_band"]').text("FM1");
-    $('[gid="tuner_memory"]').text("5");
-    $('[gid="frequency"]').text("102.1");
-    $('[gid="frequency_h"]').text("0");
-    $('[gid="frequency_mhz"]').removeClass("ledOff");
-    $('[gid="frequency_mhz"]').addClass("ledOn");
-    $('[gid="rds_text"]').text("RADIO 538");
-    $("#pty_8").text("Pop M");
-    $("#pty_16").text("Pop Music");
-    $('[gid="pi_country"]').text("NL");
-    $("#search_sensitivity_dx").removeClass("ledOff");
-    $("#search_sensitivity_dx").addClass("ledOn");
-    $("#signal_strength").text("12");
-    $("#regional").removeClass("ledOff");
-    $("#regional").addClass("ledOn");
-    $('[gid="rds_selected"]').removeClass("ledOff");
-    $('[gid="rds_selected"]').addClass("ledOn");
-    $('[gid="rds_not_available"]').hide();
-
-    // Audio settings popup
-    $('[gid="volume"]').text("12");
-    $("#bass").text("+4");
-    $("#treble").text("+3");
-    $("#fader").text("-1");
-    $("#balance").text("0");
-    $('[gid="loudness"]').addClass("ledOn");
-    $('[gid="loudness"]').removeClass("ledOff");
-    $("#auto_volume").removeClass("ledOn");
-    $("#auto_volume").addClass("ledOff");
-    $("#bass_select").show();
-
-    // Tape player
-    $('[gid="tape_side"]').text("2");
-    $('[gid="tape_status_play"]').show();
-
-    // Internal CD player
-    $("#audio_source").text("CD");
-    $('[gid="cd_track_time"]').text("2:17");
-    $('[gid="cd_status_play"]').show();
-    $("#cd_total_time").text("43:16");
-    $('[gid="cd_current_track"]').text("3");
-    $('[gid="cd_total_tracks"]').text("15");
-
-    // CD changer
-    cdChangerCurrentDisc = "3";
-    $('[gid="cd_changer_track_time"]').text("4:51");
-    $('[gid="cd_changer_status_play"]').show();
-    $('[gid="cd_changer_current_disc"]').text(cdChangerCurrentDisc);
-    $('[gid="cd_changer_current_track"]').text("6");
-    $('[gid="cd_changer_total_tracks"]').text("11");
-    $("#cd_changer_disc_1_present").removeClass("ledOff");
-    $("#cd_changer_disc_1_present").addClass("ledOn");
-    $("#cd_changer_disc_2_present").removeClass("ledOff");
-    $("#cd_changer_disc_2_present").addClass("ledOn");
-    $("#cd_changer_disc_3_present").removeClass("ledOff");
-    $("#cd_changer_disc_3_present").addClass("ledOn");
-    $("#cd_changer_disc_4_present").removeClass("ledOff");
-    $("#cd_changer_disc_4_present").addClass("ledOn");
-    $("#cd_changer_disc_5_present").removeClass("ledOn");
-    $("#cd_changer_disc_5_present").addClass("ledOff");
-    $("#cd_changer_disc_6_present").removeClass("ledOn");
-    $("#cd_changer_disc_6_present").addClass("ledOff");
-    $("#cd_changer_disc_3_present").addClass("ledActive");
-    $("#cd_changer_disc_3_present").css({marginTop: '-=25px'});
-
-    // Status bar
-    $('[gid="inst_consumption_lt_100"]').text("6.6");
-    $('[gid="distance_to_empty"]').text("750");
-    $('[gid="exterior_temperature"]').html("12.5 &deg;C");
-
-    // Pre-flight checks
-    $('[gid="fuel_level_filtered"]').text("51.6");
-    $('[gid="fuel_level_filtered_perc"]').css("transform", "scaleX(0.645)");
-    $("#water_temp").text("65.0");
-    $("#water_temp_perc").css("transform", "scaleX(0.5)");
-    $("#water_temp").addClass("glowIce");
-    $("#oil_level_raw").text("80");
-    $("#oil_level_raw_perc").css("transform", "scaleX(0.94)");
-    $("#remaining_km_to_service").text("27 500");
-    $("#remaining_km_to_service_perc").css("transform", "scaleX(0.917)");
-    $("#contact_key_position").text("START");
-    $("#contact_key_position").addClass("glow");
-    $("#dashboard_programmed_brightness").text("14");
-    $("#diesel_glow_plugs").addClass("ledOn");
-    $("#diesel_glow_plugs").removeClass("ledOff");
-    $("#vin").text("VF38FRHZF80371XXX");
-
-    // Instrument cluster
-    $('[gid="vehicle_speed"]').text("95");
-    $('[gid="engine_rpm"]').text("1873");
-    $("#odometer_1").text("65,803.2");
-    $("#delivered_power").text("27.0");
-    $("#delivered_torque").text("102.8");
-
-    // Main menu
-    languageSelectTickedButton();
-
-    // Sat nav
-    satnavInitialized = true;
-    $("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
-    $("#main_menu_goto_satnav_button").addClass("buttonSelected");
-    $("#main_menu_goto_screen_configuration_button").removeClass("buttonSelected");
-    $("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
-    $("#satnav_disc_recognized").addClass("ledOn");
-    $("#satnav_disc_recognized").removeClass("ledOff");
-    $("#satnav_gps_scanning").addClass("ledOff");
-    $("#satnav_gps_scanning").removeClass("ledOn");
-    $("#satnav_gps_fix_lost").addClass("ledOff");
-    $("#satnav_gps_fix_lost").removeClass("ledOn");
-    $('[gid="satnav_gps_fix"]').addClass("ledOn");
-    $('[gid="satnav_gps_fix"]').removeClass("ledOff");
-    $("#satnav_gps_speed").text("0");
-
-    // Compass
-    var compass_heading = 135;
-    $("#satnav_curr_heading_compass_needle").css("transform", "rotate(" + compass_heading + "deg)");
-    $("#satnav_curr_heading_compass_tag").css(
-        "transform",
-        "translate(" +
-            42 * Math.sin(compass_heading * Math.PI / 180) + "px," +
-            -42 * Math.cos(compass_heading * Math.PI / 180) + "px)"
-        );
-    $("#satnav_curr_heading_compass_tag").find("*").removeClass('satNavInstructionDisabledIconText');
-    $("#satnav_curr_heading_compass_needle").find("*").removeClass('satNavInstructionDisabledIcon');
-
-    // Sat nav current location
-    $('[gid="satnav_curr_street_shown"]').text("Keizersgracht (Amsterdam)");
-
-    // Sat nav guidance preference
-    $("#satnav_guidance_preference_fastest").html("");
-    setTick("satnav_guidance_preference_shortest");
-    satnavGuidancePreferenceSelectTickedButton();
-
-    // Sat nav enter destination city
-    $("#satnav_current_destination_city").text("Amsterdam");
-    $("#satnav_to_mfd_show_characters_line_1").removeClass("buttonSelected");
-    $("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
-    $("#satnav_enter_characters_validate_button").addClass("buttonSelected");
-    $('[gid="satnav_to_mfd_list_size"]').text("35");
-    $("#satnav_current_destination_street").text("Keizersgracht");
-
-    // Sat nav choose destination street from list
-    $("#mfd_to_satnav_request").text("Enter street");
-    var lines =
-    [
-        "AADIJK -ALMELO- -AADORP-",
-        "AADORPWEG -ALMELO- -AADORP-",
-        "ACACIALAAN -ALMELO- -AADORP-",
-        "ALBARDASTRAAT -ALMELO- -AADORP-",
-        "ALMELOSEWEG -ALMELO- -AADORP-",
-        "BEDRIJVENPARKSINGEL -ALMELO- -AADORP-",
-        "BEDRIJVENPARK TWENTE -ALMELO- -AADORP-",
-        "BERKENLAAN -ALMELO- -AADORP-",
-        "BEUKENLAAN -ALMELO- -AADORP-",
-        "BRUGLAAN -ALMELO- -AADORP-",
-        "DENNENLAAN -ALMELO- -AADORP-",
-        "SCHOUT DODDESTRAAT -ALMELO- -AADORP-",
-        "EIKENLAAN -ALMELO- -AADORP-",
-        "GRAVENWEG -ALMELO- -AADORP-",
-        "HEUVELTJESLAAN -ALMELO- -AADORP-",
-        "IEPENWEG NOORD -ALMELO- -AADORP-",
-        "IEPENWEG ZUID -ALMELO- -AADORP-",
-        "KANAALWEG ZUID -ALMELO- -AADORP-",
-        "KASTANJELAAN -ALMELO- -AADORP-",
-        "KERKWEG -ALMELO- -AADORP-"
-    ];
-    $("#satnav_list").html(lines.join('<br />'));
-    highlightFirstLine("satnav_list");
-    highlightNextLine("satnav_list");
-
-    // Sat nav enter destination house number
-    $("#satnav_house_number_range").text("From 1 to 812");
-    $("#satnav_entered_number").text("6 0 9 ");
-    highlightFirstLetter("satnav_house_number_show_characters");
-    highlightPreviousLetter("satnav_house_number_show_characters");
-    highlightPreviousLetter("satnav_house_number_show_characters");
-
-    // Sat nav private address entry
-    $("#satnav_personal_address_entry").text("HOME");
-    $("#satnav_personal_address_city").text("AMSTELVEEN");
-    $("#satnav_personal_address_street_shown").text("SPORTLAAN");
-    $("#satnav_personal_address_house_number_shown").text("23");
-
-    // Sat nav business address entry
-    $("#satnav_professional_address_entry").text("WORK");
-    $("#satnav_professional_address_city").text("Schiphol");
-    $("#satnav_professional_address_street_shown").text("Westzijde");
-    $("#satnav_professional_address_house_number_shown").text("1118");
-
-    // Sat nav service address entry
-    $("#satnav_service_address_entry").text("P1 Short-term parking");
-    $("#satnav_service_address_city").text("Schiphol");
-    $("#satnav_service_address_street").text("Boulevard");
-    $("#satnav_service_address_distance_number").text("17");
-    $("#satnav_service_address_distance_unit").text("km");
-    $("#satnav_service_address_entry_number").text("3");
-    $("#satnav_to_mfd_list_size").text("17");
-
-    // Sat nav show personal address
-    $("#satnav_show_personal_address_validate_button").addClass("buttonSelected");
-
-    // Sat nav show professional address
-    $("#satnav_show_professional_address_validate_button").addClass("buttonSelected");
-
-    // Sat nav programmed (current) destination
-    $('[gid="satnav_current_destination_city"]').text("Amsterdam");
-    $("#satnav_current_destination_street_shown").text("Keizersgracht");
-    $("#satnav_current_destination_house_number_shown").text("609");
-
-    // Sat nav last destination
-    $('[gid="satnav_last_destination_city"]').text("Schiphol");
-    $('[gid="satnav_last_destination_street_shown"]').text("Evert van de Beekstraat");
-    $('[gid="satnav_last_destination_house_number_shown"]').text("31");
-
-    // Sat nav guidance
-    $("#satnav_distance_to_dest_via_road_number").text("45");
-    $("#satnav_distance_to_dest_via_road_unit").text("km");
-    $("#satnav_guidance_curr_street").text("Evert van de Beekstraat");
-    $("#satnav_guidance_next_street").text("Handelskade");
-    $("#satnav_turn_at_number").text("200");
-    $("#satnav_turn_at_unit").text("m");
-    $("#satnav_next_turn_icon").show();
-
-    // Heading to destination
-    var heading_to_dest = 292.5;
-    $("#satnav_heading_to_dest_pointer").css("transform", "rotate(" + heading_to_dest + "deg)");
-    $("#satnav_heading_to_dest_tag").css(
-        "transform",
-        "translate(" +
-            70 * Math.sin(heading_to_dest * Math.PI / 180) + "px," +
-            -70 * Math.cos(heading_to_dest * Math.PI / 180) + "px)"
-        );
-    $("#satnav_heading_to_dest_tag").find("*").removeClass('satNavInstructionDisabledIconText');
-    $("#satnav_heading_to_dest_pointer").find("*").removeClass('satNavInstructionDisabledIcon');
-
-    // Current turn is a roundabout with five legs; display the legs not to take
-    $("#satnav_curr_turn_icon").show();
-    $("#satnav_curr_turn_roundabout").show();
-    $("#satnav_curr_turn_icon_leg_90_0").show();
-    $("#satnav_curr_turn_icon_leg_157_5").show();
-    $("#satnav_curr_turn_icon_leg_202_5").show();
-
-    // Next turn is a junction four legs; display the legs not to take
-    $("#satnav_next_turn_icon_leg_112_5").show();
-    $("#satnav_next_turn_icon_leg_202_5").show();
-
-    // Show some "no entry" icons
-    $("#satnav_curr_turn_icon_no_entry_157_5").show();
-    $("#satnav_next_turn_icon_no_entry_202_5").show();
-
-    // Set the "direction" arrows
-    var currTurnAngle = 247.5;
-    document.getElementById("satnav_curr_turn_icon_direction").style.transform = "rotate(" + currTurnAngle + "deg)";
-    document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute(
-        "d", describeArc(150, 150, 30, currTurnAngle - 180, 180)
-    );
-    var nextTurnAngle = 292.5;
-    document.getElementById("satnav_next_turn_icon_direction").style.transform = "rotate(" + nextTurnAngle + "deg)";
-    document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute(
-        "d", describeArc(150, 150, 30, nextTurnAngle - 180, 180)
-    );
-
-    // Popup warning or information
-    $("#notification_icon_warning").show();
-    $("#notification_icon_info").hide();
-    $("#last_notification_message_on_mfd").text("Oil pressure too low");
-
-    // Door open popup
-    $("#door_front_left").show();
-    $("#door_front_right").show();
-
-    // Tuner presets popup
-    $("#presets_fm_1").show();
-    $("#radio_preset_FM1_1").text("NPO 1");
-    $("#radio_preset_FM1_2").text("Classic NL");
-    $("#radio_preset_FM1_3").text("3FM");
-    $("#radio_preset_FM1_4").text("BNR");
-    $("#radio_preset_FM1_5").text("Radio 538");
-    $("#radio_preset_FM1_6").text("Veronica");
-    $("#presets_memory_5_select").show();
-
-    // Climate control
-    $("#ac_enabled").addClass("ledOn");
-    $("#ac_enabled").removeClass("ledOff");
-    $("#ac_compressor").addClass("ledOn");
-    $("#ac_compressor").removeClass("ledOff");
-    $("#rear_heater_2").addClass("ledOn");
-    $("#rear_heater_2").removeClass("ledOff");
-    $("#fan_icon").addClass("ledOn");
-    $("#fan_icon").removeClass("ledOff");
-    $("#set_fan_speed").text("6");
-    $("#condenser_temperature").text("40");
-    $("#evaporator_temperature").text("8.4");
-
-    // Misc
-    $("#original_mfd_small_screen").hide();
-    $("#original_mfd_large_screen").hide();
-    $("#original_mfd_popup").hide();
-    $("#original_mfd_curr_street").hide();
-    $("#ir_button_pressed").hide();
-    $("#comms_led").hide();
-} // demoMode
-
-//demoMode();
 )=====";

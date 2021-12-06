@@ -6,6 +6,9 @@
 //#include <WebSocketsServer_Generic.h>
 
 // Defined in PacketToJson.ino
+extern uint8_t mfdDistanceUnit;
+extern uint8_t mfdTemperatureUnit;
+extern uint8_t mfdTimeUnit;
 extern const char yesStr[];
 extern const char noStr[];
 void PrintJsonText(const char* jsonBuffer);
@@ -69,10 +72,6 @@ void ProcessWebSocketClientMessage(const char* payload)
     if (clientMessage.startsWith("in_menu:"))
     {
         inMenu = clientMessage.endsWith(":YES");
-
-#ifdef DEBUG_WEBSOCKET
-        Serial.printf_P(PSTR("[webSocket] inMenu: %S\n"), inMenu ? yesStr : noStr);
-#endif // DEBUG_WEBSOCKET
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
@@ -90,6 +89,30 @@ void ProcessWebSocketClientMessage(const char* payload)
             value == "set_language_italian" ? MFD_LANGUAGE_ITALIAN :
             value == "set_language_dutch" ? MFD_LANGUAGE_DUTCH :
             MFD_LANGUAGE_ENGLISH;
+    }
+    else if (clientMessage.startsWith("mfd_distance_unit:"))
+    {
+        String value = clientMessage.substring(18);
+
+        mfdDistanceUnit =
+            value == "set_units_mph" ? MFD_DISTANCE_UNIT_IMPERIAL :
+            MFD_DISTANCE_UNIT_METRIC;
+    }
+    else if (clientMessage.startsWith("mfd_temperature_unit:"))
+    {
+        String value = clientMessage.substring(21);
+
+        mfdTemperatureUnit =
+            value == "set_units_deg_fahrenheit" ? MFD_TEMPERATURE_UNIT_FAHRENHEIT :
+            MFD_TEMPERATURE_UNIT_CELSIUS;
+    }
+    else if (clientMessage.startsWith("mfd_time_unit:"))
+    {
+        String value = clientMessage.substring(14);
+
+        mfdTimeUnit =
+            value == "set_units_12h" ? MFD_TIME_UNIT_12H :
+            MFD_TIME_UNIT_24H;
     } // if
 } // ProcessWebSocketClientMessage
 
@@ -127,12 +150,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
         case WStype_TEXT:
         {
-#ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("[webSocket %u] received text: %s\n"), num, payload);
-#endif // DEBUG_WEBSOCKET
-
-            // Process the message
-            ProcessWebSocketClientMessage((char*)payload);
+            ProcessWebSocketClientMessage((char*)payload);  // Process the message
         }
         break;
     } // switch

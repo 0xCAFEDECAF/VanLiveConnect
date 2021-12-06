@@ -43,6 +43,17 @@ body
   background-blend-mode: multiply;
   /*background-blend-mode: lighten;*/
 }
+.languageIcon
+{
+  position:relative;
+  font-size:30px;
+  border:#dfe7f2;
+  border-width:4px;
+  border-style:solid;
+  border-radius:30px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
 /* Breaking of lines is prevented by setting 'white-space:pre', but in IE, that shoud *NOT* be set to achieve
    the same */
 /*
@@ -240,6 +251,7 @@ body
   border-bottom-left-radius:15px;
   line-height:1.15;
 }
+
 /* Style of the buttons inside the tab */
 .tab button
 {
@@ -263,6 +275,7 @@ body
   color:rgb(41,55,74);
   background-color:#dfe7f2;
 }
+
 /* Style the tab content */
 .tabContent
 {
@@ -290,6 +303,194 @@ body
   position:absolute;
   border-left:5px solid #dfe7f2;
 }
+.centerAligned
+{
+  position:relative;
+  top:50%;
+  transform:translateY(-50%);
+  white-space:normal;
+  line-height:1.2;
+  text-align:center;
+}
+
+/* Styles for popups */
+.notificationPopup
+{
+  background-color:rgba(15,19,23,0.95);
+  border:5px solid #dfe7f2;
+  border-radius:15px;
+  left:80px;
+  top:200px;
+  width:800px;
+  height:200px;
+}
+.messagePopupArea
+{
+  position:absolute;
+  left:100px;
+  width:610px;
+}
+.yesNoPopupArea
+{
+  position:absolute;
+  left:50px;
+  width:710px;
+  height:200px;
+}
+
+.highlight
+{
+  display:none;
+  border:12px solid #dfe7f2;
+  background-color:rgba(223,231,242,0.4);
+}
+.show
+{
+  display:block !important;
+}
+.gauge
+{
+  position:absolute;
+  left:12px;
+  top:0px;
+  width:324px;
+  height:60px;
+  transform:scaleX(0.0);
+  transform-origin:left center;
+}
+.gaugeBox
+{
+  fill-opacity:0;
+  stroke-width:8;
+  stroke:#dfe7f2;
+}
+.gaugeBoxDiv
+{
+  position:absolute;
+  left:0px;
+  top:0px;
+  width:340px;
+  height:60px;
+}
+.gaugeInnerBoxDiv
+{
+  position:absolute;
+  left:8px;
+  top:0px;
+  width:332px;
+  height:60px;
+}
+
+/* Style the menu screens, buttons and item elements */
+.menuScreen
+{
+  display:none;
+  left:20px;
+  top:140px;
+  width:920px;
+  height:410px;
+  font-size:60px;
+  text-align:center;
+}
+.menuTitleLine br
+{
+  line-height:100px;
+}
+.button
+{
+  overflow:hidden;
+  border:5px solid #dfe7f2;
+  border-radius:15px;
+  border-style:dotted;
+  text-align:center;
+  font-size:44px;
+  line-height:0.85;
+  margin:auto;
+  width:700px; /* Default, e.g. for items in a menu */
+  padding:10px;
+}
+.buttonSelected
+{
+  color:rgb(41,55,74);
+  background-color:#dfe7f2;
+  border:5px solid #dfe7f2;
+}
+.buttonDisabled
+{
+  color:rgb(67,82,105);
+}
+.buttonBar
+{
+  position:absolute;
+  left:20px;
+  top:460px;
+  width:940px;
+  height:80px;
+}
+.validateButton
+{
+  position:absolute;
+  left:0px;
+  top:0px;
+  width:180px;
+  height:40px;
+}
+.correctionButton
+{
+  left:210px;
+  top:0px;
+  width:230px;
+  height:40px
+}
+.invertedText
+{
+  /* Add a bit of extra whitespace around the letter */
+  line-height:1.5;
+  display:inline-block;
+  padding-left:10px;
+  padding-right:5px;
+
+  /* Invert foreground and background color */
+  color:rgb(41,55,74);
+  background-color:#dfe7f2;
+}
+.tickBox
+{
+  padding:0px;
+  display:inline-block;
+  width:50px;
+  height:50px;
+  margin-bottom:-10px;
+  font-size:60px;
+}
+.tickBoxLabel br
+{
+  line-height:70px;
+}
+
+/* Multi media */
+.mediaStatus
+{
+  display:none;
+  left:600px;
+  top:140px;
+}
+.mediaStatusInPopup
+{
+  display:none;
+  left:600px;
+  top:35px;
+}
+
+/* Trip computers */
+.tripComputerTag
+{
+  left:180px;
+  width:140px;
+  font-size:35px;
+}
+
+/* Sat nav menu and screen element styles */
 .satNavInstructionIcon
 {
   stroke:#dfe7f2;
@@ -315,96 +516,124 @@ body
 {
   stroke-width:7;
 }
-.centerAligned
-{
-  position:relative;
-  top:50%;
-  transform:translateY(-50%);
-  white-space:normal;
-  line-height:1.2;
-  text-align:center;
-}
-.notificationPopup
-{
-  background-color:rgba(15,19,23,0.95);
-  border:5px solid #dfe7f2;
-  border-radius:15px;
-  left:80px;
-  top:200px;
-  width:800px;
-  height:200px;
-}
-.highlight
-{
-  display:none;
-  border:12px solid #dfe7f2;
-  background-color:rgba(223,231,242,0.4);
-}
-.show
-{
-  display:block !important;
-}
-.gaugeBox
-{
-  fill-opacity:0;
-  stroke-width:8;
-  stroke:#dfe7f2;
-}
 .satNavRoundabout
 {
   fill:rgb(41,55,74);
   stroke-width:5;
   stroke:#dfe7f2;
 }
-
-/* Style the buttons and menu item elements */
-.menuTitle
+.satNavEnterDestination
 {
-  font-size:60px;
-  text-align:center;
+  left:25px;
+  top:180px;
+  width:925px;
+  font-size:50px;
 }
-.button
+.satNavEnterDestinationTag
 {
-  overflow:hidden;
-  border:5px solid #dfe7f2;
-  border-radius:15px;
-  border-style:dotted;
-  text-align:center;
-  font-size:44px;
-  line-height:0.85;
-  margin:auto;
-  width:700px; /* Default, e.g. for items in a menu */
-  padding:10px;
+  left:20px;
+  top:110px;
+  width:930px;
+  text-align:left;
 }
-.buttonSelected
+.satNavShowCharacters
 {
-  color:rgb(41,55,74);
-  background-color:#dfe7f2;
-  border:5px solid #dfe7f2;
-}
-.buttonDisabled
-{
-  color:rgb(67,82,105);
-}
-.invertedText
-{
-  /* Add a bit of extra whitespace around the letter */
+  left:25px;
+  width:925px;
+  font-size:50px;
   line-height:1.5;
   display:inline-block;
-  padding-left:10px;
-  padding-right:5px;
-
-  /* Invert foreground and background color */
-  color:rgb(41,55,74);
-  background-color:#dfe7f2;
+  background:none;
+  color:#dfe7f2;
+  border-style:none;
 }
-.tickBox
+.satNavAddressEntry
 {
-  padding:0px;
-  display:inline-block;
-  width:50px;
-  height:50px;
-  margin-bottom:-10px;
-  font-size:60px;
+  left:25px;
+  top:110px;
+  width:925px;
+}
+.satNavCityTag
+{
+  left:25px;
+  top:190px;
+  width:190px;
+  text-align:left;
+  font-size:40px;
+}
+.satNavStreetTag
+{
+  left:25px;
+  top:280px;
+  width:190px;
+  text-align:left;
+  font-size:40px;
+}
+.satNavNumberTag
+{
+  left:25px;
+  top:370px;
+  width:190px;
+  text-align:left;
+  font-size:40px;
+}
+.satNavCompassNeedle
+{
+  position:absolute;
+  left:870px;
+  top:20px;
+  width:48px;
+  height:72px;
+  transform-origin:center;
+}
+.satNavShowAddress
+{
+  left:25px;
+  top:110px;
+  width:830px;
+  text-align:left;
+}
+.satNavShowAddressCity
+{
+  left:210px;
+  top:195px;
+  width:720px;
+  height:90px;
+  font-size:40px;
+  white-space:normal;
+}
+.satNavShowAddressStreet
+{
+  left:210px;
+  top:285px;
+  width:720px;
+  height:90px;
+  font-size:40px;
+  white-space:normal;
+}
+.satNavShowAddressNumber
+{
+  left:210px;
+  top:375px;
+  width:720px;
+  height:90px;
+  font-size:40px;
+  white-space:normal;
+}
+.satNavEntryNameTag
+{
+  left:25px;
+  top:205px;
+  width:190px;
+  text-align:left;
+  font-size:40px;
+}
+.satNavEntryExistsTag
+{
+  display:none;
+  left:210px;
+  top:255px;
+  text-align:left;
+  font-size:40px;
 }
 )=====";

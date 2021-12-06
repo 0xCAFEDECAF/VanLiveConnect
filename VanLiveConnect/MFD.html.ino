@@ -41,27 +41,17 @@ char mfd_html[] PROGMEM = R"=====(
     <meta name="google" content="notranslate" />
     <meta charset='utf-8'>
 
-    <!-- Works on mobile Firefox, also full-screen -->
+    <!-- Works on mobile Firefox, also in full-screen mode -->
     <meta name="viewport" content="width=1350, minimum-scale=0.2, maximum-scale=1, user-scalable=yes">
-
-    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
-    <!--<meta name="viewport" content="width=device-width, initial-scale=0.6, maximum-scale=0.6">-->
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=0.6, maximum-scale=1, minimum-scale=0.4"> -->
 
     <title>Multi-functional Display</title>
     <link rel='icon' href='data:,'>
 
     <link rel="stylesheet" href="CarInfo.css">
+    <link rel="stylesheet" href="css/all.css" async>  <!-- Font Awesome -->
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="css/all.css" async> <!--load all styles -->
-
-    <!-- jQuery -->
-    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>-->
-    <script src="jquery-3.5.1.min.js"></script>
-
-    <!-- All our own stuff -->
-    <script src="MFD.js" async></script>
+    <script src="jquery-3.5.1.min.js"></script>  <!-- jQuery -->
+    <script src="MFD.js" async></script>  <!-- All our own stuff -->
   </head>
   <body translate="no">
 
@@ -188,8 +178,8 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="icon iconSmall" style="left:50px; top:30px;">
             <div class="fas fa-fire-alt"></div>
           </div>
-          <div gid="avg_consumption_lt_100_1" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
-          <div class="tag" style="left:180px; top:75px; width:140px; font-size:35px;">l/100km</div>
+          <div gid="avg_consumption_1" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
+          <div gid="fuel_consumption_unit" class="tag tripComputerTag" style="top:75px;">l/100 km</div>
 
           <div class="icon iconSmall" style="left:0px; top:160px;">
             <div class="fas fa-angle-double-right"></div>
@@ -198,14 +188,14 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="fas fa-tachometer-alt"></div>
           </div>
           <div gid="avg_speed_1" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
-          <div class="tag" style="left:180px; top:205px; width:140px; font-size:35px;">km/h</div>
+          <div gid="speed_unit" class="tag tripComputerTag" style="top:205px;">km/h</div>
 
           <div class="icon iconSmall" style="left:0px; top:280px; width:80px;">...</div>
           <div class="icon iconSmall" style="left:50px; top:280px;">
             <div class="fas fa-car-side"></div>
           </div>
           <div gid="distance_1" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
-          <div class="tag" style="left:180px; top:325px; width:140px; font-size:35px;">km</div>
+          <div gid="distance_unit" class="tag tripComputerTag" style="top:325px;">km</div>
 
         </div>  <!-- Tripcounter #1 -->
 
@@ -219,8 +209,8 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="icon iconSmall" style="left:50px; top:30px;">
             <div class="fas fa-fire-alt"></div>
           </div>
-          <div gid="avg_consumption_lt_100_2" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
-          <div class="tag" style="left:180px; top:75px; width:140px; font-size:35px;">l/100km</div>
+          <div gid="avg_consumption_2" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
+          <div gid="fuel_consumption_unit" class="tag tripComputerTag" style="top:75px;">l/100 km</div>
 
           <div class="icon iconSmall" style="left:0px; top:160px;">
             <div class="fas fa-angle-double-right"></div>
@@ -229,14 +219,14 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="fas fa-tachometer-alt"></div>
           </div>
           <div gid="avg_speed_2" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
-          <div class="tag" style="left:180px; top:205px; width:140px; font-size:35px;">km/h</div>
+          <div gid="speed_unit" class="tag tripComputerTag" style="top:205px;">km/h</div>
 
           <div class="icon iconSmall" style="left:0px; top:280px; width:80px;">...</div>
           <div class="icon iconSmall" style="left:50px; top:280px;">
             <div class="fas fa-car-side"></div>
           </div>
           <div gid="distance_2" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
-          <div class="tag" style="left:180px; top:325px; width:140px; font-size:35px;">km</div>
+          <div gid="distance_unit" class="tag tripComputerTag" style="top:325px;">km</div>
 
         </div>  <!-- Tripcounter #2 -->
 
@@ -264,7 +254,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Vehicle speed -->
         <div gid="vehicle_speed" class="dseg7" style="font-size:90px; left:10px; top:63px; width:260px;">0</div>
-        <div class="tag" style="text-align:left; left:280px; top:60px; width:140px;">km</div>
+        <div gid="distance_unit" class="tag" style="text-align:left; left:280px; top:60px; width:140px;">km</div>
         <div class="tag" style="text-align:left; left:280px; top:105px; width:140px;">/h</div>
 
         <!-- Engine rpm -->
@@ -276,7 +266,7 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
-        <div class="tag" style="text-align:left; left:280px; top:345px; width:140px;">lt</div>
+        <div gid="fuel_level_filtered_unit" class="tag" style="text-align:left; left:280px; top:345px; width:140px;">lt</div>
 
       </div>
 
@@ -322,7 +312,7 @@ char mfd_html[] PROGMEM = R"=====(
 
       <div id="clock" style="display:block;">
         <div id="date_weekday" class="tag" style="font-size:80px; left:20px; top:50px; width:920px; text-align:center;">---</div>
-        <div id="date" class="tag" style="font-size:80px; left:20px; top:140px; width:920px; text-align:center;">---</div>
+        <div id="date" class="tag" style="font-size:70px; left:20px; top:140px; width:920px; text-align:center;">---</div>
         <div id="time" class="tag" style="font-size:80px; left:20px; top:250px; width:920px; text-align:center;">--:--</div>
 
         <div id="splash_text" class="tag"
@@ -331,7 +321,7 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <!-- Also show exterior temperature -->
-        <div gid="exterior_temperature" class="tag"
+        <div gid="exterior_temp_shown" class="tag"
           style="font-size:120px; left:20px; top:330px; width:920px; height:220px; line-height:1.8; text-align:center;"></div>
 
         <!-- Obviously, we would like some weather icon here... would need at least location data (GPS) -->
@@ -447,25 +437,25 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="tag" style="left:50px; top:218px; width:200px;">Side</div>
             <div gid="tape_side" class="dseg7" style="font-size:120px; left:280px; top:145px; width:140px;">-</div>
 
-            <div gid="tape_status_stopped" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_stopped" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-stop"></div>
             </div>
-            <div gid="tape_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_loading" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
-            <div gid="tape_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_play" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <div gid="tape_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_fast_forward" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-forward"></div>
             </div>
-            <div gid="tape_status_next_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_next_track" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-fast-forward"></div>
             </div>
-            <div gid="tape_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_rewind" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-backward"></div>
             </div>
-            <div gid="tape_status_previous_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="tape_status_previous_track" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-fast-backward"></div>
             </div>
 
@@ -478,25 +468,25 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div gid="cd_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-            <div gid="cd_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_pause" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-pause"></div>
             </div>
-            <div gid="cd_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_play" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <div gid="cd_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_fast_forward" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-forward"></div>
             </div>
-            <div gid="cd_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_rewind" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-backward"></div>
             </div>
-            <div gid="cd_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_searching" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
-            <div gid="cd_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_loading" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
-            <div gid="cd_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_status_eject" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-eject"></div>
             </div>
 
@@ -523,25 +513,25 @@ char mfd_html[] PROGMEM = R"=====(
 
             <div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-            <div gid="cd_changer_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_pause" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-pause"></div>
             </div>
-            <div gid="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_play" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-play"></div>
             </div>
-            <div gid="cd_changer_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_searching" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-compact-disc"></div>
             </div>
-            <div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-forward"></div>
             </div>
-            <div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-backward"></div>
             </div>
-            <div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-sign-in-alt"></div>
             </div>
-            <div gid="cd_changer_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:140px;">
+            <div gid="cd_changer_status_eject" class="icon iconLarge iconBorder mediaStatus">
               <div class="centerAligned fas fa-eject"></div>
             </div>
 
@@ -573,6 +563,7 @@ char mfd_html[] PROGMEM = R"=====(
         </div>  <!-- Removable media -->
       </div>  <!-- Audio equipment -->
 
+      <!-- Vehicle data -->
       <div style="display:none;">
 
         <!-- Fuel level, both as number (in litres) and as linear gauge -->
@@ -582,7 +573,7 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:70px; top:65px; width:240px;">--.-</div>
-        <div class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
+        <div gid="fuel_level_filtered_unit" class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
 
         <div style="position:absolute; left:20px; top:130px; width:350px; height:60px;">
           <div style="position:absolute; left:8px; top:0px; width:332px; height:60px;">
@@ -591,12 +582,12 @@ char mfd_html[] PROGMEM = R"=====(
               <line style="stroke:#066a0c; stroke-width:24;" x1="45" y1="20" x2="333" y2="20"></line>
             </svg>
           </div>
-          <div gid="fuel_level_filtered_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
+          <div gid="fuel_level_filtered_perc" class="gauge">
             <svg style="width:324px;">
               <line style="stroke:#dfe7f2; stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
             </svg>
           </div>
-          <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
+          <div class="gaugeBoxDiv">
             <svg style="width:348px;">
               <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
               <line style="stroke:#dfe7f2; stroke-width:5;" x1="170" y1="8" x2="170" y2="32"></line>
@@ -612,23 +603,23 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="centerAligned fas fa-thermometer-half"></div>
         </div>
 
-        <div id="water_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
-        <div class="tag" style="text-align:left; left:880px; top:70px; width:60px;">&deg;C</div>
+        <div id="coolant_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
+        <div id="coolant_temp_unit" class="tag" style="text-align:left; left:880px; top:70px; width:60px;">&deg;C</div>
 
         <div style="position:absolute; left:590px; top:130px; width:350px; height:60px;">
-          <div style="position:absolute; left:8px; top:0px; width:332px; height:60px;">
+          <div class="gaugeInnerBoxDiv">
             <svg style="width:334px;">
               <line style="stroke:#00588c; stroke-width:24;" x1="0" y1="20" x2="176" y2="20"></line>
               <line style="stroke:#066a0c; stroke-width:24;" x1="177" y1="20" x2="251" y2="20"></line>
               <line style="stroke:#c40000; stroke-width:24;" x1="252" y1="20" x2="333" y2="20"></line>
             </svg>
           </div>
-          <div id="water_temp_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
+          <div id="coolant_temp_perc" class="gauge">
             <svg style="width:324px;">
               <line style="stroke:#dfe7f2; stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
             </svg>
           </div>
-          <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
+          <div class="gaugeBoxDiv">
             <svg style="width:348px;">
               <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
               <line style="stroke:#dfe7f2; stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
@@ -650,12 +641,12 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="oil_level_raw" class="dseg7" style="font-size:50px; left:125px; top:215px; width:240px;">--</div>
 
           <div style="position:absolute; left:20px; top:280px; width:350px; height:60px;">
-            <div id="oil_level_raw_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.0); transform-origin:left center;">
+            <div id="oil_level_raw_perc" class="gauge">
               <svg style="width:324px;">
                 <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
               </svg>
             </div>
-            <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
+            <div class="gaugeBoxDiv">
               <svg style="width:348px;">
                 <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
               </svg>
@@ -670,16 +661,16 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="centerAligned fas fa-tools"></div>
           </div>
 
-          <div id="remaining_km_to_service" class="dseg7" style="font-size:50px; left:620px; top:215px; width:230px;">---</div>
-          <div class="tag" style="text-align:left; left:870px; top:220px; width:80px;">km</div>
+          <div id="distance_to_service" class="dseg7" style="font-size:50px; left:620px; top:215px; width:230px;">---</div>
+          <div gid="distance_unit" class="tag" style="text-align:left; left:870px; top:220px; width:80px;">km</div>
 
           <div style="position:absolute; left:590px; top:280px; width:350px; height:60px;">
-            <div id="remaining_km_to_service_perc" style="position:absolute; left:12px; top:0px; width:324px; height:60px; transform:scaleX(0.95); transform-origin:left center;">
+            <div id="distance_to_service_perc" class="gauge">
               <svg style="width:324px;">
                 <line style="stroke:#dfe7f2; stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
               </svg>
             </div>
-            <div style="position:absolute; left:0px; top:0px; width:340px; height:60px;">
+            <div class="gaugeBoxDiv">
               <svg style="width:348px;">
                 <rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
               </svg>
@@ -687,7 +678,7 @@ char mfd_html[] PROGMEM = R"=====(
           </div>
 
           <!-- Status LEDs -->
-          <div id="warning_led" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; left:0px; top:390px; width:170px; height:160px;"></div>
+          <div id="hazard_lights" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; left:0px; top:390px; width:170px; height:160px;"></div>
           <div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
           <div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
           <div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
@@ -722,7 +713,7 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- Vehicle speed -->
           <div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:235px; width:300px;">0</div>
-          <div class="tag" style="text-align:left; left:310px; top:310px; width:140px;">km/h</div>
+          <div gid="speed_unit" class="tag" style="text-align:left; left:310px; top:310px; width:140px;">km/h</div>
 
           <!-- Engine rpm -->
           <div gid="engine_rpm" class="dseg7" style="font-size:120px; left:440px; top:235px; width:400px;">0</div>
@@ -734,7 +725,7 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="fas fa-car-side"></div>
           </div>
           <div id="odometer_1" class="dseg7" style="font-size:40px; left:120px; top:480px; width:280px;">--.-</div>
-          <div class="tag" style="font-size:40px; text-align:left; left:415px; top:482px; width:80px;">km</div>
+          <div gid="distance_unit" class="tag" style="font-size:40px; text-align:left; left:415px; top:482px; width:80px;">km</div>
 
           <!-- Delivered power (estimation) -->
           <div id="delivered_power" class="dseg7" style="font-size:40px; left:630px; top:415px; width:200px;">--.-</div>
@@ -749,8 +740,8 @@ char mfd_html[] PROGMEM = R"=====(
 
       <!-- MFD main menu -->
 
-      <div id="main_menu" class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
-        Main menu<br style="line-height:100px;" />
+      <div id="main_menu" class="tag menuScreen">
+        <div class="menuTitleLine">Main menu<br /></div>
         <div id="main_menu_goto_satnav_button"
           class="button"
           on_click="satnavGotoMainMenu();">
@@ -762,25 +753,25 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
       </div>  <!-- "main_menu" -->
 
-      <div id="screen_configuration_menu" class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
-        Configure display<br style="line-height:100px;" />
+      <div id="screen_configuration_menu" class="tag menuScreen">
+        <div class="menuTitleLine">Configure display<br /></div>
         <div class="button buttonSelected" goto_id="set_screen_brightness">Set brightness</div>
         <div class="button" goto_id="set_date_time">Set date and time</div>
         <div class="button" goto_id="set_language">Select a language</div>
         <div class="button" goto_id="set_units">Set format and units</div>
       </div>  <!-- "screen_configuration_menu" -->
 
-      <div id="set_screen_brightness" class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
-        Set brightness<br style="line-height:100px;" />
-        <!-- TODO - design this screen -->
+      <div id="set_screen_brightness" class="tag menuScreen">
+        <div class="menuTitleLine">Set brightness<br /></div>
         <small>[Not yet implemented]</small>
+        <!-- TODO - design this screen -->
       </div>  <!-- "set_screen_brightness" -->
 
-      <div id="set_date_time" class="tag menuTitle" style="display:none; left:20px; top:50px; width:920px; height:410px;">
-        Set date and time<br />
-        <small>[Not yet implemented]</small>
+      <div id="set_date_time" class="tag menuScreen" style="top:50px; height:460px;">
+        <div class="menuTitleLine">Set date and time<br /></div>
+        <small>[Not implemented]</small>
 
-        <div style="position:absolute; top:160px; font-size:60px; text-align:center;">
+        <div style="position:absolute; top:190px; font-size:60px; text-align:center;">
           <div style="position:absolute; left:30px;">1</div>
           <div style="position:absolute; left:150px;">/</div>
           <div style="position:absolute; left:210px;">Jan</div>
@@ -791,7 +782,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div style="position:absolute; left:820px;">00</div>
         </div>
 
-        <div style="position:absolute; left:0px; top:240px;">
+        <div style="position:absolute; left:0px; top:270px;">
           <div style="position:absolute; left:0px; text-align:left;">
             <span id="set_date_time_increase_day"
               class="button buttonSelected"
@@ -865,24 +856,24 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <div id="set_date_time_validate_button"
-          class="button"
+          class="button validateButton"
           UP_BUTTON="set_date_time_increase_day"
           on_click="exitMenu(); exitMenu(); exitMenu();"
-          style="position:absolute; left:0px; top:340px; width:180px; height:40px;">Validate</div>
+          style="top:390px;">Validate</div>
       </div>  <!-- "set_date_time" -->
 
       <div id="set_language"
         on_goto="languageSelectTickedButton();"
-        class="tag menuTitle" style="display:none; left:20px; top:50px; width:920px; height:410px;">
-        Select a language<br />
-        <small>[Not yet implemented]</small>
+        class="tag menuScreen">
+        <div class="menuTitleLine">Select a language<br /></div>
 
         <div style="font-size:46px; text-align:left;">
-          <div style="position:absolute; left:0px; top:160px; width:280px; height:150px;">
+          <div style="position:absolute; left:0px; top:100px; width:280px; height:150px;">
             <span id="set_language_german"
               class="tickBox button"
               LEFT_BUTTON="set_language_dutch"
               RIGHT_BUTTON="set_language_spanish"
+              UP_BUTTON="set_language_validate_button"
               on_click="toggleTick(); keyPressed('UP_BUTTON');">
             </span> Deutsch<br style="line-height:70px;" />
             <span id="set_language_english"
@@ -894,7 +885,7 @@ char mfd_html[] PROGMEM = R"=====(
             </span> English<br style="line-height:70px;" />
           </div>
 
-          <div style="position:absolute; left:280px; top:160px; width:280px; height:150px;">
+          <div style="position:absolute; left:280px; top:100px; width:280px; height:150px;">
             <span id="set_language_spanish"
               class="tickBox button"
               UP_BUTTON="set_language_french"
@@ -911,7 +902,7 @@ char mfd_html[] PROGMEM = R"=====(
           </span> Fran&ccedil;ais<br style="line-height:70px;" />
           </div>
 
-          <div style="position:absolute; left:560px; top:160px; width:280px; height:150px;">
+          <div style="position:absolute; left:560px; top:100px; width:280px; height:150px;">
             <span id="set_language_dutch"
               class="tickBox button"
               UP_BUTTON="set_language_italian"
@@ -930,17 +921,85 @@ char mfd_html[] PROGMEM = R"=====(
         </div>
 
         <div id="set_language_validate_button"
-          class="button"
+          class="button validateButton"
           UP_BUTTON="set_language_english"
+          DOWN_BUTTON="set_language_german"
           on_click="languageValidate();"
-          style="position:absolute; left:0px; top:340px; width:180px; height:40px;">Validate</div>
+          style="top:300px;">Validate</div>
 
       </div>  <!-- "set_language" -->
 
-      <div id="set_units" class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
-        Set format and units<br style="line-height:100px;" />
-        <small>[Not yet implemented]</small>
-        <!-- TODO - design this screen -->
+      <div id="set_units"
+        on_goto="unitsSelectTickedButtons();"
+        class="tag menuScreen">
+        <div class="menuTitleLine">Set format and units<br /></div>
+
+        <div style="font-size:46px; text-align:left;">
+          <div id="set_distance_unit">
+            <div style="position:absolute; left:0px; top:100px; width:380px; height:150px;">
+              <span id="set_units_km_h"
+                class="tickBox button"
+                LEFT_BUTTON="set_units_24h"
+                RIGHT_BUTTON="set_units_deg_celsius"
+                UP_BUTTON="set_units_validate_button"
+                on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+              </span> km/h - l/100<br style="line-height:70px;" />
+              <span id="set_units_mph"
+                class="tickBox button buttonSelected"
+                LEFT_BUTTON="set_units_12h"
+                RIGHT_BUTTON="set_units_deg_fahrenheit"
+                DOWN_BUTTON="set_units_validate_button"
+                on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+              </span> mph - mpg<br style="line-height:70px;" />
+            </div>
+          </div>
+
+          <div id="set_temperature_unit">
+            <div style="position:absolute; left:430px; top:100px; width:180px; height:150px;">
+              <span id="set_units_deg_celsius"
+                class="tickBox button"
+                UP_BUTTON="set_units_validate_button"
+                LEFT_BUTTON="set_units_km_h"
+                RIGHT_BUTTON="set_units_24h"
+                on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+              </span> &deg; C<br style="line-height:70px;" />
+              <span id="set_units_deg_fahrenheit"
+                class="tickBox button"
+                LEFT_BUTTON="set_units_mph"
+                RIGHT_BUTTON="set_units_12h"
+                DOWN_BUTTON="set_units_validate_button"
+                on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+            </span> &deg; F<br style="line-height:70px;" />
+            </div>
+          </div>
+
+          <div id="set_time_unit">
+            <div style="position:absolute; left:680px; top:100px; width:180px; height:150px;">
+              <span id="set_units_24h"
+                class="tickBox button"
+                UP_BUTTON="set_units_validate_button"
+                LEFT_BUTTON="set_units_deg_celsius"
+                RIGHT_BUTTON="set_units_km_h"
+                on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+              </span> 24H<br style="line-height:70px;" />
+              <span id="set_units_12h"
+                class="tickBox button"
+                LEFT_BUTTON="set_units_deg_fahrenheit"
+                RIGHT_BUTTON="set_units_mph"
+                DOWN_BUTTON="set_units_validate_button"
+                on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+              </span> 12H<br style="line-height:70px;" />
+            </div>
+          </div>
+        </div>
+
+        <div id="set_units_validate_button"
+          class="button validateButton"
+          UP_BUTTON="set_units_mph"
+          DOWN_BUTTON="set_units_km_h"
+          on_click="unitsValidate();"
+          style="top:300px;">Validate</div>
+
       </div>  <!-- "set_units" -->
 
       <!-- Navigation -->
@@ -977,14 +1036,14 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Current heading, shown as compass needle -->
 
-        <div id="satnav_curr_heading_compass_needle" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:rotate(0deg); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_needle" class="satNavCompassNeedle" style="transform:rotate(0deg);">
           <svg>
             <path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
           </svg>
         </div>
 
         <!-- Small "N" at end of arrow, indicating "North" -->
-        <div id="satnav_curr_heading_compass_tag" style="position:absolute; left:870px; top:20px; width:48px; height:72px; transform:translate(0px,-42px); transform-origin:center;">
+        <div id="satnav_curr_heading_compass_tag" class="satNavCompassNeedle" style="transform:translate(0px,-42px);">
           <svg>
             <text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="24" y="36" font-size="20px">N</text>
           </svg>
@@ -992,7 +1051,7 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Current GPS speed -->
 
-        <div id="satnav_gps_speed" class="dots" style=" left:40px; top:36px; width:160px; text-align:right;">--</div>
+        <div id="satnav_gps_speed" class="dots" style="left:40px; top:36px; width:160px; text-align:right;">--</div>
         <div class="tag" style="left:210px; top:40px; width:120px;">km/h</div>
 
         <!-- Current location -->
@@ -1013,10 +1072,12 @@ char mfd_html[] PROGMEM = R"=====(
 
         <div id="satnav_disclaimer" style="display:none;">
           <div class="tag" style="font-size:45px; left:20px; top:150px; width:920px; height:400px; text-align:center;">
-            Navigation is an electronic help system. It<br />
-            cannot replace the driver's decisions. All<br />
-            guidance instructions must be carefully<br />
-            checked by the user.<br />
+            <div id="satnav_disclaimer_text">
+              Navigation is an electronic help system. It<br />
+              cannot replace the driver's decisions. All<br />
+              guidance instructions must be carefully<br />
+              checked by the user.<br />
+            </div>
             <div id="satnav_disclaimer_validate_button"
               class="icon button buttonSelected" style="left:710px; top:300px; width:180px; height:40px;"
               on_click="satnavDisclaimerAccepted = true; exitMenu(); satnavGotoMainMenu();">
@@ -1027,16 +1088,14 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav main menu -->
 
-        <div id="satnav_main_menu"
-          on_enter="highlightFirstLine('satnav_list');"
-          class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
-          Navigation / Guidance<br style="line-height:100px;" />
+        <div id="satnav_main_menu" on_enter="highlightFirstLine('satnav_list');" class="tag menuScreen">
+          <div class="menuTitleLine">Navigation / Guidance<br /></div>
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
           <!--
-            This button is disabled until a {"satnav_to_mfd_response":"Service","satnav_to_mfd_list_size":"38"} packet
+            This button is disabled until a {"satnav_to_mfd_response":"Service","satnav_to_mfd_list_size":"<x>"} packet
             is received
           -->
           <div id="satnav_main_menu_select_a_service_button"
@@ -1047,23 +1106,20 @@ char mfd_html[] PROGMEM = R"=====(
             on_click="satnavSetDirectoryAddressScreenMode('SELECT');"
             goto_id="satnav_select_from_memory_menu">Select destination from memory</div>
 
-          <div class="button"
+          <div class="button" 
             goto_id="satnav_navigation_options_menu">Navigation options</div>
 
         </div>  <!-- "satnav_main_menu" -->
 
         <!-- Sat nav select from memory menu -->
 
-        <div id="satnav_select_from_memory_menu" class="tag menuTitle"
-          style="display:none; left:20px; top:140px; width:920px; height:410px;">
-          Select from memory<br style="line-height:100px;" />
+        <div id="satnav_select_from_memory_menu" class="tag menuScreen">
+          <div class="menuTitleLine">Select from memory<br /></div>
 
-          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button buttonSelected"
             on_click="highlightFirstLine('satnav_list');"
             goto_id="satnav_choose_from_list">Personal directory</div>
 
-          <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
           <div class="button"
             on_click="highlightFirstLine('satnav_list');"
             goto_id="satnav_choose_from_list">Professional directory</div>
@@ -1071,9 +1127,8 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Sat nav navigation options menu -->
 
-        <div id="satnav_navigation_options_menu" class="tag menuTitle"
-          style="display:none; left:20px; top:140px; width:920px; height:410px;">
-          Navigation options<br style="line-height:100px;" />
+        <div id="satnav_navigation_options_menu" class="tag menuScreen">
+          <div class="menuTitleLine">Navigation options<br /></div>
 
           <div class="button buttonSelected"
             on_click="satnavSetDirectoryAddressScreenMode('MANAGE');"
@@ -1084,30 +1139,26 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="button" on_click="showPopup('satnav_delete_directory_data_popup');">Delete directories</div>
 
           <div id="satnav_navigation_options_menu_stop_guidance_button" class="button"
-            on_click="satnavNavigationOptionsStopOrResumeGuidanceButton();">Resume guidance</div>
+            on_click="satnavStopOrResumeGuidance();">Resume guidance</div>
 
         </div>  <!-- "satnav_navigation_options_menu" -->
 
         <!-- Sat nav directory management menu -->
 
-        <div id="satnav_directory_management_menu" class="tag menuTitle"
-          style="display:none; left:20px; top:140px; width:920px; height:410px;">
-          Directory management<br style="line-height:100px;" />
+        <div id="satnav_directory_management_menu" class="tag menuScreen">
+          <div class="menuTitleLine">Directory management<br /></div>
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-          <div class="button buttonSelected"
-            on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');">Personal directory</div>
+          <div class="button buttonSelected" on_click="satnavGotoListScreenEmpty();">Personal directory</div>
 
           <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-          <div class="button"
-            on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');">Professional directory</div>
+          <div class="button" on_click="satnavGotoListScreenEmpty();">Professional directory</div>
         </div>  <!-- "satnav_directory_management_menu" -->
 
         <!-- Sat nav guidance tools (context) menu -->
 
-        <div id="satnav_guidance_tools_menu" class="tag menuTitle"
-          style="display:none; left:20px; top:140px; width:920px; height:410px;">
-          Guidance tools<br style="line-height:100px;" />
+        <div id="satnav_guidance_tools_menu" class="tag menuScreen">
+          <div class="menuTitleLine">Guidance tools<br /></div>
 
           <div class="button buttonSelected" goto_id="satnav_guidance_preference_menu">Guidance criteria</div>
 
@@ -1116,7 +1167,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
           <div id="satnav_tools_menu_stop_guidance_button" class="button"
-            on_click="localStorage.askForGuidanceContinuation = 'NO'; selectDefaultScreen();">Stop guidance</div>
+            on_click="satnavStopGuidance();">Stop guidance</div>
 
         </div>  <!-- "satnav_guidance_tools_menu" -->
 
@@ -1129,40 +1180,41 @@ char mfd_html[] PROGMEM = R"=====(
 
           <!-- As long we don't know the "satnav_guidance_preference" value, "Fastest route" will be ticked -->
           <span id="satnav_guidance_preference_fastest" class="tickBox button buttonSelected"
-            on_click="toggleTick(); keyPressed('UP_BUTTON');"><b>&#10004;</b></span> Fastest route<br style="line-height:70px;" />
+            on_click="toggleTick(); keyPressed('UP_BUTTON');"><b>&#10004;</b></span> <span class="tickBoxLabel">Fastest route<br /></span>
 
           <span id="satnav_guidance_preference_shortest" class="tickBox button"
-            on_click="toggleTick(); keyPressed('UP_BUTTON'); keyPressed('UP_BUTTON');"></span> Shortest route<br style="line-height:70px;" />
+            on_click="toggleTick(); keyPressed('UP_BUTTON'); keyPressed('UP_BUTTON');"></span> <span class="tickBoxLabel">Shortest route<br /></span>
 
           <span id="satnav_guidance_preference_avoid_highway" class="tickBox button"
-            on_click="toggleTick(); keyPressed('DOWN_BUTTON'); keyPressed('DOWN_BUTTON');"></span> Avoid highway route<br style="line-height:70px;" />
+            on_click="toggleTick(); keyPressed('DOWN_BUTTON'); keyPressed('DOWN_BUTTON');"></span> <span class="tickBoxLabel">Avoid highway route<br /></span>
 
           <span id="satnav_guidance_preference_compromise" class="tickBox button"
-            on_click="toggleTick(); keyPressed('DOWN_BUTTON');"></span> Fast/short compromise route<br style="line-height:70px;" />
+            on_click="toggleTick(); keyPressed('DOWN_BUTTON');"></span> <span class="tickBoxLabel">Fast/short compromise route<br /></span>
 
           <div id="satnav_guidance_preference_menu_validate_button"
-            class="button"
+            class="button validateButton"
             on_click="satnavGuidancePreferenceValidate();"
-            style="position:absolute; left:0px; top:300px; width:180px; height:40px;">Validate</div>
+            style="top:300px;">
+            Validate
+          </div>
 
         </div>  <!-- "satnav_guidance_preference_menu" -->
 
         <!-- Sat nav vocal synthesis level screen -->
 
-        <div id="satnav_vocal_synthesis_level"
-          on_esc="satnavEscapeVocalSynthesisLevel();"
-          class="tag menuTitle" style="display:none; left:20px; top:140px; width:920px; height:410px;">
+        <div id="satnav_vocal_synthesis_level" on_esc="satnavEscapeVocalSynthesisLevel();" class="tag menuScreen">
 
-          Vocal synthesis level<br style="line-height:100px;" />
+          <div class="menuTitleLine">Vocal synthesis level<br /></div>
+
           <div class="tag" style="left:50px; top:148px; width:200px;">Level</div>
 
           <!-- TODO - also show the volume as a linear gauge -->
           <div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:115px; width:200px;">-</div>
 
           <div
-            class="button buttonSelected"
+            class="button buttonSelected validateButton"
             on_click="satnavValidateVocalSynthesisLevel();"
-            style="position:absolute; left:0px; top:300px; width:180px; height:40px;">Validate</div>
+            style="top:300px;">Validate</div>
         </div>  <!-- "satnav_vocal_synthesis_level" -->
 
         <!-- Enter destination -->
@@ -1174,7 +1226,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_enter_characters" style="display:none;">
 
             <!-- The city or street that has been entered thus far -->
-            <div id="satnav_entered_string" class="dots" style="left:25px; top:180px; width:925px; font-size:50px;"></div>
+            <div id="satnav_entered_string" class="dots satNavEnterDestination"></div>
 
             <div class="tag" style="left:20px; top:240px; width:550px; text-align:left;">Choose next letter</div>
 
@@ -1197,9 +1249,8 @@ char mfd_html[] PROGMEM = R"=====(
               on_down_button="highlightIndexes['satnav_to_mfd_show_characters_line_2'] = highlightIndexes['satnav_to_mfd_show_characters_line_1']; navigateButtons('DOWN_BUTTON');"
               on_enter="highlightLetter();"
               on_exit="unhighlightLetter();"
-              class="dots buttonSelected"
-              style="left:25px; top:290px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-                background:none; color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+              class="dots buttonSelected satNavShowCharacters"
+              style="top:290px;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
             <div id="satnav_to_mfd_show_characters_line_2"
               UP_BUTTON="satnav_to_mfd_show_characters_line_1"
@@ -1209,39 +1260,32 @@ char mfd_html[] PROGMEM = R"=====(
               on_up_button="highlightIndexes['satnav_to_mfd_show_characters_line_1'] = highlightIndexes['satnav_to_mfd_show_characters_line_2']; navigateButtons('UP_BUTTON');"
               on_enter="highlightLetter();"
               on_exit="unhighlightLetter();"
-              class="dots"
-              style="left:25px; top:360px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-                background:none; color:#dfe7f2; border-style:none;">YZ'</div>
+              class="dots satNavShowCharacters"
+              style="top:360px;">YZ'</div>
 
-            <div
-              button_orientation="horizontal"
-              style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
+            <div button_orientation="horizontal" class="buttonBar">
 
               <div id="satnav_enter_characters_validate_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 on_click="satnavGotoEnterStreetOrNumber();"
-                class="icon button buttonDisabled"
-                style="left:0px; top:0px; width:180px; height:40px;">
+                class="icon button buttonDisabled validateButton">
                 Validate
               </div>
 
               <div id="satnav_enter_characters_correction_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
-                class="icon button buttonDisabled"
-                style="left:210px; top:0px; width:230px; height:40px;">
+                class="icon button buttonDisabled correctionButton">
                 Correction
               </div>
 
-              <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_list_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
-                on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');"
+                on_click="satnavGotoListScreenEmpty();"
                 class="icon button buttonDisabled"
                 style="left:470px; top:0px; width:240px; height:40px;">
                 List <span gid="satnav_to_mfd_list_size"></span>
               </div>
 
-              <!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
               <div id="satnav_enter_characters_change_or_city_center_button"
                 UP_BUTTON="satnav_to_mfd_show_characters_line_2"
                 on_click="satnavEnterCharactersChangeOrCityCenterButtonPress();"
@@ -1255,14 +1299,13 @@ char mfd_html[] PROGMEM = R"=====(
               on_enter="highlightFirstLine('satnav_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
               style="display:none;">
 
-              <div class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter city</div>
+              <div class="tag satNavEnterDestinationTag">Enter city</div>
 
               <!--
                 The following div will disappear as soon as the user starts choosing letters, which will then
                 appear one by one in "satnav_entered_string"
               -->
-              <div id="satnav_current_destination_city"
-                class="dots" style="left:25px; top:180px; width:925px; font-size:50px;"></div>
+              <div id="satnav_current_destination_city" class="dots satNavEnterDestination"></div>
             </div>
 
             <div id="satnav_enter_street_characters"
@@ -1270,14 +1313,13 @@ char mfd_html[] PROGMEM = R"=====(
               on_esc="satnavConfirmCityMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
               style="display:none;">
 
-              <div class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter street</div>
+              <div class="tag satNavEnterDestinationTag">Enter street</div>
 
               <!--
                 The following div will disappear as soon as the user starts choosing letters, which will then
                 appear one by one in "satnav_entered_string"
               -->
-              <div id="satnav_current_destination_street"
-                class="dots" style="left:25px; top:180px; width:925px; font-size:50px;"></div>
+              <div id="satnav_current_destination_street" class="dots satNavEnterDestination"></div>
             </div>
 
           </div>  <!-- "satnav_enter_characters" -->
@@ -1289,7 +1331,7 @@ char mfd_html[] PROGMEM = R"=====(
             style="display:none;">
 
             <!-- What is being entered? (city, street) -->
-            <div id="mfd_to_satnav_request" class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter city</div>
+            <div id="mfd_to_satnav_request" class="tag satNavEnterDestinationTag">Enter city</div>
 
             <!-- <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div> -->
             <div id="mfd_to_satnav_length" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div>
@@ -1317,7 +1359,7 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_enter_house_number" style="display:none;">
 
             <!-- What is being entered? (house number) -->
-            <div class="tag" style="left:20px; top:110px; width:930px; text-align:left;">Enter number</div>
+            <div class="tag satNavEnterDestinationTag">Enter number</div>
 
             <!-- The number that has been entered thus far -->
             <div id="satnav_entered_number" class="dots" style="left:25px; top:180px; width:930px;"></div>
@@ -1345,19 +1387,17 @@ char mfd_html[] PROGMEM = R"=====(
               style="left:25px; top:310px; width:830px; line-height:1.5; display:inline-block; letter-spacing:25px;
                 background:none; color:#dfe7f2; border-style:none;">1234567890</div>
 
-            <div
-              button_orientation="horizontal"
-              style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
+            <div button_orientation="horizontal" class="buttonBar">
               <div id="satnav_enter_house_number_validate_button"
                 UP_BUTTON="satnav_house_number_show_characters"
                 on_click="satnavCheckEnteredHouseNumber();"
-                class="icon button" style="left:0px; top:0px; width:180px; height:40px;">
+                class="icon button validateButton">
                 Validate
               </div>
               <div id="satnav_enter_house_number_change_button"
                 UP_BUTTON="satnav_house_number_show_characters"
                 on_click="satnavHouseNumberEntryMode();"
-                class="icon button buttonDisabled" style="left:210px; top:0px; width:170px; height:40px;">
+                class="icon button buttonDisabled correctionButton">
                 Change
               </div>
             </div>
@@ -1371,44 +1411,38 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div id="satnav_show_personal_address" style="display:none;">
 
-            <div id="satnav_personal_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
+            <div id="satnav_personal_address_entry" class="dots satNavAddressEntry"></div>
 
-            <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_personal_address_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavCityTag">City</div>
+            <div id="satnav_personal_address_city" class="dots satNavShowAddressCity"></div>
 
-            <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_personal_address_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavStreetTag">Street</div>
+            <div id="satnav_personal_address_street_shown" class="dots satNavShowAddressStreet"></div>
 
-            <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_personal_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavNumberTag">Number</div>
+            <div id="satnav_personal_address_house_number_shown" class="dots satNavShowAddressNumber"></div>
 
             <div id="satnav_personal_address_validate_buttons" style="display:block">
               <div id="satnav_show_personal_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-                class="icon button"
-                style="left:25px; top:450px; width:180px; height:40px;">
+                class="icon button validateButton"
+                style="left:25px; top:450px;">
                 Validate
               </div>
             </div>
 
             <div id="satnav_personal_address_manage_buttons" style="display:none">
-              <div button_orientation="horizontal"
-                style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
-
+              <div button_orientation="horizontal" class="buttonBar">
                 <div id="satnav_manage_personal_address_rename_button"
                   goto_id="satnav_rename_entry_in_directory_entry"
-                  class="icon button"
-                  style="left:0px; top:0px; width:180px; height:40px;">
+                  class="icon button validateButton">
                   Rename
                 </div>
 
                 <div id="satnav_manage_personal_address_delete_button"
                   on_click="satnavDirectoryEntry = $('#satnav_personal_address_entry').text(); showPopup('satnav_delete_item_popup', 30000);"
-                  class="icon button"
-                  style="left:210px; top:0px; width:180px; height:40px;">
+                  class="icon button validateButton"
+                  style="left:210px;">
                   Delete
                 </div>
               </div>
@@ -1417,44 +1451,38 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div id="satnav_show_professional_address" style="display:none;">
 
-            <div id="satnav_professional_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
+            <div id="satnav_professional_address_entry" class="dots satNavAddressEntry"></div>
 
-            <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_professional_address_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavCityTag">City</div>
+            <div id="satnav_professional_address_city" class="dots satNavShowAddressCity"></div>
 
-            <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_professional_address_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavStreetTag">Street</div>
+            <div id="satnav_professional_address_street_shown" class="dots satNavShowAddressStreet"></div>
 
-            <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_professional_address_house_number_shown" class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavNumberTag">Number</div>
+            <div id="satnav_professional_address_house_number_shown" class="dots satNavShowAddressNumber"></div>
 
             <div id="satnav_professional_address_validate_buttons" style="display:block">
               <div id="satnav_show_professional_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-                class="icon button"
-                style="left:25px; top:450px; width:180px; height:40px;">
+                class="icon button validateButton"
+                style="left:25px; top:450px;">
                 Validate
               </div>
             </div>
 
             <div id="satnav_professional_address_manage_buttons" style="display:none">
-              <div button_orientation="horizontal"
-                style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
-
+              <div button_orientation="horizontal" class="buttonBar">
                 <div id="satnav_manage_professional_address_rename_button"
                   goto_id="satnav_rename_entry_in_directory_entry"
-                  class="icon button"
-                  style="left:0px; top:0px; width:180px; height:40px;">
+                  class="icon button validateButton">
                   Rename
                 </div>
 
                 <div id="satnav_manage_professional_address_delete_button"
                   on_click="satnavDirectoryEntry = $('#satnav_professional_address_entry').text(); showPopup('satnav_delete_item_popup', 30000);"
-                  class="icon button"
-                  style="left:210px; top:0px; width:180px; height:40px;">
+                  class="icon button validateButton"
+                  style="left:210px;">
                   Delete
                 </div>
               </div>
@@ -1463,16 +1491,16 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div id="satnav_show_service_address"
             style="display:none;"
-            on_enter="if (! inDemoMode) $('#satnav_show_service_address .dots:not(#satnav_to_mfd_list_size)').text('');">
+            on_enter="if (! inDemoMode) $('#satnav_show_service_address .dots:not(#satnav_to_mfd_list_size)').empty();">
 
-            <div id="satnav_service_address_entry" class="dots" style="left:25px; top:110px; width:925px;"></div>
+            <div id="satnav_service_address_entry" class="dots satNavAddressEntry"></div>
 
-            <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div id="satnav_service_address_city" class="dots" style="left:210px; top:195px; width:750px; height:90px; font-size:40px; white-space:normal;">
+            <div class="tag satNavCityTag">City</div>
+            <div id="satnav_service_address_city" class="dots satNavShowAddressCity">
             </div>
 
-            <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_service_address_street" class="dots" style="left:210px; top:285px; width:750px; height:90px; font-size:40px; white-space:normal;">
+            <div class="tag satNavStreetTag">Street</div>
+            <div id="satnav_service_address_street" class="dots satNavShowAddressStreet">
             </div>
 
             <div id="satnav_service_address_distance_number" class="dots" style=" left:25px; top:376px; width:180px; text-align:right;">-</div>
@@ -1483,20 +1511,18 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="tag" style="left:733px; top:376px; width:50px;">/</div>
             <div id="satnav_to_mfd_list_size" class="dots" style=" left:800px; top:376px; width:160px; text-align:left;">-</div>
 
-            <div button_orientation="horizontal" style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
-
+            <div button_orientation="horizontal" class="buttonBar">
               <div id="satnav_service_address_validate_button"
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-                class="icon button"
-                style="left:0px; top:0px; width:180px; height:40px;">
+                class="icon button validateButton">
                 Validate
               </div>
               <div id="satnav_service_address_previous_button"
-                class="icon button" style="left:210px; top:0px; width:180px; height:40px;">
+                class="icon button validateButton" style="left:210px;">
                 Previous
               </div>
               <div id="satnav_service_address_next_button"
-                class="icon button buttonSelected" style="left:420px; top:0px; width:180px; height:40px;">
+                class="icon button buttonSelected validateButton" style="left:420px;">
                 Next
               </div>
             </div>
@@ -1506,38 +1532,33 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_show_current_destination"
             on_goto="selectFirstMenuItem('satnav_show_current_destination');"
             on_esc="satnavGotoMainMenu();"
-            style="left:25px; top:110px; width:1330px; display:none;">
+            style="left:25px; top:110px; width:950px; display:none;">
 
-            <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Programmed destination</div>
+            <div class="tag satNavShowAddress">Programmed destination</div>
 
-            <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div gid="satnav_current_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavCityTag">City</div>
+            <div gid="satnav_current_destination_city" class="dots satNavShowAddressCity"></div>
 
-            <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div id="satnav_current_destination_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavStreetTag">Street</div>
+            <div id="satnav_current_destination_street_shown" class="dots satNavShowAddressStreet"></div>
 
-            <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div id="satnav_current_destination_house_number_shown" class="dots"
-              style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;"></div>
+            <div class="tag satNavNumberTag">Number</div>
+            <div id="satnav_current_destination_house_number_shown" class="dots satNavShowAddressNumber"></div>
 
-            <div button_orientation="horizontal" style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
-
+            <div button_orientation="horizontal" class="buttonBar">
               <div
                 on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-                class="icon button buttonSelected"
-                style="left:0px; top:0px; width:180px; height:40px;">
+                class="icon button buttonSelected validateButton">
                 Validate
               </div>
               <div
                 on_click="satnavGotoEnterCity();"
-                class="icon button" style="left:210px; top:0px; width:230px; height:40px;">
+                class="icon button correctionButton">
                 Change
               </div>
-              <div id="satnav_show_current_destination_store_button"
+              <div
                 goto_id="satnav_archive_in_directory_entry"
-                class="icon button" style="left:470px; top:0px; width:240px; height:40px;">
+                class="icon button correctionButton" style="left:470px;">
                 Store
               </div>
             </div>
@@ -1549,34 +1570,26 @@ char mfd_html[] PROGMEM = R"=====(
             on_esc="satnavSwitchToGuidanceScreen();"
             style="display:none;">
 
-            <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Programmed destination</div>
+            <div class="tag satNavShowAddress">Programmed destination</div>
 
-            <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div gid="satnav_last_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
-            <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div gid="satnav_last_destination_street_shown"
-              class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavCityTag">City</div>
+            <div gid="satnav_last_destination_city" class="dots satNavShowAddressCity"></div>
 
-            <div class="tag" style="left:25px; top:370px; width:190px; text-align:left; font-size:40px;">Number</div>
-            <div gid="satnav_last_destination_house_number_shown"
-              class="dots" style="left:210px; top:375px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavStreetTag">Street</div>
+            <div gid="satnav_last_destination_street_shown" class="dots satNavShowAddressStreet"></div>
 
-            <div
-              button_orientation="horizontal"
-              style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
+            <div class="tag satNavNumberTag">Number</div>
+            <div gid="satnav_last_destination_house_number_shown" class="dots satNavShowAddressNumber"></div>
 
+            <div button_orientation="horizontal" class="buttonBar">
               <div id="satnav_show_programmed_destination_validate_button"
                 on_click="satnavSwitchToGuidanceScreen();"
-                class="icon button buttonSelected"
-                style="left:0px; top:0px; width:180px; height:40px;">
+                class="icon button buttonSelected validateButton">
                 Validate
               </div>
               <div
                 on_click="menuStack = [ 'satnav_guidance' ]; currentMenu = 'satnav_main_menu'; changeLargeScreenTo('satnav_main_menu'); selectFirstMenuItem('satnav_main_menu');"
-                class="icon button" style="left:210px; top:0px; width:230px; height:40px;">
+                class="icon button correctionButton">
                 Change
               </div>
             </div>
@@ -1586,34 +1599,24 @@ char mfd_html[] PROGMEM = R"=====(
           <div id="satnav_show_last_destination"
             style="display:none;">
 
-            <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Select a service</div>
+            <div class="tag satNavShowAddress">Select a service</div>
 
-            <div class="tag" style="left:25px; top:190px; width:190px; text-align:left; font-size:40px;">City</div>
-            <div gid="satnav_last_destination_city" class="dots" style="left:210px; top:195px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
-            <div class="tag" style="left:25px; top:280px; width:190px; text-align:left; font-size:40px;">Street</div>
-            <div gid="satnav_last_destination_street_shown" class="dots" style="left:210px; top:285px; width:720px; height:90px; font-size:40px; white-space:normal;">
-            </div>
+            <div class="tag satNavCityTag">City</div>
+            <div gid="satnav_last_destination_city" class="dots satNavShowAddressCity"></div>
 
-            <div
-              button_orientation="horizontal"
-              style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
+            <div class="tag satNavStreetTag">Street</div>
+            <div gid="satnav_last_destination_street_shown" class="dots satNavShowAddressStreet"></div>
 
-              <div
-                on_click="satnavGotoListScreen(); $('#satnav_list').text(''); highlightFirstLine('satnav_list');"
-                class="icon button buttonSelected"
-                style="left:0px; top:0px; width:180px; height:40px;">
+            <div button_orientation="horizontal" class="buttonBar">
+              <div class="icon button buttonSelected validateButton" on_click="satnavGotoListScreenEmpty();">
                 Validate
               </div>
-              <div
-                on_click="satnavEnterNewCityForService();"
-                class="icon button" style="left:210px; top:0px; width:230px; height:40px;">
+              <div class="icon button correctionButton" on_click="satnavEnterNewCityForService();">
                 Change
               </div>
-
               <div
-                on_click="highlightFirstLine('satnav_list');"
-                class="icon button" style="left:470px; top:0px; width:340px; height:40px;">
+                class="icon button" style="left:470px; top:0px; width:340px; height:40px;"
+                on_click="highlightFirstLine('satnav_list');">
                 Current location
               </div>
             </div>
@@ -1621,22 +1624,17 @@ char mfd_html[] PROGMEM = R"=====(
         </div>  <!-- "satnav_show_address" -->
 
         <div id="satnav_archive_in_directory"
-          style="left:25px; top:110px; width:1330px; display:none;">
+          style="left:25px; top:110px; width:950px; display:none;">
 
-          <div class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Archive in directory</div>
+          <div id="satnav_archive_in_directory_title" class="tag satNavShowAddress">Archive in directory</div>
 
-          <div id="satnav_archive_in_directory_entry_exists"
-            class="tag" style="display:none; left:210px; top:255px; text-align:left; font-size:40px;">
-            This entry already exists
-          </div>
+          <div class="tag satNavEntryExistsTag">This entry already exists</div>
 
-          <div class="tag" style="left:25px; top:205px; width:190px; text-align:left; font-size:40px;">Name</div>
+          <div class="tag satNavEntryNameTag">Name</div>
           <div id="satnav_archive_in_directory_entry"
             on_enter="satnavEnterArchiveInDirectoryScreen();"
             on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
-            class="dots"
-            style="left:210px; top:195px; width:720px; height:90px; white-space:normal;"
-          >----------------</div>
+            class="dots satNavShowAddressCity" style="font-size:60px;">----------------</div>
 
           <div id="satnav_archive_in_directory_characters_line_1"
             UP_BUTTON="satnav_archive_in_directory_characters_line_1"
@@ -1646,9 +1644,8 @@ char mfd_html[] PROGMEM = R"=====(
             on_down_button="highlightIndexes['satnav_archive_in_directory_characters_line_2'] = highlightIndexes['satnav_archive_in_directory_characters_line_1']; navigateButtons('DOWN_BUTTON');"
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
-            class="dots buttonSelected"
-            style="left:25px; top:310px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background:none; color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+            class="dots buttonSelected satNavShowCharacters"
+            style="top:310px;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
           <div id="satnav_archive_in_directory_characters_line_2"
             UP_BUTTON="satnav_archive_in_directory_characters_line_1"
@@ -1658,12 +1655,10 @@ char mfd_html[] PROGMEM = R"=====(
             on_up_button="highlightIndexes['satnav_archive_in_directory_characters_line_1'] = highlightIndexes['satnav_archive_in_directory_characters_line_2']; navigateButtons('UP_BUTTON');"
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
-            class="dots"
-            style="left:25px; top:380px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background:none; color:#dfe7f2; border-style:none;">YZ0123456789_</div>
+            class="dots satNavShowCharacters"
+            style="top:380px;">YZ0123456789_</div>
 
-          <div button_orientation="horizontal"
-            style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
+          <div button_orientation="horizontal" class="buttonBar">
 
             <div id="satnav_archive_in_directory_correction_button"
               UP_BUTTON="satnav_archive_in_directory_characters_line_2"
@@ -1690,25 +1685,19 @@ char mfd_html[] PROGMEM = R"=====(
         </div>  <!-- "satnav_archive_in_directory" -->
 
         <div id="satnav_rename_entry_in_directory"
-          style="left:25px; top:110px; width:1330px; display:none;">
+          style="left:25px; top:110px; width:950px; display:none;">
 
-          <div id="satnav_rename_entry_in_directory_title"
-            class="tag" style="left:25px; top:110px; width:830px; text-align:left;">Rename ()</div>
+          <div id="satnav_rename_entry_in_directory_title" class="tag satNavShowAddress">Rename entry</div>
 
-          <div class="tag" style="left:25px; top:205px; width:190px; text-align:left; font-size:40px;">Name</div>
+          <div class="tag satNavEntryNameTag">Name</div>
 
-          <div id="satnav_rename_entry_in_directory_entry_exists"
-            class="tag" style="display:none; left:210px; top:255px; text-align:left; font-size:40px;">
-            This entry already exists
-          </div>
+          <div class="tag satNavEntryExistsTag">This entry already exists</div>
 
           <!-- on_esc: this goes back to the "List" screen -->
           <div id="satnav_rename_entry_in_directory_entry"
             on_enter="satnavEnterRenameDirectoryEntryScreen();"
             on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
-            class="dots"
-            style="left:210px; top:195px; width:720px; height:90px; white-space:normal;"
-          >----------------</div>
+            class="dots satNavShowAddressCity" style="font-size:60px;">----------------</div>
 
           <div id="satnav_rename_entry_in_directory_characters_line_1"
             UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
@@ -1718,9 +1707,8 @@ char mfd_html[] PROGMEM = R"=====(
             on_down_button="highlightIndexes['satnav_rename_entry_in_directory_characters_line_2'] = highlightIndexes['satnav_rename_entry_in_directory_characters_line_1']; navigateButtons('DOWN_BUTTON');"
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
-            class="dots buttonSelected"
-            style="left:25px; top:310px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background:none; color:#dfe7f2; border-style:none;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+            class="dots buttonSelected satNavShowCharacters"
+            style="top:310px;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
 
           <div id="satnav_rename_entry_in_directory_characters_line_2"
             UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
@@ -1730,19 +1718,16 @@ char mfd_html[] PROGMEM = R"=====(
             on_up_button="highlightIndexes['satnav_rename_entry_in_directory_characters_line_1'] = highlightIndexes['satnav_rename_entry_in_directory_characters_line_2']; navigateButtons('UP_BUTTON');"
             on_enter="highlightLetter();"
             on_exit="unhighlightLetter();"
-            class="dots"
-            style="left:25px; top:380px; width:925px; font-size:50px; line-height:1.5; display:inline-block;
-              background:none; color:#dfe7f2; border-style:none;">YZ0123456789</div>
+            class="dots satNavShowCharacters"
+            style="top:380px;">YZ0123456789</div>
 
-          <div button_orientation="horizontal"
-            style="position:absolute; left:20px; top:460px; width:940px; height:80px;">
+          <div button_orientation="horizontal" class="buttonBar">
 
             <!-- on_click: goes all the way back to the "Directory management" menu -->
             <div id="satnav_rename_entry_in_directory_validate_button"
               UP_BUTTON="satnav_rename_entry_in_directory_characters_line_2"
               on_click="satnavDirectoryEntryRenameValidateButton();"
-              class="icon button"
-              style="left:0px; top:0px; width:240px; height:40px;">
+              class="icon button validateButton">
               Validate
             </div>
 
@@ -2093,7 +2078,7 @@ char mfd_html[] PROGMEM = R"=====(
               </div>  <!-- Legs and roundabout -->
             </div>  <!-- "satnav_next_turn_icon" -->
           </div>  <!-- Area with guidance icon(s) -->
-        </div>  <!-- Sat nav guidance -->
+        </div>  <!-- "satnav_guidance" -->
       </div>  <!-- Navigation -->
 
       <!-- Popups in the "large" information panel -->
@@ -2117,9 +2102,9 @@ char mfd_html[] PROGMEM = R"=====(
 
         <!-- Data -->
         <div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:10px; width:100px;">0</div>
-        <div id="condenser_temperature" class="tag" style="font-size:60px; left:100px; top:120px; width:160px;">--</div>
+        <div id="condenser_temp" class="tag" style="font-size:60px; left:100px; top:120px; width:160px;">--</div>
         <div class="tag" style="font-size:60px; left:270px; top:120px; width:90px; text-align:left;">&deg;C</div>
-        <div id="evaporator_temperature" class="tag" style="font-size:60px; left:380px; top:120px; width:230px;">-.-</div>
+        <div id="evaporator_temp" class="tag" style="font-size:60px; left:380px; top:120px; width:230px;">-.-</div>
         <div class="tag" style="font-size:60px; left:620px; top:120px; width:90px; text-align:left;">&deg;C</div>
       </div>
 
@@ -2182,25 +2167,25 @@ char mfd_html[] PROGMEM = R"=====(
           <div class="tag" style="left:180px; top:113px; width:200px;">Side</div>
           <div gid="tape_side" class="dseg7" style="font-size:120px; left:380px; top:40px; width:140px;">-</div>
 
-          <div gid="tape_status_stopped" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_stopped" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-stop"></div>
           </div>
-          <div gid="tape_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_loading" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-sign-in-alt"></div>
           </div>
-          <div gid="tape_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_play" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-play"></div>
           </div>
-          <div gid="tape_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_fast_forward" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-forward"></div>
           </div>
-          <div gid="tape_status_next_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_next_track" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-fast-forward"></div>
           </div>
-          <div gid="tape_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_rewind" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-backward"></div>
           </div>
-          <div gid="tape_status_previous_track" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="tape_status_previous_track" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-fast-backward"></div>
           </div>
 
@@ -2214,25 +2199,25 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div gid="cd_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
-          <div gid="cd_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_pause" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-pause"></div>
           </div>
-          <div gid="cd_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_play" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-play"></div>
           </div>
-          <div gid="cd_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_fast_forward" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-forward"></div>
           </div>
-          <div gid="cd_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_rewind" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-backward"></div>
           </div>
-          <div gid="cd_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_searching" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-compact-disc"></div>
           </div>
-          <div gid="cd_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_loading" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-sign-in-alt"></div>
           </div>
-          <div gid="cd_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_status_eject" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-eject"></div>
           </div>
 
@@ -2257,25 +2242,25 @@ char mfd_html[] PROGMEM = R"=====(
 
           <div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
-          <div gid="cd_changer_status_pause" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_pause" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-pause"></div>
           </div>
-          <div gid="cd_changer_status_play" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_play" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-play"></div>
           </div>
-          <div gid="cd_changer_status_searching" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_searching" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-compact-disc"></div>
           </div>
-          <div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-forward"></div>
           </div>
-          <div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-backward"></div>
           </div>
-          <div gid="cd_changer_status_loading" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_loading" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-sign-in-alt"></div>
           </div>
-          <div gid="cd_changer_status_eject" class="icon iconLarge iconBorder" style="display:none; left:600px; top:35px;">
+          <div gid="cd_changer_status_eject" class="icon iconLarge iconBorder mediaStatusInPopup">
             <div class="centerAligned fas fa-eject"></div>
           </div>
 
@@ -2300,7 +2285,7 @@ char mfd_html[] PROGMEM = R"=====(
         class="icon notificationPopup" style="top:160px; height:280px; display:none;">
 
         <div class="centerAligned" style="position:absolute; left:10px; width:780px; height:200px;">
-          Destination reached
+          <div id="satnav_reached_destination_popup_title">Destination reached</div>
           <div gid="satnav_last_destination_city" class="dots"
             style="top:90px; width:780px; height:90px; font-size:40px; white-space:normal;">
           </div>
@@ -2337,14 +2322,14 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="fas fa-fire-alt"></div>
             </div>
 
-            <div gid="inst_consumption_lt_100" class="dots" style="left:100px; top:100px; width:220px; text-align:center;">--.-</div>
-            <div class="tag" style="left:100px; top:170px; width:220px; text-align:center;">l/100 km</div>
+            <div gid="inst_consumption" class="dots" style="left:100px; top:100px; width:220px; text-align:center;">--.-</div>
+            <div gid="fuel_consumption_unit" class="tag" style="left:100px; top:170px; width:220px; text-align:center;">l/100 km</div>
 
             <div class="icon iconSmall" style="left:500px; top:20px;">
               <div class="fas fa-gas-pump"></div>
             </div>
             <div gid="distance_to_empty" class="dots" style="left:430px; top:100px; width:220px; text-align:center;">---</div>
-            <div class="tag" style="left:430px; top:170px; width:220px; text-align:center;">km</div>
+            <div gid="distance_unit" class="tag" style="left:430px; top:170px; width:220px; text-align:center;">km</div>
           </div>
 
           <div id="trip_computer_popup_trip_1" class="tabContent"
@@ -2356,8 +2341,8 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="icon iconSmall" style="left:120px; top:20px;">
               <div class="fas fa-fire-alt"></div>
             </div>
-            <div gid="avg_consumption_lt_100_1" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
-            <div class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100km</div>
+            <div gid="avg_consumption_1" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
+            <div gid="fuel_consumption_unit" class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100 km</div>
 
             <div class="icon iconSmall" style="left:290px; top:20px;">
               <div class="fas fa-angle-double-right"></div>
@@ -2366,14 +2351,14 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="fas fa-tachometer-alt"></div>
             </div>
             <div gid="avg_speed_1" class="dots" style="left:250px; top:100px; width:220px; text-align:center;">--</div>
-            <div class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
+            <div gid="speed_unit" class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
 
             <div class="icon iconSmall" style="left:510px; top:20px; width:70px;">...</div>
             <div class="icon iconSmall" style="left:560px; top:20px;">
               <div class="fas fa-car-side"></div>
             </div>
             <div gid="distance_1" class="dots" style="left:465px; top:100px; width:230px; text-align:center;">--</div>
-            <div class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
+            <div gid="distance_unit" class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
           </div>
 
           <div id="trip_computer_popup_trip_2" class="tabContent"
@@ -2385,8 +2370,8 @@ char mfd_html[] PROGMEM = R"=====(
             <div class="icon iconSmall" style="left:120px; top:20px;">
               <div class="fas fa-fire-alt"></div>
             </div>
-            <div gid="avg_consumption_lt_100_2" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
-            <div class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100km</div>
+            <div gid="avg_consumption_2" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
+            <div gid="fuel_consumption_unit" class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100 km</div>
 
             <div class="icon iconSmall" style="left:290px; top:20px;">
               <div class="fas fa-angle-double-right"></div>
@@ -2395,14 +2380,14 @@ char mfd_html[] PROGMEM = R"=====(
               <div class="fas fa-tachometer-alt"></div>
             </div>
             <div gid="avg_speed_2" class="dots" style="left:250px; top:100px; width:220px; text-align:center;">--</div>
-            <div class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
+            <div gid="speed_unit" class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
 
             <div class="icon iconSmall" style="left:510px; top:20px; width:70px;">...</div>
             <div class="icon iconSmall" style="left:560px; top:20px;">
               <div class="fas fa-car-side"></div>
             </div>
             <div gid="distance_2" class="dots" style="left:465px; top:100px; width:230px; text-align:center;">--</div>
-            <div class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
+            <div gid="distance_unit" class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
           </div>
         </div>
       </div>  <!-- "trip_computer_popup" -->
@@ -2450,7 +2435,7 @@ char mfd_html[] PROGMEM = R"=====(
       <!-- Sat nav initializing popup -->
 
       <div id="satnav_initializing_popup" class="icon notificationPopup" style="display:none;">
-        <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
+        <div class="centerAligned messagePopupArea">
           Navigation system<br />being initialised
         </div>
       </div>  <!-- "satnav_initializing_popup" -->
@@ -2460,7 +2445,7 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="satnav_input_stored_in_personal_dir_popup"
         on_exit="exitMenu();"
         class="icon notificationPopup" style="display:none;">
-        <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
+        <div class="centerAligned messagePopupArea">
           Input has been stored in<br />the personal<br />directory
         </div>
       </div>  <!-- "satnav_input_stored_in_personal_dir_popup" -->
@@ -2470,7 +2455,7 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="satnav_input_stored_in_professional_dir_popup"
         on_exit="exitMenu();"
         class="icon notificationPopup" style="display:none;">
-        <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
+        <div class="centerAligned messagePopupArea">
           Input has been stored in<br />the professional<br />directory
         </div>
       </div>  <!-- "satnav_input_stored_in_professional_dir_popup" -->
@@ -2480,22 +2465,21 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="satnav_delete_item_popup"
         on_enter="selectButton('satnav_delete_item_popup_no_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
-        <div class="centerAligned" style="position:absolute; left:50px; width:710px; height:200px;">
-          Delete item ?<br />
+        <div class="centerAligned yesNoPopupArea">
+          <div id="satnav_delete_item_popup_title">Delete item ?<br /></div>
+
           <span style="font-size:60px;" id="satnav_delete_directory_entry_in_popup"></span>
 
           <div button_orientation="horizontal">
             <!-- on_click: goes all the way back to the "Directory management" menu -->
             <div id="satnav_delete_item_popup_yes_button"
-              class="icon button"
               on_click="satnavDeleteDirectoryEntry();"
-              style="left:150px; top:150px; width:150px; height:40px;">
+              class="icon button yesButton" style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
             <div id="satnav_delete_item_popup_no_button"
-              class="icon button"
               on_click="hidePopup();"
-              style="left:360px; top:150px; width:150px; height:40px;">
+              class="icon button noButton" style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>
           </div>
@@ -2509,9 +2493,7 @@ char mfd_html[] PROGMEM = R"=====(
         on_exit="showOrTimeoutDestinationNotAccessiblePopup();"
         class="icon notificationPopup"
         style="display:none;">
-        <div class="centerAligned" style="position:absolute; left:100px; width:610px;">
-          Computing route<br />in progress
-        </div>
+        <div class="centerAligned messagePopupArea">Computing route<br />in progress</div>
       </div>  <!-- "satnav_computing_route_popup" -->
 
       <!--
@@ -2522,18 +2504,19 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="satnav_guidance_preference_popup"
         on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
-        <div class="centerAligned" style="position:absolute; left:50px; width:710px; height:200px;">
-          Keep criteria "<span id="satnav_guidance_current_preference_text">Fastest route</span>"?
+        <div class="centerAligned yesNoPopupArea">
+          <span id="satnav_guidance_preference_popup_title">Keep criteria</span>
+          "<span id="satnav_guidance_current_preference_text">Fastest route</span>"?
 
           <div button_orientation="horizontal">
             <div id="satnav_guidance_preference_popup_yes_button"
-              class="icon button"
+              class="icon button yesButton"
               on_click="satnavGuidancePreferencePopupYesButton();"
               style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
             <div id="satnav_guidance_preference_popup_no_button"
-              class="icon button"
+              class="icon button noButton"
               on_click="satnavGuidancePreferencePopupNoButton();"
               style="left:360px; top:150px; width:150px; height:40px;">
               No
@@ -2547,18 +2530,18 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="satnav_delete_directory_data_popup"
         on_enter="selectButton('satnav_delete_directory_data_popup_no_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
-        <div class="centerAligned" style="position:absolute; left:50px; width:710px; height:200px;">
-          This will delete all data in directories
+        <div class="centerAligned yesNoPopupArea">
+          <div id="satnav_delete_directory_data_popup_title">This will delete all data in directories</div>
 
           <div button_orientation="horizontal">
             <div id="satnav_delete_directory_data_popup_yes_button"
               on_click="satnavDeleteDirectories();"
-              class="icon button" style="left:150px; top:150px; width:150px; height:40px;">
+              class="icon button yesButton" style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
             <div id="satnav_delete_directory_data_popup_no_button"
               on_click="hidePopup('satnav_delete_directory_data_popup');"
-              class="icon button" style="left:360px; top:150px; width:150px; height:40px;">
+              class="icon button noButton" style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>
           </div>
@@ -2570,18 +2553,18 @@ char mfd_html[] PROGMEM = R"=====(
       <div id="satnav_continue_guidance_popup"
         on_enter="selectButton('satnav_continue_guidance_popup_yes_button');"
         class="icon notificationPopup" style="display:none; height:300px;">
-        <div class="centerAligned" style="position:absolute; left:50px; width:710px; height:200px;">
-          Continue guidance to destination ?
+        <div class="centerAligned yesNoPopupArea">
+          <div id="satnav_continue_guidance_popup_title">Continue guidance to destination ?</div>
 
           <div button_orientation="horizontal">
             <div id="satnav_continue_guidance_popup_yes_button"
               on_click="hidePopup('satnav_continue_guidance_popup'); satnavShowDisclaimer();"
-              class="icon button" style="left:150px; top:150px; width:150px; height:40px;">
+              class="icon button yesButton" style="left:150px; top:150px; width:150px; height:40px;">
               Yes
             </div>
             <div id="satnav_continue_guidance_popup_no_button"
               on_click="hidePopup('satnav_continue_guidance_popup');"
-              class="icon button" style="left:360px; top:150px; width:150px; height:40px;">
+              class="icon button noButton" style="left:360px; top:150px; width:150px; height:40px;">
               No
             </div>
           </div>
@@ -2591,7 +2574,7 @@ char mfd_html[] PROGMEM = R"=====(
       <!-- Status popup (without icon) -->
 
       <div id="status_popup" class="icon notificationPopup" style="display:none;">
-        <div id="status_popup_text" class="centerAligned" style="position:absolute; left:100px; width:610px;">
+        <div id="status_popup_text" class="centerAligned messagePopupArea">
         </div>
       </div>  <!-- "status_popup" -->
 
@@ -2827,8 +2810,8 @@ COMMS_LED
 
 R"=====(
     <div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
-      <div gid="inst_consumption_lt_100" class="dots" style="left:0px; top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>
-      <div class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
+      <div gid="inst_consumption" class="dots" style="left:0px; top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>
+      <div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
     </div>
 
     <div class="tab tabBottom" style="left:385px; top:550px; width:220px;">
@@ -2838,7 +2821,7 @@ R"=====(
       <div gid="distance_to_empty" class="dots" style="left:60px; top:15px; width:150px; font-size:50px; text-align:right;">---</div>
     </div>
 
-    <div gid="exterior_temperature" class="tab tabBottom" style="left:610px; top:550px; width:200px;">-- &deg;C</div>
+    <div gid="exterior_temp_shown" class="tab tabBottom" style="left:610px; top:550px; width:200px;">-- &deg;C</div>
     <div id="date_small" class="tab tabBottom" style="left:815px; top:550px; width:320px;">---</div>
     <div id="time_small" class="tab tabBottom" style="left:1140px; top:550px; width:180px;">--:--</div>
 
