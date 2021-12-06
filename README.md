@@ -114,8 +114,8 @@ See also the [screen shots](#screenshots) above.
 * CD changer unit
 * Notifications and warnings
 * Satellite Navigation (maps are out of date but it's a nice gimmick 😇)
-* Setting format and units
 * Multiple languages (but some menus and screens are only in English)
+* Setting format and units
 
 Note: availability will depend on your vehicle's configuration.
 
