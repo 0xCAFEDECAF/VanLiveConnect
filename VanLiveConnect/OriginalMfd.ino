@@ -216,7 +216,7 @@ void SetAllTabIndexes()
 {
     tripComputerPopupTab = smallScreen == SMALL_SCREEN_GPS_INFO ? SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen;
     tripComputerLargeScreenTab = tripComputerPopupTab;
-} // SetAllTabIndexesEqual
+} // SetAllTabIndexes
 
 // Initialize value of 'smallScreen', if necessary
 void InitSmallScreen()

@@ -68,6 +68,7 @@ PGM_P TripComputerStr(uint8_t idx);
 PGM_P TripComputerStr();
 PGM_P SmallScreenStr();
 PGM_P LargeScreenStr();
+bool IsTripComputerPopupShowing();
 void InitSmallScreen();
 void ResetTripInfo(uint16_t mfdStatus);
 void CycleTripInfo();
@@ -117,22 +118,25 @@ sint32_t _floor(sint32_t n, sint32_t d)
 
 uint16_t ToMiles(uint16_t km)
 {
-    return (uint32_t)km * 1000 / 1609;
+    //return (uint32_t)km * 1000 / 1609;
+    return (uint32_t)km * 10 / 16;
 } // ToMiles
 
 sint32_t ToMiles(sint32_t km)
 {
-    return (sint32_t)km * 1000 / 1609;
+    //return (sint32_t)km * 1000 / 1609;
+    return (sint32_t)km * 10 / 16;
 } // ToMiles
 
 float ToMiles(float km)
 {
-    return km * 1.609;
+    //return km / 1.609;
+    return km / 1.6;
 } // ToMiles
 
 float ToYards(float m)
 {
-    return m * 1.094;
+    return m / 1.094;
 } // ToYards
 
 float ToMilesPerGallon(float consumptionLt100_x10)
@@ -1401,7 +1405,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         PopupStr()  // Possibly updated if the stalk was short-pressed
     );
 
-    if (tripComputerPopupTab >= 0)
+    if (IsTripComputerPopupShowing() && tripComputerPopupTab >= 0)
     {
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at,
@@ -2362,7 +2366,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
                 TripComputerStr()
             );
 
-        if (tripComputerPopupTab >= 0)
+        if (IsTripComputerPopupShowing() && tripComputerPopupTab >= 0)
         {
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at,
@@ -3171,19 +3175,19 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             roadDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
-            roadDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("y"),
+            roadDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("yd"),
 
         FloatToStr(floatBuf[1], gpsDistanceToDestination, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             gpsDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
-            gpsDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("y"),
+            gpsDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("yd"),
 
         FloatToStr(floatBuf[2], distanceToNextTurn, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             distanceToNextTurnInKmsMiles ? PSTR("km") : PSTR("m") :
-            distanceToNextTurnInKmsMiles ? PSTR("mile") : PSTR("y"),
+            distanceToNextTurnInKmsMiles ? PSTR("mile") : PSTR("yd"),
 
         headingOnRoundabout == 0x7FFF ? notApplicable3Str : FloatToStr(floatBuf[3], headingOnRoundabout, 0),
         minutesToTravel
@@ -3712,7 +3716,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // Distance to the service address (sat nav reports in kms or in yards)
                     records[0][11].c_str(),
-                    mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? PSTR("m") : PSTR("y")
+                    mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? PSTR("m") : PSTR("yd")
                 );
         }
         break;
