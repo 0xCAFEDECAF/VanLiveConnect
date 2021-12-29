@@ -12,6 +12,7 @@ extern uint8_t mfdTimeUnit;
 extern const char yesStr[];
 extern const char noStr[];
 void PrintJsonText(const char* jsonBuffer);
+void ResetPacketPrevData();
 
 // Defined in OriginalMfd.ino
 extern uint8_t mfdLanguage;
@@ -28,8 +29,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 uint8_t websocketNum = 0xFF;
 
-// Broadcast a (JSON) message to all websocket clients
-void BroadcastJsonText(const char* json)
+// Send a (JSON) message to the websocket client
+void SendJsonText(const char* json)
 {
     if (strlen(json) <= 0) return;
     if (websocketNum == 0xFF) return;
@@ -39,8 +40,11 @@ void BroadcastJsonText(const char* json)
     unsigned long start = millis();
 
     digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
-    webSocket.broadcastTXT(json);
-    //webSocket.sendTXT(websocketNum, json); // Alternative
+
+    //webSocket.broadcastTXT(json);
+    // No, serve only the last one connected (the others are probably already dead)
+    webSocket.sendTXT(websocketNum, json);
+
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
     // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
@@ -57,7 +61,7 @@ void BroadcastJsonText(const char* json)
         Serial.print(F("JSON object:\n"));
         PrintJsonText(json);
     } // if
-} // BroadcastJsonText
+} // SendJsonText
 
 void ProcessWebSocketClientMessage(const char* payload)
 {
@@ -97,6 +101,8 @@ void ProcessWebSocketClientMessage(const char* payload)
         mfdDistanceUnit =
             value == "set_units_mph" ? MFD_DISTANCE_UNIT_IMPERIAL :
             MFD_DISTANCE_UNIT_METRIC;
+
+        ResetPacketPrevData();
     }
     else if (clientMessage.startsWith("mfd_temperature_unit:"))
     {
@@ -105,6 +111,8 @@ void ProcessWebSocketClientMessage(const char* payload)
         mfdTemperatureUnit =
             value == "set_units_deg_fahrenheit" ? MFD_TEMPERATURE_UNIT_FAHRENHEIT :
             MFD_TEMPERATURE_UNIT_CELSIUS;
+
+        ResetPacketPrevData();
     }
     else if (clientMessage.startsWith("mfd_time_unit:"))
     {
@@ -138,13 +146,13 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             websocketNum = num;
 
             // Send ESP system data to client
-            BroadcastJsonText(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+            SendJsonText(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send Wi-Fi and IP data to client
-            BroadcastJsonText(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
+            SendJsonText(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send equipment status data, e.g. presence of sat nav and other devices
-            BroadcastJsonText(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+            SendJsonText(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
         }
         break;
 

@@ -314,7 +314,14 @@ var connectToWebsocketTimer = setTimeout(
 
 		// Bind to WebSocket to server events
 		webSocket.bind('display', function(data) { writeToDom(data); });
-		webSocket.bind('open', function () { webSocket.send("mfd_language:" + localStorage.mfdLanguage); });
+		webSocket.bind('open', function ()
+			{
+				webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+				webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
+				webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
+				webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
+			}
+		);
 		//webSocket.bind('close', function () { demoMode(); });
 	}, // function
 	2000
@@ -1527,7 +1534,6 @@ function hideAudioSettingsPopup()
 	isAudioMenuVisible = false;
 
 	if (! $("#audio_settings_popup").is(":visible")) return false;
-	//$("#audio_settings_popup").hide();
 	hidePopup("audio_settings_popup");
 	return true;
 } // hideAudioSettingsPopup
@@ -1615,6 +1621,8 @@ function showTunerPresetsPopup()
 
 // -----
 // Functions for selecting MFD language
+
+var notDigitizedAreaText = "Not digitized area";
 
 // Find the ticked button and select it
 function languageSelectTickedButton()
@@ -1758,6 +1766,7 @@ var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
 var satnavDestinationReachable = true;
+var satnavGpsFix = false;
 var satnavOnMap = false;
 var satnavStatus1 = "";
 var satnavDestinationAccessible = true;
@@ -2690,9 +2699,10 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Show this popup only once at start of guidance or after recalculation
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
 
-	// But only if the curent location is known (to emulate behaviour of MFD)
+	// But only if the current location is known (to emulate behaviour of MFD)
 	//if (satnavCurrentStreet !== "")
-	if (satnavOnMap)
+	//if (satnavOnMap)
+	if (satnavGpsFix)
 	{
 		hidePopup();
 		showStatusPopup(
@@ -3920,9 +3930,21 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "satnav_gps_fix":
+		{
+			satnavGpsFix = value === "YES";
+		} // case
+		break;
+
 		case "satnav_on_map":
 		{
 			satnavOnMap = value === "YES";
+
+			if (value === "NO" && satnavCurrentStreet !== "")
+			{
+				satnavCurrentStreet = "";
+				$('[gid="satnav_curr_street_shown"]').html(notDigitizedAreaText);
+			} // if
 		} // case
 		break;
 
@@ -4026,7 +4048,8 @@ function handleItemChange(item, value)
 			} // if
 
 			// In the current location screen, show "City", or "Street (City)", otherwise "Street not listed"
-			// TODO - do we ever see "Not digitized area" in the current location screen?
+			// Note: when driving off the map, the current location screen will start showing "Not digitized area"; this
+			// is handled by 'case "satnav_on_map"' above.
 			$('[gid="satnav_curr_street_shown"]').text(value !== "" ? value : "Street not listed");
 
 			// Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
@@ -4595,7 +4618,7 @@ function handleItemChange(item, value)
 				// Hide the "Computing route in progress" popup, if showing
 				hidePopup("satnav_computing_route_popup");
 
-				$("#satnav_guidance_next_street").text(
+				$("#satnav_guidance_next_street").html(
 					localStorage.mfdLanguage === "set_language_french" ? "Suivez le cap indiqu&eacute;" :
 					localStorage.mfdLanguage === "set_language_german" ? "Folgen Sie dem Pfeil" :
 					localStorage.mfdLanguage === "set_language_spanish" ? "Siga el rumbo indicado" :
@@ -4607,14 +4630,7 @@ function handleItemChange(item, value)
 				//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
 
 				// To replicate a bug in the original MFD; in fact the current street is usually known
-				$("#satnav_guidance_curr_street").text(
-					localStorage.mfdLanguage === "set_language_french" ? "Zone non cartographi&eacute;e" :
-					localStorage.mfdLanguage === "set_language_german" ? "Nicht kartographiert" :
-					localStorage.mfdLanguage === "set_language_spanish" ? "Zona no cartografiada" :
-					localStorage.mfdLanguage === "set_language_italian" ? "Area non mappata" :
-					localStorage.mfdLanguage === "set_language_dutch" ? "Zone niet in kaart" :
-					"Not digitized area"
-				);
+				$("#satnav_guidance_curr_street").html(notDigitizedAreaText);
 			} // if
 
 			$("#satnav_turn_at_indication").toggle(value !== "ON");
@@ -4962,6 +4978,8 @@ function setLanguage(language)
 				guidance instructions must be carefully<br>\
 				checked by the user.<br>");
 
+			notDigitizedAreaText = "Not digitized area";
+
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Enter new destination");
 			$("#satnav_main_menu .button:eq(1)").html("Select a service");
@@ -5100,6 +5118,8 @@ function setLanguage(language)
 				substituer &agrave; l&aacute;nalyse du conducteur.<br>\
 				Soi te consigne de guidance est &agrave; v&eacute;rifier<br>\
 				scrupuleusement par l&uacute;tilisateur.<br>");
+
+			notDigitizedAreaText = "Zone non cartographi&eacute;e";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Saisie d'une nouvelle destination");
@@ -5240,6 +5260,8 @@ function setLanguage(language)
 				F&uuml;hrungsanweisung mu&szlig; vom Benutzer<br>\
 				sofgf&auml;ltig gepr&uuml;ft werden");
 
+			notDigitizedAreaText = "Nicht kartographiert";
+
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / F&uuml;hrung<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Neues Ziel eingeben");
 			$("#satnav_main_menu .button:eq(1)").html("Einen Dienst w&auml;hlen");
@@ -5377,6 +5399,8 @@ function setLanguage(language)
 				// cannot replace the driver's decisions. All<br>\
 				// guidance instructions must be carefully<br>\
 				// checked by the user.<br>");
+
+			notDigitizedAreaText = "Zona no cartografiada";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navegaci&oacute;n / Guiado<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Introducir nuevo destino");
@@ -5516,6 +5540,8 @@ function setLanguage(language)
 				// guidance instructions must be carefully<br>\
 				// checked by the user.<br>");
 
+			notDigitizedAreaText = "Area non mappata";
+
 			$("#satnav_main_menu .menuTitleLine").html("Navigazione/Guida<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Inserire una nuova destinazione");
 			$("#satnav_main_menu .button:eq(1)").html("Scelta un servizio");
@@ -5648,11 +5674,14 @@ function setLanguage(language)
 				// Input has been stored in<br />the professional<br />directory");
 			$("#satnav_computing_route_popup .messagePopupArea").html("Routeberekening");
 
-			// $("#satnav_disclaimer_text").html("\
-				// Navigation is an electronic help system. It<br>\
-				// cannot replace the driver's decisions. All<br>\
-				// guidance instructions must be carefully<br>\
-				// checked by the user.<br>");
+			$("#satnav_disclaimer_text").html("\
+				De navigator is een elektronisch<br>\
+				hulpsysteem dat de beslissing van de<br>\
+				bestuurder niet kan vervangen.<br>\
+				De gebruiker moet elke aanwijzing<br>\
+				nauwkeurig controleren.<br>");
+
+			notDigitizedAreaText = "Zone niet in kaart";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigatie/ Begeleiding<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Nieuwe bestemming invoeren");

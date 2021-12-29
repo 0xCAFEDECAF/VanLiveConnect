@@ -2580,7 +2580,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Audio settings popup -->
 
-			<div id="audio_settings_popup" class="icon notificationPopup" style="display:none; top:80px; height:430px;">
+			<div id="audio_settings_popup" class="icon notificationPopup" 
+				style="display:none; left:50px; top:80px; width:830px; height:430px;">
 
 				<div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
 				<div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
@@ -2595,20 +2596,20 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
 
-				<div class="tag" style="left:430px; top:210px; width:200px;">Fader</div>
-				<div id="fader" class="dots" style="left:640px; top:215px; width:100px; text-align:right;">-</div>
-				<div class="tag" style="left:430px; top:280px; width:200px;">Balance</div>
-				<div id="balance" class="dots" style="left:640px; top:285px; width:100px; text-align:right;">-</div>
+				<div class="tag" style="left:410px; top:210px; width:200px;">Fader</div>
+				<div id="fader" class="dots" style="left:640px; top:215px; width:150px; text-align:right;">-</div>
+				<div class="tag" style="left:410px; top:280px; width:200px;">Balance</div>
+				<div id="balance" class="dots" style="left:640px; top:285px; width:150px; text-align:right;">-</div>
 
-				<div id="auto_volume" class="led ledOff" style="left:475px; top:360px; width:260px;">AUTO-VOL</div>
+				<div id="auto_volume" class="led ledOff" style="left:525px; top:360px; width:260px;">AUTO-VOL</div>
 
 				<!-- Highlight boxes -->
 				<div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:200px; width:320px; height:60px;"></div>
-				<div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:260px; width:320px; height:60px;"></div>
+				<div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:270px; width:320px; height:60px;"></div>
 				<div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:348px; width:147px; height:37px;"></div>
-				<div id="fader_select" class="highlight icon iconBorder" style="left:410px; top:200px; width:320px; height:60px;"></div>
-				<div id="balance_select" class="highlight icon iconBorder" style="left:410px; top:260px; width:320px; height:60px;"></div>
-				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:465px; top:348px; width:257px; height:37px;"></div>
+				<div id="fader_select" class="highlight icon iconBorder" style="left:400px; top:200px; width:390px; height:60px;"></div>
+				<div id="balance_select" class="highlight icon iconBorder" style="left:400px; top:270px; width:390px; height:60px;"></div>
+				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:515px; top:348px; width:257px; height:37px;"></div>
 			</div>	<!-- "audio_settings_popup" -->
 
 			<!--

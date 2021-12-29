@@ -44,7 +44,7 @@ void SetupWebServer();
 void LoopWebServer();
 
 // Defined in WebSocket.ino
-void BroadcastJsonText(const char* json);
+void SendJsonText(const char* json);
 void SetupWebSocket();
 void LoopWebSocket();
 
@@ -230,12 +230,12 @@ void loop()
 
     // IR receiver
     TIrPacket irPacket;
-    if (IrReceive(irPacket)) BroadcastJsonText(ParseIrPacketToJson(irPacket));
+    if (IrReceive(irPacket)) SendJsonText(ParseIrPacketToJson(irPacket));
 
     // VAN bus receiver
     TVanPacketRxDesc pkt;
     bool isQueueOverrun = false;
-    if (VanBusRx.Receive(pkt, &isQueueOverrun)) BroadcastJsonText(ParseVanPacketToJson(pkt));
+    if (VanBusRx.Receive(pkt, &isQueueOverrun)) SendJsonText(ParseVanPacketToJson(pkt));
     if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
     static unsigned long lastUpdate = 0;
@@ -245,7 +245,7 @@ void loop()
 
     #ifdef SHOW_ESP_RUNTIME_STATS
         // Send ESP runtime data to client
-        BroadcastJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+        SendJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
     #endif // SHOW_ESP_RUNTIME_STATS
 
     #ifdef SHOW_VAN_RX_STATS
@@ -253,7 +253,7 @@ void loop()
         VanBusRx.DumpStats(Serial);
 
         // Send VAN bus receiver status string to client
-        BroadcastJsonText(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
+        SendJsonText(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
     #endif // SHOW_VAN_RX_STATS
     } // if
 } // loop

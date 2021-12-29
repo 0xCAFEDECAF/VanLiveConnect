@@ -37,6 +37,7 @@ struct IdenHandler_t
 // Often used string constants
 const char PROGMEM emptyStr[] = "";
 const char PROGMEM commaStr[] = ",";
+const char PROGMEM spaceStr[] = " ";
 const char PROGMEM onStr[] = "ON";
 const char PROGMEM offStr[] = "OFF";
 const char PROGMEM yesStr[] = "YES";
@@ -747,7 +748,17 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     bool isCoolantTempValid = lastValidCoolantTempRaw != 0xFF;
     sint16_t coolantTemp = (uint16_t)lastValidCoolantTempRaw - 39;
     float odometer = ((uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5]) / 10.0;
-    float extTemp = data[6] / 2.0 - 40;
+
+    // Copy new value for exterior temperature at first time, or if seeing the same value twice
+
+    uint8_t extTempRaw = data[6];
+    static uint32_t reportedTempRaw = extTempRaw;
+    static uint32_t prevTempRaw = extTempRaw;
+
+    if (extTempRaw != reportedTempRaw && extTempRaw == prevTempRaw) reportedTempRaw = extTempRaw;
+    prevTempRaw = extTempRaw;
+
+    float extTemp = reportedTempRaw / 2.0 - 40;
 
     economyMode = data[1] & 0x10;
 
@@ -1273,6 +1284,9 @@ inline bool IsEngineRpmValid()
 bool isSatnavGuidanceActive = false;
 bool isCurrentStreetKnown = false;
 
+// Set to true to disable (once) duplicate detection. For use when switching to other units.
+bool SkipCarStatus1PktDupDetect = false;
+
 VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#564
@@ -1283,8 +1297,9 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
     // Only continue parsing if actual content differs, not just the sequence number
     static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
-    if (memcmp(data + 1, packetData, dataLen - 2) == 0) return VAN_PACKET_DUPLICATE;
+    if (! SkipCarStatus1PktDupDetect && memcmp(data + 1, packetData, dataLen - 2) == 0) return VAN_PACKET_DUPLICATE;
     memcpy(packetData, data + 1, dataLen - 2);
+    SkipCarStatus1PktDupDetect = false;
 
     InitSmallScreen();
 
@@ -2208,12 +2223,15 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
     // https://github.com/morcibacsi/PSAVanCanBridge/blob/master/src/Van/Structs/VanRadioInfoStructs.h
 
     const uint8_t* data = pkt.Data();
-    uint8_t volume = data[5] & 0x7F;
     isHeadUnitPowerOn = data[2] & 0x01;
     bool isTapePresent = data[4] & 0x20;
     bool isCdPresent = data[4] & 0x40;
     seenTapePresence = seenTapePresence || isTapePresent;
     seenCdPresence = seenCdPresence || isCdPresent;
+
+    uint8_t volume = data[5] & 0x7F;
+    sint8_t balance = (sint8_t)(0x3F) - (data[6] & 0x7F);
+    sint8_t fader = (sint8_t)(0x3F) - (data[7] & 0x7F);
 
     static bool washeadUnitPowerOn = false;
     if (! washeadUnitPowerOn && isHeadUnitPowerOn)
@@ -2255,9 +2273,9 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"treble\": \"%+d\",\n"
             "\"treble_update\": \"%S\",\n"
             "\"loudness\": \"%S\",\n"
-            "\"fader\": \"%+d\",\n"
+            "\"fader\": \"%c %+d\",\n"
             "\"fader_update\": \"%S\",\n"
-            "\"balance\": \"%+d\",\n"
+            "\"balance\": \"%c %+d\",\n"
             "\"balance_update\": \"%S\",\n"
             "\"auto_volume\": \"%S\",\n"
             "\"large_screen\": \"%S\",\n"
@@ -2308,9 +2326,9 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         (sint8_t)(data[9] & 0x7F) - 0x3F,  // Treble
         data[9] & 0x80 ? yesStr : noStr,
         data[1] & 0x10 ? onStr : offStr,  // Loudness
-        (sint8_t)(0x3F) - (data[7] & 0x7F),  // Fader
+        fader > 0 ? 'F' : 'R', fader,
         data[7] & 0x80 ? yesStr : noStr,
-        (sint8_t)(0x3F) - (data[6] & 0x7F),  // Balance
+        balance > 0 ? 'R' : 'L', balance,
         data[6] & 0x80 ? yesStr : noStr,
         data[1] & 0x04 ? onStr : offStr,  // Auto volume
         LargeScreenStr(),
@@ -2520,6 +2538,9 @@ VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     return VAN_PACKET_PARSE_OK;
 } // ParseAirCon1Pkt
 
+// Set to true to disable (once) duplicate detection. For use when switching to other units.
+bool SkipAirCon2PktDupDetect = false;
+
 VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4DC
@@ -2529,15 +2550,42 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     const uint8_t* data = pkt.Data();
     int dataLen = pkt.DataLen();
 
-    // Evaporator temperature is contantly toggling between 2 values, while the rest of the data is the same.
-    // So process only if not duplicate of previous 2 packets.
-    static uint8_t packetData[2][VAN_MAX_DATA_BYTES];  // Previous packet data
+    // Avoid continuous updates if a temperature value is constantly toggling between 2 values, while the rest of the
+    // data is the same.
+    
+    static uint16_t prevStatusBits = 0xFFFF;  // Value that can never come from a packet itself
+    uint8_t statusBits = data[0];
+    
+    static uint16_t prevContactKeyData = 0xFFFF;  // Value that can never come from a packet itself
+    uint8_t contactKeyData = data[1];
+    
+    static uint32_t lastReportedCondenserTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
+    uint8_t condenserTemp = data[2];
+    static uint8_t prevCondenserTemp = condenserTemp;
+    
+    static uint32_t lastReportedEvaporatorTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
+    uint16_t evaporatorTemp = (uint16_t)data[3] << 8 | data[4];
+    static uint16_t prevEvaporatorTemp = evaporatorTemp;
+    
+    bool hasNewData =
+        SkipAirCon2PktDupDetect
+        || statusBits != prevStatusBits
+        || contactKeyData != prevContactKeyData
+        || (condenserTemp != lastReportedCondenserTemp && condenserTemp == prevCondenserTemp)
+        || (evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp == prevEvaporatorTemp);
 
-    if (memcmp(data, packetData[0], dataLen) == 0) return VAN_PACKET_DUPLICATE;
-    if (memcmp(data, packetData[1], dataLen) == 0) return VAN_PACKET_DUPLICATE;
+    SkipAirCon2PktDupDetect = false;
+    prevStatusBits = statusBits;
+    prevContactKeyData = contactKeyData;
+    prevCondenserTemp = condenserTemp;
+    prevEvaporatorTemp = evaporatorTemp;
+    
+    if (! hasNewData) return VAN_PACKET_DUPLICATE;
+    
+    lastReportedCondenserTemp = condenserTemp;
+    lastReportedEvaporatorTemp = evaporatorTemp;
 
-    memcpy(packetData[0], packetData[1], dataLen);
-    memcpy(packetData[1], data, dataLen);
+    float evaporatorTempCelsius = evaporatorTemp / 10.0 - 40.0;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2554,25 +2602,30 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         "}\n"
     "}\n";
 
-    char floatBuf[2][MAX_FLOAT_SIZE];
+    char floatBuf[MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
-        data[0] & 0x80 ? yesStr : noStr,
-        data[0] & 0x40 ? yesStr : noStr,
-        data[0] & 0x20 ? onStr : offStr,
-        data[0] & 0x01 ? onStr : offStr,
+        statusBits & 0x80 ? yesStr : noStr,
+        statusBits & 0x40 ? yesStr : noStr,
+        statusBits & 0x20 ? onStr : offStr,
+        statusBits & 0x01 ? onStr : offStr,
 
-        data[1] == 0x1C ? PSTR("ACC_OR_OFF") :
-        data[1] == 0x18 ? PSTR("ACC-->OFF") :
-        data[1] == 0x04 ? PSTR("ON-->ACC") :
-        data[1] == 0x00 ? onStr :
-        ToHexStr(data[1]),
+        contactKeyData == 0x1C ? PSTR("ACC_OR_OFF") :
+        contactKeyData == 0x18 ? PSTR("ACC-->OFF") :
+        contactKeyData == 0x04 ? PSTR("ON-->ACC") :
+        contactKeyData == 0x00 ? onStr :
+        ToHexStr(contactKeyData),
 
         // This is not interior temperature. This rises quite rapidly if the aircon compressor is
         // running, and drops again when the aircon compressor is off. So I think this is the condenser
         // temperature.
-        data[2] == 0xFF ? notApplicable2Str : FloatToStr(floatBuf[0], data[2], 0),
+        condenserTemp == 0xFF ? notApplicable2Str :
+            mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+                ToStr(condenserTemp) :
+                ToStr(ToFahrenheit((sint16_t)condenserTemp)),
 
-        FloatToStr(floatBuf[1], ((uint16_t)data[3] << 8 | data[4]) / 10.0 - 40.0, 1)
+        mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+            FloatToStr(floatBuf, evaporatorTempCelsius, 1) :
+            FloatToStr(floatBuf, ToFahrenheit(evaporatorTempCelsius), 0)
     );
 
     // JSON buffer overflow?
@@ -3331,6 +3384,39 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavGuidancePkt
 
+// Compose a string for a street name
+String ComposeStreetString(const String& records5, const String& records6)
+{
+    String result = "";
+
+    // First letter 'G' indicates prefix, e.g. "Rue de la" as in "Rue de la PAIX"
+    // First letter 'I' indicates building name??
+    if (records5[0] == 'G' || records5[0] == 'I')
+    {
+        result += records5.substring(1);  // Skip the 'G' or 'I'
+        if (records5.length() > 1) result += String(spaceStr);
+    } // if
+
+    result += records6;
+
+    // First letter 'D' indicates postfix, e.g. "Strasse" as in "ORANIENBURGER Strasse"
+    if (records5[0] == 'D')
+    {
+        if (records5.length() > 1) result += String(spaceStr);
+        result += records5.substring(1);  // Skip the 'D'
+    } // if
+
+    return result;
+} // ComposeStreetString
+
+// Compose a string for a city name plus optional district
+String ComposeCityString(const String& records3, const String& records4)
+{
+    String result = records3;
+    if (records4.length() > 0) result += " - " + records4;
+    return result;
+} // ComposeCityString
+
 VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#6CE
@@ -3436,41 +3522,39 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
         size_t bufLen = strlen(buffer);
         offsetInPacket += bufLen + 1 - offsetInBuffer;
-        if (offsetInPacket <= dataLen - 1)
-        {
-            // Better safe than sorry
-            if (currentRecord < MAX_SATNAV_RECORDS && currentString < MAX_SATNAV_STRINGS_PER_RECORD)
-            {
-                // Copy the current string buffer into the array
-                records[currentRecord][currentString] = buffer;
-
-                // The last character can be:
-                // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
-                //   read. This is shown as a "?".
-                // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
-                //   different country/region. This is shown on the MFD as an circle with a bar "(-)"; here we use a
-                //   circle with a cross "(X)".
-                records[currentRecord][currentString].replace("\x80", "?");
-                records[currentRecord][currentString].replace("\x81", "&#x24E7;");
-
-                // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
-                AsciiToHtml(records[currentRecord][currentString]);
-
-                // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
-                records[currentRecord][currentString].replace("#", "&shy;");
-
-                if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
-                {
-                    // Warning on serial output
-                    Serial.print(F("--> WARNING: too many strings in record in satnav report!\n"));
-                } // if
-            } // if
-
-            offsetInBuffer = 0;
-        }
-        else
+        if (offsetInPacket >= dataLen)
         {
             offsetInBuffer = bufLen;
+            continue;
+        } // if
+
+        offsetInBuffer = 0;
+
+        // Better safe than sorry
+        if (currentRecord >= MAX_SATNAV_RECORDS || currentString >= MAX_SATNAV_STRINGS_PER_RECORD) continue;
+
+        // Copy the current string buffer into the array of Strings
+        records[currentRecord][currentString] = buffer;
+
+        // The last character can be:
+        // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
+        //   read. This is shown as a "?".
+        // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
+        //   different country/region. This is shown on the MFD as an circle with a bar "(-)"; here we use a
+        //   circle with a cross "(X)".
+        records[currentRecord][currentString].replace("\x80", "?");
+        records[currentRecord][currentString].replace("\x81", "&#x24E7;");
+
+        // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
+        AsciiToHtml(records[currentRecord][currentString]);
+
+        // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
+        records[currentRecord][currentString].replace("#", "&shy;");
+
+        if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
+        {
+            // Warning on serial output
+            Serial.print(F("--> WARNING: too many strings in record in satnav report!\n"));
         } // if
     } // while
 
@@ -3498,26 +3582,27 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
     switch(report)
     {
         case SR_CURRENT_STREET:
+        {
+            isCurrentStreetKnown = true;
+        }
+        // No 'break': fallthrough intended
+
         case SR_NEXT_STREET:
         {
-            if (report == SR_CURRENT_STREET) isCurrentStreetKnown = true;
-
             if (records[0][6].length() == 0)
             {
-                // In this case, the original MFD says: "Street not listed"
+                // In this case, the original MFD says: "Street not listed". We just show the city.
 
                 const static char jsonFormatter[] PROGMEM =
                     ",\n"
-                    "\"%S\": \"%s%S%s\"";
+                    "\"%S\": \"%s\"";
 
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatter,
                         report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
 
                         // City (if any) + optional district
-                        records[0][3].c_str(),
-                        records[0][4].length() == 0 ? emptyStr : PSTR(" - "),
-                        records[0][4].c_str()
+                        ComposeCityString(records[0][3], records[0][4]).c_str()
                     );
 
                 break;
@@ -3525,7 +3610,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
             const static char jsonFormatter[] PROGMEM =
                 ",\n"
-                "\"%S\": \"%s%s (%s%S%s)\"";
+                "\"%S\": \"%s (%s)\"";
 
             // Current/next street is in first (and only) record. Copy only city [3], district [4] (if any) and
             // street [5, 6]; skip the other strings.
@@ -3535,13 +3620,10 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
 
                     // Street
-                    records[0][5].c_str() + 1,  // Skip the fixed first letter 'G'
-                    records[0][6].c_str(),
+                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
                     // City + optional district
-                    records[0][3].c_str(),
-                    records[0][4].length() == 0 ? emptyStr : PSTR(" - "),
-                    records[0][4].c_str()
+                    ComposeCityString(records[0][3], records[0][4]).c_str()
                 );
         }
         break;
@@ -3553,12 +3635,12 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 ",\n"
                 "\"%S\": \"%s\",\n"
                 "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s%S%s\",\n"
-                "\"%S\": \"%s%s\",\n"
+                "\"%S\": \"%s\",\n"
+                "\"%S\": \"%s\",\n"
                 "\"%S\": \"%S\"";
 
-            // Address is in first (and only) record. Copy at least only city [3], district [4] (if any), street [5, 6] and
-            // house number [7]; skip the other strings.
+            // Address is in first (and only) record. Copy at least only city [3], district [4] (if any), street [5, 6]
+            // and house number [7]; skip the other strings.
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
@@ -3581,9 +3663,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_last_destination_city"),
 
                     // City + optional district
-                    records[0][3].c_str(),
-                    records[0][4].length() == 0 ? emptyStr : PSTR(" - "),
-                    records[0][4].c_str(),
+                    ComposeCityString(records[0][3], records[0][4]).c_str(),
 
                     report == SR_DESTINATION ?
                         PSTR("satnav_current_destination_street") :
@@ -3591,8 +3671,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // Street
                     // Note: if the street is empty: it means "City center"
-                    records[0][5].c_str() + 1,  // Skip the fixed first letter 'G'
-                    records[0][6].c_str(),
+                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
                     report == SR_DESTINATION ?
                         PSTR("satnav_current_destination_house_number") :
@@ -3615,12 +3694,12 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "\"%S\": \"%s\",\n"
                 "\"%S\": \"%s\",\n"
                 "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s%S%s\",\n"
-                "\"%S\": \"%s%s\",\n"
+                "\"%S\": \"%s\",\n"
+                "\"%S\": \"%s\",\n"
                 "\"%S\": \"%s\"";
 
-            // Chosen address is in first (and only) record. Copy at least city [3], district [4] (if any), street [5, 6]
-            // house number [7] and entry name [8]; skip the other strings.
+            // Chosen address is in first (and only) record. Copy at least city [3], district [4] (if any),
+            // street [5, 6], house number [7] and entry name [8]; skip the other strings.
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
@@ -3652,9 +3731,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_professional_address_city"),
 
                     // City + optional district
-                    records[0][3].c_str(),
-                    records[0][4].length() == 0 ? emptyStr : PSTR(" - "),
-                    records[0][4].c_str(),
+                    ComposeCityString(records[0][3], records[0][4]).c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
                         PSTR("satnav_personal_address_street") :
@@ -3662,8 +3739,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // Street
                     // Note: if the street is empty: it means "City center"
-                    records[0][5].c_str() + 1,  // Skip the fixed first letter 'G'
-                    records[0][6].c_str(),
+                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
                         PSTR("satnav_personal_address_house_number") :
@@ -3685,8 +3761,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "\"satnav_service_address_entry\": \"%s\",\n"
                 "\"satnav_service_address_country\": \"%s\",\n"
                 "\"satnav_service_address_province\": \"%s\",\n"
-                "\"satnav_service_address_city\": \"%s%S%s\",\n"
-                "\"satnav_service_address_street\": \"%s%s\",\n"
+                "\"satnav_service_address_city\": \"%s\",\n"
+                "\"satnav_service_address_street\": \"%s\",\n"
                 "\"satnav_service_address_distance\": \"%s %s\"";
 
             // Chosen service address is in first (and only) record. Copy at least city [3], district [4]
@@ -3706,13 +3782,10 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     records[0][2].c_str(),
 
                     // City + optional district
-                    records[0][3].c_str(),
-                    records[0][4].length() == 0 ? emptyStr : PSTR(" - "),
-                    records[0][4].c_str(),
+                    ComposeCityString(records[0][3], records[0][4]).c_str(),
 
                     // Street
-                    records[0][5].c_str() + 1,  // Skip the fixed first letter ('G' or 'I')
-                    records[0][6].c_str(),
+                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
                     // Distance to the service address (sat nav reports in kms or in yards)
                     records[0][11].c_str(),
@@ -4977,3 +5050,25 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 
     return jsonBuffer;
 } // ParseVanPacketToJson
+
+// Called when the user chooses a different distance unit or temperature unit, so that reporting is done immediately,
+// instead of having to wait for a differing packet.
+void ResetPacketPrevData()
+{
+    IdenHandler_t* handler = handlers;
+
+    while (handler != handlers_end)
+    {
+        if (handler->prevData != NULL)
+        {
+            memset(handler->prevData, 0, VAN_MAX_DATA_BYTES);
+            handler->prevDataLen = 0;
+        } // if
+
+        handler++;
+    } // while
+
+    // These packet handlers have internal logic to skip duplicates:
+    SkipCarStatus1PktDupDetect = true;
+    SkipAirCon2PktDupDetect = true;
+} // ResetPacketPrevData
