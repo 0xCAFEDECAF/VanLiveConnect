@@ -566,7 +566,7 @@ enum SatNavRequestType_t
     SRT_REQ_N_ITEMS = 0,  // Request for number of items
     SRT_REQ_ITEMS = 1,  // Request (single or list of) item(s)
     SRT_SELECT = 2,  // Select item
-    SRT_SELECT_CITY_CENTER = 3  // Select city center
+    SRT_SELECT_CITY_CENTRE = 3  // Select city centre
 }; // enum SatNavRequestType_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
@@ -576,7 +576,7 @@ PGM_P SatNavRequestTypeStr(uint8_t data)
         data == SRT_REQ_N_ITEMS ? PSTR("REQ_N_ITEMS") :
         data == SRT_REQ_ITEMS ? PSTR("REQ_ITEMS") :
         data == SRT_SELECT ? PSTR("SELECT") :
-        data == SRT_SELECT_CITY_CENTER ? PSTR("SELECT_CITY_CENTER") :
+        data == SRT_SELECT_CITY_CENTRE ? PSTR("SELECT_CITY_CENTRE") :
         ToStr(data);
 } // SatNavRequestTypeStr
 
@@ -3670,7 +3670,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_last_destination_street"),
 
                     // Street
-                    // Note: if the street is empty: it means "City center"
+                    // Note: if the street is empty: it means "City centre"
                     ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
                     report == SR_DESTINATION ?
@@ -3738,7 +3738,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_professional_address_street"),
 
                     // Street
-                    // Note: if the street is empty: it means "City center"
+                    // Note: if the street is empty: it means "City centre"
                     ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
@@ -3994,14 +3994,14 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         //   - type = 2 (SRT_SELECT) (dataLen = 11): select entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
         //   param == 0x1D: (TODO also || param == 0x0D ?)
-        //   - type = 3 (SRT_SELECT_CITY_CENTER) (dataLen = 9): select city center
+        //   - type = 3 (SRT_SELECT_CITY_CENTRE) (dataLen = 9): select city centre
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
         request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_REQ_N_ITEMS ? PSTR("satnav_enter_street_characters") :
         request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
         request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_SELECT ? emptyStr :
-        request == SR_ENTER_STREET && param == 0x1D && type == SRT_SELECT_CITY_CENTER ? PSTR("satnav_show_current_destination") :
+        request == SR_ENTER_STREET && param == 0x1D && type == SRT_SELECT_CITY_CENTRE ? PSTR("satnav_show_current_destination") :
 
         // * request == 0x06 (SR_ENTER_HOUSE_NUMBER),
         //   param == 0x1D:
@@ -4164,7 +4164,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         // * request == 0x1D (SR_DESTINATION),
         //   param == 0xFF:
         //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): get current destination. Satnav replies (IDEN 0x6CE) with the last
-        //     destination, a city center with GPS coordinate (if no street has been entered yet), or a
+        //     destination, a city centre with GPS coordinate (if no street has been entered yet), or a
         //     full address
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)

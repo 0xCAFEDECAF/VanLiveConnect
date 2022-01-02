@@ -1286,7 +1286,7 @@ char mfd_html[] PROGMEM = R"=====(
 								List <span gid="satnav_to_mfd_list_size"></span>
 							</div>
 
-							<div id="satnav_enter_characters_change_or_city_center_button"
+							<div id="satnav_enter_characters_change_or_city_centre_button"
 								UP_BUTTON="satnav_to_mfd_show_characters_line_2"
 								on_click="satnavEnterCharactersChangeOrCityCenterButtonPress();"
 								class="icon button"
@@ -2395,7 +2395,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Door open popup -->
 
 			<div id="door_open_popup" class="icon notificationPopup" style="display:none;">
-				<div class="centerAligned icon" style="position:absolute; left:70px; width:200px; height:175px;">
+				<div class="centerAligned icon" style="position:absolute; left:40px; width:200px; height:175px;">
 					<svg width="160px" height="175px" style="fill:#dfe7f2;">
 						<defs>
 							<g id="car_icon">
@@ -2417,7 +2417,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<line id="door_boot" stroke="#dfe7f2" stroke-width="14" stroke-linecap="round" x1="50" y1="165" x2="105" y2="165" style="display:none;"></line>
 					</svg>
 				</div>
-				<div id="door_open_popup_text" class="centerAligned" style="position:absolute; left:250px; width:400px;">
+				<div id="door_open_popup_text" class="centerAligned" style="position:absolute; left:250px; width:500px;">
 					Door open!
 				</div>
 			</div>	<!-- "door_open_popup" -->

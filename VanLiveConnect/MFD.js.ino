@@ -216,13 +216,12 @@ function writeToDom(jsonObj)
 				// {
 				//   "event": "display",
 				//   "data": {
-				//	 "alarm_list":
-				//	 [
-				//	   "Tyre pressure low",
-				//	   "Door open",
-				//	   "Water temperature too high",
-				//	   "Oil level too low"
-				//	 ]
+				//     "alarm_list": [
+				//       "Tyre pressure low",
+				//       "Door open",
+				//       "Water temperature too high",
+				//       "Oil level too low"
+				//     ]
 				//   }
 				// }
 
@@ -235,16 +234,16 @@ function writeToDom(jsonObj)
 				// {
 				//   "event": "display",
 				//   "data": {
-				//	 "satnav_curr_heading": { "transform": "rotate(247.5)" }
+				//     "satnav_curr_heading": { "transform": "rotate(247.5)" }
 				//   }
 				// }
 				//
 				// {
 				//   "event": "display",
 				//   "data": {
-				//	 "notification_on_mfd": {
-				//	   "style": { "display": "block" }
-				//	 }
+				//     "notification_on_mfd": {
+				//       "style": { "display": "block" }
+				//     }
 				//   }
 				// }
 
@@ -330,7 +329,7 @@ var connectToWebsocketTimer = setTimeout(
 // -----
 // Handling of vehicle data
 
-var economyMode= "UNKNOWN";
+var economyMode= "";
 var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 var engineCoolantTemperature = 80;  // In degrees Celsius
 var vehicleSpeed = 0;
@@ -348,7 +347,7 @@ function setEngineRunning(newValue)
 	// If engine just started?
 	if (engineRunning === "YES")
 	{
-		// If currently in "pre_flight" screen, then switch to "instruments"
+		// If currently in "pre_flight" screen, then switch to "instruments" screen
 		if ($("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
 
 		// Suppress climate control popup during the next 2 seconds
@@ -383,7 +382,7 @@ function setVisibilityOfElementAndParents(id, value)
 	} // while
 } // setVisibilityOfElementAndParents
 
-var currentLargeScreenId = "clock";  // Currently shown large (right) screen; make sure this is the first screen visible
+var currentLargeScreenId = "clock";  // Currently shown large (right) screen. Initialize to the first screen visible.
 var lastScreenChangedAt = 0;  // Last time the large screen changed
 
 // Switch to a specific screen on the right hand side of the display
@@ -778,7 +777,7 @@ function showPopupAndNotifyServer(id, msec, message)
 // Hide the specified or the current (top) popup
 function hidePopup(id)
 {
-	webSocket.send("mfd_popup_showing:NO");
+	if (webSocket) webSocket.send("mfd_popup_showing:NO");
 	$("#original_mfd_popup").empty();  // Debug info
 
 	var popup;
@@ -1623,6 +1622,11 @@ function showTunerPresetsPopup()
 // Functions for selecting MFD language
 
 var notDigitizedAreaText = "Not digitized area";
+var cityCentreText = "City centre";
+var noNumberText = "No number";
+var stopGuidanceText = "Stop guidance";
+var resumeGuidanceText = "Resume guidance";
+var streetNotListedText = "Street not listed";
 
 // Find the ticked button and select it
 function languageSelectTickedButton()
@@ -1808,13 +1812,30 @@ function satnavGotoMainMenu()
 
 	if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
 	{
-		showStatusPopup("Navigation CD-ROM is<br />missing", 8000);
+		showStatusPopup(
+			localStorage.mfdLanguage === "set_language_french" ? "Le CD-ROM de navigation<br />est absent" :
+			localStorage.mfdLanguage === "set_language_german" ? "Die Navigations CD-ROM<br />fehlt" :
+			localStorage.mfdLanguage === "set_language_spanish" ? "No hay CD-ROM de<br />navegaci&oacute;n" :
+			localStorage.mfdLanguage === "set_language_italian" ? "Il CD-ROM di navigazione<br />&egrave; assente" :
+			localStorage.mfdLanguage === "set_language_dutch" ? "De navigatie CD-rom is<br />niet aanwezig" :
+			"Navigation CD-ROM is<br />missing",
+			8000
+		);
 		return;
 	} // if
 
 	if (satnavStatus1.match(/DISC_UNREADABLE/))
 	{
-		showStatusPopup("Navigation CD-ROM<br />is unreadable", 10000);
+		showStatusPopup(
+			localStorage.mfdLanguage === "set_language_french" ? "Le CD-ROM de navigation<br />est illisible" :
+			localStorage.mfdLanguage === "set_language_german" ? "Die Navigations CD-ROM<br />is unleserlich" :
+			localStorage.mfdLanguage === "set_language_spanish" ? "No se puede leer<br />CD-ROM de navegaci&oacute;n" :
+			localStorage.mfdLanguage === "set_language_italian" ? "Il CD-ROM di navigazione<br />&egrave; illeggibile" :
+			localStorage.mfdLanguage === "set_language_dutch" ? "De navigatie CD-rom is<br />onleesbaar" :
+			"Navigation CD-ROM<br />is unreadable",
+			10000
+		);
+
 		return;
 	} // if
 
@@ -1936,7 +1957,7 @@ function satnavConfirmCityMode()
 	);
 
 	// Set button text
-	$("#satnav_enter_characters_change_or_city_center_button").text("Change");
+	$("#satnav_enter_characters_change_or_city_centre_button").text("Change");
 
 	satnavSelectFirstAvailableCharacter();
 } // satnavConfirmCityMode
@@ -1951,8 +1972,8 @@ function satnavEnterByLetterMode()
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
 
 	// Set button text
-	// TODO - set full text ("City Center"), make button auto-expand when selected
-	$("#satnav_enter_characters_change_or_city_center_button").text(
+	// TODO - set full text ("City Centre"), make button auto-expand when selected
+	$("#satnav_enter_characters_change_or_city_centre_button").text(
 		currentMenu === "satnav_enter_street_characters" ? "City Ce" : "Change");
 
 	satnavSelectFirstAvailableCharacter();
@@ -1981,8 +2002,8 @@ function satnavConfirmStreetMode()
 	);
 
 	// Set button text
-	// TODO - set full text ("City Center"), make button auto-expand when selected
-	$("#satnav_enter_characters_change_or_city_center_button").text("City Ce");
+	// TODO - set full text ("City Centre"), make button auto-expand when selected
+	$("#satnav_enter_characters_change_or_city_centre_button").text("City Ce");
 
 	satnavSelectFirstAvailableCharacter();
 
@@ -1996,17 +2017,17 @@ function satnavToggleCityEntryMode()
 } // satnavToggleCityEntryMode
 
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
-// "City Center" for ("Enter street"). Depending on the button text, perform the appropriate action.
+// "City Centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
-	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
+	if ($("#satnav_enter_characters_change_or_city_centre_button").text().replace(/\s*/g, "") === "Change")
 	{
 		// Entering city: toggle to the entry mode
 		satnavToggleCityEntryMode();
 	}
 	else
 	{
-		// Entering street and chosen "City center": directly go to the "Programmed destination" screen
+		// Entering street and chosen "City centre": directly go to the "Programmed destination" screen
 		gotoMenu("satnav_show_current_destination");
 	} // if
 } // satnavEnterCharactersChangeOrCityCenterButtonPress
@@ -2049,10 +2070,10 @@ function satnavGotoEnterCity()
 } // satnavGotoEnterCity
 
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
-// "City Center" for ("Enter street"). Depending on the button text, perform the appropriate action.
+// "City Centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavGotoEnterStreetOrNumber()
 {
-	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
+	if ($("#satnav_enter_characters_change_or_city_centre_button").text().replace(/\s*/g, "") === "Change")
 	{
 		gotoMenu("satnav_enter_street_characters");
 		satnavConfirmStreetMode();
@@ -2153,7 +2174,7 @@ function satnavEnterOrDeleteCharacter(newState)
 function satnavCheckIfCityCenterMustBeAdded()
 {
 	// If changed to screen "satnav_choose_from_list" while entering the street with no street entered,
-	// then add "City center" at the top of the list
+	// then add "City centre" at the top of the list
 	if (
 		$("#satnav_choose_from_list").is(":visible")
 		&& $("#mfd_to_satnav_request").text() === "Enter street"  // TODO - other language?
@@ -2161,7 +2182,7 @@ function satnavCheckIfCityCenterMustBeAdded()
 		&& ! userHadOpportunityToEnterStreet
 	   )
 	{
-		$("#satnav_list").html("City center<br />" + $("#satnav_list").html());
+		$("#satnav_list").html(cityCentreText + "<br />" + $("#satnav_list").html());
 	} // if
 } // satnavCheckIfCityCenterMustBeAdded
 
@@ -2286,13 +2307,20 @@ function satnavCheckEnteredHouseNumber()
 	if (! ok)
 	{
 		satnavHouseNumberEntryMode();
-		showStatusPopup("This number is<br />not listed for<br />this street", 7000);
+		showStatusPopup(
+			localStorage.mfdLanguage === "set_language_french" ? "Ce num&eacute;ro n'est<br />pas r&eacute;pertori&eacute;<br />dans cette voie" :
+			localStorage.mfdLanguage === "set_language_german" ? "Die Nummer ist<br />f&uuml;r diese Stra&szlig;e<br />nicht eingetragen" :
+			localStorage.mfdLanguage === "set_language_spanish" ? "N&uacute;mero no<br />identificado<br />para esta v&iacute;a" :
+			localStorage.mfdLanguage === "set_language_italian" ? "Questo numero<br />non &egrave; indicato<br />in questa via" :
+			localStorage.mfdLanguage === "set_language_dutch" ? "Straatnummer onbekend" :
+			"This number is<br />not listed for<br />this street",
+			7000);
 		return;
 	} // if
 
 	// Already copy the house number into the "satnav_show_current_destination" screen, in case the
 	// "satnav_report" packet is missed
-	$("#satnav_current_destination_house_number_shown").text(enteredNumber === "" ? "No number" : enteredNumber);
+	$("#satnav_current_destination_house_number_shown").html(enteredNumber === "" ? noNumberText : enteredNumber);
 
 	gotoMenu("satnav_show_current_destination");
 } // satnavCheckEnteredHouseNumber
@@ -2599,12 +2627,12 @@ function satnavGuidanceSetPreference(value)
 {
 	if (typeof value === "undefined" || value === "---") return;
 
-	// Set the correct text in the sat nav guidance preference popup
+	// Copy the correct text into the sat nav guidance preference popup
 	var satnavGuidancePreferenceText =
-		value === "FASTEST_ROUTE" ? "Fastest route" :
-		value === "SHORTEST_DISTANCE" ? "Shortest route" :
-		value === "AVOID_HIGHWAY" ? "Avoid highway route" :
-		value === "COMPROMISE_FAST_SHORT" ? "Fast/short compromise route" :
+		value === "FASTEST_ROUTE" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").text() :
+		value === "SHORTEST_DISTANCE" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").text() :
+		value === "AVOID_HIGHWAY" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").text() :
+		value === "COMPROMISE_FAST_SHORT" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").text() :
 		"??";
 	$("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText);
 
@@ -2712,7 +2740,8 @@ function showDestinationNotAccessiblePopupIfApplicable()
 			localStorage.mfdLanguage === "set_language_italian" ? "La destinazione non<br />&egrave; accessibile<br />mediante strada" :
 			localStorage.mfdLanguage === "set_language_dutch" ? "De bestemming is niet<br />via de weg bereikbaar" :
 			"Destination is not<br />accessible by road",
-			8000);
+			8000
+		);
 	} // if
 
 	satnavDestinationNotAccessibleByRoadPopupShown = true;
@@ -2830,7 +2859,7 @@ function satnavStopGuidance()
 
 function satnavStopOrResumeGuidance()
 {
-	if ($("#satnav_navigation_options_menu_stop_guidance_button").text() === "Stop guidance") 
+	if ($("#satnav_navigation_options_menu_stop_guidance_button").html() === stopGuidanceText) 
 	{
 		satnavStopGuidance();
 	}
@@ -2861,6 +2890,7 @@ function showPowerSavePopup()
 {
 	showNotificationPopup(
 		localStorage.mfdLanguage === "set_language_german" ? "Wechsel in<br />Energiesparmodus" :
+		localStorage.mfdLanguage === "set_language_dutch" ? "Omschakeling naar<br />energiebesparingsmodus" :
 		"Changing to<br />power-save mode",
 		15000);
 } // showPowerSavePopup
@@ -2886,6 +2916,12 @@ function gearIconAreaClicked()
 
 var isDoorOpen = {};  // Associative array, using the door ID as key, mapping to true (open) or false (closed)
 var isBootOpen = false;
+
+var doorOpenText = "Door open";
+var doorsOpenText = "Doors open";
+var bootOpenText = "Boot open";
+var bootAndDoorOpenText = "Boot and door open";
+var bootAndDoorsOpenText = "Boot and doors open";
 
 // -----
 // Handling of changed items
@@ -3671,19 +3707,15 @@ function handleItemChange(item, value)
 			} // if
 
 			// Compose gold-plated popup text
-			// TODO - language
-
-			var popupText = " open";
-			if (isBootOpen) popupText = "boot" + popupText;
-			if (isBootOpen && nDoorsOpen > 0) popupText = " and " + popupText;
-			if (nDoorsOpen > 1) popupText = "s" + popupText;
-			if (nDoorsOpen > 0) popupText = "door" + popupText;
-
-			// Capitalize first letter
-			popupText = popupText.charAt(0).toUpperCase() + popupText.slice(1);
+			var popupText =
+				isBootOpen && nDoorsOpen > 1 ? bootAndDoorsOpenText :
+				isBootOpen && nDoorsOpen == 1 ? bootAndDoorOpenText :
+				isBootOpen && nDoorsOpen == 0 ? bootOpenText :
+				nDoorsOpen > 1 ? doorsOpenText :
+				doorOpenText;
 
 			// Set the correct text and show the "door open" popup
-			$("#door_open_popup_text").text(popupText);
+			$("#door_open_popup_text").html(popupText);
 			showPopupAndNotifyServer("door_open_popup", 8000);
 		} // case
 		break;
@@ -3825,9 +3857,8 @@ function handleItemChange(item, value)
 			if (satnavInitialized) hidePopup("satnav_initializing_popup");
 
 			// Button texts in menus
-			// TODO - depends on 'localStorage.mfdLanguage'
-			$("#satnav_navigation_options_menu_stop_guidance_button").text(
-				value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
+			$("#satnav_navigation_options_menu_stop_guidance_button").html(
+				value === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 			// $("#satnav_tools_menu_stop_guidance_button").text(
 				// value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
 
@@ -3990,7 +4021,7 @@ function handleItemChange(item, value)
 
 		case "satnav_current_destination_street":
 		{
-			$("#satnav_current_destination_street_shown").text(value === "" ? "City centre" : value);
+			$("#satnav_current_destination_street_shown").html(value === "" ? cityCentreText : value);
 
 			if (! $("#satnav_enter_street_characters").is(":visible")) break;
 
@@ -4010,13 +4041,13 @@ function handleItemChange(item, value)
 		case "satnav_personal_address_street":
 		case "satnav_professional_address_street":
 		{
-			$("#" + item + "_shown").text(value === "" ? "City centre" : value);
+			$("#" + item + "_shown").html(value === "" ? cityCentreText : value);
 		} // case
 		break;
 
 		case "satnav_last_destination_street":
 		{
-			$('[gid="satnav_last_destination_street_shown"]').text(value === "" ? "City centre" : value);
+			$('[gid="satnav_last_destination_street_shown"]').html(value === "" ? cityCentreText : value);
 		} // case
 		break;
 
@@ -4024,13 +4055,13 @@ function handleItemChange(item, value)
 		case "satnav_personal_address_house_number":
 		case "satnav_professional_address_house_number":
 		{
-			$("#" + item + "_shown").text(value === "" || value === "0" ? "No number" : value);
+			$("#" + item + "_shown").html(value === "" || value === "0" ? noNumberText : value);
 		} // case
 		break;
 
 		case "satnav_last_destination_house_number":
 		{
-			$('[gid="satnav_last_destination_house_number_shown"]').text(value === "" ? "No number" : value);
+			$('[gid="satnav_last_destination_house_number_shown"]').html(value === "" ? noNumberText : value);
 		} // case
 		break;
 
@@ -4044,13 +4075,13 @@ function handleItemChange(item, value)
 			if (satnavMode === "IN_GUIDANCE_MODE")
 			{
 				// In the guidance screen, show "Street (City)", otherwise "Street not listed"
-				$("#satnav_guidance_curr_street").text(value.match(/\(.*\)/) ? value : "Street not listed");
+				$("#satnav_guidance_curr_street").html(value.match(/\(.*\)/) ? value : streetNotListedText);
 			} // if
 
 			// In the current location screen, show "City", or "Street (City)", otherwise "Street not listed"
-			// Note: when driving off the map, the current location screen will start showing "Not digitized area"; this
-			// is handled by 'case "satnav_on_map"' above.
-			$('[gid="satnav_curr_street_shown"]').text(value !== "" ? value : "Street not listed");
+			// Note: when driving off the map, the current location screen will start showing "Not digitized area";
+			// this is handled by 'case "satnav_on_map"' above.
+			$('[gid="satnav_curr_street_shown"]').html(value !== "" ? value : streetNotListedText);
 
 			// Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
 			if (! $("#clock").is(":visible")) break;
@@ -4939,16 +4970,11 @@ function setLanguage(language)
 	{
 		case "set_language_english":
 		{
-			$("#audio_settings_popup .tag:eq(0)").html("Source");
-			$("#audio_settings_popup .tag:eq(1)").html("Volume");
-			$("#audio_settings_popup .tag:eq(2)").html("Bass");
-			$("#audio_settings_popup .tag:eq(3)").html("Treble");
-			$("#audio_settings_popup .tag:eq(4)").html("Fader");
-			$("#audio_settings_popup .tag:eq(5)").html("Balance");
-
-			$("#tape_popup .tag").html("Side");
-			$("#cd_player_popup .tag:eq(0)").html("Track");
-			$("#cd_changer_popup .tag:eq(1)").html("Track");
+			doorOpenText = "Door open";
+			doorsOpenText = "Doors open";
+			bootOpenText = "Boot open";
+			bootAndDoorOpenText = "Boot and door open";
+			bootAndDoorsOpenText = "Boot and doors open";
 
 			$("#main_menu .menuTitleLine").html("Main menu<br />");
 			$("#main_menu_goto_satnav_button").html("Navigation / Guidance");
@@ -4979,6 +5005,11 @@ function setLanguage(language)
 				checked by the user.<br>");
 
 			notDigitizedAreaText = "Not digitized area";
+			cityCentreText = "City centre";
+			noNumberText = "No number";
+			stopGuidanceText = "Stop guidance";
+			resumeGuidanceText = "Resume guidance";
+			streetNotListedText = "Street not listed";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Enter new destination");
@@ -4994,7 +5025,8 @@ function setLanguage(language)
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Directory management");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Vocal synthesis volume");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("Delete directories");
-			$("#satnav_navigation_options_menu .button:eq(3)").html("Resume guidance");
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
+				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			$("#satnav_directory_management_menu .menuTitleLine").html("Directory management<br />");
 			$("#satnav_directory_management_menu .button:eq(0)").html("Personal directory");
@@ -5004,7 +5036,7 @@ function setLanguage(language)
 			$("#satnav_guidance_tools_menu .button:eq(0)").html("Guidance criteria");
 			$("#satnav_guidance_tools_menu .button:eq(1)").html("Programmed destination");
 			$("#satnav_guidance_tools_menu .button:eq(2)").html("Vocal synthesis volume");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html("Stop guidance");
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
 
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Fastest route<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Shortest route<br />");
@@ -5090,6 +5122,12 @@ function setLanguage(language)
 
 		case "set_language_french":
 		{
+			doorOpenText = "Porte ouverte";
+			doorsOpenText = "Portes ouverts";
+			bootOpenText = "Coffre ouvert";
+			bootAndDoorOpenText = "Porte et coffre ouverts";
+			bootAndDoorsOpenText = "Portes et coffre ouverts";
+
 			$("#main_menu .menuTitleLine").html("Menu g&eacute;n&eacute;ral<br />");
 			$("#main_menu_goto_satnav_button").html("Navigation / Guidage");
 			$("#main_menu_goto_screen_configuration_button").html("Configuration afficheur");
@@ -5106,10 +5144,10 @@ function setLanguage(language)
 			$("#set_units .menuTitleLine").html("R&eacute;glage des formats et unit&eacute;s<br />");
 
 			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
-			// $("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the personal<br />directory");
-			// $("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the professional<br />directory");
+			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
+				L'entre&eacute;e a &eacute;t&eacute; archiv&eacute;e<br />dans le r&eacute;pertoire<br />personnel");
+			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
+				L'entre&eacute;e a &eacute;t&eacute; archiv&eacute;e<br />dans le r&eacute;pertoire<br />professionel");
 			$("#satnav_computing_route_popup .messagePopupArea").html("Le calcul d'itin&eacute;raire<br />est en cours");
 
 			$("#satnav_disclaimer_text").html("\
@@ -5120,6 +5158,11 @@ function setLanguage(language)
 				scrupuleusement par l&uacute;tilisateur.<br>");
 
 			notDigitizedAreaText = "Zone non cartographi&eacute;e";
+			cityCentreText = "Centre-ville";
+			noNumberText = "Pas de num&eacute;ro";
+			stopGuidanceText = "Arr&ecirc;ter le guidage";
+			resumeGuidanceText = "Reprendre le guidage";
+			// streetNotListedText = "Street not listed";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Saisie d'une nouvelle destination");
@@ -5135,7 +5178,8 @@ function setLanguage(language)
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Gestion des r&eacute;pertoires");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Volume synth&egrave;se vocale");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("Effacement des r&eacute;pertoires");
-			$("#satnav_navigation_options_menu .button:eq(3)").html("Reprendre le guidage");
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
+				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			$("#satnav_directory_management_menu .menuTitleLine").html("Gestion des r&eacute;pertoires<br />");
 			$("#satnav_directory_management_menu .button:eq(0)").html("R&eacute;pertoire personnel");
@@ -5145,7 +5189,7 @@ function setLanguage(language)
 			$("#satnav_guidance_tools_menu .button:eq(0)").html("Crit&egrave;res de guidage");
 			$("#satnav_guidance_tools_menu .button:eq(1)").html("Destination programm&eacute;e");
 			$("#satnav_guidance_tools_menu .button:eq(2)").html("Volume synth&egrave;se vocale");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html("Arr&ecirc;ter le guidage");
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
 
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Trajet le plus rapide<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Trajet le plus court<br />");
@@ -5231,6 +5275,12 @@ function setLanguage(language)
 
 		case "set_language_german":
 		{
+			doorOpenText = "T&uuml;r offen";
+			doorsOpenText = "T&uuml;ren offen";
+			bootOpenText = "Kofferraum offen";
+			bootAndDoorOpenText = "T&uuml;r und Kofferraum offen";
+			bootAndDoorsOpenText = "T&uuml;ren und Kofferraum offen";
+
 			$("#main_menu .menuTitleLine").html("Hauptmen&uuml;<br />");
 			$("#main_menu_goto_satnav_button").html("Navigation / F&uuml;hrung");
 			$("#main_menu_goto_screen_configuration_button").html("Display konfigurieren");
@@ -5247,10 +5297,10 @@ function setLanguage(language)
 			$("#set_units .menuTitleLine").html("Einstellen der Einheiten<br />");
 
 			$("#satnav_initializing_popup .messagePopupArea").html("Das Navigationssystem<br>wird initialisiert");
-			// $("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the personal<br />directory");
-			// $("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the professional<br />directory");
+			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
+				Die Eingabe wurde im<br />pers&ouml;nlichen Verzeichnis<br />gespeichert");
+			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
+				Die Eingabe wurde im<br />beruflichen Verzeichnis<br />gespeichert");
 			$("#satnav_computing_route_popup .messagePopupArea").html("Berechnung der<br />Fahrstrecke l&auml;uft");
 
 			$("#satnav_disclaimer_text").html("\
@@ -5261,6 +5311,11 @@ function setLanguage(language)
 				sofgf&auml;ltig gepr&uuml;ft werden");
 
 			notDigitizedAreaText = "Nicht kartographiert";
+			cityCentreText = "Stadtmitte";
+			noNumberText = "Keine Nummer";
+			stopGuidanceText = "F&uuml;hrung abbrechen";
+			resumeGuidanceText = "F&uuml;hrung wieder aufnehmen";
+			// streetNotListedText = "Street not listed";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / F&uuml;hrung<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Neues Ziel eingeben");
@@ -5272,11 +5327,12 @@ function setLanguage(language)
 			$("#satnav_select_from_memory_menu .button:eq(0)").html("Pers&ouml;nliches Zielverzeichnis");
 			$("#satnav_select_from_memory_menu .button:eq(1)").html("Berufliches Zielverzeichnis");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Navigationsoptionenbr />");
+			$("#satnav_navigation_options_menu .menuTitleLine").html("Navigationsoptionen<br />");
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Verwalben der Verzeichnisse");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Lautst. der Synthesestimme");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("L&ouml;schen der Verzeichnisse");
-			$("#satnav_navigation_options_menu .button:eq(3)").html("F&uuml;hrung wieder aufnehmen");
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
+				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			$("#satnav_directory_management_menu .menuTitleLine").html("Verwalben der Verzeichnisse<br />");
 			$("#satnav_directory_management_menu .button:eq(0)").html("Pers&ouml;nliches Zielverzeichnis");
@@ -5286,7 +5342,7 @@ function setLanguage(language)
 			$("#satnav_guidance_tools_menu .button:eq(0)").html("F&uuml;hrungskriterien");
 			$("#satnav_guidance_tools_menu .button:eq(1)").html("Programmiertes Ziel");
 			$("#satnav_guidance_tools_menu .button:eq(2)").html("Lautst. der Synthesestimme");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html("F&uuml;hrung abbrechen");
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
 
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Die schnellste Route<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Die k&uuml;rzeste Route<br />");
@@ -5346,7 +5402,7 @@ function setLanguage(language)
 
 			// $("#satnav_reached_destination_popup_title").html("Destination reached");
 			$("#satnav_delete_item_popup_title").html("M&ouml;chten Sie Diese<br />Position l&ouml;schen ?<br />");
-			// $("#satnav_guidance_preference_popup_title").html("Keep criteria");
+			$("#satnav_guidance_preference_popup_title").html("Beibehalten Routenart");
 			$("#satnav_delete_directory_data_popup_title").html("Hiermit werden alle Daten der Verzeichnisse gel&ouml;scht");
 			// $("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
 
@@ -5372,6 +5428,12 @@ function setLanguage(language)
 
 		case "set_language_spanish":
 		{
+			doorOpenText = "Puerta abierta";
+			doorsOpenText = "Puertas abiertas";
+			bootOpenText = "Maletero abierto";
+			bootAndDoorOpenText = "Puerta y maletero abiertos";
+			bootAndDoorsOpenText = "Puertas y maletero abiertos";
+
 			$("#main_menu .menuTitleLine").html("Men&uacute; general<br />");
 			$("#main_menu_goto_satnav_button").html("Navegaci&oacute;n / Guiado");
 			$("#main_menu_goto_screen_configuration_button").html("Configuraci&oacute;n de pantalla");
@@ -5388,19 +5450,26 @@ function setLanguage(language)
 			$("#set_units .menuTitleLine").html("Ajustar formatos y unidades<br />");
 
 			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
-			// $("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the personal<br />directory");
-			// $("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the professional<br />directory");
+			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
+				Datos memorizados en el<br />directorio personal");
+			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
+				Datos memorizados en el<br />directorio profesional");
 			$("#satnav_computing_route_popup .messagePopupArea").html("C&aacute;lculo de itinerario<br />en proceso");
 
-			// $("#satnav_disclaimer_text").html("\
-				// Navigation is an electronic help system. It<br>\
-				// cannot replace the driver's decisions. All<br>\
-				// guidance instructions must be carefully<br>\
-				// checked by the user.<br>");
+			$("#satnav_disclaimer_text").html("\
+				La navegaci&oacute;n es un sistema electr&oacute;nico<br>\
+				de asistencia que nunca se sustiuye al<br>\
+				an&aacute;lisis del conductor quien debe<br>\
+				comprobar todos las instrucciones de<br>\
+				guiado y respetar las se&ntilde;ales de<br>\
+				carreteras.<br>");
 
 			notDigitizedAreaText = "Zona no cartografiada";
+			cityCentreText = "Centro de la ciudad";
+			noNumberText = "Sin n&uacute;mero";
+			stopGuidanceText = "Interrumpir guiado";
+			resumeGuidanceText = "Reanudar el guiado";
+			// streetNotListedText = "Street not listed";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navegaci&oacute;n / Guiado<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Introducir nuevo destino");
@@ -5409,24 +5478,25 @@ function setLanguage(language)
 			$("#satnav_main_menu .button:eq(3)").html("Opciones de navegaci&oacute;n");
 
 			$("#satnav_select_from_memory_menu .menuTitleLine").html("Seleccionar destino archivado<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Directorio personnal");
+			$("#satnav_select_from_memory_menu .button:eq(0)").html("Directorio personal");
 			$("#satnav_select_from_memory_menu .button:eq(1)").html("Directorio profesional");
 
 			$("#satnav_navigation_options_menu .menuTitleLine").html("Opciones de navegaci&oacute;n<br />");
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Gesti&oacute;n de directorios");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Volumen de s&iacute;ntesis vocal");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("Borrado de directorios");
-			$("#satnav_navigation_options_menu .button:eq(3)").html("Reanudar el guiado");
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
+				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			$("#satnav_directory_management_menu .menuTitleLine").html("Gesti&oacute;n de directorios<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Directorio personnal");
+			$("#satnav_directory_management_menu .button:eq(0)").html("Directorio personal");
 			$("#satnav_directory_management_menu .button:eq(1)").html("Directorio profesional");
 
 			$("#satnav_guidance_tools_menu .menuTitleLine").html("Herramientas de guiado<br />");
 			$("#satnav_guidance_tools_menu .button:eq(0)").html("Criterios de guiado");
 			$("#satnav_guidance_tools_menu .button:eq(1)").html("Destino programado");
 			$("#satnav_guidance_tools_menu .button:eq(2)").html("Volumen de s&iacute;ntesis vocal");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html("Interrumpir guiado");
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
 
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("M&aacute;s r&aacute;pido<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("M&aacute;s corto<br />");
@@ -5472,10 +5542,10 @@ function setLanguage(language)
 			$("#satnav_show_last_destination .tag:eq(1)").html("Ciudad");
 			$("#satnav_show_last_destination .tag:eq(2)").html("Calle");
 
-			// $("#satnav_archive_in_directory_title").html("Archive in directory");
+			$("#satnav_archive_in_directory_title").html("Archivar en directorio");
 			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Denominaci&oacute;n");
 			$("#satnav_archive_in_directory .button:eq(0)").html("Corregir");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Directorio personnal");
+			$("#satnav_archive_in_directory .button:eq(1)").html("Directorio personal");
 			$("#satnav_archive_in_directory .button:eq(2)").html("Directorio profesional");
 
 			$("#satnav_rename_entry_in_directory_title").html("Cambiar");
@@ -5499,8 +5569,8 @@ function setLanguage(language)
 			$("#satnav_manage_personal_address_delete_button").html("Suprimir");
 			$("#satnav_manage_professional_address_rename_button").html("Cambiar");
 			$("#satnav_manage_professional_address_delete_button").html("Suprimir");
-			// $("#satnav_service_address_previous_button").html("Previous");
-			// $("#satnav_service_address_next_button").html("Next");
+			$("#satnav_service_address_previous_button").html("Anterior");
+			$("#satnav_service_address_next_button").html("Siguiente");
 
 			$(".correctionButton").html("Cambiar");
 			$("#satnav_enter_characters_correction_button").html("Corregir");
@@ -5512,6 +5582,12 @@ function setLanguage(language)
 
 		case "set_language_italian":
 		{
+			doorOpenText = "Portiera aperta";
+			doorsOpenText = "Portiere aperte";
+			bootOpenText = "Cofano aperto";
+			bootAndDoorOpenText = "Portiera e cofano aperti";
+			bootAndDoorsOpenText = "Portiere e cofano aperti";
+
 			$("#main_menu .menuTitleLine").html("Men&ugrave; generale<br />");
 			$("#main_menu_goto_satnav_button").html("Navigazione/Guida");
 			$("#main_menu_goto_screen_configuration_button").html("Configurazione monitor");
@@ -5528,19 +5604,25 @@ function setLanguage(language)
 			$("#set_units .menuTitleLine").html("Regolazione formato e unita<br />");
 
 			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
-			// $("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the personal<br />directory");
-			// $("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the professional<br />directory");
+			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
+				L'informazione &egrave; stata<br />salvata nella rubrica<br />personale");
+			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
+				L'informazione &egrave; stata<br />salvata nella rubrica<br />professionale");
 			$("#satnav_computing_route_popup .messagePopupArea").html("Calcolo dell'itinerario<br />in corso");
 
-			// $("#satnav_disclaimer_text").html("\
-				// Navigation is an electronic help system. It<br>\
-				// cannot replace the driver's decisions. All<br>\
-				// guidance instructions must be carefully<br>\
-				// checked by the user.<br>");
+			$("#satnav_disclaimer_text").html("\
+				La navigazione fornisce un'assistenza<br>\
+				elettronica. In nessun caso pu&ograve; sostituirsi<br>\
+				a l'analisi del conducente. Qualsiasi<br>\
+				istruzione deve essere attentamente<br>\
+				verificata dall'utente<br>");
 
 			notDigitizedAreaText = "Area non mappata";
+			cityCentreText = "Centro della citt&agrave;";
+			noNumberText = "Nessun numero";
+			stopGuidanceText = "Interrompere la guida";
+			resumeGuidanceText = "Riprendere la guida";
+			// streetNotListedText = "Street not listed";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigazione/Guida<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Inserire una nuova destinazione");
@@ -5549,24 +5631,25 @@ function setLanguage(language)
 			$("#satnav_main_menu .button:eq(3)").html("Opzioni di navigazione");
 
 			$("#satnav_select_from_memory_menu .menuTitleLine").html("Scelta una destinazione salvata<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Rubrica personale");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("Rubrica professionale");
+			$("#satnav_select_from_memory_menu .button:eq(0)").html("Rub. personale");
+			$("#satnav_select_from_memory_menu .button:eq(1)").html("Rub. professionale");
 
 			$("#satnav_navigation_options_menu .menuTitleLine").html("Opzioni di navigatione<br />");
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Gestione rubrica");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Volume navigazione");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("Cancella rubrica");
-			$("#satnav_navigation_options_menu .button:eq(3)").html("Riprendere la guida");
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
+				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			$("#satnav_directory_management_menu .menuTitleLine").html("Gestione rubrica<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Rubrica personale");
-			$("#satnav_directory_management_menu .button:eq(1)").html("Rubrica professionale");
+			$("#satnav_directory_management_menu .button:eq(0)").html("Rub. personale");
+			$("#satnav_directory_management_menu .button:eq(1)").html("Rub. professionale");
 
 			$("#satnav_guidance_tools_menu .menuTitleLine").html("Strumenti de guida<br />");
 			$("#satnav_guidance_tools_menu .button:eq(0)").html("Criteri di guida");
 			$("#satnav_guidance_tools_menu .button:eq(1)").html("Destinazione programmata");
 			$("#satnav_guidance_tools_menu .button:eq(2)").html("Volume navigazione");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html("Interrompere la guida");
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
 
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Percorso pi&ugrave; rapido<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Percorso pi&ugrave; corto<br />");
@@ -5608,15 +5691,15 @@ function setLanguage(language)
 			$("#satnav_show_programmed_destination .tag:eq(2)").html("Via");
 			$("#satnav_show_programmed_destination .tag:eq(3)").html("Numero");
 
-			// $("#satnav_show_last_destination .tag:eq(0)").html("Select a service");
+			$("#satnav_show_last_destination .tag:eq(0)").html("Scelta un servizio");
 			$("#satnav_show_last_destination .tag:eq(1)").html("Citt&agrave;");
 			$("#satnav_show_last_destination .tag:eq(2)").html("Via");
 
-			// $("#satnav_archive_in_directory_title").html("Archive in directory");
+			$("#satnav_archive_in_directory_title").html("Salvare nella rubrica");
 			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Denominazione");
 			$("#satnav_archive_in_directory .button:eq(0)").html("Correggere");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Rubrica personale");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Rubrica professionale");
+			$("#satnav_archive_in_directory .button:eq(1)").html("Rub. personale");
+			$("#satnav_archive_in_directory .button:eq(2)").html("Rub. professionale");
 
 			$("#satnav_rename_entry_in_directory_title").html("Rinominare");
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominazione");
@@ -5639,8 +5722,8 @@ function setLanguage(language)
 			$("#satnav_manage_personal_address_delete_button").html("Eliminare");
 			$("#satnav_manage_professional_address_rename_button").html("Rinominare");
 			$("#satnav_manage_professional_address_delete_button").html("Eliminare");
-			// $("#satnav_service_address_previous_button").html("Previous");
-			// $("#satnav_service_address_next_button").html("Next");
+			$("#satnav_service_address_previous_button").html("Precedente");
+			$("#satnav_service_address_next_button").html("Seguente");
 
 			$(".correctionButton").html("Modificare");
 			$("#satnav_enter_characters_correction_button").html("Correggere");
@@ -5652,6 +5735,12 @@ function setLanguage(language)
 
 		case "set_language_dutch":
 		{
+			doorOpenText = "Deur open";
+			doorsOpenText = "Deuren open";
+			bootOpenText = "Kofferbak open";
+			bootAndDoorOpenText = "Deur en kofferbak open";
+			bootAndDoorsOpenText = "Deuren en kofferbak open";
+
 			$("#main_menu .menuTitleLine").html("Hoofdmenu<br />");
 			$("#main_menu_goto_satnav_button").html("Navigatie / Begeleiding");
 			$("#main_menu_goto_screen_configuration_button").html("Beeldschermconfiguratie");
@@ -5667,11 +5756,11 @@ function setLanguage(language)
 			$("#set_language .menuTitleLine").html("Taalkeuze<br />");
 			$("#set_units .menuTitleLine").html("Instelling van eenheden<br />");
 
-			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
-			// $("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the personal<br />directory");
-			// $("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
-				// Input has been stored in<br />the professional<br />directory");
+			$("#satnav_initializing_popup .messagePopupArea").html("Initialisering navigator");
+			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
+				Gegevens opgeslagen in<br />priv&eacute;-bestand");
+			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
+				Gegevens opgeslagen in<br />zaken-bestand");
 			$("#satnav_computing_route_popup .messagePopupArea").html("Routeberekening");
 
 			$("#satnav_disclaimer_text").html("\
@@ -5682,6 +5771,11 @@ function setLanguage(language)
 				nauwkeurig controleren.<br>");
 
 			notDigitizedAreaText = "Zone niet in kaart";
+			cityCentreText = "Stadscentrum";
+			noNumberText = "Geen nummer";
+			stopGuidanceText = "Stop navigatie";
+			resumeGuidanceText = "Laatste bestemming";
+			// streetNotListedText = "Street not listed";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigatie/ Begeleiding<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Nieuwe bestemming invoeren");
@@ -5697,7 +5791,8 @@ function setLanguage(language)
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Adressenbestand");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Geluidsvolume");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("Bestanden wissen");
-			$("#satnav_navigation_options_menu .button:eq(3)").html("Laatste bestemming");
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
+				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			$("#satnav_directory_management_menu .menuTitleLine").html("Adressenbestand<br />");
 			$("#satnav_directory_management_menu .button:eq(0)").html("Priv&eacute;-adressen");
@@ -5707,7 +5802,7 @@ function setLanguage(language)
 			$("#satnav_guidance_tools_menu .button:eq(0)").html("Navigatiecriteria");
 			$("#satnav_guidance_tools_menu .button:eq(1)").html("Geprogrammeerde bestemming");
 			$("#satnav_guidance_tools_menu .button:eq(2)").html("Geluidsvolume");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html("Stop navigatie");
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
 
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Snelste weg<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Kortste afstand<br />");
@@ -5780,8 +5875,8 @@ function setLanguage(language)
 			$("#satnav_manage_personal_address_delete_button").html("Wissen");
 			$("#satnav_manage_professional_address_rename_button").html("Nieuwe naam");
 			$("#satnav_manage_professional_address_delete_button").html("Wissen");
-			// $("#satnav_service_address_previous_button").html("Previous");
-			// $("#satnav_service_address_next_button").html("Next");
+			$("#satnav_service_address_previous_button").html("Vorige");
+			$("#satnav_service_address_next_button").html("Volgende");
 
 			$(".correctionButton").html("Wijzigen");
 			$("#satnav_enter_characters_correction_button").html("Verbeteren");
@@ -5794,6 +5889,8 @@ function setLanguage(language)
 		default:
 		break;
 	} // switch
+
+	satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
 } // setLanguage
 
 setLanguage(localStorage.mfdLanguage);
