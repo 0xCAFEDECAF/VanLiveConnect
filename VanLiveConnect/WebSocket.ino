@@ -79,6 +79,8 @@ void ProcessWebSocketClientMessage(const char* payload)
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
+        // We need to know when a popup is showing, e.g. to know when to ignore a "MOD" button press from the
+        // IR remote control.
         if (clientMessage.endsWith(":NO")) NoPopup();
         else NotificationPopupShowing(millis(), clientMessage.substring(18).toInt());
     }

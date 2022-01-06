@@ -1308,6 +1308,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     static bool stalkWasPressed = false;
     bool stalkIsPressed = data[10] & 0x01;
 
+    // Note: stalk button will be processed even if a notification popup is visible (IsNotificationPopupShowing())
     while (! economyMode && ! inMenu)
     {
         // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset)
@@ -1331,7 +1332,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         if (! stalkWasPressed || stalkIsPressed) break;
 
         // Only continue if it was a short-press
-        // Note: short-press = switch screen; long-press = reset trip counter currently shown (if any)
+        // Note: short-press = cycle screen; long-press = reset trip counter currently shown (if any)
         if (now - stalkLastPressed >= 1000) break;
 
         // May update the value of 'tripComputerPopupTab' and the values as reported by 'TripComputerStr()'
@@ -3536,6 +3537,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // Copy the current string buffer into the array of Strings
         records[currentRecord][currentString] = buffer;
 
+        // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
+        records[currentRecord][currentString].replace("#", "&shy;");
+
         // The last character can be:
         // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
         //   read. This is shown as a "?".
@@ -3547,9 +3551,6 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
         // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
         AsciiToHtml(records[currentRecord][currentString]);
-
-        // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
-        records[currentRecord][currentString].replace("#", "&shy;");
 
         if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
         {

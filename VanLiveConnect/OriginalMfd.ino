@@ -160,7 +160,9 @@ void NoPopup()
 #endif // DEBUG_ORIGINAL_MFD
 } // NoPopup
 
-// Register the fact that a notification popup (not the trip computer popup) is showing
+// Register the fact that a notification popup (not the trip computer popup) is showing.
+// We need to know when a popup is showing, e.g. to know when to ignore a "MOD" button press from the
+// IR remote control.
 void NotificationPopupShowing(unsigned long since, long duration)
 {
     NotificationPopupShowingSince = since;
@@ -207,7 +209,7 @@ PGM_P PopupStr()
 {
     return
         IsTripComputerPopupShowing() ? TripComputerShortStr() :
-        IsNotificationPopupShowing() ? PSTR("N_POP") :
+        IsNotificationPopupShowing() ? PSTR("N_POP") : // "Notification popup"
         emptyStr;
 } // PopupStr
 

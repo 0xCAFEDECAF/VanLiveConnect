@@ -763,7 +763,8 @@ function showPopup(id, msec)
 	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
 } // showPopup
 
-// Show a popup and send an update on the web socket
+// Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
+// e.g. to know when to ignore a "MOD" button press from the IR remote control.
 function showPopupAndNotifyServer(id, msec, message)
 {
 	showPopup(id, msec);
@@ -771,20 +772,20 @@ function showPopupAndNotifyServer(id, msec, message)
 	var messageText = typeof message !== "undefined" ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
 	webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
 
-	$("#original_mfd_popup").text("N_POP");  // Debug info
+	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
 } // showPopupAndNotifyServer
 
 // Hide the specified or the current (top) popup
 function hidePopup(id)
 {
-	if (webSocket) webSocket.send("mfd_popup_showing:NO");
-	$("#original_mfd_popup").empty();  // Debug info
-
 	var popup;
 	if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
 	if (popup.length === 0 || ! popup.is(":visible")) return false;
 
 	popup.hide();
+
+	if (webSocket) webSocket.send("mfd_popup_showing:NO");
+	$("#original_mfd_popup").empty();  // Debug info
 
 	clearInterval(popupTimer[id]);
 
