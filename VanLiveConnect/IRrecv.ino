@@ -75,8 +75,8 @@ void ICACHE_RAM_ATTR irPinChangeIsr()
     uint32_t now = system_get_time();
     if (irparams.rcvstate == STATE_IDLE)
     {
-        irparams.rcvstate = STATE_MARK;	
-        irparams.rawbuf[irparams.rawlen++] = 20;		
+        irparams.rcvstate = STATE_MARK;
+        irparams.rawbuf[irparams.rawlen++] = 20;
     }
     else
     {
