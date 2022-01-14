@@ -154,7 +154,7 @@ bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter)
         return true;
     } // if
 
-    if (filter == VAN_PACKETS_AIRCON)
+    if (filter == VAN_PACKETS_AIRCON_PKTS)
     {
         // Aircon packets (plus anything not recognized)
         // (Commented-out IDs will be printed on Serial)

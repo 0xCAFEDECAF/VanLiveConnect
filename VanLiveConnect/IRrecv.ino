@@ -355,7 +355,7 @@ bool IrReceive(TIrPacket& irPacket)
        )
     {
         return false;
-    }
+    } // if
 
     // IR controller button codes
     enum IrButtonHeldState_t

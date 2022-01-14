@@ -219,6 +219,20 @@ void HandleDumpFilter()
         F("OK: filtering JSON data"));
 } // HandleDumpFilter
 
+void HandleAndroidConnectivityCheck()
+{
+    printHttpRequest();
+    unsigned long start = millis();
+
+    webServer.send(204, "");
+
+#ifdef DEBUG_WEBSERVER
+    Serial.printf_P(PSTR("[webServer] Serving '%S' took: %lu msec\n"),
+        webServer.uri().c_str(),
+        millis() - start);
+#endif // DEBUG_WEBSERVER
+} // HandleAndroidConnectivityCheck
+
 // -----
 // MIME type string constants
 
@@ -514,6 +528,8 @@ void SetupWebServer()
     // Miscellaneous
 
     webServer.on(F("/dumpOnly"), HandleDumpFilter);
+    webServer.on(F("/generate_204"), HandleAndroidConnectivityCheck);
+    webServer.on(F("/gen_204"), HandleAndroidConnectivityCheck);
 
 #ifdef SERVE_FROM_SPIFFS
     // Try to serve any not further listed document from the SPI flash file system

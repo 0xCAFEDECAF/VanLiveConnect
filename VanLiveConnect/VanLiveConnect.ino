@@ -63,7 +63,7 @@ enum VanPacketFilter_t
     VAN_PACKETS_ALL_VAN_PKTS,
     VAN_PACKETS_NO_VAN_PKTS,
     VAN_PACKETS_HEAD_UNIT_PKTS,
-    VAN_PACKETS_AIRCON,
+    VAN_PACKETS_AIRCON_PKTS,
     VAN_PACKETS_COM2000_ETC_PKTS,
     VAN_PACKETS_SAT_NAV_PKTS
 }; // enum VanPacketFilter_t
@@ -89,10 +89,20 @@ bool IrReceive(TIrPacket& irPacket);
 
 void SetupVanReceiver()
 {
+#if ! defined VAN_RX_ISR_DEBUGGING && ! defined VAN_RX_IFS_DEBUGGING
+
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
     #define VAN_PACKET_QUEUE_SIZE 100
+
+#else
+
+    // Packet debugging requires a lot of extra memory per slot, so the queue must be small to prevent
+    // "out of memory" errors
+    #define VAN_PACKET_QUEUE_SIZE 15
+
+#endif
 
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
@@ -235,7 +245,14 @@ void loop()
     // VAN bus receiver
     TVanPacketRxDesc pkt;
     bool isQueueOverrun = false;
-    if (VanBusRx.Receive(pkt, &isQueueOverrun)) SendJsonText(ParseVanPacketToJson(pkt));
+    if (VanBusRx.Receive(pkt, &isQueueOverrun))
+    {
+    #ifdef VAN_RX_IFS_DEBUGGING
+        if (pkt.getIfsDebugPacket().IsAbnormal()) pkt.getIfsDebugPacket().Dump(Serial);
+    #endif // VAN_RX_IFS_DEBUGGING
+
+        SendJsonText(ParseVanPacketToJson(pkt));
+    }
     if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
     static unsigned long lastUpdate = 0;

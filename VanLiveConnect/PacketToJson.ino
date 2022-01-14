@@ -566,7 +566,7 @@ enum SatNavRequestType_t
     SRT_REQ_N_ITEMS = 0,  // Request for number of items
     SRT_REQ_ITEMS = 1,  // Request (single or list of) item(s)
     SRT_SELECT = 2,  // Select item
-    SRT_SELECT_CITY_CENTRE = 3  // Select city centre
+    SRT_SELECT_CITY_CENTER = 3  // Select city center
 }; // enum SatNavRequestType_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
@@ -576,7 +576,7 @@ PGM_P SatNavRequestTypeStr(uint8_t data)
         data == SRT_REQ_N_ITEMS ? PSTR("REQ_N_ITEMS") :
         data == SRT_REQ_ITEMS ? PSTR("REQ_ITEMS") :
         data == SRT_SELECT ? PSTR("SELECT") :
-        data == SRT_SELECT_CITY_CENTRE ? PSTR("SELECT_CITY_CENTRE") :
+        data == SRT_SELECT_CITY_CENTER ? PSTR("SELECT_CITY_CENTER") :
         ToStr(data);
 } // SatNavRequestTypeStr
 
@@ -740,6 +740,8 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
     const uint8_t* data = pkt.Data();
 
+    economyMode = data[1] & 0x10;
+
     // Coolant water temperature value often falls back to 'invalid' (0xFF), even if a valid value was previously
     // found. Keep the last reported valid value.
     static uint8_t lastValidCoolantTempRaw = 0xFF;
@@ -759,8 +761,6 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     prevTempRaw = extTempRaw;
 
     float extTemp = reportedTempRaw / 2.0 - 40;
-
-    economyMode = data[1] & 0x10;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -1308,7 +1308,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     static bool stalkWasPressed = false;
     bool stalkIsPressed = data[10] & 0x01;
 
-    // Note: stalk button will be processed even if a notification popup is visible (IsNotificationPopupShowing())
+    // Note: stalk button will be processed even if a notification popup is currently showing
+    // (IsNotificationPopupShowing())
     while (! economyMode && ! inMenu)
     {
         // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset)
@@ -2858,12 +2859,6 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         unsigned long packetInterval = now - lastPacketReceived;  // Arithmetic has safe roll-over
         lastPacketReceived = now;
 
-        // TODO - remove
-        // Serial.printf_P(
-            // PSTR("--> Received empty SatNavStatus2 packet (IDEN 7CE): packetInterval = %lu\n"),
-            // packetInterval
-        // );
-
         if (packetInterval < 500)
         {
             // As long as the MFD assumes the sat nav equipment is present (e.g. at boot time), it sends 5 bursts
@@ -3764,7 +3759,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "\"satnav_service_address_province\": \"%s\",\n"
                 "\"satnav_service_address_city\": \"%s\",\n"
                 "\"satnav_service_address_street\": \"%s\",\n"
-                "\"satnav_service_address_distance\": \"%s %s\"";
+                "\"satnav_service_address_distance\": \"%s %S\"";
 
             // Chosen service address is in first (and only) record. Copy at least city [3], district [4]
             // (if any), street [5, 6], entry name [9] and distance [11]; skip the other strings.
@@ -3788,7 +3783,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     // Street
                     ComposeStreetString(records[0][5], records[0][6]).c_str(),
 
-                    // Distance to the service address (sat nav reports in kms or in yards)
+                    // Distance to the service address (sat nav reports in metres or in yards)
                     records[0][11].c_str(),
                     mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? PSTR("m") : PSTR("yd")
                 );
@@ -3995,14 +3990,14 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         //   - type = 2 (SRT_SELECT) (dataLen = 11): select entry
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
         //   param == 0x1D: (TODO also || param == 0x0D ?)
-        //   - type = 3 (SRT_SELECT_CITY_CENTRE) (dataLen = 9): select city centre
+        //   - type = 3 (SRT_SELECT_CITY_CENTER) (dataLen = 9): select city center
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
         request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_REQ_N_ITEMS ? PSTR("satnav_enter_street_characters") :
         request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
         request == SR_ENTER_STREET && (param == 0x1D || param == 0x0D) && type == SRT_SELECT ? emptyStr :
-        request == SR_ENTER_STREET && param == 0x1D && type == SRT_SELECT_CITY_CENTRE ? PSTR("satnav_show_current_destination") :
+        request == SR_ENTER_STREET && param == 0x1D && type == SRT_SELECT_CITY_CENTER ? PSTR("satnav_show_current_destination") :
 
         // * request == 0x06 (SR_ENTER_HOUSE_NUMBER),
         //   param == 0x1D:
@@ -4165,7 +4160,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         // * request == 0x1D (SR_DESTINATION),
         //   param == 0xFF:
         //   - type = 1 (SRT_REQ_ITEMS) (dataLen = 9): get current destination. Satnav replies (IDEN 0x6CE) with the last
-        //     destination, a city centre with GPS coordinate (if no street has been entered yet), or a
+        //     destination, a city center with GPS coordinate (if no street has been entered yet), or a
         //     full address
         //     -- data[5] << 8 | data[6]: offset in list (always 0)
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)

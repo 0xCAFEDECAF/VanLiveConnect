@@ -66,10 +66,6 @@ function updateDateTime()
 	$("#time_small").text(time.replace(/.m.$/, ""));  // Remove trailing '.m.' if present
 } // updateDateTime
 
-// Update now and every next second
-updateDateTime();
-setInterval(updateDateTime, 1000);
-
 // -----
 // System settings
 
@@ -662,8 +658,6 @@ function gotoSmallScreen(smallScreenName)
 		break;
 	} // switch
 } // gotoSmallScreen
-
-gotoSmallScreen(localStorage.smallScreen);
 
 // If the "trip_computer_popup" is has no tab selected, select that of the current small screen
 function initTripComputerPopup()
@@ -1623,7 +1617,7 @@ function showTunerPresetsPopup()
 // Functions for selecting MFD language
 
 var notDigitizedAreaText = "Not digitized area";
-var cityCentreText = "City centre";
+var cityCenterText = "City centre";
 var noNumberText = "No number";
 var stopGuidanceText = "Stop guidance";
 var resumeGuidanceText = "Resume guidance";
@@ -1958,7 +1952,7 @@ function satnavConfirmCityMode()
 	);
 
 	// Set button text
-	$("#satnav_enter_characters_change_or_city_centre_button").text("Change");
+	$("#satnav_enter_characters_change_or_city_center_button").text("Change");
 
 	satnavSelectFirstAvailableCharacter();
 } // satnavConfirmCityMode
@@ -1974,7 +1968,7 @@ function satnavEnterByLetterMode()
 
 	// Set button text
 	// TODO - set full text ("City Centre"), make button auto-expand when selected
-	$("#satnav_enter_characters_change_or_city_centre_button").text(
+	$("#satnav_enter_characters_change_or_city_center_button").text(
 		currentMenu === "satnav_enter_street_characters" ? "City Ce" : "Change");
 
 	satnavSelectFirstAvailableCharacter();
@@ -2004,7 +1998,7 @@ function satnavConfirmStreetMode()
 
 	// Set button text
 	// TODO - set full text ("City Centre"), make button auto-expand when selected
-	$("#satnav_enter_characters_change_or_city_centre_button").text("City Ce");
+	$("#satnav_enter_characters_change_or_city_center_button").text("City Ce");
 
 	satnavSelectFirstAvailableCharacter();
 
@@ -2021,7 +2015,7 @@ function satnavToggleCityEntryMode()
 // "City Centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
-	if ($("#satnav_enter_characters_change_or_city_centre_button").text().replace(/\s*/g, "") === "Change")
+	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
 	{
 		// Entering city: toggle to the entry mode
 		satnavToggleCityEntryMode();
@@ -2074,7 +2068,7 @@ function satnavGotoEnterCity()
 // "City Centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavGotoEnterStreetOrNumber()
 {
-	if ($("#satnav_enter_characters_change_or_city_centre_button").text().replace(/\s*/g, "") === "Change")
+	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
 	{
 		gotoMenu("satnav_enter_street_characters");
 		satnavConfirmStreetMode();
@@ -2183,7 +2177,7 @@ function satnavCheckIfCityCenterMustBeAdded()
 		&& ! userHadOpportunityToEnterStreet
 	   )
 	{
-		$("#satnav_list").html(cityCentreText + "<br />" + $("#satnav_list").html());
+		$("#satnav_list").html(cityCenterText + "<br />" + $("#satnav_list").html());
 	} // if
 } // satnavCheckIfCityCenterMustBeAdded
 
@@ -2647,8 +2641,6 @@ function satnavGuidanceSetPreference(value)
 	setTick(satnavGuidancePreferenceTickBoxId);
 } // satnavGuidanceSetPreference
 
-satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
-
 // Find the ticked button and select it
 function satnavGuidancePreferenceSelectTickedButton()
 {
@@ -2705,14 +2697,15 @@ function satnavCalculatingRoute()
 {
 	localStorage.askForGuidanceContinuation = "NO";
 
-	// If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
-	// start, but not any more during the guidance.
-	satnavDestinationNotAccessibleByRoadPopupShown = false;
-
 	// Don't pop up in the guidance preference screen
 	if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
 
-	if (satnavVehicleMoving()) return;  // No popups while driving
+	// No popups while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
+	if (satnavVehicleMoving()) return;
+
+	// If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
+	// start, but not any more during the guidance.
+	satnavDestinationNotAccessibleByRoadPopupShown = false;
 
 	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 } // satnavCalculatingRoute
@@ -3658,7 +3651,7 @@ function handleItemChange(item, value)
 			// Show or hide the "door open" popup, but not in the "pre_flight" screen
 			if (value === "YES" && currentLargeScreenId !== "pre_flight")
 			{
-				$("#door_open_popup_text").text("Door open");  // TODO - language
+				$("#door_open_popup_text").html(doorOpenText);
 				showPopupAndNotifyServer("door_open_popup", 8000);
 			}
 			else
@@ -4022,7 +4015,7 @@ function handleItemChange(item, value)
 
 		case "satnav_current_destination_street":
 		{
-			$("#satnav_current_destination_street_shown").html(value === "" ? cityCentreText : value);
+			$("#satnav_current_destination_street_shown").html(value === "" ? cityCenterText : value);
 
 			if (! $("#satnav_enter_street_characters").is(":visible")) break;
 
@@ -4042,13 +4035,13 @@ function handleItemChange(item, value)
 		case "satnav_personal_address_street":
 		case "satnav_professional_address_street":
 		{
-			$("#" + item + "_shown").html(value === "" ? cityCentreText : value);
+			$("#" + item + "_shown").html(value === "" ? cityCenterText : value);
 		} // case
 		break;
 
 		case "satnav_last_destination_street":
 		{
-			$('[gid="satnav_last_destination_street_shown"]').html(value === "" ? cityCentreText : value);
+			$('[gid="satnav_last_destination_street_shown"]').html(value === "" ? cityCenterText : value);
 		} // case
 		break;
 
@@ -5006,7 +4999,7 @@ function setLanguage(language)
 				checked by the user.<br>");
 
 			notDigitizedAreaText = "Not digitized area";
-			cityCentreText = "City centre";
+			cityCenterText = "City centre";
 			noNumberText = "No number";
 			stopGuidanceText = "Stop guidance";
 			resumeGuidanceText = "Resume guidance";
@@ -5159,11 +5152,11 @@ function setLanguage(language)
 				scrupuleusement par l&uacute;tilisateur.<br>");
 
 			notDigitizedAreaText = "Zone non cartographi&eacute;e";
-			cityCentreText = "Centre-ville";
+			cityCenterText = "Centre-ville";
 			noNumberText = "Pas de num&eacute;ro";
 			stopGuidanceText = "Arr&ecirc;ter le guidage";
 			resumeGuidanceText = "Reprendre le guidage";
-			// streetNotListedText = "Street not listed";
+			streetNotListedText = "Rue non r&eacute;pertori&eacute;e";  // TODO - check
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Saisie d'une nouvelle destination");
@@ -5246,13 +5239,13 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Libell&eacute;");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corriger");
 
-			// $("#satnav_guidance .tag").html("To dest");
+			$("#satnav_guidance .tag").html("Vers dest.");  // TODO - check
 
-			// $("#satnav_reached_destination_popup_title").html("Destination reached");
+			$("#satnav_reached_destination_popup_title").html("Destination atteinte");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Voulez-vous supprimer<br />la fiche ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conserver le crit&egrave;re");
 			// $("#satnav_delete_directory_data_popup_title").html("This will delete all data in directories");
-			// $("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
+			$("#satnav_continue_guidance_popup_title").html("Continuer la navigation?");  // TODO - check
 
 			$(".yesButton").html("Oui");
 			$(".noButton").html("Non");
@@ -5270,7 +5263,7 @@ function setLanguage(language)
 			$("#satnav_enter_characters_correction_button").html("Corriger");
 			$("#satnav_archive_in_directory_entry").html("Archiver");
 
-			// $(".satNavEntryExistsTag").html("This entry already exists");
+			$(".satNavEntryExistsTag").html("Libell&eacute; existe d&eacute;j&agrave;");  // TODO - check
 		} // case
 		break;
 
@@ -5312,11 +5305,11 @@ function setLanguage(language)
 				sofgf&auml;ltig gepr&uuml;ft werden");
 
 			notDigitizedAreaText = "Nicht kartographiert";
-			cityCentreText = "Stadtmitte";
+			cityCenterText = "Stadtmitte";
 			noNumberText = "Keine Nummer";
 			stopGuidanceText = "F&uuml;hrung abbrechen";
 			resumeGuidanceText = "F&uuml;hrung wieder aufnehmen";
-			// streetNotListedText = "Street not listed";
+			streetNotListedText = "Stra&szlig;e unbekannt";  // TODO - check
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / F&uuml;hrung<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Neues Ziel eingeben");
@@ -5401,11 +5394,11 @@ function setLanguage(language)
 
 			$("#satnav_guidance .tag").html("Ziel");
 
-			// $("#satnav_reached_destination_popup_title").html("Destination reached");
+			$("#satnav_reached_destination_popup_title").html("Ziel erreicht");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("M&ouml;chten Sie Diese<br />Position l&ouml;schen ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Beibehalten Routenart");
 			$("#satnav_delete_directory_data_popup_title").html("Hiermit werden alle Daten der Verzeichnisse gel&ouml;scht");
-			// $("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
+			$("#satnav_continue_guidance_popup_title").html("Navigation fortsetzen?");  // TODO - check
 
 			$(".yesButton").html("Ja");
 			$(".noButton").html("Nein");
@@ -5423,7 +5416,7 @@ function setLanguage(language)
 			$("#satnav_enter_characters_correction_button").html("Korrigieren");
 			$("#satnav_archive_in_directory_entry").html("Speichern");
 
-			// $(".satNavEntryExistsTag").html("This entry already exists");
+			$(".satNavEntryExistsTag").html("Name existiert bereits");  // TODO - check
 		} // case
 		break;
 
@@ -5466,11 +5459,11 @@ function setLanguage(language)
 				carreteras.<br>");
 
 			notDigitizedAreaText = "Zona no cartografiada";
-			cityCentreText = "Centro de la ciudad";
+			cityCenterText = "Centro de la ciudad";
 			noNumberText = "Sin n&uacute;mero";
 			stopGuidanceText = "Interrumpir guiado";
 			resumeGuidanceText = "Reanudar el guiado";
-			// streetNotListedText = "Street not listed";
+			streetNotListedText = "Calle no listada"; // TODO - check
 
 			$("#satnav_main_menu .menuTitleLine").html("Navegaci&oacute;n / Guiado<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Introducir nuevo destino");
@@ -5553,13 +5546,13 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominaci&oacute;n");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corregir");
 
-			// $("#satnav_guidance .tag").html("To dest");
+			$("#satnav_guidance .tag").html("Al destino");  // TODO - check
 
-			// $("#satnav_reached_destination_popup_title").html("Destination reached");
+			$("#satnav_reached_destination_popup_title").html("Destino alcanzado");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?");
 			// $("#satnav_guidance_preference_popup_title").html("Keep criteria");
 			$("#satnav_delete_directory_data_popup_title").html("Se borrar&aacute;n todos los<br />catos de los directorios");
-			// $("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
+			$("#satnav_continue_guidance_popup_title").html("&iquest;Continuar la navegaci&oacute;n?");  // TODO - check
 
 			$(".yesButton").html("S&iacute;");
 			$(".noButton").html("No");
@@ -5577,7 +5570,7 @@ function setLanguage(language)
 			$("#satnav_enter_characters_correction_button").html("Corregir");
 			$("#satnav_archive_in_directory_entry").html("Memorizar");
 
-			// $(".satNavEntryExistsTag").html("This entry already exists");
+			$(".satNavEntryExistsTag").html("Denominaci&oacute;n ya existe");  // TODO - check
 		} // case
 		break;
 
@@ -5619,11 +5612,11 @@ function setLanguage(language)
 				verificata dall'utente<br>");
 
 			notDigitizedAreaText = "Area non mappata";
-			cityCentreText = "Centro della citt&agrave;";
+			cityCenterText = "Centro della citt&agrave;";
 			noNumberText = "Nessun numero";
 			stopGuidanceText = "Interrompere la guida";
 			resumeGuidanceText = "Riprendere la guida";
-			// streetNotListedText = "Street not listed";
+			streetNotListedText = "Strada non elencata";  // TODO - check
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigazione/Guida<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Inserire una nuova destinazione");
@@ -5635,7 +5628,7 @@ function setLanguage(language)
 			$("#satnav_select_from_memory_menu .button:eq(0)").html("Rub. personale");
 			$("#satnav_select_from_memory_menu .button:eq(1)").html("Rub. professionale");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Opzioni di navigatione<br />");
+			$("#satnav_navigation_options_menu .menuTitleLine").html("Opzioni di navigazione<br />");
 			$("#satnav_navigation_options_menu .button:eq(0)").html("Gestione rubrica");
 			$("#satnav_navigation_options_menu .button:eq(1)").html("Volume navigazione");
 			$("#satnav_navigation_options_menu .button:eq(2)").html("Cancella rubrica");
@@ -5657,7 +5650,7 @@ function setLanguage(language)
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Esclusione autostrada<br />");
 			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Compromesso rapidit&agrave;/distanza<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Volume navigatione<br />");
+			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Volume navigazione<br />");
 			$("#satnav_vocal_synthesis_level .tag").html("Volume");
 
 			$("#satnav_enter_city_characters .tag").html("Selezionare citt&agrave;");
@@ -5706,13 +5699,13 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominazione");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Correggere");
 
-			// $("#satnav_guidance .tag").html("To dest");
+			$("#satnav_guidance .tag").html("A dest.");  // TODO - check
 
-			// $("#satnav_reached_destination_popup_title").html("Destination reached");
+			$("#satnav_reached_destination_popup_title").html("Destinazione raggiunta");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Cancellare la scheda?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conservare il criterio");
 			$("#satnav_delete_directory_data_popup_title").html("I dati delle rubrica<br />verranno cancellati");
-			// $("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
+			$("#satnav_continue_guidance_popup_title").html("Continuare la navigazione?");  // TODO - check
 
 			$(".yesButton").html("S&igrave;");
 			$(".noButton").html("No");
@@ -5730,7 +5723,7 @@ function setLanguage(language)
 			$("#satnav_enter_characters_correction_button").html("Correggere");
 			$("#satnav_archive_in_directory_entry").html("Memorizzare");
 
-			// $(".satNavEntryExistsTag").html("This entry already exists");
+			$(".satNavEntryExistsTag").html("Denominazione esiste gi&agrave;");  // TODO - check
 		} // case
 		break;
 
@@ -5772,11 +5765,11 @@ function setLanguage(language)
 				nauwkeurig controleren.<br>");
 
 			notDigitizedAreaText = "Zone niet in kaart";
-			cityCentreText = "Stadscentrum";
+			cityCenterText = "Stadscentrum";
 			noNumberText = "Geen nummer";
 			stopGuidanceText = "Stop navigatie";
 			resumeGuidanceText = "Laatste bestemming";
-			// streetNotListedText = "Street not listed";
+			streetNotListedText = "Straat onbekend";  // TODO - check
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigatie/ Begeleiding<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Nieuwe bestemming invoeren");
@@ -5859,13 +5852,13 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Naam");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Verbeteren");
 
-			// $("#satnav_guidance .tag").html("To dest");
+			$("#satnav_guidance .tag").html("Naar best.");  // TODO - check
 
-			// $("#satnav_reached_destination_popup_title").html("Destination reached");
+			$("#satnav_reached_destination_popup_title").html("Bestemming bereikt");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Wilt u dit gegeven<br />wissen?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Bewaar de gegevens");
 			$("#satnav_delete_directory_data_popup_title").html("Pas op : alle gegevens<br />worden gewist");
-			// $("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
+			$("#satnav_continue_guidance_popup_title").html("Navigatie voortzetten?");  // TODO - check
 
 			$(".yesButton").html("Ja");
 			$(".noButton").html("Nee");
@@ -5883,7 +5876,7 @@ function setLanguage(language)
 			$("#satnav_enter_characters_correction_button").html("Verbeteren");
 			$("#satnav_archive_in_directory_entry").html("Bewaren");
 
-			// $(".satNavEntryExistsTag").html("This entry already exists");
+			$(".satNavEntryExistsTag").html("Deze naam bestaat al");  // TODO - check
 		} // case
 		break;
 
@@ -5891,10 +5884,9 @@ function setLanguage(language)
 		break;
 	} // switch
 
+	$("#door_open_popup_text").html(doorOpenText);
 	satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
 } // setLanguage
-
-setLanguage(localStorage.mfdLanguage);
 
 function setUnits(distanceUnit, temperatureUnit, timeUnit)
 {
@@ -5929,6 +5921,17 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 	} // if
 } // setUnits
 
-setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+// To be called by the body "onload" event
+function htmlBodyOnLoad()
+{
+	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+	setLanguage(localStorage.mfdLanguage);
+
+	gotoSmallScreen(localStorage.smallScreen);
+
+	// Update time now and every next second
+	updateDateTime();
+	setInterval(updateDateTime, 1000);
+} // htmlBodyOnLoad
 
 )=====";

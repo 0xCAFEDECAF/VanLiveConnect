@@ -51,9 +51,10 @@ char mfd_html[] PROGMEM = R"=====(
 		<link rel="stylesheet" href="css/all.css" async>	<!-- Font Awesome -->
 
 		<script src="jquery-3.5.1.min.js"></script>	<!-- jQuery -->
-		<script src="MFD.js" async></script>	<!-- All our own stuff -->
+		<script src="MFD.js" async></script>	<!-- Our own stuff -->
+		<!-- <script defer src="MFD.js"></script> -->	<!-- Our own stuff. 'defer': don't run until HTML parsing is done -->
 	</head>
-	<body translate="no">
+	<body translate="no" onload = "htmlBodyOnLoad();">
 
 		<!-- Hierarchy of screens:
 
@@ -1286,7 +1287,7 @@ char mfd_html[] PROGMEM = R"=====(
 								List <span gid="satnav_to_mfd_list_size"></span>
 							</div>
 
-							<div id="satnav_enter_characters_change_or_city_centre_button"
+							<div id="satnav_enter_characters_change_or_city_center_button"
 								UP_BUTTON="satnav_to_mfd_show_characters_line_2"
 								on_click="satnavEnterCharactersChangeOrCityCenterButtonPress();"
 								class="icon button"
