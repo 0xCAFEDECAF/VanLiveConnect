@@ -47,14 +47,14 @@ void SendJsonText(const char* json)
 
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
-    // Print a message if the websocket broadcast took outrageously long (normally it takes around 1-2 msec).
+    // Print a message if the websocket transmission took outrageously long (normally it takes around 1-2 msec).
     // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
     // a single-thread system).
     unsigned long duration = millis() - start;
     if (duration > 100)
     {
         Serial.printf_P(
-            PSTR("Sending %zu JSON bytes via 'webSocket.broadcastTXT' took: %lu msec\n"),
+            PSTR("Sending %zu JSON bytes via 'webSocket.sendTXT' took: %lu msec\n"),
             strlen(json),
             duration);
 

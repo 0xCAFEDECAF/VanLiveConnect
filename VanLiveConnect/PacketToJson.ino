@@ -30,8 +30,8 @@ struct IdenHandler_t
     int dataLen;
     bool ignoreDups;
     TPacketParser parser;
-    uint8_t* prevData;
     int prevDataLen;
+    uint8_t* prevData;
 }; // struct IdenHandler_t
 
 // Often used string constants
@@ -119,20 +119,17 @@ sint32_t _floor(sint32_t n, sint32_t d)
 
 uint16_t ToMiles(uint16_t km)
 {
-    //return (uint32_t)km * 1000 / 1609;
-    return (uint32_t)km * 10 / 16;
+    return ((uint32_t)km * 2000 + 1609) / 1609 / 2;  // Adding 1609 for correct rounding
 } // ToMiles
 
 sint32_t ToMiles(sint32_t km)
 {
-    //return (sint32_t)km * 1000 / 1609;
-    return (sint32_t)km * 10 / 16;
+    return ((sint32_t)km * 2000 + 1609) / 1609 / 2;  // Adding 1609 for correct rounding
 } // ToMiles
 
 float ToMiles(float km)
 {
-    //return km / 1.609;
-    return km / 1.6;
+    return km / 1.609;
 } // ToMiles
 
 float ToYards(float m)
@@ -140,6 +137,7 @@ float ToYards(float m)
     return m / 1.094;
 } // ToYards
 
+// Note: cannot handle 0 as parameter!
 float ToMilesPerGallon(float consumptionLt100_x10)
 {
     return 2824.8 / consumptionLt100_x10;  // Assuming imperial gallons
@@ -152,7 +150,7 @@ float ToFahrenheit(float temp_C)
 
 sint16_t ToFahrenheit(sint16_t temp_C)
 {
-    return temp_C * 9 / 5 + 32;
+    return (temp_C * 90 + 50 / 2) / 50 + 32;  // Adding 50 / 2 for correct rounding
 } // ToFahrenheit
 
 float ToGallons(float litres)
@@ -4872,7 +4870,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 
     // Relying on short-circuit boolean evaluation
     bool isDuplicate =
-        handler->prevDataLen - 1 == dataLen  // handler->prevDataLen is initialized to 0; use 1 for 0-byte packets
+        handler->prevDataLen == dataLen  // handler->prevDataLen is initialized to -1
         && handler->prevData != NULL
         && memcmp(data, handler->prevData, dataLen) == 0;
 
@@ -4888,7 +4886,11 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         Serial.printf_P(PSTR("---> Received: %s packet (0x%03X)\n"), handler->idenStr, iden);
 
         // The first time, handler->prevData will be NULL, so only the "FULL: " line will be printed
-        if (handler->prevData != NULL)
+        //if (handler->prevData != NULL)
+
+        // The first time, or after an call to ResetPacketPrevData, handler->prevDataLen will be -1, so only
+        // the "FULL: " line will be printed
+        if (handler->prevData != NULL && handler->prevDataLen >= 0)
         {
             // First line: print the new packet's data where it differs from the previous packet
             Serial.printf_P(PSTR("DIFF: 0x%03X (%s) "), iden, handler->idenStr);
@@ -4920,7 +4922,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         // Save packet data to compare against at next packet reception
         memset(handler->prevData, 0, VAN_MAX_DATA_BYTES);
         memcpy(handler->prevData, data, dataLen);
-        handler->prevDataLen = dataLen + 1;
+        handler->prevDataLen = dataLen;
     } // if
 
 #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
@@ -4954,35 +4956,36 @@ static IdenHandler_t handlers[] =
     // 3. Number of expected bytes (or -1 if varying/unknown),
     // 4. Ignore duplicates (boolean)
     // 5. handler function
-    { VIN_IDEN, "vin", 17, true, &ParseVinPkt },
-    { ENGINE_IDEN, "engine", 7, true, &ParseEnginePkt },
-    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, true, &ParseHeadUnitStalkPkt },
-    { LIGHTS_STATUS_IDEN, "lights_status", -1, true, &ParseLightsStatusPkt },
-    { DEVICE_REPORT, "device_report", -1, true, &ParseDeviceReportPkt },
-    { CAR_STATUS1_IDEN, "car_status_1", 27, true, &ParseCarStatus1Pkt },
-    { CAR_STATUS2_IDEN, "car_status_2", -1, true, &ParseCarStatus2Pkt },
-    { DASHBOARD_IDEN, "dashboard", 7, true, &ParseDashboardPkt },
-    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, true, &ParseDashboardButtonsPkt },
-    { HEAD_UNIT_IDEN, "head_unit", -1, true, &ParseHeadUnitPkt },
-    { TIME_IDEN, "time", 5, true, &ParseTimePkt },
-    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, true, &ParseAudioSettingsPkt },
-    { MFD_STATUS_IDEN, "mfd_status", 2, true, &ParseMfdStatusPkt },
-    { AIRCON1_IDEN, "aircon_1", 5, true, &ParseAirCon1Pkt },
-    { AIRCON2_IDEN, "aircon_2", 7, true, &ParseAirCon2Pkt },
-    { CDCHANGER_IDEN, "cd_changer", -1, true, &ParseCdChangerPkt },
-    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, true, &ParseSatNavStatus1Pkt },
-    { SATNAV_STATUS_2_IDEN, "satnav_status_2", -1, false, &ParseSatNavStatus2Pkt },
-    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, true, &ParseSatNavStatus3Pkt },
-    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, true, &ParseSatNavGuidanceDataPkt },
-    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, true, &ParseSatNavGuidancePkt },
-    { SATNAV_REPORT_IDEN, "satnav_report", -1, true, &ParseSatNavReportPkt },
-    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, true, &ParseMfdToSatNavPkt },
-    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, true, &ParseSatNavToMfdPkt },
-    { WHEEL_SPEED_IDEN, "wheel_speed", 5, true, &ParseWheelSpeedPkt },
-    { ODOMETER_IDEN, "odometer", 5, true, &ParseOdometerPkt },
-    { COM2000_IDEN, "com2000", 10, true, &ParseCom2000Pkt },
-    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, true, &ParseCdChangerCmdPkt },
-    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, true, &ParseMfdToHeadUnitPkt },
+    // 6. prevDataLen: must be initialized to -1 to indicate "unknown"
+    { VIN_IDEN, "vin", 17, true, &ParseVinPkt, -1 },
+    { ENGINE_IDEN, "engine", 7, true, &ParseEnginePkt, -1 },
+    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, true, &ParseHeadUnitStalkPkt, -1 },
+    { LIGHTS_STATUS_IDEN, "lights_status", -1, true, &ParseLightsStatusPkt, -1 },
+    { DEVICE_REPORT, "device_report", -1, true, &ParseDeviceReportPkt, -1 },
+    { CAR_STATUS1_IDEN, "car_status_1", 27, true, &ParseCarStatus1Pkt, -1 },
+    { CAR_STATUS2_IDEN, "car_status_2", -1, true, &ParseCarStatus2Pkt, -1 },
+    { DASHBOARD_IDEN, "dashboard", 7, true, &ParseDashboardPkt, -1 },
+    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, true, &ParseDashboardButtonsPkt, -1 },
+    { HEAD_UNIT_IDEN, "head_unit", -1, true, &ParseHeadUnitPkt, -1 },
+    { TIME_IDEN, "time", 5, true, &ParseTimePkt, -1 },
+    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, true, &ParseAudioSettingsPkt, -1 },
+    { MFD_STATUS_IDEN, "mfd_status", 2, true, &ParseMfdStatusPkt, -1 },
+    { AIRCON1_IDEN, "aircon_1", 5, true, &ParseAirCon1Pkt, -1 },
+    { AIRCON2_IDEN, "aircon_2", 7, true, &ParseAirCon2Pkt, -1 },
+    { CDCHANGER_IDEN, "cd_changer", -1, true, &ParseCdChangerPkt, -1 },
+    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, true, &ParseSatNavStatus1Pkt, -1 },
+    { SATNAV_STATUS_2_IDEN, "satnav_status_2", -1, false, &ParseSatNavStatus2Pkt, -1 },
+    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, true, &ParseSatNavStatus3Pkt, -1 },
+    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, true, &ParseSatNavGuidanceDataPkt, -1 },
+    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, true, &ParseSatNavGuidancePkt, -1 },
+    { SATNAV_REPORT_IDEN, "satnav_report", -1, true, &ParseSatNavReportPkt, -1 },
+    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, true, &ParseMfdToSatNavPkt, -1 },
+    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, true, &ParseSatNavToMfdPkt, -1 },
+    { WHEEL_SPEED_IDEN, "wheel_speed", 5, true, &ParseWheelSpeedPkt, -1 },
+    { ODOMETER_IDEN, "odometer", 5, true, &ParseOdometerPkt, -1 },
+    { COM2000_IDEN, "com2000", 10, true, &ParseCom2000Pkt, -1 },
+    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, true, &ParseCdChangerCmdPkt, -1 },
+    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, true, &ParseMfdToHeadUnitPkt, -1 },
 }; // handlers
 
 const IdenHandler_t* const handlers_end = handlers + sizeof(handlers) / sizeof(handlers[0]);
@@ -5058,7 +5061,7 @@ void ResetPacketPrevData()
         if (handler->prevData != NULL)
         {
             memset(handler->prevData, 0, VAN_MAX_DATA_BYTES);
-            handler->prevDataLen = 0;
+            handler->prevDataLen = -1;  // Re-initialize
         } // if
 
         handler++;

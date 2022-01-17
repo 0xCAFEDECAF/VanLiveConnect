@@ -1747,11 +1747,14 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Distance to destination -->
 
-					<div class="tag" style="left:350px; top:460px; width:180px;">To dest</div>
+					<div class="icon iconSmall" style="left:610px; top:470px; width:80px;">...</div>
+					<div class="icon iconSmall" style="left:660px; top:470px;">
+						<div class="fas fa-sign-in-alt"></div>
+					</div>
 
 					<div id="satnav_distance_to_dest_via_road_visible">
-						<div id="satnav_distance_to_dest_via_road_number" class="dots" style="left:540px; top:457px; width:200px; text-align:right;">-</div>
-						<div id="satnav_distance_to_dest_via_road_unit" class="dots" style="font-size:30px; left:750px; top:480px;"></div>
+						<div id="satnav_distance_to_dest_via_road_number" class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
+						<div id="satnav_distance_to_dest_via_road_unit" class="dots" style="font-size:30px; left:560px; top:480px;"></div>
 					</div>
 
 					<!-- This one is shown instead of the above, in case "Destination is not accessible by road" -->

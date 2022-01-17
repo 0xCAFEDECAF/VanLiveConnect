@@ -2770,7 +2770,7 @@ function satnavFormatDistance(distanceStr)
 		// Note that 'toFixed' also performs rounding. So we need to add only 49.
 		return [ ((+distance + 49) / 1000).toFixed(1), "km" ];
 	}
-	else if (unit === "y" && +distance >= 880)
+	else if (unit === "yd" && +distance >= 880)
 	{
 		// Reported in yards, and 880 yards or more: show in miles, with decimal notation. Round upwards.
 		return [ ((+distance + 87) / 1760).toFixed(1), "mile" ];  // Original MFD shows "ml"
@@ -3561,11 +3561,15 @@ function handleItemChange(item, value)
 
 			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit") 
 			{
-				icyConditions = temp >= 26.0 && temp <= 38;
+				// Apply hysteresis
+				if (! icyConditions && temp >= 26 && temp <= 38) icyConditions = true;
+				else if (icyConditions && (temp <= 24 || temp >= 40)) icyConditions = false;
 			}
 			else
 			{
-				icyConditions = temp >= -3.0 && temp <= 3.0;
+				// Apply hysteresis
+				if (! icyConditions && temp >= -3.0 && temp <= 3.0) icyConditions = true;
+				else if (icyConditions && (temp <= -4.0 || temp >= 4.0)) icyConditions = false;
 			} // if
 
 			$('[gid="exterior_temp_shown"]').html(
@@ -3939,7 +3943,18 @@ function handleItemChange(item, value)
 			{
 				if ($("#satnav_guidance").is(":visible"))
 				{
-					if (! satnavRouteComputed) $("#satnav_guidance_next_street").text("Retrieving next instruction");
+					if (! satnavRouteComputed)
+					{
+						// TODO - check translations from English
+						$("#satnav_guidance_next_street").html(
+							localStorage.mfdLanguage === "set_language_french" ? "Chercher instruction" :
+							localStorage.mfdLanguage === "set_language_german" ? "Anweisung suchen" :
+							localStorage.mfdLanguage === "set_language_spanish" ? "Buscar instrucci&oacute;n" :
+							localStorage.mfdLanguage === "set_language_italian" ? "Cercare istruzione" :
+							localStorage.mfdLanguage === "set_language_dutch" ? "Opzoeken instructie" :
+							"Retrieving next instruction"
+						);
+					}
 				}
 				else
 				{
@@ -5086,8 +5101,6 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Name");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Correction");
 
-			$("#satnav_guidance .tag").html("To dest");
-
 			$("#satnav_reached_destination_popup_title").html("Destination reached");
 			$("#satnav_delete_item_popup_title").html("Delete item ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Keep criteria");
@@ -5239,8 +5252,6 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Libell&eacute;");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corriger");
 
-			$("#satnav_guidance .tag").html("Vers dest.");  // TODO - check
-
 			$("#satnav_reached_destination_popup_title").html("Destination atteinte");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Voulez-vous supprimer<br />la fiche ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conserver le crit&egrave;re");
@@ -5391,8 +5402,6 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory_title").html("Umbenennen");
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Name");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Korrigieren");
-
-			$("#satnav_guidance .tag").html("Ziel");
 
 			$("#satnav_reached_destination_popup_title").html("Ziel erreicht");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("M&ouml;chten Sie Diese<br />Position l&ouml;schen ?<br />");
@@ -5546,8 +5555,6 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominaci&oacute;n");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corregir");
 
-			$("#satnav_guidance .tag").html("Al destino");  // TODO - check
-
 			$("#satnav_reached_destination_popup_title").html("Destino alcanzado");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?");
 			// $("#satnav_guidance_preference_popup_title").html("Keep criteria");
@@ -5699,8 +5706,6 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominazione");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Correggere");
 
-			$("#satnav_guidance .tag").html("A dest.");  // TODO - check
-
 			$("#satnav_reached_destination_popup_title").html("Destinazione raggiunta");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Cancellare la scheda?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conservare il criterio");
@@ -5851,8 +5856,6 @@ function setLanguage(language)
 			$("#satnav_rename_entry_in_directory_title").html("Nieuwe naam");
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Naam");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Verbeteren");
-
-			$("#satnav_guidance .tag").html("Naar best.");  // TODO - check
 
 			$("#satnav_reached_destination_popup_title").html("Bestemming bereikt");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Wilt u dit gegeven<br />wissen?<br />");

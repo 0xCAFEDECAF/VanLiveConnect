@@ -215,7 +215,7 @@ void setup()
     SetupWebSocket();
 
 #ifdef WIFI_AP_MODE
-    Serial.print(F("Please surf to: http://"));
+    Serial.printf_P(PSTR("Please connect to Wi-Fi network '%s', then surf to: http://"), WIFI_SSID);
     Serial.print(apIP);
     Serial.println(F("/MFD.html"));
 #endif // WIFI_AP_MODE
