@@ -4778,6 +4778,20 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "van_bus_overrun":
+		{
+			// Indicate bus overrun by changing color of comms_led icon to red
+			$("#comms_led").css('background-color', 'red');
+
+			// After 10 seconds, return to original color
+			clearInterval(handleItemChange.revertCommsLedColor);
+			handleItemChange.revertCommsLedColor = setTimeout(
+				function () { $("#comms_led").css('background-color', '#dfe7f2'); },
+				10000
+			);
+		} // case
+		break;
+
 		case "mfd_remote_control":
 		{
 			// Ignore remote control buttons if contact key is off
@@ -5121,7 +5135,7 @@ function setLanguage(language)
 
 			$(".correctionButton").html("Change");
 			$("#satnav_enter_characters_correction_button").html("Correction");
-			$("#satnav_archive_in_directory_entry").html("Store");
+			$("#satnav_store_entry_in_directory").html("Store");
 
 			$(".satNavEntryExistsTag").html("This entry already exists");
 		} // case
@@ -5209,7 +5223,7 @@ function setLanguage(language)
 			$("#satnav_enter_city_characters .tag").html("Saisie de la ville");
 			$("#satnav_enter_street_characters .tag").html("Saisie de la voie");
 
-			// $("#satnav_enter_characters .tag:eq(0)").html("Choose next letter");
+			$("#satnav_enter_characters .tag:eq(0)").html("Choisis une lettre");  // TODO - check
 			$("#satnav_enter_characters .tag:eq(1)").html("Saisie de la ville");
 			$("#satnav_enter_characters .tag:eq(2)").html("Saisie de la voie");
 
@@ -5272,7 +5286,7 @@ function setLanguage(language)
 
 			$(".correctionButton").html("Changer");
 			$("#satnav_enter_characters_correction_button").html("Corriger");
-			$("#satnav_archive_in_directory_entry").html("Archiver");
+			$("#satnav_store_entry_in_directory").html("Archiver");
 
 			$(".satNavEntryExistsTag").html("Libell&eacute; existe d&eacute;j&agrave;");  // TODO - check
 		} // case
@@ -5360,7 +5374,7 @@ function setLanguage(language)
 			$("#satnav_enter_city_characters .tag").html("Stadt eingeben");
 			$("#satnav_enter_street_characters .tag").html("Stra&szlig;e eingeben");
 
-			// $("#satnav_enter_characters .tag:eq(0)").html("Choose next letter");
+			$("#satnav_enter_characters .tag:eq(0)").html("Buchstabe w&auml;hlen");  // TODO - check
 			$("#satnav_enter_characters .tag:eq(1)").html("Stadt eingeben");
 			$("#satnav_enter_characters .tag:eq(2)").html("Stra&szlig;e eingeben");
 
@@ -5423,7 +5437,7 @@ function setLanguage(language)
 
 			$(".correctionButton").html("&Auml;ndern");
 			$("#satnav_enter_characters_correction_button").html("Korrigieren");
-			$("#satnav_archive_in_directory_entry").html("Speichern");
+			$("#satnav_store_entry_in_directory").html("Speichern");
 
 			$(".satNavEntryExistsTag").html("Name existiert bereits");  // TODO - check
 		} // case
@@ -5512,7 +5526,7 @@ function setLanguage(language)
 			$("#satnav_enter_city_characters .tag").html("Introducir la ciudad");
 			$("#satnav_enter_street_characters .tag").html("Introducir la calle");
 
-			// $("#satnav_enter_characters .tag:eq(0)").html("Choose next letter");
+			$("#satnav_enter_characters .tag:eq(0)").html("Elegir letra");  // TODO - check
 			$("#satnav_enter_characters .tag:eq(1)").html("Introducir la ciudad");
 			$("#satnav_enter_characters .tag:eq(2)").html("Introducir la calle");
 
@@ -5575,7 +5589,7 @@ function setLanguage(language)
 
 			$(".correctionButton").html("Cambiar");
 			$("#satnav_enter_characters_correction_button").html("Corregir");
-			$("#satnav_archive_in_directory_entry").html("Memorizar");
+			$("#satnav_store_entry_in_directory").html("Memorizar");
 
 			$(".satNavEntryExistsTag").html("Denominaci&oacute;n ya existe");  // TODO - check
 		} // case
@@ -5663,7 +5677,7 @@ function setLanguage(language)
 			$("#satnav_enter_city_characters .tag").html("Selezionare citt&agrave;");
 			$("#satnav_enter_street_characters .tag").html("Selezionare via");
 
-			// $("#satnav_enter_characters .tag:eq(0)").html("Choose next letter");
+			$("#satnav_enter_characters .tag:eq(0)").html("Scegli lettera");  // TODO - check
 			$("#satnav_enter_characters .tag:eq(1)").html("Selezionare citt&agrave;");
 			$("#satnav_enter_characters .tag:eq(2)").html("Selezionare via");
 
@@ -5726,7 +5740,7 @@ function setLanguage(language)
 
 			$(".correctionButton").html("Modificare");
 			$("#satnav_enter_characters_correction_button").html("Correggere");
-			$("#satnav_archive_in_directory_entry").html("Memorizzare");
+			$("#satnav_store_entry_in_directory").html("Memorizzare");
 
 			$(".satNavEntryExistsTag").html("Denominazione esiste gi&agrave;");  // TODO - check
 		} // case
@@ -5814,7 +5828,7 @@ function setLanguage(language)
 			$("#satnav_enter_city_characters .tag").html("Stad invoeren");
 			$("#satnav_enter_street_characters .tag").html("Straat invoeren");
 
-			// $("#satnav_enter_characters .tag:eq(0)").html("Choose next letter");
+			$("#satnav_enter_characters .tag:eq(0)").html("Kies letter");
 			$("#satnav_enter_characters .tag:eq(1)").html("Stad invoeren");
 			$("#satnav_enter_characters .tag:eq(2)").html("Straat invoeren");
 
@@ -5877,7 +5891,7 @@ function setLanguage(language)
 
 			$(".correctionButton").html("Wijzigen");
 			$("#satnav_enter_characters_correction_button").html("Verbeteren");
-			$("#satnav_archive_in_directory_entry").html("Bewaren");
+			$("#satnav_store_entry_in_directory").html("Bewaren");
 
 			$(".satNavEntryExistsTag").html("Deze naam bestaat al");  // TODO - check
 		} // case

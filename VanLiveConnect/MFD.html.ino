@@ -1557,7 +1557,7 @@ char mfd_html[] PROGMEM = R"=====(
 								class="icon button correctionButton">
 								Change
 							</div>
-							<div
+							<div id="satnav_store_entry_in_directory"
 								goto_id="satnav_archive_in_directory_entry"
 								class="icon button correctionButton" style="left:470px;">
 								Store

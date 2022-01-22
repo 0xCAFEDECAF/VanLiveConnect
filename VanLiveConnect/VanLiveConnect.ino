@@ -253,7 +253,24 @@ void loop()
 
         SendJsonText(ParseVanPacketToJson(pkt));
     }
-    if (isQueueOverrun) Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
+    if (isQueueOverrun)
+    {
+        Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
+
+      #ifdef DEBUG_WEBSOCKET
+        const static char jsonFormatter[] PROGMEM =
+        "{\n"
+            "\"event\": \"display\",\n"
+            "\"data\":\n"
+            "{\n"
+                "\"van_bus_overrun\": \"YES\"\n"
+            "}\n"
+        "}\n";
+
+        snprintf_P(jsonBuffer, JSON_BUFFER_SIZE, jsonFormatter);
+        SendJsonText(jsonBuffer);
+      #endif // DEBUG_WEBSOCKET
+    } // if
 
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
