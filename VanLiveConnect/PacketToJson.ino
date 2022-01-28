@@ -612,7 +612,7 @@ PGM_P SatNavGuidancePreferenceStr(uint8_t data)
 //
 // A detailed SatNav guidance instruction consists of 8 bytes:
 // * 0   : turn angle in increments of 22.5 degrees, measured clockwise, starting with 0 at 6 o-clock.
-//         E.g.: 0x4 == 90 deg left, 0x8 = 180 deg = straight ahead, 0xC = 270 deg = 90 deg right.
+//         E.g.: 0x4 == 90 degrees left, 0x8 = 180 degrees = straight ahead, 0xC = 270 degrees = 90 degrees right.
 // * 1   : always 0x00 ??
 // * 2, 3: bit pattern indicating which legs are present in the junction or roundabout. Each bit set is for one leg.
 //         Lowest bit of byte 3 corresponds to the leg of 0 degrees (straight down, which is
@@ -627,28 +627,36 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
 {
     // Show all the legs in the junction
 
+    // Use "namespace" notation
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"%S_leg_\":\n{\n"), iconName);
+
     uint16_t legBits = (uint16_t)data[2] << 8 | data[3];
     for (int legBit = 1; legBit < 16; legBit++)
     {
         uint16_t degrees10 = legBit * 225;
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"%S_leg_%u_%u\": \"%S\""),
-                iconName,
+            snprintf_P(buf + at, n - at, PSTR("%S\"%u_%u\": \"%S\""),
+                legBit == 1 ? emptyStr : PSTR(",\n"),
                 degrees10 / 10,
                 degrees10 % 10,
                 legBits & (1 << legBit) ? onStr : offStr
             );
     } // for
 
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(""));
+
     // Show all the "no-entry" legs in the junction
+
+    // Use "namespace" notation
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n},\n\"%S_no_entry_\":\n{\n"), iconName);
 
     uint16_t noEntryBits = (uint16_t)data[4] << 8 | data[5];
     for (int noEntryBit = 1; noEntryBit < 16; noEntryBit++)
     {
         uint16_t degrees10 = noEntryBit * 225;
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"%S_no_entry_%u_%u\": \"%S\""),
-                iconName,
+            snprintf_P(buf + at, n - at, PSTR("%S\"%u_%u\": \"%S\""),
+                noEntryBit == 1 ? emptyStr : PSTR(",\n"),
                 degrees10 / 10,
                 degrees10 % 10,
                 noEntryBits & (1 << noEntryBit) ? onStr : offStr
@@ -660,7 +668,8 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
     uint16_t direction = data[0] * 225;
 
     const static char jsonFormatter[] PROGMEM =
-        ",\n"
+        "\n"
+        "},\n"
         "\"%S_direction_as_text\": \"%u.%u\",\n"  // degrees
         "\"%S_direction\":\n"
         "{\n"
@@ -2791,22 +2800,23 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0020 ? ToHexStr(status) :  // Seen this but what is it?? Nearly at destination ??
         status == 0x0080 ? PSTR("READY") :
         status == 0x0101 ? ToHexStr(status) :  // Seen this but what is it??
-        status == 0x0200 ? PSTR("READING_DISC_1") :
-        status == 0x0220 ? PSTR("NEARLY_AT_DESTINATION") :  // TODO - guessing
-        status == 0x0300 ? PSTR("IN_GUIDANCE_MODE_1") :
-        status == 0x0301 ? PSTR("IN_GUIDANCE_MODE_2") :
+        status == 0x0200 ? PSTR("READING_DISC") :
+        status == 0x0220 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
+        status == 0x0300 ? PSTR("IN_GUIDANCE_MODE") :
+        status == 0x0301 ? PSTR("IN_GUIDANCE_MODE") :
         status == 0x0320 ? PSTR("STOPPING_GUIDANCE") :
         status == 0x0400 ? PSTR("START_OF_AUDIO_MESSAGE") :
         status == 0x0410 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :
         status == 0x0600 ? ToHexStr(status) :  // Seen this but what is it??
-        status == 0x0700 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START_1") :
-        status == 0x0701 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START_2") :
+        status == 0x0700 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START") :
+        status == 0x0701 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START") :
+        status == 0x0710 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :  // TODO - guessing
         status == 0x0800 ? PSTR("END_OF_AUDIO_MESSAGE") :  // Follows 0x0400, 0x0700, 0x0701
         status == 0x4000 ? PSTR("GUIDANCE_STOPPED") :
         status == 0x4001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :
-        status == 0x9000 ? PSTR("READING_DISC_2") :
+        status == 0x9000 ? PSTR("READING_DISC") :
         status == 0x9080 ? PSTR("START_COMPUTING_ROUTE") : // TODO - guessing
         status == 0xD001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         ToHexStr(status),
@@ -4262,16 +4272,20 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_to_mfd_response\": \"%S\",\n"
-            "\"satnav_to_mfd_list_size\": \"%d\"";
+            "\"satnav_to_mfd_response\": \"%S\"";
 
-    int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request), listSize);
+    int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request));
+
+    if (listSize >= 0)
+    {
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_size\": \"%d\""), listSize);
+    } // if
 
     // data[10] is some "flags" byte. Values seen:
     // - 0x41 : Second list
     // - 0x48 : No second list
     // - 0xF1 : Second list with same length as first list
-    if (data[10] == 0x41)
+    if (data[10] == 0x41 && list2Size >= 0)
     {
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_2_size\": \"%d\""), list2Size);
     } // if
@@ -4849,10 +4863,10 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
     // JSON buffer overflow?
     if (at >= n) return "";
 
-#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     Serial.print(F("Equipment status data as JSON object:\n"));
     PrintJsonText(buf);
-#endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return buf;
 } // EquipmentStatusDataToJson
@@ -4879,7 +4893,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Don't repeatedly print the same packet
     if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print
 
-#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
@@ -4913,7 +4927,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             } // if
         } // if
     } // if
-#endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     if (handler->prevData == NULL) handler->prevData = (uint8_t*) malloc(VAN_MAX_DATA_BYTES);
 
@@ -4925,7 +4939,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         handler->prevDataLen = dataLen;
     } // if
 
-#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         // Now print the new packet's data in full
@@ -4943,7 +4957,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             Serial.println("<no_data>");
         } // if
     } // if
-#endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return false;
 } // IsPacketDataDuplicate
@@ -4994,18 +5008,17 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 {
     if (! pkt.CheckCrcAndRepair())
     {
-
-#ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
+      #ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
         Serial.print(F("VAN PACKET CRC ERROR!\n"));
 
         // Show byte content of packet
         pkt.DumpRaw(Serial);
 
-    #ifdef VAN_RX_ISR_DEBUGGING
+      #ifdef VAN_RX_ISR_DEBUGGING
         // Fully dump bit timings for packets that have CRC ERROR, for further analysis
         pkt.getIsrDebugPacket().Dump(Serial);
-    #endif // VAN_RX_ISR_DEBUGGING
-#endif // PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
+      #endif // VAN_RX_ISR_DEBUGGING
+      #endif // PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
 
         return ""; // CRC error
     } // if
@@ -5039,13 +5052,13 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 
     if (result != VAN_PACKET_PARSE_OK) return ""; // Parsing result not OK
 
-#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.print(F("Parsed to JSON object:\n"));
         PrintJsonText(jsonBuffer);
     } // if
-#endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return jsonBuffer;
 } // ParseVanPacketToJson

@@ -153,6 +153,121 @@ var fixFieldsOnDemo =
 	"satnav_distance_to_dest_via_road_unit"
 ];
 
+function processJsonObject(item, jsonObject)
+{
+	// Recognize the string before a double underscore ('__') as a prefix for following items
+	var r = /^(.*)__.+/.exec(item);
+	if (! r) processJsonObject.prefix = ""; else if (r[1]) processJsonObject.prefix = r[1];
+
+	// Pre-pend saved prefix to items starting with double underscore ('__', "ditto mark")
+	var domItem = item;
+	if (domItem.match(/^__.+/)) domItem = processJsonObject.prefix + domItem;
+
+	domItem = domItem.replace("__", "_"); 
+
+	// In demo mode, skip certain updates and just call the handler
+	if (inDemoMode && fixFieldsOnDemo.indexOf(domItem) >= 0)
+	{
+		handleItemChange(domItem, jsonObject);
+		return;
+	} // if
+
+	var selectorById = '#' + domItem;  // Select by 'id' attribute (must be unique in the DOM)
+	var selectorByAttr = '[gid="' + domItem + '"]';  // Select also by custom attribute 'gid' (need not be unique)
+
+	// jQuery-style loop over merged, unique-element array
+	$.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
+	{
+		if ($(selector).length <= 0) return;  // Go to next iteration in .each()
+
+		if (Array.isArray(jsonObject))
+		{
+			// Handling of multi-line DOM objects to show lists. Example:
+			//
+			// {
+			//   "event": "display",
+			//   "data": {
+			//     "alarm_list": [
+			//       "Tyre pressure low",
+			//       "Door open",
+			//       "Water temperature too high",
+			//       "Oil level too low"
+			//     ]
+			//   }
+			// }
+
+			$(selector).html(jsonObject.join('<br />'));
+		}
+		else if (!!jsonObject && typeof(jsonObject) === "object")
+		{
+			// Handling of "change attribute" events. Examples:
+			//
+			// {
+			//   "event": "display",
+			//   "data": {
+			//     "satnav_curr_heading": { "transform": "rotate(247.5)" }
+			//   }
+			// }
+			//
+			// {
+			//   "event": "display",
+			//   "data": {
+			//     "notification_on_mfd": {
+			//       "style": { "display": "block" }
+			//     }
+			//   }
+			// }
+
+			var attributeObj = jsonObject;
+			for (var attribute in attributeObj)
+			{
+				// Deeper nesting?
+				if (typeof(attributeObj) === "object")
+				{
+					var propertyObj = attributeObj[attribute];
+					for (var property in propertyObj)
+					{
+						var value = propertyObj[property];
+						$(selector).get(0)[attribute][property] = value;
+					} // for
+				}
+				else
+				{
+					var attrValue = attributeObj[attribute];
+					$(selector).attr(attribute, attrValue);
+				} // if
+			} // for
+		}
+		else
+		{
+			var itemText = jsonObject;
+			if ($(selector).hasClass("led"))
+			{
+				// Handle "led" class objects: no text copy, just turn ON or OFF
+				var itemTextUc = itemText.toUpperCase();
+				var on = itemTextUc === "ON" || itemTextUc === "YES";
+				$(selector).toggleClass("ledOn", on);
+				$(selector).toggleClass("ledOff", ! on);
+			}
+			else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
+			{
+				// Handle SVG elements and "icon" class objects: no text copy, just show or hide
+				var itemTextUc = itemText.toUpperCase();
+				var on = itemTextUc === "ON" || itemTextUc === "YES";
+				$(selector).toggle(on);
+			}
+			else
+			{
+				// Handle simple "text" objects
+				$(selector).html(itemText);
+			} // if
+		} // if
+	}); // each
+
+	// Check if a handler must be invoked
+	handleItemChange(domItem, jsonObject);
+} // processJsonObject
+
 function writeToDom(jsonObj)
 {
 	// Toggle the "comms_led" to indicate communication activity
@@ -187,110 +302,31 @@ function writeToDom(jsonObj)
 
 	for (var item in jsonObj)
 	{
-		// In demo mode, skip certain updates and just call the handler
-		if (inDemoMode && fixFieldsOnDemo.indexOf(item) >= 0)
+		// A nested object with an item name that ends with '_' indicates namespace. For example:
+		//
+		// {
+		//   "event": "display",
+		//   "data": {
+		//     "satnav_fork_icon_": {
+		//       "take_right_exit":"OFF",
+		//       "keep_right":"OFF",
+		//       "take_left_exit":"OFF",
+		//       "keep_left":"OFF"
+		//     }
+		//   }
+		// }
+		//
+		// will update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
+		//
+		if (item.endsWith('_') && !!jsonObj[item] && typeof(jsonObj[item]) === "object")
 		{
-			handleItemChange(item, jsonObj[item]);
-			continue;
+			var subObj = jsonObj[item];
+			for (var subItem in subObj) processJsonObject(item + subItem, subObj[subItem]);  // Use 'item' as prefix
+		}
+		else
+		{
+			processJsonObject(item, jsonObj[item]);
 		} // if
-
-		// Select by 'id' attribute (must be unique in the DOM)
-		var selectorById = '#' + item;
-
-		// Select also by custom attribute 'gid' (need not be unique)
-		var selectorByAttr = '[gid="' + item + '"]';
-
-		// jQuery-style loop over merged, unique-element array (this is cool, looks like Perl! :-) )
-		$.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
-		{
-			if ($(selector).length <= 0) return;  // Go to next iteration in .each()
-
-			if (Array.isArray(jsonObj[item]))
-			{
-				// Handling of multi-line DOM objects to show lists. Example:
-				//
-				// {
-				//   "event": "display",
-				//   "data": {
-				//     "alarm_list": [
-				//       "Tyre pressure low",
-				//       "Door open",
-				//       "Water temperature too high",
-				//       "Oil level too low"
-				//     ]
-				//   }
-				// }
-
-				$(selector).html(jsonObj[item].join('<br />'));
-			}
-			else if (!!jsonObj[item] && typeof(jsonObj[item]) === "object")
-			{
-				// Handling of "change attribute" events. Examples:
-				//
-				// {
-				//   "event": "display",
-				//   "data": {
-				//     "satnav_curr_heading": { "transform": "rotate(247.5)" }
-				//   }
-				// }
-				//
-				// {
-				//   "event": "display",
-				//   "data": {
-				//     "notification_on_mfd": {
-				//       "style": { "display": "block" }
-				//     }
-				//   }
-				// }
-
-				var attributeObj = jsonObj[item];
-				for (var attribute in attributeObj)
-				{
-					// Deeper nesting?
-					if (typeof(attributeObj) === "object")
-					{
-						var propertyObj = attributeObj[attribute];
-						for (var property in propertyObj)
-						{
-							var value = propertyObj[property];
-							$(selector).get(0)[attribute][property] = value;
-						} // for
-					}
-					else
-					{
-						var attrValue = attributeObj[attribute];
-						$(selector).attr(attribute, attrValue);
-					} // if
-				} // for
-			}
-			else
-			{
-				var itemText = jsonObj[item];
-				if ($(selector).hasClass("led"))
-				{
-					// Handle "led" class objects: no text copy, just turn ON or OFF
-					var itemTextUc = itemText.toUpperCase();
-					var on = itemTextUc === "ON" || itemTextUc === "YES";
-					$(selector).toggleClass("ledOn", on);
-					$(selector).toggleClass("ledOff", ! on);
-				}
-				else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
-				{
-					// Handle SVG elements and "icon" class objects: no text copy, just show or hide
-					var itemTextUc = itemText.toUpperCase();
-					var on = itemTextUc === "ON" || itemTextUc === "YES";
-					$(selector).toggle(on);
-				}
-				else
-				{
-					// Handle simple "text" objects
-					$(selector).html(itemText);
-				} // if
-			} // if
-		}); // each
-
-		// Check if a handler must be invoked
-		handleItemChange(item, jsonObj[item]);
 	} // for
 } // writeToDom
 
@@ -298,29 +334,29 @@ var webSocketServerHost = window.location.hostname;
 
 var webSocket;
 
+function connectToWebSocket()
+{
+	var wsUrl = "ws://" + webSocketServerHost + ":81/";
+	console.log("// Connecting to WebSocket '" + wsUrl + "'");
+
+	// Create WebSocket class instance
+	webSocket = new FancyWebSocket(wsUrl);
+
+	// Bind WebSocket to server events
+	webSocket.bind('display', function(data) { writeToDom(data); });
+	webSocket.bind('open', function ()
+		{
+			webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+			webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
+			webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
+			webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
+		}
+	);
+	//webSocket.bind('close', function () { demoMode(); });
+} // connectToWebSocket
+
 // For stability, connect to the web socket server only after a few seconds
-var connectToWebsocketTimer = setTimeout(
-	function ()
-	{
-		console.log("// Connecting to WebSocket 'ws://" + webSocketServerHost + ":81/'");
-
-		// WebSocket class instance
-		webSocket = new FancyWebSocket("ws://" + webSocketServerHost + ":81/");
-
-		// Bind to WebSocket to server events
-		webSocket.bind('display', function(data) { writeToDom(data); });
-		webSocket.bind('open', function ()
-			{
-				webSocket.send("mfd_language:" + localStorage.mfdLanguage);
-				webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
-				webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
-				webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
-			}
-		);
-		//webSocket.bind('close', function () { demoMode(); });
-	}, // function
-	2000
-);
+//var connectToWebsocketTimer = setTimeout(connectToWebSocket, 2000);
 
 // -----
 // Handling of vehicle data
@@ -2610,9 +2646,6 @@ function satnavDeleteDirectories()
 function satnavSwitchToGuidanceScreen()
 {
 	hidePopup("satnav_computing_route_popup");
-
-	if (! inMenu()) return;  // Only switch from a menu screen; don't switch away from any main screen
-
 	menuStack = [];
 	currentMenu = "satnav_guidance";
 	changeLargeScreenTo(currentMenu);
@@ -3958,7 +3991,11 @@ function handleItemChange(item, value)
 				}
 				else
 				{
-					if (! $("#satnav_guidance_preference_menu").is(":visible")) satnavSwitchToGuidanceScreen();
+					// Don't change screen while driving or while the guidance preference menu is showing
+					if (inMenu() && ! $("#satnav_guidance_preference_menu").is(":visible"))
+					{
+						satnavSwitchToGuidanceScreen();
+					} // if
 				} // if
 			} // if
 		} // case
@@ -5949,6 +5986,8 @@ function htmlBodyOnLoad()
 	// Update time now and every next second
 	updateDateTime();
 	setInterval(updateDateTime, 1000);
+
+	connectToWebSocket();
 } // htmlBodyOnLoad
 
 )=====";

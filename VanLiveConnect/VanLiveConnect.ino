@@ -165,12 +165,12 @@ const char* VanBusStatsToJson(char* buf, const int n)
     // JSON buffer overflow?
     if (at >= n) return "";
 
-    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
 
     Serial.print(F("Parsed to JSON object:\n"));
     PrintJsonText(buf);
 
-    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return buf;
 } // VanBusStatsToJson
@@ -194,31 +194,31 @@ void setup()
     // Setup "Over The Air" (OTA) update
     SetupOta();
 
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
     apIP.fromString(IP_ADDR);
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 
     SetupWifi();
 
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
     // If DNSServer is started with "*" for domain name, it will reply with provided IP to all DNS request
     dnsServer.start(DNS_PORT, "*", apIP);
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 
-#ifdef USE_MDNS
+  #ifdef USE_MDNS
     // Start the mDNS responder
     if (MDNS.begin(GetHostname())) Serial.println("mDNS responder started");
     else Serial.println("Error setting up MDNS responder!");
-#endif // USE_MDNS
+  #endif // USE_MDNS
 
     SetupWebServer();
     SetupWebSocket();
 
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
     Serial.printf_P(PSTR("Please connect to Wi-Fi network '%s', then surf to: http://"), WIFI_SSID);
     Serial.print(apIP);
     Serial.println(F("/MFD.html"));
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 
     SetupVanReceiver();
 
@@ -227,9 +227,9 @@ void setup()
 
 void loop()
 {
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
     dnsServer.processNextRequest();
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 
     WifiCheckStatus();
 
@@ -247,9 +247,9 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
-    #ifdef VAN_RX_IFS_DEBUGGING
+      #ifdef VAN_RX_IFS_DEBUGGING
         if (pkt.getIfsDebugPacket().IsAbnormal()) pkt.getIfsDebugPacket().Dump(Serial);
-    #endif // VAN_RX_IFS_DEBUGGING
+      #endif // VAN_RX_IFS_DEBUGGING
 
         SendJsonText(ParseVanPacketToJson(pkt));
     }
@@ -277,17 +277,17 @@ void loop()
     {
         lastUpdate = millis();
 
-    #ifdef SHOW_ESP_RUNTIME_STATS
+      #ifdef SHOW_ESP_RUNTIME_STATS
         // Send ESP runtime data to client
         SendJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
-    #endif // SHOW_ESP_RUNTIME_STATS
+      #endif // SHOW_ESP_RUNTIME_STATS
 
-    #ifdef SHOW_VAN_RX_STATS
+      #ifdef SHOW_VAN_RX_STATS
         // Print statistics
         VanBusRx.DumpStats(Serial);
 
         // Send VAN bus receiver status string to client
         SendJsonText(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
-    #endif // SHOW_VAN_RX_STATS
+      #endif // SHOW_VAN_RX_STATS
     } // if
 } // loop

@@ -319,9 +319,9 @@ body
   background-color:rgba(15,19,23,0.95);
   border:5px solid #dfe7f2;
   border-radius:15px;
-  left:80px;
+  left:55px;
   top:200px;
-  width:800px;
+  width:850px;
   height:200px;
 }
 .messagePopupArea

@@ -155,9 +155,9 @@ void NoPopup()
     TripComputerPopupShowingSince = 0;
     popupDuration = 0;
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(PSTR("[originalMfd] NoPopup()\n"));
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // NoPopup
 
 // Register the fact that a notification popup (not the trip computer popup) is showing.
@@ -169,9 +169,9 @@ void NotificationPopupShowing(unsigned long since, long duration)
     TripComputerPopupShowingSince = 0;
     popupDuration = duration;
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(PSTR("[originalMfd] NotificationPopupShowing(%ld msec)\n"), popupDuration);
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // NotificationPopupShowing
 
 // Return true if a notification popup (not the trip computer popup) is showing, otherwise return false
@@ -188,13 +188,13 @@ void TripComputerPopupShowing(unsigned long since, long duration)
     TripComputerPopupShowingSince = since;
     popupDuration = duration;
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] TripComputerPopupShowing(%ld msec), tripComputerPopupTab := %S\n"),
         popupDuration,
         TripComputerStr(tripComputerPopupTab)
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // TripComputerPopupShowing
 
 // Return true if the trip computer popup is showing, otherwise return false
@@ -229,13 +229,13 @@ void InitSmallScreen()
     // Initialize from (emulated) EEPROM
     smallScreen = EEPROM.read(SMALL_SCREEN_EEPROM_POS);
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] Read value %u (%S) from EEPROM position %d\n"),
         smallScreen,
         SmallScreenStr(),
         SMALL_SCREEN_EEPROM_POS);
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 
     // Successfully read from EEPROM? Then copy tab index to trip computer popup and large screen.
     if (smallScreen >= SMALL_SCREEN_FIRST && smallScreen <= SMALL_SCREEN_LAST) return SetAllTabIndexes();
@@ -259,12 +259,12 @@ void ResetTripInfo(uint16_t mfdStatus)
     smallScreen = newSmallScreenIndex;  // Set tab index for trip computer on small screen
     SetAllTabIndexes();  // Copy tab index to trip computer popup and large screen
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] Right stalk button long-press; smallScreen := %S\n"),
         SmallScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 
     if (mustWrite) WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen);
 } // ResetTripInfo
@@ -281,12 +281,12 @@ void CycleTripInfo()
         smallScreen = (smallScreen + 1) % N_SMALL_SCREENS;  // Select next tab
         SetAllTabIndexes();  // Copy tab index to trip computer popup and large screen
 
-    #ifdef DEBUG_ORIGINAL_MFD
+      #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] Right stalk button short-press; smallScreen := %S\n"),
             SmallScreenStr()
         );
-    #endif // DEBUG_ORIGINAL_MFD
+      #endif // DEBUG_ORIGINAL_MFD
 
         WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen);
     }
@@ -300,12 +300,12 @@ void CycleTripInfo()
 
         tripComputerPopupTab = tripComputerLargeScreenTab;  // Copy tab index to trip computer popup
 
-    #ifdef DEBUG_ORIGINAL_MFD
+      #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] Right stalk button short-press; tripComputerLargeScreenTab := %S\n"),
             TripComputerStr(tripComputerLargeScreenTab)
         );
-    #endif // DEBUG_ORIGINAL_MFD
+      #endif // DEBUG_ORIGINAL_MFD
 
     }
     else // isSatnavGuidanceActive && largeScreen != LARGE_SCREEN_TRIP_COMPUTER
@@ -324,7 +324,7 @@ void CycleTripInfo()
         {
             // The trip computer popup was not visible: the stalk button triggers the trip computer popup to appear
 
-        #ifdef DEBUG_ORIGINAL_MFD
+          #ifdef DEBUG_ORIGINAL_MFD
             Serial.printf_P(
                 PSTR(
                     "[originalMfd] Right stalk button short-press; trip computer popup appeared;"
@@ -332,7 +332,7 @@ void CycleTripInfo()
                 ),
                 TripComputerStr(tripComputerPopupTab)
             );
-        #endif // DEBUG_ORIGINAL_MFD
+          #endif // DEBUG_ORIGINAL_MFD
         }
         else
         {
@@ -344,7 +344,7 @@ void CycleTripInfo()
 
             tripComputerLargeScreenTab = tripComputerPopupTab;  // Copy tab index to large screen
 
-        #ifdef DEBUG_ORIGINAL_MFD
+          #ifdef DEBUG_ORIGINAL_MFD
             Serial.printf_P(
                 PSTR(
                     "[originalMfd] Right stalk button short-press; next tab in trip computer popup;"
@@ -352,7 +352,7 @@ void CycleTripInfo()
                 ),
                 TripComputerStr(tripComputerPopupTab)
             );
-        #endif // DEBUG_ORIGINAL_MFD
+          #endif // DEBUG_ORIGINAL_MFD
         } // if
 
         TripComputerPopupShowing(now, 8000);  // (Re-)start the timer
@@ -372,12 +372,12 @@ void UpdateLargeScreenForCurrentStreetKnown()
         } // if
     } // if
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] current street known; largeScreen := %S\n"),
         LargeScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForCurrentStreetKnown
 
 // Called when the head unit is powered on (tuner, tape, internal CD or CD changer). The original MFD switches to
@@ -402,7 +402,7 @@ void UpdateLargeScreenForHeadUnitOn()
         largeScreen = LARGE_SCREEN_HEAD_UNIT;
     } // if
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     char popupDurationStr[20];
     sprintf_P(popupDurationStr, PSTR(" (%ld msec)"), popupDuration);
     Serial.printf_P(
@@ -411,7 +411,7 @@ void UpdateLargeScreenForHeadUnitOn()
         IsNotificationPopupShowing() ? popupDurationStr : emptyStr,
         LargeScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForHeadUnitOn
 
 // Called when the head unit is powered off
@@ -430,14 +430,14 @@ void UpdateLargeScreenForHeadUnitOff()
         } // if
     } // if
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] Head unit powered off; guidance=%S; curr_street_known=%S; largeScreen := %S\n"),
         isSatnavGuidanceActive ? yesStr : noStr,
         isCurrentStreetKnown ? yesStr : noStr,
         LargeScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForHeadUnitOff
 
 // Called when going into sat nav guidance mode.  The original MFD switches to the guidance instruction screen.
@@ -446,13 +446,13 @@ void UpdateLargeScreenForGuidanceModeOn()
     largeScreenBeforeGoingIntoGuidanceMode = largeScreen;  // To return to later, when guidance ends
     largeScreen = LARGE_SCREEN_GUIDANCE;
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] Going into guidance; largeScreenBefore=%S; largeScreen := %S\n"),
         LargeScreenStr(largeScreenBeforeGoingIntoGuidanceMode),
         LargeScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForGuidanceModeOn
 
 // Called when going out of sat nav guidance mode
@@ -464,12 +464,12 @@ void UpdateLargeScreenForGuidanceModeOff()
     {
         if (tripComputerLargeScreenTab >= 0) smallScreen = tripComputerLargeScreenTab;
 
-    #ifdef DEBUG_ORIGINAL_MFD
+      #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] Going out of guidance; switched small screen to trip computer; smallScreen := %S\n"),
             SmallScreenStr()
         );
-    #endif // DEBUG_ORIGINAL_MFD
+      #endif // DEBUG_ORIGINAL_MFD
 
         WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen);
     }
@@ -477,12 +477,12 @@ void UpdateLargeScreenForGuidanceModeOff()
     {
         SetAllTabIndexes();
 
-    #ifdef DEBUG_ORIGINAL_MFD
+      #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] Going out of guidance; tripComputerPopupTab := %S\n"),
             TripComputerStr(tripComputerPopupTab)
         );
-    #endif // DEBUG_ORIGINAL_MFD
+      #endif // DEBUG_ORIGINAL_MFD
     } // if
 
     // Large screen stays in clock, if showing
@@ -500,14 +500,14 @@ void UpdateLargeScreenForGuidanceModeOff()
         } // if
     } // if
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] Going out of guidance; head_unit=%S; curr_street_known=%S; largeScreen := %S\n"),
         isHeadUnitPowerOn ? yesStr : noStr,
         isCurrentStreetKnown ? yesStr : noStr,
         LargeScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForGuidanceModeOff
 
 // Called after receiving an MFD status "MFD_SCREEN_OFF" packet
@@ -550,7 +550,7 @@ void CycleLargeScreen()
         largeScreen = LARGE_SCREEN_CLOCK;
     } // if
 
-#ifdef DEBUG_ORIGINAL_MFD
+  #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
         PSTR("[originalMfd] \"MOD\" button press; guidance=%S; head_unit=%S; curr_street_known=%S; largeScreen := %S\n"),
         isSatnavGuidanceActive ? yesStr : noStr,
@@ -558,5 +558,5 @@ void CycleLargeScreen()
         isCurrentStreetKnown ? yesStr : noStr,
         LargeScreenStr()
     );
-#endif // DEBUG_ORIGINAL_MFD
+  #endif // DEBUG_ORIGINAL_MFD
 } // CycleLargeScreen

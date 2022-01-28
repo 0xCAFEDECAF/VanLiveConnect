@@ -69,9 +69,9 @@ void ProcessWebSocketClientMessage(const char* payload)
 
     if (clientMessage == "") return;
 
-#ifdef DEBUG_WEBSOCKET
+  #ifdef DEBUG_WEBSOCKET
     Serial.println("[webSocket] received text: '" + clientMessage + "'");
-#endif // DEBUG_WEBSOCKET
+  #endif // DEBUG_WEBSOCKET
 
     if (clientMessage.startsWith("in_menu:"))
     {

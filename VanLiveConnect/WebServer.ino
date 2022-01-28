@@ -121,7 +121,7 @@ String getMd5(const String& path)
 // Print all HTTP request details on Serial
 void printHttpRequest()
 {
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.print(F("[webServer] Received request from "));
     String ip = webServer.client().remoteIP().toString();
     Serial.print(ip);
@@ -139,7 +139,7 @@ void printHttpRequest()
     } // for
 
     Serial.println(F("'"));
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 } // printHttpRequest
 
 // Returns true if the actual Etag is equal to the received Etag in an 'If-None-Match' header field.
@@ -161,10 +161,10 @@ bool checkETag(const String& etag)
                 webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
 
                 webServer.send(304, "text/plain", F("Not Modified"));
-            #ifdef DEBUG_WEBSERVER
+              #ifdef DEBUG_WEBSERVER
                 Serial.println(
                     String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified"));
-            #endif // DEBUG_WEBSERVER
+              #endif // DEBUG_WEBSERVER
                 return true;
             } // if
         } // if
@@ -226,11 +226,11 @@ void HandleAndroidConnectivityCheck()
 
     webServer.send(204, "");
 
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] Serving '%S' took: %lu msec\n"),
         webServer.uri().c_str(),
         millis() - start);
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 } // HandleAndroidConnectivityCheck
 
 // -----
@@ -288,13 +288,13 @@ void HandleNotFound()
 {
     printHttpRequest();
 
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), webServer.uri().c_str());
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 
     if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
 
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
     // Redirect to the main HTML page ('/MFD.html').
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
     // http://detectportal.firefox.com/success.txt ; Android tries to load https://www.gstatic.com/generate_204 .
@@ -303,7 +303,7 @@ void HandleNotFound()
     //webServer.send(301, F("text/plain"), F("Redirect"));
     webServer.send(302, F("text/plain"), F("Found"));
     return;
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 
     // Gold-plated response
     String message = F("File Not Found\n\n");
@@ -330,11 +330,11 @@ void ServeFont(PGM_P content, unsigned int content_len)
 
     webServer.send_P(200, fontWoffStr, content, content_len);
 
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] Serving font '%S' took: %lu msec\n"),
         webServer.uri().c_str(),
         millis() - start);
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 } // ServeFont
 
 #ifdef SERVE_FROM_SPIFFS
@@ -358,11 +358,11 @@ void ServeFontFromFile(const char* path)
     file.close();
     VanBusRx.Enable();
 
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] Serving font '%s' from file system took: %lu msec\n"),
         webServer.uri().c_str(),
         millis() - start);
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 } // ServeFontFromFile
 
 #endif // SERVE_FROM_SPIFFS
@@ -379,12 +379,12 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
         webServer.send_P(200, mimeType, content);
     } // if
 
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] %S '%s' took: %lu msec\n"),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         webServer.uri().c_str(),
         millis() - start);
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 } // ServeDocument
 
 // Convert the file extension to the MIME type
@@ -415,9 +415,9 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
         md5 = getMd5(path + ".gz");
         if (md5.length() == 0)
         {
-        #ifdef DEBUG_WEBSERVER
+          #ifdef DEBUG_WEBSERVER
             Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), path.c_str());
-        #endif // DEBUG_WEBSERVER
+          #endif // DEBUG_WEBSERVER
             return HandleNotFound();
         } // if
 
@@ -442,12 +442,12 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
         VanBusRx.Enable();
     } // if
 
-#ifdef DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("[webServer] %S '%S' from file system took: %lu msec\n"),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         path.c_str(),
         millis() - start);
-#endif // DEBUG_WEBSERVER
+  #endif // DEBUG_WEBSERVER
 } // ServeDocumentFromFile
 
 #endif // SERVE_FROM_SPIFFS
@@ -469,13 +469,13 @@ void SetupWebServer()
     // -----
     // Fonts
 
-#ifdef SERVE_FRONTS_FROM_SPIFFS
+  #ifdef SERVE_FRONTS_FROM_SPIFFS
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){ ServeFontFromFile("/ArialRoundedMTbold.woff"); });
     webServer.on(F("/DotsAllForNow.woff"), [](){ ServeFontFromFile("/DotsAllForNow.woff"); });
     webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG7Classic-BoldItalic.woff"); });
     webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG14Classic-BoldItalic.woff"); });
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){ ServeFontFromFile("/fa-solid-900.woff"); });
-#else
+  #else
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){
         ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
     });
@@ -491,16 +491,16 @@ void SetupWebServer()
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
         ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });
-#endif // SERVE_FRONTS_FROM_SPIFFS
+  #endif // SERVE_FRONTS_FROM_SPIFFS
 
     // -----
     // Javascript files
 
-#ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
+  #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
     webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocumentFromFile(); });
-#else
+  #else
     webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocument(textJavascriptStr, jQuery_js); });
-#endif // SERVE_JAVASCRIPT_FROM_SPIFFS
+  #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
 
     webServer.on(F("/MFD.js"), [](){
         // This one should always be served from program memory, so updating is easy and does not need the SPI flash
@@ -511,13 +511,13 @@ void SetupWebServer()
     // -----
     // Cascading style sheet files
 
-#ifdef SERVE_CSS_FROM_SPIFFS
+  #ifdef SERVE_CSS_FROM_SPIFFS
     webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile(); });
     webServer.on(F("/CarInfo.css"), [](){ ServeDocumentFromFile(); });
-#else
+  #else
     webServer.on(F("/css/all.css"), [](){ ServeDocument(textCssStr, faAll_css); });
     webServer.on(F("/CarInfo.css"), [](){ ServeDocument(textCssStr, carInfo_css); });
-#endif // SERVE_CSS_FROM_SPIFFS
+  #endif // SERVE_CSS_FROM_SPIFFS
 
     // -----
     // HTML files
@@ -531,12 +531,12 @@ void SetupWebServer()
     webServer.on(F("/generate_204"), HandleAndroidConnectivityCheck);
     webServer.on(F("/gen_204"), HandleAndroidConnectivityCheck);
 
-#ifdef SERVE_FROM_SPIFFS
+  #ifdef SERVE_FROM_SPIFFS
     // Try to serve any not further listed document from the SPI flash file system
     webServer.onNotFound([](){ ServeDocumentFromFile(); });
-#else
+  #else
     webServer.onNotFound(HandleNotFound);
-#endif // SERVE_FROM_SPIFFS
+  #endif // SERVE_FROM_SPIFFS
 
     const char* headers[] = { "If-None-Match" };
     webServer.collectHeaders(headers, sizeof(headers)/ sizeof(headers[0]));

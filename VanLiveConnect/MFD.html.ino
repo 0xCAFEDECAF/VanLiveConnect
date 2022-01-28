@@ -1759,8 +1759,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- This one is shown instead of the above, in case "Destination is not accessible by road" -->
 					<div id="satnav_distance_to_dest_via_straight_line_visible" style="display:none">
-						<div id="satnav_distance_to_dest_via_straight_line_number" class="dots" style="left:540px; top:457px; width:200px; text-align:right;">-</div>
-						<div id="satnav_distance_to_dest_via_straight_line_unit" class="dots" style="font-size:30px; left:750px; top:480px;"></div>
+						<div id="satnav_distance_to_dest_via_straight_line_number" class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
+						<div id="satnav_distance_to_dest_via_straight_line_unit" class="dots" style="font-size:30px; left:560px; top:480px;"></div>
 					</div>
 
 					<!-- Heading to destination -->
@@ -2432,7 +2432,7 @@ char mfd_html[] PROGMEM = R"=====(
 					style="display:none; position:absolute; line-height:2.2; left:0px; width:260px; height:260px"></div>
 				<div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
 					style="display:block; position:absolute; left:30px;"></div>
-				<div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:180px; width:600px;">
+				<div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:180px; width:650px;">
 				</div>
 			</div>
 
