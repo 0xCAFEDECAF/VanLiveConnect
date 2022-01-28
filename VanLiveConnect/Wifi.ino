@@ -12,19 +12,19 @@ void SetupWifi()
 {
     WiFi.hostname(GetHostname());
 
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
 
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), WIFI_SSID);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-#ifdef WIFI_PASSWORD
+  #ifdef WIFI_PASSWORD
     WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
-#else
+  #else
     WiFi.softAP(WIFI_SSID);
-#endif
+  #endif
 
-#else  // ! WIFI_AP_MODE
+  #else  // ! WIFI_AP_MODE
 
     Serial.printf_P(PSTR("Connecting to Wi-Fi SSID '%s'\n"), WIFI_SSID);
 
@@ -44,22 +44,22 @@ void SetupWifi()
     // TODO - using Wi-Fi, unfortunately, has a detrimental effect on the packet CRC error rate. It will rise from
     // around 0.006% up to 0.1% or more. Underlying cause is timing failures due to Wi-Fi causing varying interrupt
     // latency. Not sure how to tackle this.
-#ifdef WIFI_PASSWORD
+  #ifdef WIFI_PASSWORD
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-#else
+  #else
     WiFi.begin(WIFI_SSID);
-#endif
+  #endif
 
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 
     delay(1);
 } // SetupWifi
 
 void WifiCheckStatus()
 {
-#ifdef WIFI_AP_MODE
+  #ifdef WIFI_AP_MODE
     return;
-#else  // ! WIFI_AP_MODE
+  #else  // ! WIFI_AP_MODE
 
     static unsigned long lastUpdate;
     unsigned long now = millis();
@@ -116,12 +116,12 @@ const char* WifiDataToJson(const IPAddress& client, char* buf, const int n)
     // JSON buffer overflow?
     if (at >= n) return "";
 
-    #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
 
     Serial.print(F("Wi-Fi data as JSON object:\n"));
     PrintJsonText(buf);
 
-    #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return buf;
 } // WifiDataToJson
