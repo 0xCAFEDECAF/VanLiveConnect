@@ -214,7 +214,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2.
   Should that not work, you can always try [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
-  version 2.2.0, 2.3.3 and 2.3.4 .
+  version 2.2.0, 2.3.3, 2.3.4 and 2.3.5 .
 
 #### 3. Board settings
 
