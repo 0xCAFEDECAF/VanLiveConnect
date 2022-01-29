@@ -3232,19 +3232,19 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             roadDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
-            roadDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("yd"),
+            roadDistanceToDestinationInKmsMiles ? PSTR("mi") : PSTR("yd"),
 
         FloatToStr(floatBuf[1], gpsDistanceToDestination, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             gpsDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
-            gpsDistanceToDestinationInKmsMiles ? PSTR("mile") : PSTR("yd"),
+            gpsDistanceToDestinationInKmsMiles ? PSTR("mi") : PSTR("yd"),
 
         FloatToStr(floatBuf[2], distanceToNextTurn, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             distanceToNextTurnInKmsMiles ? PSTR("km") : PSTR("m") :
-            distanceToNextTurnInKmsMiles ? PSTR("mile") : PSTR("yd"),
+            distanceToNextTurnInKmsMiles ? PSTR("mi") : PSTR("yd"),
 
         headingOnRoundabout == 0x7FFF ? notApplicable3Str : FloatToStr(floatBuf[3], headingOnRoundabout, 0),
         minutesToTravel
@@ -3398,7 +3398,7 @@ String ComposeStreetString(const String& records5, const String& records6)
     if (records5[0] == 'G' || records5[0] == 'I')
     {
         result += records5.substring(1);  // Skip the 'G' or 'I'
-        if (records5.length() > 1) result += String(spaceStr);
+        if (records5.length() > 1) result += String(" ");
     } // if
 
     result += records6;
@@ -3406,7 +3406,7 @@ String ComposeStreetString(const String& records5, const String& records6)
     // First letter 'D' indicates postfix, e.g. "Strasse" as in "ORANIENBURGER Strasse"
     if (records5[0] == 'D')
     {
-        if (records5.length() > 1) result += String(spaceStr);
+        if (records5.length() > 1) result += String(" ");
         result += records5.substring(1);  // Skip the 'D'
     } // if
 

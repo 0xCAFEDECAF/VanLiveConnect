@@ -88,7 +88,6 @@ var FancyWebSocket = function(url)
 {
 	var _url = url;
 	var conn = new WebSocket(url);
-	var retryTimerId = null;
 
 	var callbacks = {};
 
@@ -109,22 +108,40 @@ var FancyWebSocket = function(url)
 	{
 		var json = JSON.parse(evt.data)
 		dispatch(json.event, json.data)
-	};  // function
+	}; // function
 
 	conn.onopen = function()
 	{
-		clearInterval(retryTimerId);
 		console.log("// Connected to WebSocket '" + url + "'!");
 		dispatch('open', null);
-	};
+	}; // function
 
 	conn.onclose = function(event)
 	{
 		console.log("// Connection to WebSocket '" + url + "' died!");
 		dispatch('close', null);
-		// TODO - uncomment the following line. Currently it will crash the ESP.
-		//retryTimerId = setInterval(() => { conn = new WebSocket(_url); }, 2000);
-	};
+
+		//conn = new WebSocket(_url);
+		if (event.code == 3001)
+		{
+			console.log("// WebSocket '" + url + "' closed");
+			//conn = null;
+		}
+		else
+		{
+			//conn = null;
+			console.log("// WebSocket '" + url + "' connection error: " + event.code);
+			connectToWebSocket();
+		} // if
+	}; // function
+
+	conn.onerror = function(event)
+	{
+		if (conn.readyState == 1)
+		{
+			console.log("// WebSocket '" + url + "' normal error: " + event.type);
+		} // if
+	}; // function
 
 	var dispatch = function(event_name, message)
 	{
@@ -155,7 +172,23 @@ var fixFieldsOnDemo =
 
 function processJsonObject(item, jsonObject)
 {
-	// Recognize the string before a double underscore ('__') as a prefix for following items
+	// A double underscore ('__') is parsed as a "ditto mark". Example:
+	//
+	// {
+	//   "event": "display",
+	//   "data": {
+	//     "satnav_fork_icon__take_right_exit":"OFF",
+	//     "__keep_right":"OFF",
+	//     "__take_left_exit":"OFF",
+	//     "__keep_left":"OFF",
+	//   }
+	// }
+	//
+	// The above will update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
+	//
+	// Note: double underscores ('__') are translated to single ones ('_').
+
+	// Recognize the string before a double underscore ('__') as a prefix for subsequent items
 	var r = /^(.*)__.+/.exec(item);
 	if (! r) processJsonObject.prefix = ""; else if (r[1]) processJsonObject.prefix = r[1];
 
@@ -316,7 +349,7 @@ function writeToDom(jsonObj)
 		//   }
 		// }
 		//
-		// will update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
+		// The above update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
 		//
 		if (item.endsWith('_') && !!jsonObj[item] && typeof(jsonObj[item]) === "object")
 		{
@@ -331,11 +364,23 @@ function writeToDom(jsonObj)
 } // writeToDom
 
 var webSocketServerHost = window.location.hostname;
+// Send some data so that a webSocket event triggers when the connection has failed
+function keepAliveWebSocket()
+{
+	webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+} // keepAliveWebSocket
 
 var webSocket;
+var keepAliveWebSocketTimer = null;
+var websocketPreventConnect = false;
+
+// Prevent double re-connecting when user reloads the page
+window.onbeforeunload = function() { websocketPreventConnect = true; };
 
 function connectToWebSocket()
 {
+	if (websocketPreventConnect) return;
+
 	var wsUrl = "ws://" + webSocketServerHost + ":81/";
 	console.log("// Connecting to WebSocket '" + wsUrl + "'");
 
@@ -343,16 +388,33 @@ function connectToWebSocket()
 	webSocket = new FancyWebSocket(wsUrl);
 
 	// Bind WebSocket to server events
-	webSocket.bind('display', function(data) { writeToDom(data); });
+	webSocket.bind('display', function(data)
+		{
+			// Re-start the "keep alive" timer
+			clearInterval(keepAliveWebSocketTimer);
+			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
+
+			writeToDom(data);
+		}
+	);
 	webSocket.bind('open', function ()
 		{
 			webSocket.send("mfd_language:" + localStorage.mfdLanguage);
 			webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
 			webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
 			webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
+
+			// (Re-)start the "keep alive" timer
+			clearInterval(keepAliveWebSocketTimer);
+			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
 		}
 	);
-	//webSocket.bind('close', function () { demoMode(); });
+	webSocket.bind('close', function ()
+		{
+			clearInterval(keepAliveWebSocketTimer);
+			// demoMode();
+		}
+	);
 } // connectToWebSocket
 
 // For stability, connect to the web socket server only after a few seconds
@@ -383,7 +445,7 @@ function setEngineRunning(newValue)
 		if ($("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
 
 		// Suppress climate control popup during the next 2 seconds
-		clearInterval(suppressClimateControlPopup);
+		clearTimeout(suppressClimateControlPopup);
 		suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
 	} // if
 
@@ -789,7 +851,7 @@ function showPopup(id, msec)
 	if (! msec) return;
 
 	// Hide popup after specified milliseconds
-	clearInterval(popupTimer[id]);
+	clearTimeout(popupTimer[id]);
 	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
 } // showPopup
 
@@ -817,7 +879,7 @@ function hidePopup(id)
 	if (webSocket) webSocket.send("mfd_popup_showing:NO");
 	$("#original_mfd_popup").empty();  // Debug info
 
-	clearInterval(popupTimer[id]);
+	clearTimeout(popupTimer[id]);
 
 	// Perform "on_exit" action, if specified
 	var onExit = popup.attr("on_exit");
@@ -1558,8 +1620,8 @@ var tunerSearchMode = "";
 
 function hideAudioSettingsPopup()
 {
-	clearInterval(audioSettingsPopupShowTimer);
-	clearInterval(audioSettingsPopupHideTimer);
+	clearTimeout(audioSettingsPopupShowTimer);
+	clearTimeout(audioSettingsPopupHideTimer);
 	updatingAudioVolume = false;
 	isAudioMenuVisible = false;
 
@@ -1571,7 +1633,7 @@ function hideAudioSettingsPopup()
 function hideAudioSettingsPopupAfter(msec)
 {
 	// (Re-)arm the timer to hide the popup after the specified number of milliseconds
-	clearInterval(audioSettingsPopupHideTimer);
+	clearTimeout(audioSettingsPopupHideTimer);
 	audioSettingsPopupHideTimer = setTimeout(hideAudioSettingsPopup, msec);
 } // hideAudioSettingsPopupAfter
 
@@ -1645,7 +1707,7 @@ function showTunerPresetsPopup()
 	$("#tuner_presets_popup").show();
 
 	// Hide the popup after 9 seconds
-	clearInterval(handleItemChange.tunerPresetsPopupTimer);
+	clearTimeout(handleItemChange.tunerPresetsPopupTimer);
 	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, 9000);
 } // showTunerPresetsPopup
 
@@ -1925,7 +1987,7 @@ function satnavGotoListScreen()
 	if ($("#satnav_list").text() === "")
 	{
 		// Show the spinning disc after a while
-		clearInterval(satnavGotoListScreen.showSpinningDiscTimer);
+		clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
 		satnavGotoListScreen.showSpinningDiscTimer = setTimeout
 		(
 			function () { $("#satnav_choose_from_list_spinning_disc").show(); },
@@ -2157,7 +2219,7 @@ function satnavRemoveEnteredCharacter()
 	{
 		var availableCharacters = satnavAvailableCharactersStack[satnavAvailableCharactersStack.length - 2];
 
-		clearInterval(showAvailableCharactersTimer);
+		clearTimeout(showAvailableCharactersTimer);
 		showAvailableCharactersTimer = setTimeout(
 			function ()
 			{
@@ -2781,7 +2843,7 @@ function showOrTimeoutDestinationNotAccessiblePopup()
 	if (showDestinationNotAccessiblePopupIfApplicable()) return;
 
 	// The popup may be displayed during the next 10 seconds, not any more after that
-	clearInterval(showOrTimeoutDestinationNotAccessiblePopup.timer);
+	clearTimeout(showOrTimeoutDestinationNotAccessiblePopup.timer);
 	showOrTimeoutDestinationNotAccessiblePopup.timer = setTimeout(
 		function () { satnavDestinationNotAccessibleByRoadPopupShown = true; },
 		10000
@@ -2806,7 +2868,7 @@ function satnavFormatDistance(distanceStr)
 	else if (unit === "yd" && +distance >= 880)
 	{
 		// Reported in yards, and 880 yards or more: show in miles, with decimal notation. Round upwards.
-		return [ ((+distance + 87) / 1760).toFixed(1), "mile" ];  // Original MFD shows "ml"
+		return [ ((+distance + 87) / 1760).toFixed(1), "mi" ];  // Original MFD shows "ml"
 	}
 	else
 	{
@@ -2822,7 +2884,7 @@ function satnavValidateVocalSynthesisLevel()
 	{
 		// When head unit is playing audio (tuner, CD, CD changer), the "audio_source" will change to it after
 		// setting the vocal synthesis level. In that situation, ignore that change during a short period.
-		clearInterval(suppressScreenChangeToAudio);
+		clearTimeout(suppressScreenChangeToAudio);
 		suppressScreenChangeToAudio = setTimeout(
 			function () { suppressScreenChangeToAudio = null; },
 			400
@@ -2857,7 +2919,7 @@ function satnavEscapeVocalSynthesisLevel()
 	{
 		// When head unit is playing audio (tuner, CD, CD changer), the "audio_source" will change to it after
 		// setting the vocal synthesis level. In that situation, ignore that change during a short period.
-		clearInterval(suppressScreenChangeToAudio);
+		clearTimeout(suppressScreenChangeToAudio);
 		suppressScreenChangeToAudio = setTimeout(
 			function () { suppressScreenChangeToAudio = null; },
 			400
@@ -2998,7 +3060,7 @@ function handleItemChange(item, value)
 				// With no contact key in place, we get a spurious "volume_update" message when turning off the
 				// head unit. To prevent the audio settings popup to flash up and disappear, show it only after
 				// 100 msec in this specific situation.
-				clearInterval(audioSettingsPopupShowTimer);
+				clearTimeout(audioSettingsPopupShowTimer);
 				audioSettingsPopupShowTimer = setTimeout(function () { $("#audio_settings_popup").show(); }, 100);
 			} // if
 			updatingAudioVolume = true;
@@ -3115,7 +3177,7 @@ function handleItemChange(item, value)
 				$("#cd_changer_selected_disc").show();
 
 				// After 5 seconds, go back to showing the CD currently playing
-				clearInterval(handleItemChange.noCdPresentTimer);
+				clearTimeout(handleItemChange.noCdPresentTimer);
 				handleItemChange.noCdPresentTimer = setTimeout
 				(
 					function ()
@@ -3437,7 +3499,7 @@ function handleItemChange(item, value)
 			hideTunerPresetsPopup();
 
 			// Suppress the audio settings popup for the next 0.4 seconds (bit clumsy, but effective)
-			clearInterval(handleItemChange.hideHeadUnitPopupsTimer);
+			clearTimeout(handleItemChange.hideHeadUnitPopupsTimer);
 			handleItemChange.hideHeadUnitPopupsTimer = setTimeout(
 				function () { handleItemChange.hideHeadUnitPopupsTimer = null; },
 				400
@@ -3771,7 +3833,7 @@ function handleItemChange(item, value)
 			{
 				if (engineRunning === "NO")
 				{
-					clearInterval(handleItemChange.contactKeyOffTimer);
+					clearTimeout(handleItemChange.contactKeyOffTimer);
 					changeLargeScreenTo("pre_flight");
 
 					// Hide all popups except "satnav_continue_guidance_popup"
@@ -3792,12 +3854,12 @@ function handleItemChange(item, value)
 			}
 			else if (value === "ACC")
 			{
-				clearInterval(handleItemChange.contactKeyOffTimer);
+				clearTimeout(handleItemChange.contactKeyOffTimer);
 			}
 			else if (value === "OFF")
 			{
 				// "OFF" position can be very short between "ACC" and "ON", so first wait a bit
-				clearInterval(handleItemChange.contactKeyOffTimer);
+				clearTimeout(handleItemChange.contactKeyOffTimer);
 				handleItemChange.contactKeyOffTimer = setTimeout(
 					function ()
 					{
@@ -3834,7 +3896,7 @@ function handleItemChange(item, value)
 				$("#satnav_audio").toggleClass("ledOn", playingAudio);
 				$("#satnav_audio").toggleClass("ledOff", ! playingAudio);
 
-				clearInterval(handleItemChange.showSatnavAudioLed);
+				clearTimeout(handleItemChange.showSatnavAudioLed);
 				if (playingAudio)
 				{
 					// Set timeout on LED, in case the "AUDIO OFF" packet is missed
@@ -4308,7 +4370,7 @@ function handleItemChange(item, value)
 					$("#satnav_to_mfd_show_characters_line_2").empty();
 
 					// Show the spinning disc after a second or so
-					clearInterval(handleItemChange.showCharactersSpinningDiscTimer);
+					clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 					handleItemChange.showCharactersSpinningDiscTimer = setTimeout
 					(
 						function () { $("#satnav_to_mfd_show_characters_spinning_disc").show(); },
@@ -4350,7 +4412,7 @@ function handleItemChange(item, value)
 		case "satnav_to_mfd_list_size":
 		{
 			// Hide the spinning disc
-			clearInterval(handleItemChange.showCharactersSpinningDiscTimer);
+			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 
 			if (satnavToMfdResponse === "Service")
@@ -4402,7 +4464,7 @@ function handleItemChange(item, value)
 		case "satnav_list":
 		{
 			// Hide the spinning disc
-			clearInterval(satnavGotoListScreen.showSpinningDiscTimer);
+			clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
 			$("#satnav_choose_from_list_spinning_disc").hide();
 
 			satnavCheckIfCityCenterMustBeAdded();
@@ -4580,7 +4642,7 @@ function handleItemChange(item, value)
 		{
 			if (value === "") break;
 
-			clearInterval(showAvailableCharactersTimer);
+			clearTimeout(showAvailableCharactersTimer);
 
 			if ($("#satnav_enter_characters").is(":visible"))
 			{
@@ -4821,8 +4883,8 @@ function handleItemChange(item, value)
 			$("#comms_led").css('background-color', 'red');
 
 			// After 10 seconds, return to original color
-			clearInterval(handleItemChange.revertCommsLedColor);
-			handleItemChange.revertCommsLedColor = setTimeout(
+			clearTimeout(handleItemChange.revertCommsLedColorTimer);
+			handleItemChange.revertCommsLedColorTimer = setTimeout(
 				function () { $("#comms_led").css('background-color', '#dfe7f2'); },
 				10000
 			);
@@ -5950,7 +6012,7 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 		$('[gid="fuel_consumption_unit"]').text("mpg");
 		$("#fuel_consumption_unit_sm").text("mpg");
 		$('[gid="speed_unit"]').text("mph");
-		$('[gid="distance_unit"]').text("mile");
+		$('[gid="distance_unit"]').text("mi");
 	}
 	else
 	{
