@@ -190,7 +190,6 @@ body
   font-size:44px;
   width:70px;
   height:57px;
-  /*line-height:1.3;*/
 }
 .iconMedium
 {
@@ -209,7 +208,6 @@ body
 {
   font-size:120px;
   width:160px;
-/*  height:160px;*/
   line-height:1.2;
 }
 
@@ -518,7 +516,7 @@ body
 }
 .satNavRoundabout
 {
-  fill:rgb(41,55,74);
+  /* fill:rgb(41,55,74); */
   stroke-width:5;
   stroke:#dfe7f2;
 }

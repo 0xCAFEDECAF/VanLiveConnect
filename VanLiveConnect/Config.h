@@ -21,7 +21,11 @@
 
 #ifdef WIFI_AP_MODE // Wi-Fi access point mode
   #define WIFI_SSID "PSA display AP"
-  //#define WIFI_PASSWORD "99999999" // Define to set password on access point
+
+  // Define to set password on access point
+  // Note: many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
+  //#define WIFI_PASSWORD "99999999"
+
   #define IP_ADDR "192.168.244.1"
 
 #else  // Wi-Fi station (client) mode
@@ -119,6 +123,9 @@
 
 // Define to show the ESP RAM and Wi-Fi statistics on the "system" screen
 //#define SHOW_ESP_RUNTIME_STATS
+
+// Prints each packet on serial port, highlighting the bytes that differ
+#define PRINT_RAW_PACKET_DATA
 
 // Define to see JSON buffers printed on the serial port
 // Note: for some reason, having JSON buffers printed on the serial port seems to reduce the number

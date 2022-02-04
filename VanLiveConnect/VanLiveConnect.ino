@@ -89,20 +89,10 @@ bool IrReceive(TIrPacket& irPacket);
 
 void SetupVanReceiver()
 {
-#if ! defined VAN_RX_ISR_DEBUGGING && ! defined VAN_RX_IFS_DEBUGGING
-
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
     #define VAN_PACKET_QUEUE_SIZE 100
-
-#else
-
-    // Packet debugging requires a lot of extra memory per slot, so the queue must be small to prevent
-    // "out of memory" errors
-    #define VAN_PACKET_QUEUE_SIZE 15
-
-#endif
 
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
@@ -111,6 +101,10 @@ void SetupVanReceiver()
     {
         Serial.printf_P(PSTR("VanBusRx queue of size %d is set up\n"), VanBusRx.QueueSize());
     } // if
+
+  #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
+    Serial.printf_P(PSTR("--> VanBusRx: DEBUGGING MODE IS ON!\n"));
+  #endif
 } // SetupVanReceiver
 
 // Defined in PacketToJson.ino

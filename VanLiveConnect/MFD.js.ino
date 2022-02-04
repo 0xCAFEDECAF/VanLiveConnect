@@ -367,7 +367,7 @@ var webSocketServerHost = window.location.hostname;
 // Send some data so that a webSocket event triggers when the connection has failed
 function keepAliveWebSocket()
 {
-	webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+	webSocket.send("keepalive");
 } // keepAliveWebSocket
 
 var webSocket;
@@ -417,9 +417,6 @@ function connectToWebSocket()
 	);
 } // connectToWebSocket
 
-// For stability, connect to the web socket server only after a few seconds
-//var connectToWebsocketTimer = setTimeout(connectToWebSocket, 2000);
-
 // -----
 // Handling of vehicle data
 
@@ -428,7 +425,7 @@ var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 var engineCoolantTemperature = 80;  // In degrees Celsius
 var vehicleSpeed = 0;
 var icyConditions = false;
-var wasRiskOfIceWarningShown = false; // This warning is shown at most once per ride
+var wasRiskOfIceWarningShown = false;
 
 var suppressClimateControlPopup = null;
 
@@ -1508,10 +1505,6 @@ function highlightNextLine(id)
 
 	if (highlightIndexes[id] === undefined) highlightIndexes[id] = 0; else highlightIndexes[id]++;
 
-	// Uncomment to have roll-over behaviour
-	//var lines = splitIntoLines(id);
-	//if (highlightIndexes[id] >= lines.length) highlightIndexes[id] = 0;  // Roll over
-
 	highlightLine(id);
 
 	// Scroll along if necessary
@@ -1521,10 +1514,11 @@ function highlightNextLine(id)
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
 	var heightOfBox = $("#" + id).height();
 
-	if (topOfHighlightedLine + heightOfHighlightedLine > heightOfBox - heightOfUnhighlightedLine)
+	var scrollBy = (topOfHighlightedLine + heightOfHighlightedLine) - (heightOfBox - heightOfUnhighlightedLine)
+	if (scrollBy > 0)
 	{
 		// Try to keep at least one next line visible
-		$("#" + id).scrollTop($("#" + id).scrollTop() + heightOfUnhighlightedLine);
+		$("#" + id).scrollTop($("#" + id).scrollTop() + scrollBy);
 	} // if
 } // highlightNextLine
 
@@ -1539,9 +1533,6 @@ function highlightPreviousLine(id)
 
 	if (highlightIndexes[id] === undefined) highlightIndexes[id] = lines.length - 1; else highlightIndexes[id]--;
 
-	// Uncomment to have roll-over behaviour
-	//if (highlightIndexes[id] < 0) highlightIndexes[id] = lines.length - 1;  // Roll over
-
 	highlightLine(id);
 
 	// Scroll along if necessary
@@ -1551,21 +1542,11 @@ function highlightPreviousLine(id)
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
 	var heightOfBox = $("#" + id).height();
 
-	if (topOfHighlightedLine < heightOfUnhighlightedLine)
+	if (topOfHighlightedLine < heightOfUnhighlightedLine - 1)
 	{
 		// Try to keep at least one previous line visible
 		$("#" + id).scrollTop($("#" + id).scrollTop() - heightOfUnhighlightedLine);
 	}
-	// else if (topOfHighlightedLine + heightOfHighlightedLine > heightOfBox - heightOfUnhighlightedLine)
-	// {
-		// // Try to keep at least one next line visible
-		// $("#" + id).scrollTop($("#" + id).scrollTop() + heightOfUnhighlightedLine);
-	// }
-	// else
-	// {
-		// // Prevent spontaneous jumps
-		// $("#" + id).scrollTop(scrollPositions[id]);
-	// } // if
 } // highlightPreviousLine
 
 // -----
@@ -1965,26 +1946,26 @@ function satnavGotoListScreen()
 		{
 			// Pre-fill with what we previously received
 
-			case "Service":
-				$("#satnav_list").html(satnavServices.join('<br />'));
+			case "service":
+				$("#satnav_choice_list").html(satnavServices.join('<br />'));
 				break;
 
-			case "Personal address list":
-				$("#satnav_list").html(satnavPersonalDirectoryEntries.join('<br />'));
+			case "personal_address_list":
+				$("#satnav_choice_list").html(satnavPersonalDirectoryEntries.join('<br />'));
 				break;
 
-			case "Professional address list":
-				$("#satnav_list").html(satnavProfessionalDirectoryEntries.join('<br />'));
+			case "professional_address_list":
+				$("#satnav_choice_list").html(satnavProfessionalDirectoryEntries.join('<br />'));
 				break;
 
-			case "Enter city":
-			case "Enter street":
-				$("#satnav_list").empty();
+			case "enter_city":
+			case "enter_street":
+				$("#satnav_choice_list").empty();
 				break;
 		} // switch
 	} // if
 
-	if ($("#satnav_list").text() === "")
+	if ($("#satnav_choice_list").text() === "")
 	{
 		// Show the spinning disc after a while
 		clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
@@ -1996,15 +1977,36 @@ function satnavGotoListScreen()
 	} // if
 
 	// We could get here via "Esc" and then the currently selected line must be highlighted
-	highlightLine("satnav_list");
+	highlightLine("satnav_choice_list");
 } // satnavGotoListScreen
 
 function satnavGotoListScreenEmpty()
 {
 	satnavGotoListScreen();
-	$('#satnav_list').empty();
-	highlightFirstLine('satnav_list');
+	$("#satnav_choice_list").empty();
+	highlightFirstLine("satnav_choice_list");
 } // satnavGotoListScreenEmpty
+
+function satnavGotoListScreenServiceList()
+{
+	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
+	handleItemChange.mfdToSatnavRequest = "service";
+	satnavGotoListScreen();
+} // satnavGotoListScreenServiceList
+
+function satnavGotoListScreenPersonalAddressList()
+{
+	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
+	handleItemChange.mfdToSatnavRequest = "personal_address_list";
+	satnavGotoListScreen();
+} // satnavGotoListScreenPersonalAddressList
+
+function satnavGotoListScreenProfessionalAddressList()
+{
+	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
+	handleItemChange.mfdToSatnavRequest = "professional_address_list";
+	satnavGotoListScreen();
+} // satnavGotoListScreenProfessionalAddressList
 
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
 function satnavSelectFirstAvailableCharacter()
@@ -2022,7 +2024,7 @@ function satnavSelectFirstAvailableCharacter()
 
 function satnavEnterStreetCharactersScreen()
 {
-	highlightFirstLine("satnav_list");
+	highlightFirstLine("satnav_choice_list");
 	$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
 } // satnavEnterStreetCharactersScreen
@@ -2199,7 +2201,7 @@ function satnavEnterCharacter()
 	$("#satnav_entered_string").append(satnavLastEnteredChar);  // Append the entered character
 	$("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");  // Enable the "Correction" button
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");  // Disable the "Validate" button
-	highlightFirstLine("satnav_list");  // Go to the first line in the "satnav_list" screen
+	highlightFirstLine("satnav_choice_list");  // Go to the first line in the "satnav_choice_list" screen
 } // satnavEnterCharacter
 
 var showAvailableCharactersTimer = null;
@@ -2270,12 +2272,12 @@ function satnavCheckIfCityCenterMustBeAdded()
 	// then add "City centre" at the top of the list
 	if (
 		$("#satnav_choose_from_list").is(":visible")
-		&& $("#mfd_to_satnav_request").text() === "Enter street"  // TODO - other language?
+		&& handleItemChange.mfdToSatnavRequest === "enter_street"
 		//&& $("#satnav_entered_string").text() === ""
 		&& ! userHadOpportunityToEnterStreet
 	   )
 	{
-		$("#satnav_list").html(cityCenterText + "<br />" + $("#satnav_list").html());
+		$("#satnav_choice_list").html(cityCenterText + "<br />" + $("#satnav_choice_list").html());
 	} // if
 } // satnavCheckIfCityCenterMustBeAdded
 
@@ -2286,7 +2288,7 @@ function satnavListItemClicked()
 
 	// When choosing a city from the list, hide the current destination street, so that the entry format ("") will
 	// be shown.
-	if ($("#mfd_to_satnav_request").text() === "Enter city") $("#satnav_current_destination_street").empty();
+	if (handleItemChange.mfdToSatnavRequest === "Enter city") $("#satnav_current_destination_street").empty();
 
 	// When choosing a city or street from the list, hide the current destination house number, so that the
 	// entry format ("_ _ _") will be shown.
@@ -3700,8 +3702,7 @@ function handleItemChange(item, value)
 
 		case "distance_to_service":
 		{
-			// Add a space between hundreds and thousands for better readability
-			$("#distance_to_service").text(addThousandsSeparator(value));
+			$("#distance_to_service").text(addThousandsSeparator(value));  // Improve readability
 
 			// If zero or negative, add glow effect
 			$("#distance_to_service").toggleClass("glow", parseInt(value) <= 0);
@@ -3710,8 +3711,7 @@ function handleItemChange(item, value)
 
 		case "odometer_1":
 		{
-			// Add a space between hundreds and thousands for better readability
-			$("#odometer_1").text(addThousandsSeparator(value));
+			$("#odometer_1").text(addThousandsSeparator(value));  // Improve readability
 		} // case
 		break;
 
@@ -3730,10 +3730,9 @@ function handleItemChange(item, value)
 
 		case "hazard_lights":
 		{
-			// If on, add glow effect
 			$("#hazard_lights").removeClass("ledOn");
 			$("#hazard_lights").removeClass("ledOff");
-			$("#hazard_lights").toggleClass("glow", value === "ON");
+			$("#hazard_lights").toggleClass("glow", value === "ON");  // If on, add glow effect
 		} // case
 		break;
 
@@ -3783,8 +3782,7 @@ function handleItemChange(item, value)
 				isDoorOpen[item] = isOpen;
 			} // if
 
-			// Only continue if anything changed
-			if (! change) break;
+			if (! change) break;  // Only continue if anything changed
 
 			var nDoorsOpen = 0;
 			for (var id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
@@ -4291,6 +4289,9 @@ function handleItemChange(item, value)
 
 			if (value === "") break;
 
+			// Has anything changed?
+			if (value === currentLargeScreenId) break;
+
 			if (value === "satnav_choose_from_list")
 			{
 				if ($("#satnav_enter_street_characters").is(":visible")
@@ -4302,9 +4303,6 @@ function handleItemChange(item, value)
 				satnavGotoListScreen();
 				break;
 			} // if
-
-			// Has anything changed?
-			if (value === currentLargeScreenId) break;
 
 			if (value === "satnav_enter_city_characters")
 			{
@@ -4352,6 +4350,13 @@ function handleItemChange(item, value)
 		case "mfd_to_satnav_request":
 		{
 			handleItemChange.mfdToSatnavRequest = value;
+
+			// Show or hide the appropriate tag
+			$("#satnav_tag_city_list").toggle(value === "enter_city");
+			$("#satnav_tag_street_list").toggle(value === "enter_street");
+			$("#satnav_tag_service_list").toggle(value === "service");
+			$("#satnav_tag_personal_address_list").toggle(value === "personal_address_list");
+			$("#satnav_tag_professional_address_list").toggle(value === "professional_address_list");
 		} // case
 		break;
 
@@ -4363,8 +4368,8 @@ function handleItemChange(item, value)
 
 			switch (handleItemChange.mfdToSatnavRequest)
 			{
-				case "Enter city":
-				case "Enter street":
+				case "enter_city":
+				case "enter_street":
 				{
 					$("#satnav_to_mfd_show_characters_line_1").empty();
 					$("#satnav_to_mfd_show_characters_line_2").empty();
@@ -4384,13 +4389,13 @@ function handleItemChange(item, value)
 
 		case "mfd_to_satnav_selection":
 		{
-			if (handleItemChange.mfdToSatnavRequest === "Enter street"
+			if (handleItemChange.mfdToSatnavRequest === "enter_street"
 				&& handleItemChange.mfdToSatnavRequestType === "SELECT")
 			{
 				// Already copy the selected street into the "satnav_show_current_destination" screen, in case the
 				// "satnav_report" packet is missed
 
-				var lines = splitIntoLines("satnav_list");
+				var lines = splitIntoLines("satnav_choice_list");
 
 				if (lines[value] === undefined) break;
 
@@ -4415,30 +4420,28 @@ function handleItemChange(item, value)
 			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 
-			if (satnavToMfdResponse === "Service")
+			if (satnavToMfdResponse === "service")
 			{
-				// Sat nav menu item "Select a service": enable the button if sat nav responds with a
-				// list size value > 0
+				// Sat nav menu item "Select a service": enable if sat nav responds with a list size value > 0
 				if (parseInt(value) > 0) $("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
 			} // if
 
 			// "List XXX" button: only enable if less than 80 items in list
 			$("#satnav_enter_characters_list_button").toggleClass("buttonDisabled", parseInt(value) > 80);
 
-			if ($("#mfd_to_satnav_request").is(":visible") && value == 0)
+			if ($("#satnav_choose_from_list").is(":visible") && value == 0)
 			{
-				var title = $("#mfd_to_satnav_request").text();
-				if (title.match(/^Service/))
+				if (handleItemChange.mfdToSatnavRequest.match(/^service/))
 				{
 					// User selected a service which has no address entries for the specified location
 					showStatusPopup("This service is<br />not available for<br />this location", 8000);
 				}
-				else if (title === "Personal address list")
+				else if (handleItemChange.mfdToSatnavRequest === "personal_address_list")
 				{
 					exitMenu();
 					showStatusPopup("Personal directory<br />is empty", 8000);
 				}
-				else if (title === "Professional address list")
+				else if (handleItemChange.mfdToSatnavRequest === "professional_address_list")
 				{
 					exitMenu();
 					showStatusPopup("Professional directory<br />is empty", 8000);
@@ -4467,20 +4470,50 @@ function handleItemChange(item, value)
 			clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
 			$("#satnav_choose_from_list_spinning_disc").hide();
 
+			switch(handleItemChange.mfdToSatnavRequest)
+			{
+				case "enter_city":
+				case "enter_street":
+					// These entries are received in chunks of 20
+
+					if (handleItemChange.mfdToSatnavOffset == 0 || $("#satnav_choice_list").text() == "")
+					{
+						// First chunk
+						$("#satnav_choice_list").html(value.join('<br />'));
+					}
+					else
+					{
+						// Follow-up chunk
+						//unhighlightLine("satnav_choice_list");
+
+						var lines = splitIntoLines("satnav_choice_list");
+						lines = lines.slice(0, handleItemChange.mfdToSatnavOffset);
+						lines = lines.concat(value);
+						$("#satnav_choice_list").html(lines.join('<br />'));
+
+						highlightNextLine("satnav_choice_list");
+					} // if
+
+					break;
+
+				default:
+					$("#satnav_choice_list").html(value.join('<br />'));
+
+			} // switch
+
 			satnavCheckIfCityCenterMustBeAdded();
 
 			// Highlight the current line (or the first, if no line is currently highlighted)
-			highlightLine("satnav_list");
+			highlightLine("satnav_choice_list");
 
-			var title = $("#mfd_to_satnav_request").text();
-			if (title === "Service")
+			if (handleItemChange.mfdToSatnavRequest === "service")
 			{
 				satnavServices = value;
 
 				// Save in local (persistent) store
 				localStorage.satnavServices = JSON.stringify(satnavServices);
 			}
-			else if (title === "Personal address list")
+			else if (handleItemChange.mfdToSatnavRequest === "personal_address_list")
 			{
 				// Store the list of entries. When the user tries to create an entry with an existing name,
 				// the "Validate" button must be disabled.
@@ -4498,7 +4531,7 @@ function handleItemChange(item, value)
 				// Save in local (persistent) store
 				localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
 			}
-			else if (title === "Professional address list")
+			else if (handleItemChange.mfdToSatnavRequest === "professional_address_list")
 			{
 				// Store the list of entries. When the user tries to create an entry with an existing name,
 				// the "Validate" button must be disabled.
@@ -4522,6 +4555,9 @@ function handleItemChange(item, value)
 		case "mfd_to_satnav_offset":
 		{
 			if (value === "") break;
+
+			handleItemChange.mfdToSatnavOffset = value;
+
 			if (! $("#satnav_show_service_address").is(":visible")) break;
 			satnavServiceAddressSetButtons(parseInt(value) + 1);
 		} // case
@@ -4885,7 +4921,7 @@ function handleItemChange(item, value)
 			// After 10 seconds, return to original color
 			clearTimeout(handleItemChange.revertCommsLedColorTimer);
 			handleItemChange.revertCommsLedColorTimer = setTimeout(
-				function () { $("#comms_led").css('background-color', '#dfe7f2'); },
+				function () { $("#comms_led").css('background-color', ''); },
 				10000
 			);
 		} // case
@@ -4935,7 +4971,7 @@ function handleItemChange(item, value)
 				// Very special situation... Escaping out of list of services after entering a new "Select a Service"
 				// address means escaping back all the way to the to the "Select a Service" address screen.
 				if (currentMenu === "satnav_choose_from_list"
-					&& $("#mfd_to_satnav_request").text() === "Service"  // TODO - other language?
+					&& handleItemChange.mfdToSatnavRequest === "service"
 					&& menuStack.indexOf("satnav_show_last_destination") >= 0
 					&& menuStack[menuStack.length - 1] !== "satnav_show_last_destination")
 				{
@@ -5175,7 +5211,11 @@ function setLanguage(language)
 			$("#satnav_enter_characters .tag:eq(1)").html("Enter city");
 			$("#satnav_enter_characters .tag:eq(2)").html("Enter street");
 
-			$("#satnav_choose_from_list .tag").html("Enter city");
+			$("#satnav_tag_city_list").html("Choose city");
+			$("#satnav_tag_street_list").html("Choose street");
+			$("#satnav_tag_service_list").html("Service list");
+			$("#satnav_tag_personal_address_list").html("Personal address list");
+			$("#satnav_tag_professional_address_list").html("Professional address list");
 
 			$("#satnav_enter_house_number .tag").html("Enter number");
 
@@ -5326,7 +5366,11 @@ function setLanguage(language)
 			$("#satnav_enter_characters .tag:eq(1)").html("Saisie de la ville");
 			$("#satnav_enter_characters .tag:eq(2)").html("Saisie de la voie");
 
-			$("#satnav_choose_from_list .tag").html("Saisie de la ville");
+			$("#satnav_tag_city_list").html("Saisie de la ville");
+			$("#satnav_tag_street_list").html("Saisie de la voie");
+			$("#satnav_tag_service_list").html("Choix d'un service");  // TODO - check
+			$("#satnav_tag_personal_address_list").html("R&eacute;pertoire personnel");  // TODO - check
+			$("#satnav_tag_professional_address_list").html("R&eacute;pertoire professionnel");  // TODO - check
 
 			$("#satnav_enter_house_number .tag").html("Saisie du num&eacute;ro");
 
@@ -5477,7 +5521,11 @@ function setLanguage(language)
 			$("#satnav_enter_characters .tag:eq(1)").html("Stadt eingeben");
 			$("#satnav_enter_characters .tag:eq(2)").html("Stra&szlig;e eingeben");
 
-			$("#satnav_choose_from_list .tag").html("Stadt eingeben");
+			$("#satnav_tag_city_list").html("Stadt eingeben");
+			$("#satnav_tag_street_list").html("Stra&szlig;e eingeben");
+			$("#satnav_tag_service_list").html("Einen Dienst w&auml;hlen");  // TODO - check
+			$("#satnav_tag_personal_address_list").html("Pers&ouml;nliches Zielverzeichnis");  // TODO - check
+			$("#satnav_tag_professional_address_list").html("Berufliches Zielverzeichnis");  // TODO - check
 
 			$("#satnav_enter_house_number .tag").html("Hausnummer eingeben");
 
@@ -5629,7 +5677,11 @@ function setLanguage(language)
 			$("#satnav_enter_characters .tag:eq(1)").html("Introducir la ciudad");
 			$("#satnav_enter_characters .tag:eq(2)").html("Introducir la calle");
 
-			$("#satnav_choose_from_list .tag").html("Introducir la ciudad");
+			$("#satnav_tag_city_list").html("Introducir la ciudad");
+			$("#satnav_tag_street_list").html("Introducir la calle");
+			$("#satnav_tag_service_list").html("Seleccionar servicio");  // TODO - check
+			$("#satnav_tag_personal_address_list").html("Directorio personal");  // TODO - check
+			$("#satnav_tag_professional_address_list").html("Directorio profesional");  // TODO - check
 
 			$("#satnav_enter_house_number .tag").html("Introducir el n&uacute;mero");
 
@@ -5780,7 +5832,11 @@ function setLanguage(language)
 			$("#satnav_enter_characters .tag:eq(1)").html("Selezionare citt&agrave;");
 			$("#satnav_enter_characters .tag:eq(2)").html("Selezionare via");
 
-			$("#satnav_choose_from_list .tag").html("Selezionare citt&agrave;");
+			$("#satnav_tag_city_list").html("Selezionare citt&agrave;");
+			$("#satnav_tag_street_list").html("Selezionare via");
+			$("#satnav_tag_service_list").html("Scelta un servizio");  // TODO - check
+			$("#satnav_tag_personal_address_list").html("Rubrica personale");  // TODO - check
+			$("#satnav_tag_professional_address_list").html("Rubrica professionale");  // TODO - check
 
 			$("#satnav_enter_house_number .tag").html("Selezionare numero civico");
 
@@ -5931,7 +5987,11 @@ function setLanguage(language)
 			$("#satnav_enter_characters .tag:eq(1)").html("Stad invoeren");
 			$("#satnav_enter_characters .tag:eq(2)").html("Straat invoeren");
 
-			$("#satnav_choose_from_list .tag").html("Stad invoeren");
+			$("#satnav_tag_city_list").html("Kies stad");
+			$("#satnav_tag_street_list").html("Kies straat");
+			$("#satnav_tag_service_list").html("Kies dienst");  // TODO - check
+			$("#satnav_tag_personal_address_list").html("Kies priv&eacute;-adres");  // TODO - check
+			$("#satnav_tag_professional_address_list").html("Kies zaken-adres");  // TODO - check
 
 			$("#satnav_enter_house_number .tag").html("Nummer invoeren");
 
@@ -5960,7 +6020,7 @@ function setLanguage(language)
 			$("#satnav_show_last_destination .tag:eq(1)").html("Stad");
 			$("#satnav_show_last_destination .tag:eq(2)").html("Straat");
 
-			// $("#satnav_archive_in_directory_title").html("Archive in directory");
+			$("#satnav_archive_in_directory_title").html("Opslaan in adressenbestand");  // TODO - check
 			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Naam");
 			$("#satnav_archive_in_directory .button:eq(0)").html("Verbeteren");
 			$("#satnav_archive_in_directory .button:eq(1)").html("Priv&eacute;-adressen");
@@ -5992,11 +6052,8 @@ function setLanguage(language)
 			$("#satnav_enter_characters_correction_button").html("Verbeteren");
 			$("#satnav_store_entry_in_directory").html("Bewaren");
 
-			$(".satNavEntryExistsTag").html("Deze naam bestaat al");  // TODO - check
+			$(".satNavEntryExistsTag").html("Deze naam bestaat al");
 		} // case
-		break;
-
-		default:
 		break;
 	} // switch
 

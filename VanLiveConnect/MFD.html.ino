@@ -51,8 +51,9 @@ char mfd_html[] PROGMEM = R"=====(
 		<link rel="stylesheet" href="css/all.css" async>	<!-- Font Awesome -->
 
 		<script src="jquery-3.5.1.min.js"></script>	<!-- jQuery -->
-		<script src="MFD.js" async></script>	<!-- Our own stuff -->
-		<!-- <script defer src="MFD.js"></script> -->	<!-- Our own stuff. 'defer': don't run until HTML parsing is done -->
+
+		<!-- Our own stuff. Added '?foo=1' to force Chrome reload; see also https://stackoverflow.com/a/70410178 -->
+		<script src="MFD.js?foo=1" async></script>
 	</head>
 	<body translate="no" onload = "htmlBodyOnLoad();">
 
@@ -1089,14 +1090,14 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Sat nav main menu -->
 
-				<div id="satnav_main_menu" on_enter="highlightFirstLine('satnav_list');" class="tag menuScreen">
+				<div id="satnav_main_menu" on_enter="highlightFirstLine('satnav_choice_list');" class="tag menuScreen">
 					<div class="menuTitleLine">Navigation / Guidance<br /></div>
 
 					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
 					<div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
 					<!--
-						This button is disabled until a {"satnav_to_mfd_response":"Service","satnav_to_mfd_list_size":"<x>"} packet
+						This button is disabled until a {"satnav_to_mfd_response":"service","satnav_to_mfd_list_size":"<x>"} packet
 						is received
 					-->
 					<div id="satnav_main_menu_select_a_service_button"
@@ -1118,12 +1119,12 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="menuTitleLine">Select from memory<br /></div>
 
 					<div class="button buttonSelected"
-						on_click="highlightFirstLine('satnav_list');"
-						goto_id="satnav_choose_from_list">Personal directory</div>
+						on_click="satnavGotoListScreenPersonalAddressList();">
+						Personal directory</div>
 
 					<div class="button"
-						on_click="highlightFirstLine('satnav_list');"
-						goto_id="satnav_choose_from_list">Professional directory</div>
+						on_click="satnavGotoListScreenProfessionalAddressList();">
+						Professional directory</div>
 				</div>	<!-- "satnav_select_from_memory_menu" -->
 
 				<!-- Sat nav navigation options menu -->
@@ -1150,10 +1151,10 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="menuTitleLine">Directory management<br /></div>
 
 					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-					<div class="button buttonSelected" on_click="satnavGotoListScreenEmpty();">Personal directory</div>
+					<div class="button buttonSelected" on_click="satnavGotoListScreenPersonalAddressList();">Personal directory</div>
 
 					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
-					<div class="button" on_click="satnavGotoListScreenEmpty();">Professional directory</div>
+					<div class="button" on_click="satnavGotoListScreenProfessionalAddressList();">Professional directory</div>
 				</div>	<!-- "satnav_directory_management_menu" -->
 
 				<!-- Sat nav guidance tools (context) menu -->
@@ -1226,7 +1227,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_enter_characters" style="display:none;">
 
-						<!-- The city or street that has been entered thus far -->
+						<!-- The city or street name that has been entered thus far -->
 						<div id="satnav_entered_string" class="dots satNavEnterDestination"></div>
 
 						<div class="tag" style="left:20px; top:240px; width:550px; text-align:left;">Choose next letter</div>
@@ -1297,7 +1298,7 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 
 						<div id="satnav_enter_city_characters"
-							on_enter="highlightFirstLine('satnav_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
+							on_enter="highlightFirstLine('satnav_choice_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
 							style="display:none;">
 
 							<div class="tag satNavEnterDestinationTag">Enter city</div>
@@ -1328,22 +1329,27 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- ...or choosing entry from list... -->
 
 					<div id="satnav_choose_from_list"
-						on_enter="if (highlightIndexes['satnav_list'] === 0) $('#satnav_list').scrollTop(0);"
+						on_enter="if (highlightIndexes['satnav_choice_list'] === 0) $('#satnav_choice_list').scrollTop(0);"
 						style="display:none;">
 
 						<!-- What is being entered? (city, street) -->
-						<div id="mfd_to_satnav_request" class="tag satNavEnterDestinationTag">Enter city</div>
+						<div id="satnav_tag_city_list" class="tag satNavEnterDestinationTag">Choose city</div>
+						<div id="satnav_tag_street_list" class="tag satNavEnterDestinationTag" style="display:none;">Choose street</div>
+						<div id="satnav_tag_service_list" class="tag satNavEnterDestinationTag" style="display:none;">Service list</div>
+						<div id="satnav_tag_personal_address_list" class="tag satNavEnterDestinationTag" style="display:none;">Personal address list</div>
+						<div id="satnav_tag_professional_address_list" class="tag satNavEnterDestinationTag" style="display:none;">Professional address list</div>
 
-						<!-- <div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div> -->
-						<div id="mfd_to_satnav_length" class="dots" style="left:730px; top:120px; width:218px; text-align:right;">-</div>
+						<div gid="satnav_to_mfd_list_size" class="dots" style="left:730px; top:107px; width:218px; text-align:right;">-</div>
 
 						<!-- TODO - id="satnav_software_modules_list": show this? -->
 
-						<div id="satnav_list" class="dots buttonSelected"
+						<!-- <div id="satnav_choice_list" class="dots buttonSelected" -->
+						<div id="satnav_choice_list" class="buttonSelected" 
 							on_up_button="highlightPreviousLine();"
 							on_down_button="highlightNextLine();"
 							on_click="satnavListItemClicked();"
-							style="font-size:40px; left:20px; top:180px; width:923px; height:360px;
+							style="position:absolute; font-size:33px; line-height:1.000000;
+								left:20px; top:180px; width:923px; height:360px;
 								overflow:hidden; white-space:nowrap;
 								background:none; color:#dfe7f2; border-style:none;">
 						</div>
@@ -1609,7 +1615,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div gid="satnav_last_destination_street_shown" class="dots satNavShowAddressStreet"></div>
 
 						<div button_orientation="horizontal" class="buttonBar">
-							<div class="icon button buttonSelected validateButton" on_click="satnavGotoListScreenEmpty();">
+							<div class="icon button buttonSelected validateButton" on_click="satnavGotoListScreenServiceList();">
 								Validate
 							</div>
 							<div class="icon button correctionButton" on_click="satnavEnterNewCityForService();">
@@ -1617,7 +1623,7 @@ char mfd_html[] PROGMEM = R"=====(
 							</div>
 							<div
 								class="icon button" style="left:470px; top:0px; width:340px; height:40px;"
-								on_click="highlightFirstLine('satnav_list');">
+								on_click="satnavGotoListScreenServiceList();">
 								Current location
 							</div>
 						</div>
@@ -1862,7 +1868,7 @@ char mfd_html[] PROGMEM = R"=====(
 							</svg>
 							<div style="position:absolute; top:0px;">
 								<svg style="width:200px; height:80px;">
-									<circle class="satNavInstructionIcon" cx="100" cy="80" r="40"></circle>
+									<circle stroke="#dfe7f2" stroke-width="14" stroke-linecap="round" cx="100" cy="80" r="40"></circle>
 								</svg>
 							</div>
 						</div>	<!-- "satnav_turn_around_if_possible_icon" -->
@@ -2468,8 +2474,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_delete_item_popup"
 				on_enter="selectButton('satnav_delete_item_popup_no_button');"
-				class="icon notificationPopup" style="display:none; height:300px;">
-				<div class="centerAligned yesNoPopupArea">
+				class="icon notificationPopup" style="display:none; top:120px; height:350px;">
+				<div class="centerAligned yesNoPopupArea" style="height:300px;">
 					<div id="satnav_delete_item_popup_title">Delete item ?<br /></div>
 
 					<span style="font-size:60px;" id="satnav_delete_directory_entry_in_popup"></span>
@@ -2478,12 +2484,12 @@ char mfd_html[] PROGMEM = R"=====(
 						<!-- on_click: goes all the way back to the "Directory management" menu -->
 						<div id="satnav_delete_item_popup_yes_button"
 							on_click="satnavDeleteDirectoryEntry();"
-							class="icon button yesButton" style="left:150px; top:150px; width:150px; height:40px;">
+							class="icon button yesButton" style="left:150px; top:220px; width:150px; height:40px;">
 							Yes
 						</div>
 						<div id="satnav_delete_item_popup_no_button"
 							on_click="hidePopup();"
-							class="icon button noButton" style="left:360px; top:150px; width:150px; height:40px;">
+							class="icon button noButton" style="left:360px; top:220px; width:150px; height:40px;">
 							No
 						</div>
 					</div>

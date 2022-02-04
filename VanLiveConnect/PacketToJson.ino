@@ -535,27 +535,27 @@ enum SatNavRequest_t
 PGM_P SatNavRequestStr(uint8_t data)
 {
     return
-        data == SR_ENTER_COUNTRY ? PSTR("Enter country") :
-        data == SR_ENTER_PROVINCE ? PSTR("Enter province") :
-        data == SR_ENTER_CITY ? PSTR("Enter city") :
-        data == SR_ENTER_DISTRICT ? PSTR("Enter district") :
-        data == SR_ENTER_NEIGHBORHOOD ? PSTR("Enter neighborhood") :
-        data == SR_ENTER_STREET ? PSTR("Enter street") :
-        data == SR_ENTER_HOUSE_NUMBER ? PSTR("Enter number") :
-        data == SR_ENTER_HOUSE_NUMBER_LETTER ? PSTR("Enter letter") :
-        data == SR_SERVICE_LIST ? PSTR("Service") :
-        data == SR_SERVICE_ADDRESS ? PSTR("Service address") :
-        data == SR_ARCHIVE_IN_DIRECTORY ? PSTR("Archive in directory") :
-        data == SR_RENAME_DIRECTORY_ENTRY ? PSTR("Rename directory entry") :
-        data == SR_LAST_DESTINATION ? PSTR("Last destination") :  // TODO - change to SR_CURR_DESTINATION - "Current destination"
-        data == SR_NEXT_STREET ? PSTR("Next street") :
-        data == SR_CURRENT_STREET ? PSTR("Current street") :
-        data == SR_PERSONAL_ADDRESS ? PSTR("Personal address") :
-        data == SR_PROFESSIONAL_ADDRESS ? PSTR("Professional address") :
-        data == SR_SOFTWARE_MODULE_VERSIONS ? PSTR("Software module versions") :
-        data == SR_PERSONAL_ADDRESS_LIST ? PSTR("Personal address list") :
-        data == SR_PROFESSIONAL_ADDRESS_LIST ? PSTR("Professional address list") :
-        data == SR_DESTINATION ? PSTR("Current destination") :  // TODO - change to SR_NEW_DESTINATION - "New destination"
+        data == SR_ENTER_COUNTRY ? PSTR("enter_country") :
+        data == SR_ENTER_PROVINCE ? PSTR("enter_province") :
+        data == SR_ENTER_CITY ? PSTR("enter_city") :
+        data == SR_ENTER_DISTRICT ? PSTR("enter_district") :
+        data == SR_ENTER_NEIGHBORHOOD ? PSTR("enter_neighborhood") :
+        data == SR_ENTER_STREET ? PSTR("enter_street") :
+        data == SR_ENTER_HOUSE_NUMBER ? PSTR("enter_number") :
+        data == SR_ENTER_HOUSE_NUMBER_LETTER ? PSTR("enter_letter") :
+        data == SR_SERVICE_LIST ? PSTR("service") :
+        data == SR_SERVICE_ADDRESS ? PSTR("service_address") :
+        data == SR_ARCHIVE_IN_DIRECTORY ? PSTR("archive_in_directory") :
+        data == SR_RENAME_DIRECTORY_ENTRY ? PSTR("rename_directory_entry") :
+        data == SR_LAST_DESTINATION ? PSTR("last_destination") :  // TODO - change to SR_CURR_DESTINATION - "current_destination"
+        data == SR_NEXT_STREET ? PSTR("next_street") :
+        data == SR_CURRENT_STREET ? PSTR("current_street") :
+        data == SR_PERSONAL_ADDRESS ? PSTR("personal_address") :
+        data == SR_PROFESSIONAL_ADDRESS ? PSTR("professional_address") :
+        data == SR_SOFTWARE_MODULE_VERSIONS ? PSTR("software_module_versions") :
+        data == SR_PERSONAL_ADDRESS_LIST ? PSTR("personal_address_list") :
+        data == SR_PROFESSIONAL_ADDRESS_LIST ? PSTR("professional_address_list") :
+        data == SR_DESTINATION ? PSTR("current_destination") :  // TODO - change to SR_NEW_DESTINATION - "new_destination"
         ToHexStr(data);
 } // SatNavRequestStr
 
@@ -3429,13 +3429,10 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
     int dataLen = pkt.DataLen();
     if (dataLen < 3) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
-    // Each report is a sequence of one or more VAN bus packets, so we keep a static buffer of the strings we've
-    // read thus far.
-    // TODO - This two-dimensional array is pretty heavy on RAM. Better to use some kind of linked list, e.g. from
-    //   ESPAsyncWebServer-master\src\StringArray.h .
     #define MAX_SATNAV_STRINGS_PER_RECORD 15
-    #define MAX_SATNAV_RECORDS 40
-    static String records[MAX_SATNAV_RECORDS][MAX_SATNAV_STRINGS_PER_RECORD];
+    #define MAX_SATNAV_RECORDS 80
+    static String records[MAX_SATNAV_RECORDS];
+
     static int currentRecord = 0;
     static int currentString = 0;
 
@@ -3468,10 +3465,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
         // Clear all records and reset array indexes. Otherwise, if the last fragment of the previous report
         // was missed, the data will continue to pile up after the previous records.
-        for (int i = 0; i < currentRecord; i++)
-        {
-            for (int j = 0; j < MAX_SATNAV_STRINGS_PER_RECORD; j++) records[i][j] = "";
-        } // for
+        // TODO - check if the following can be commented out:
+        //for (int i = 0; i < MAX_SATNAV_RECORDS; i++) records[i] = "";
+
         currentRecord = 0;
         currentString = 0;
     }
@@ -3534,26 +3530,61 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
         offsetInBuffer = 0;
 
+        // Calculate which entry of 'records' array to fill
+        int i = currentRecord;
+
+        switch(report)
+        {
+            case SR_CURRENT_STREET:
+            case SR_NEXT_STREET:
+            case SR_DESTINATION:
+            case SR_LAST_DESTINATION:
+            case SR_PERSONAL_ADDRESS:
+            case SR_PROFESSIONAL_ADDRESS:
+            case SR_SERVICE_ADDRESS:
+            case SR_ENTER_HOUSE_NUMBER:
+            {
+                i = currentString;
+            } // case
+            break;
+
+            case SR_ENTER_CITY:
+            case SR_ENTER_STREET:
+            case SR_PERSONAL_ADDRESS_LIST:
+            case SR_PROFESSIONAL_ADDRESS_LIST:
+            case SR_SERVICE_LIST:
+            {
+                i = currentRecord;
+            } // case
+            break;
+
+            case SR_SOFTWARE_MODULE_VERSIONS:
+            {
+                i = currentRecord * 3 + currentString;
+            } // case
+            break;
+        } // switch
+
         // Better safe than sorry
-        if (currentRecord >= MAX_SATNAV_RECORDS || currentString >= MAX_SATNAV_STRINGS_PER_RECORD) continue;
+        if (i >= MAX_SATNAV_RECORDS) continue;
 
         // Copy the current string buffer into the array of Strings
-        records[currentRecord][currentString] = buffer;
+        records[i] = buffer;
 
         // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
-        records[currentRecord][currentString].replace("#", "&shy;");
+        records[i].replace("#", "&shy;");
 
         // The last character can be:
         // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
         //   read. This is shown as a "?".
         // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
-        //   different country/region. This is shown on the MFD as an circle with a bar "(-)"; here we use a
-        //   circle with a cross "(X)".
-        records[currentRecord][currentString].replace("\x80", "?");
-        records[currentRecord][currentString].replace("\x81", "&#x24E7;");
+        //   different country/region. This is shown on the original MFD as an circle with a bar "(-)"; here we
+        //   use a circle with a cross "(X)".
+        records[i].replace("\x80", "?");
+        records[i].replace("\x81", "&#x24E7;");
 
         // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
-        AsciiToHtml(records[currentRecord][currentString]);
+        AsciiToHtml(records[i]);
 
         if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
         {
@@ -3588,12 +3619,12 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         case SR_CURRENT_STREET:
         {
             isCurrentStreetKnown = true;
-        }
+        } // case
         // No 'break': fallthrough intended
 
         case SR_NEXT_STREET:
         {
-            if (records[0][6].length() == 0)
+            if (records[6].length() == 0)
             {
                 // In this case, the original MFD says: "Street not listed". We just show the city.
 
@@ -3606,7 +3637,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
 
                         // City (if any) + optional district
-                        ComposeCityString(records[0][3], records[0][4]).c_str()
+                        ComposeCityString(records[3], records[4]).c_str()
                     );
 
                 break;
@@ -3624,12 +3655,12 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
 
                     // Street
-                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
+                    ComposeStreetString(records[5], records[6]).c_str(),
 
                     // City + optional district
-                    ComposeCityString(records[0][3], records[0][4]).c_str()
+                    ComposeCityString(records[3], records[4]).c_str()
                 );
-        }
+        } // case
         break;
 
         case SR_DESTINATION:
@@ -3653,21 +3684,21 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_last_destination_country"),
 
                     // Country
-                    records[0][1].c_str(),
+                    records[1].c_str(),
 
                     report == SR_DESTINATION ?
                         PSTR("satnav_current_destination_province") :
                         PSTR("satnav_last_destination_province"),
 
                     // Province
-                    records[0][2].c_str(),
+                    records[2].c_str(),
 
                     report == SR_DESTINATION ?
                         PSTR("satnav_current_destination_city") :
                         PSTR("satnav_last_destination_city"),
 
                     // City + optional district
-                    ComposeCityString(records[0][3], records[0][4]).c_str(),
+                    ComposeCityString(records[3], records[4]).c_str(),
 
                     report == SR_DESTINATION ?
                         PSTR("satnav_current_destination_street") :
@@ -3675,7 +3706,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // Street
                     // Note: if the street is empty: it means "City centre"
-                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
+                    ComposeStreetString(records[5], records[6]).c_str(),
 
                     report == SR_DESTINATION ?
                         PSTR("satnav_current_destination_house_number") :
@@ -3683,11 +3714,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // First string is either "C" or "V"; "C" has GPS coordinates in [7] and [8]; "V" has house number
                     // in [7]. If we see "V", show house number
-                    records[0][0] == "V" && records[0][7] != "0" ?
-                        records[0][7].c_str() :
+                    records[0] == "V" && records[7] != "0" ?
+                        records[7].c_str() :
                         emptyStr
                 );
-        }
+        } // case
         break;
 
         case SR_PERSONAL_ADDRESS:
@@ -3712,7 +3743,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_professional_address_entry"),
 
                     // Name of the entry
-                    records[0][0] == "C" ? records[0][9].c_str() : records[0][8].c_str(),
+                    records[0] == "C" ? records[9].c_str() : records[8].c_str(),
 
                     // Address
 
@@ -3721,21 +3752,21 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                         PSTR("satnav_professional_address_country"),
 
                     // Country
-                    records[0][1].c_str(),
+                    records[1].c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
                         PSTR("satnav_personal_address_province") :
                         PSTR("satnav_professional_address_province"),
 
                     // Province
-                    records[0][2].c_str(),
+                    records[2].c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
                         PSTR("satnav_personal_address_city") :
                         PSTR("satnav_professional_address_city"),
 
                     // City + optional district
-                    ComposeCityString(records[0][3], records[0][4]).c_str(),
+                    ComposeCityString(records[3], records[4]).c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
                         PSTR("satnav_personal_address_street") :
@@ -3743,7 +3774,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // Street
                     // Note: if the street is empty: it means "City centre"
-                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
+                    ComposeStreetString(records[5], records[6]).c_str(),
 
                     report == SR_PERSONAL_ADDRESS ?
                         PSTR("satnav_personal_address_house_number") :
@@ -3751,11 +3782,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                     // First string is either "C" or "V"; "C" has GPS coordinates in [7] and [8]; "V" has house number
                     // in [7]. If we see "V", show house number
-                    records[0][0] == "V" && records[0][7] != "0" ?
-                        records[0][7].c_str() :
+                    records[0] == "V" && records[7] != "0" ?
+                        records[7].c_str() :
                         emptyStr
                 );
-        }
+        } // case
         break;
 
         case SR_SERVICE_ADDRESS:
@@ -3775,27 +3806,27 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
                     // Name of the service address
-                    records[0][9].c_str(),
+                    records[9].c_str(),
 
                     // Service address
 
                     // Country
-                    records[0][1].c_str(),
+                    records[1].c_str(),
 
                     // Province
-                    records[0][2].c_str(),
+                    records[2].c_str(),
 
                     // City + optional district
-                    ComposeCityString(records[0][3], records[0][4]).c_str(),
+                    ComposeCityString(records[3], records[4]).c_str(),
 
                     // Street
-                    ComposeStreetString(records[0][5], records[0][6]).c_str(),
+                    ComposeStreetString(records[5], records[6]).c_str(),
 
                     // Distance to the service address (sat nav reports in metres or in yards)
-                    records[0][11].c_str(),
+                    records[11].c_str(),
                     mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? PSTR("m") : PSTR("yd")
                 );
-        }
+        } // case
         break;
 
         case SR_ENTER_CITY:
@@ -3818,22 +3849,13 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     snprintf_P(buf + at, n - at,
                         PSTR("%S\n\"%s\""),
                         i == 0 ? emptyStr : commaStr,
-                        records[i][0].c_str()
+                        records[i].c_str()
                     );
-
-                if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST)
-                {
-                    // Remove possibly trailing special characters and spaces.
-                    // The special characters that can occur are listed in the above 'while' loop (around line 2985).
-                    records[i][0].replace("?", "");
-                    records[i][0].replace("&#x24E7;", "");
-                    records[i][0].trim();
-                } // if
             } // for
 
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
-        }
+        } // case
         break;
 
         case SR_ENTER_HOUSE_NUMBER:
@@ -3849,10 +3871,10 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
 
-                    records[0][0].c_str(),
-                    records[0][1].c_str()
+                    records[0].c_str(),
+                    records[1].c_str()
                 );
-        }
+        } // case
         break;
 
         case SR_SERVICE_LIST:
@@ -3872,17 +3894,23 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     snprintf_P(buf + at, n - at,
                         PSTR("%S\n\"%s\""),
                         i == 0 ? emptyStr : commaStr,
-                        records[i][0].c_str()
+                        records[i].c_str()
                     );
             } // for
 
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
-        }
+        } // case
         break;
 
         case SR_SOFTWARE_MODULE_VERSIONS:
         {
+            // To see the module versions on the original MFD:
+            // - Press Menu on the infrared remote control
+            // - Hold Esc until the menu goes away
+            // - Press Left twice
+            // - Hold Esc until the debug menu appears ("Supplier DEBUG Menu")
+
             const static char jsonFormatter[] PROGMEM =
                 ",\n"
                 "\"satnav_software_modules_list\":\n"
@@ -3899,15 +3927,15 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     snprintf_P(buf + at, n - at,
                         PSTR("%S\n\"%s - %s - %s\""),
                         i == 0 ? emptyStr : commaStr,
-                        records[i][0].c_str(),
-                        records[i][1].c_str(),
-                        records[i][2].c_str()
+                        records[i * 3].c_str(),
+                        records[i * 3 + 1].c_str(),
+                        records[i * 3 + 2].c_str()
                     );
             } // for
 
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, PSTR("\n]"));
-        } // if
+        } // case
         break;
 
     } // switch
@@ -3930,10 +3958,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
     // Clear all records and reset array indexes. Otherwise, if the first fragment of the next report
     // is missed, the data will continue to pile up after the current records.
-    for (int i = 0; i < currentRecord; i++)
-    {
-        for (int j = 0; j < MAX_SATNAV_STRINGS_PER_RECORD; j++) records[i][j] = "";
-    } // for
+    // TODO - check if the following can be commented out:
+    //for (int i = 0; i < MAX_SATNAV_RECORDS; i++) records[i] = "";
+
     currentRecord = 0;
     currentString = 0;
 
@@ -4893,11 +4920,11 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Don't repeatedly print the same packet
     if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print
 
-  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_RAW_PACKET_DATA
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
-        Serial.printf_P(PSTR("---> Received: %s packet (0x%03X)\n"), handler->idenStr, iden);
+        Serial.printf_P(PSTR("---> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
 
         // The first time, handler->prevData will be NULL, so only the "FULL: " line will be printed
         //if (handler->prevData != NULL)
@@ -4907,7 +4934,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         if (handler->prevData != NULL && handler->prevDataLen >= 0)
         {
             // First line: print the new packet's data where it differs from the previous packet
-            Serial.printf_P(PSTR("DIFF: 0x%03X (%s) "), iden, handler->idenStr);
+            Serial.printf_P(PSTR("DIFF: %03X %1X (%s) "), iden, pkt.CommandFlags(), pkt.CommandFlagsStr());
             if (dataLen > 0)
             {
                 for (int i = 0; i < dataLen; i++)
@@ -4927,7 +4954,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             } // if
         } // if
     } // if
-  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_RAW_PACKET_DATA
 
     if (handler->prevData == NULL) handler->prevData = (uint8_t*) malloc(VAN_MAX_DATA_BYTES);
 
@@ -4939,11 +4966,11 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         handler->prevDataLen = dataLen;
     } // if
 
-  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_RAW_PACKET_DATA
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
         // Now print the new packet's data in full
-        Serial.printf_P(PSTR("FULL: 0x%03X (%s) "), iden, handler->idenStr);
+        Serial.printf_P(PSTR("FULL: %03X %1X (%s) "), iden, pkt.CommandFlags(), pkt.CommandFlagsStr());
         if (dataLen > 0)
         {
             for (int i = 0; i < dataLen; i++)
@@ -4957,7 +4984,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             Serial.println("<no_data>");
         } // if
     } // if
-  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #endif // PRINT_RAW_PACKET_DATA
 
     return false;
 } // IsPacketDataDuplicate
