@@ -87,7 +87,11 @@ const char* EspSystemDataToJson(char* buf, const int n)
         unknownStr,
 
         WiFi.macAddress().c_str(),
+      #ifdef WIFI_AP_MODE // Wi-Fi access point mode
+        IP_ADDR,
+      #else
         WiFi.localIP().toString().c_str(),
+      #endif // ifdef WIFI_AP_MODE
         WiFi.RSSI(),
 
         system_get_free_heap_size(),

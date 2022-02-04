@@ -2282,9 +2282,9 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"treble\": \"%+d\",\n"
             "\"treble_update\": \"%S\",\n"
             "\"loudness\": \"%S\",\n"
-            "\"fader\": \"%c %+d\",\n"
+            "\"fader\": \"%s%d\",\n"
             "\"fader_update\": \"%S\",\n"
-            "\"balance\": \"%c %+d\",\n"
+            "\"balance\": \"%s%d\",\n"
             "\"balance_update\": \"%S\",\n"
             "\"auto_volume\": \"%S\",\n"
             "\"large_screen\": \"%S\",\n"
@@ -2335,9 +2335,9 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         (sint8_t)(data[9] & 0x7F) - 0x3F,  // Treble
         data[9] & 0x80 ? yesStr : noStr,
         data[1] & 0x10 ? onStr : offStr,  // Loudness
-        fader > 0 ? 'F' : 'R', fader,
+        fader == 0 ? "   " : fader > 0 ? "F +" : "R ", fader,
         data[7] & 0x80 ? yesStr : noStr,
-        balance > 0 ? 'R' : 'L', balance,
+        balance == 0 ? "   " : balance > 0 ? "R +" : "L ", balance,
         data[6] & 0x80 ? yesStr : noStr,
         data[1] & 0x04 ? onStr : offStr,  // Auto volume
         LargeScreenStr(),
