@@ -12,6 +12,7 @@ the VAN bus.</p>
 - [Technical Details](#details)
 - [Schematics](#schematics)
 - [Building the Project](#building)
+- [Hints and tips](#hints_tips)
 - [Used Libraries](#libraries)
 - [Limitations, Caveats](#limits)
 - [Work to be Done](#todo)
@@ -117,7 +118,7 @@ See also the [screen shots](#screenshots) above.
 * Multiple languages (but some menus and screens are only in English)
 * Setting format and units
 
-Note: availability will depend on your vehicle's configuration.
+> 👉 Note: availability will depend on your vehicle's configuration.
 
 Not yet supported:
 * Setting brightness and contrast
@@ -211,7 +212,7 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Manager:
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
-* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2.
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.5 .
   Should that not work, you can always try [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3, 2.3.4 and 2.3.5 .
@@ -256,6 +257,16 @@ If you have no experience in compiling and uploading, have a look at this excell
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
 the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware always causes the board to
 crash the very first time, but after that it works (uploads) fine.
+
+## 💡 Hints, tips<a name = "hints_tips"></a>
+
+### Preventing Screen Timeout / Screen Saver
+
+While driving, you don't want the screen timeout to kick in all the time. If you have an Android smart phone or
+tablet, you can use the
+[Caffeine - Keep Screen On](https://play.google.com/store/apps/details?id=moe.zhs.caffeine&hl=en&gl=US)
+app. An excellent explanation how to install and use is found on
+[hotogeek.com](https://www.howtogeek.com/685034/how-to-stop-your-android-phones-screen-from-turning-off/).
 
 ## 📚 Used Libraries<a name = "libraries"></a>
 
