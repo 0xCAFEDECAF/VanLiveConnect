@@ -84,7 +84,7 @@ function showViewportSizes()
 // Functions for parsing and handling JSON data as it comes in on a WebSocket
 
 // Inspired by https://gist.github.com/ismasan/299789
-var FancyWebSocket = function(url)
+var fancyWebSocket = function(url)
 {
 	var _url = url;
 	var conn = new WebSocket(url);
@@ -152,7 +152,7 @@ var FancyWebSocket = function(url)
 			chain[i](message)
 		} // for
 	}; // function
-}; // FancyWebSocket
+}; // fancyWebSocket
 
 // In "demo mode", specific fields will not be updated
 var inDemoMode = false;
@@ -385,7 +385,7 @@ function connectToWebSocket()
 	console.log("// Connecting to WebSocket '" + wsUrl + "'");
 
 	// Create WebSocket class instance
-	webSocket = new FancyWebSocket(wsUrl);
+	webSocket = new fancyWebSocket(wsUrl);
 
 	// Bind WebSocket to server events
 	webSocket.bind('display', function(data)
@@ -421,6 +421,8 @@ function connectToWebSocket()
 // Handling of vehicle data
 
 var economyMode= "";
+var contactKeyPosition;
+var engineRpm = 0;
 var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
 var engineCoolantTemperature = 80;  // In degrees Celsius
 var vehicleSpeed = 0;
@@ -429,26 +431,14 @@ var wasRiskOfIceWarningShown = false;
 
 var suppressClimateControlPopup = null;
 
-function setEngineRunning(newValue)
+function changeToInstrumentsScreen()
 {
-	// Has anything changed?
-	if (newValue === engineRunning) return;
-	engineRunning = newValue;
+	changeLargeScreenTo("instruments");
 
-	// If engine just started?
-	if (engineRunning === "YES")
-	{
-		// If currently in "pre_flight" screen, then switch to "instruments" screen
-		if ($("#pre_flight").is(":visible")) changeLargeScreenTo("instruments");
-
-		// Suppress climate control popup during the next 2 seconds
-		clearTimeout(suppressClimateControlPopup);
-		suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
-	} // if
-
-	// If engine just stopped, and currently in "instruments" screen, then switch to default screen
-	if (engineRunning === "NO" && $("#instruments").is(":visible")) selectDefaultScreen();
-} // setEngineRunning
+	// Suppress climate control popup during the next 2 seconds
+	clearTimeout(suppressClimateControlPopup);
+	suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
+} // changeToInstrumentsScreen
 
 // -----
 // Functions for navigating through the screens and their subscreens/elements
@@ -509,6 +499,9 @@ var mfdLargeScreen = "CLOCK";  // Screen currently shown in the "large" (right h
 
 function selectDefaultScreen(audioSource)
 {
+	// Ignore invocation during engine start
+	if (currentLargeScreenId === "pre_flight" && contactKeyPosition === "START") return;
+
 	// We're no longer in any menu
 	menuStack = [];
 	currentMenu = undefined;
@@ -546,10 +539,10 @@ function selectDefaultScreen(audioSource)
 	// Show current street, if known
 	if (selectedScreenId === "" && satnavCurrentStreet !== "")
 	{
-		// But don't switch away from instrument screen, if that is showing useful information
+		// But don't switch away from instrument screen, if the engine is running
 		if (currentLargeScreenId === "instruments")
 		{
-			if (engineRunning !== "NO" && $('[gid="engine_rpm"]').first().text() !== "---") return;
+			if (engineRunning !== "NO" && engineRpm !== 0 && contactKeyPosition === "ON") return;
 		} // if
 
 		selectedScreenId = "satnav_current_location";
@@ -1992,6 +1985,7 @@ function satnavGotoListScreenServiceList()
 	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
 	handleItemChange.mfdToSatnavRequest = "service";
 	satnavGotoListScreen();
+	highlightFirstLine("satnav_choice_list");
 } // satnavGotoListScreenServiceList
 
 function satnavGotoListScreenPersonalAddressList()
@@ -1999,6 +1993,7 @@ function satnavGotoListScreenPersonalAddressList()
 	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
 	handleItemChange.mfdToSatnavRequest = "personal_address_list";
 	satnavGotoListScreen();
+	highlightFirstLine("satnav_choice_list");
 } // satnavGotoListScreenPersonalAddressList
 
 function satnavGotoListScreenProfessionalAddressList()
@@ -2006,6 +2001,7 @@ function satnavGotoListScreenProfessionalAddressList()
 	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
 	handleItemChange.mfdToSatnavRequest = "professional_address_list";
 	satnavGotoListScreen();
+	highlightFirstLine("satnav_choice_list");
 } // satnavGotoListScreenProfessionalAddressList
 
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
@@ -2067,9 +2063,11 @@ function satnavEnterByLetterMode()
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
 
 	// Set button text
-	// TODO - set full text ("City Centre"), make button auto-expand when selected
+	// TODO
+	// - set full text ("City centre"), make button auto-expand when selected
+	// - Other languages
 	$("#satnav_enter_characters_change_or_city_center_button").text(
-		currentMenu === "satnav_enter_street_characters" ? "City Ce" : "Change");
+		currentMenu === "satnav_enter_street_characters" ? "City ce" : "Change");
 
 	satnavSelectFirstAvailableCharacter();
 } // satnavEnterByLetterMode
@@ -2097,8 +2095,10 @@ function satnavConfirmStreetMode()
 	);
 
 	// Set button text
-	// TODO - set full text ("City Centre"), make button auto-expand when selected
-	$("#satnav_enter_characters_change_or_city_center_button").text("City Ce");
+	// TODO
+	// - set full text ("City centre"), make button auto-expand when selected
+	// - Other languages
+	$("#satnav_enter_characters_change_or_city_center_button").text("City ce");
 
 	satnavSelectFirstAvailableCharacter();
 
@@ -2112,7 +2112,7 @@ function satnavToggleCityEntryMode()
 } // satnavToggleCityEntryMode
 
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
-// "City Centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
+// "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
 	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
@@ -2165,7 +2165,7 @@ function satnavGotoEnterCity()
 } // satnavGotoEnterCity
 
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
-// "City Centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
+// "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavGotoEnterStreetOrNumber()
 {
 	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === "Change")
@@ -2222,11 +2222,9 @@ function satnavRemoveEnteredCharacter()
 		var availableCharacters = satnavAvailableCharactersStack[satnavAvailableCharactersStack.length - 2];
 
 		clearTimeout(showAvailableCharactersTimer);
-		showAvailableCharactersTimer = setTimeout(
-			function ()
-			{
-				writeToDom({"satnav_to_mfd_show_characters":availableCharacters});
-			},
+		showAvailableCharactersTimer = setTimeout
+		(
+			function () { writeToDom({"satnav_to_mfd_show_characters":availableCharacters}); },
 			1500
 		);
 	} // if
@@ -2288,7 +2286,7 @@ function satnavListItemClicked()
 
 	// When choosing a city from the list, hide the current destination street, so that the entry format ("") will
 	// be shown.
-	if (handleItemChange.mfdToSatnavRequest === "Enter city") $("#satnav_current_destination_street").empty();
+	if (handleItemChange.mfdToSatnavRequest === "enter_city") $("#satnav_current_destination_street").empty();
 
 	// When choosing a city or street from the list, hide the current destination house number, so that the
 	// entry format ("_ _ _") will be shown.
@@ -2846,7 +2844,8 @@ function showOrTimeoutDestinationNotAccessiblePopup()
 
 	// The popup may be displayed during the next 10 seconds, not any more after that
 	clearTimeout(showOrTimeoutDestinationNotAccessiblePopup.timer);
-	showOrTimeoutDestinationNotAccessiblePopup.timer = setTimeout(
+	showOrTimeoutDestinationNotAccessiblePopup.timer = setTimeout
+	(
 		function () { satnavDestinationNotAccessibleByRoadPopupShown = true; },
 		10000
 	);
@@ -2887,10 +2886,7 @@ function satnavValidateVocalSynthesisLevel()
 		// When head unit is playing audio (tuner, CD, CD changer), the "audio_source" will change to it after
 		// setting the vocal synthesis level. In that situation, ignore that change during a short period.
 		clearTimeout(suppressScreenChangeToAudio);
-		suppressScreenChangeToAudio = setTimeout(
-			function () { suppressScreenChangeToAudio = null; },
-			400
-		);
+		suppressScreenChangeToAudio = setTimeout(function () { suppressScreenChangeToAudio = null; }, 400);
 	} // if
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
@@ -2922,10 +2918,7 @@ function satnavEscapeVocalSynthesisLevel()
 		// When head unit is playing audio (tuner, CD, CD changer), the "audio_source" will change to it after
 		// setting the vocal synthesis level. In that situation, ignore that change during a short period.
 		clearTimeout(suppressScreenChangeToAudio);
-		suppressScreenChangeToAudio = setTimeout(
-			function () { suppressScreenChangeToAudio = null; },
-			400
-		);
+		suppressScreenChangeToAudio = setTimeout(function () { suppressScreenChangeToAudio = null; }, 400);
 	} // if
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
@@ -3502,7 +3495,8 @@ function handleItemChange(item, value)
 
 			// Suppress the audio settings popup for the next 0.4 seconds (bit clumsy, but effective)
 			clearTimeout(handleItemChange.hideHeadUnitPopupsTimer);
-			handleItemChange.hideHeadUnitPopupsTimer = setTimeout(
+			handleItemChange.hideHeadUnitPopupsTimer = setTimeout
+			(
 				function () { handleItemChange.hideHeadUnitPopupsTimer = null; },
 				400
 			);
@@ -3557,6 +3551,7 @@ function handleItemChange(item, value)
 
 		case "engine_rpm":
 		{
+			engineRpm = parseInt(value) || 0;
 			if (value === "---") break;
 
 			// If more than 3500 rpm or less than 500 rpm (but > 0), add glow effect
@@ -3568,6 +3563,11 @@ function handleItemChange(item, value)
 
 			$('[gid="engine_rpm"]').toggleClass("glow",
 				(parseInt(value) < 500 && parseInt(value) > 0) || parseInt(value) > thresholdRpm);
+
+			if (contactKeyPosition === "START" && parseInt(value) > 150)
+			{
+				changeToInstrumentsScreen();
+			} // if
 		} // case
 		break;
 
@@ -3813,60 +3813,83 @@ function handleItemChange(item, value)
 
 		case "engine_running":
 		{
-			setEngineRunning(value);
+			// Has anything changed?
+			if (value === engineRunning) return;
+			engineRunning = value;
+
+			// Engine just started?
+			if (engineRunning === "YES") changeToInstrumentsScreen();
+
+			// If engine just stopped, and currently in "instruments" screen, then switch to default screen
+			if (engineRunning === "NO" && $("#instruments").is(":visible")) selectDefaultScreen();
 		} // case
 		break;
 
 		case "contact_key_position":
 		{
 			// Has anything changed?
-			if (value === handleItemChange.contactKeyPosition) break;
-			handleItemChange.contactKeyPosition = value;
+			if (value === contactKeyPosition) break;
+			contactKeyPosition = value;
 
 			// On engine START, add glow effect
 			$("#contact_key_position").toggleClass("glow", value === "START");
 
-			// Show "Pre-flight checks" screen if contact key is in "ON" position, without engine running
-			if (value === "ON" && ! inMenu())
+			switch(value)
 			{
-				if (engineRunning === "NO")
+				case "ON":
 				{
 					clearTimeout(handleItemChange.contactKeyOffTimer);
-					changeLargeScreenTo("pre_flight");
 
-					// Hide all popups except "satnav_continue_guidance_popup"
-					hideAllPopups("satnav_continue_guidance_popup");
-				} // if
+					if (inMenu()) break;
 
-				if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES" && economyMode === "OFF")
-				{
-					// Show popup "Continue guidance to destination? [Yes]/No"
-					showPopup("satnav_continue_guidance_popup", 15000);
-
-					localStorage.askForGuidanceContinuation = "NO";
-				} // if
-			}
-			else if (value === "START")
-			{
-				wasRiskOfIceWarningShown = false;
-			}
-			else if (value === "ACC")
-			{
-				clearTimeout(handleItemChange.contactKeyOffTimer);
-			}
-			else if (value === "OFF")
-			{
-				// "OFF" position can be very short between "ACC" and "ON", so first wait a bit
-				clearTimeout(handleItemChange.contactKeyOffTimer);
-				handleItemChange.contactKeyOffTimer = setTimeout(
-					function ()
+					// Show "Pre-flight checks" screen if contact key is in "ON" position, without engine running
+					if (engineRunning === "NO" && engineRpm === 0)
 					{
-						handleItemChange.contactKeyOffTimer = null;
-						selectDefaultScreen();
-					},
-					500
-				);
-			} // if
+						changeLargeScreenTo("pre_flight");
+
+						// Hide all popups except "satnav_continue_guidance_popup"
+						hideAllPopups("satnav_continue_guidance_popup");
+					} // if
+
+					if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES" && economyMode === "OFF")
+					{
+						// Show popup "Continue guidance to destination? [Yes]/No"
+						showPopup("satnav_continue_guidance_popup", 15000);
+
+						localStorage.askForGuidanceContinuation = "NO";
+					} // if
+				} // case
+				break;
+
+				case "START":
+				{
+					clearTimeout(handleItemChange.contactKeyOffTimer);
+					wasRiskOfIceWarningShown = false;
+				} // case
+				break;
+
+				case "ACC":
+				{
+					clearTimeout(handleItemChange.contactKeyOffTimer);
+				} // case
+				break;
+
+				case "OFF":
+				{
+					// "OFF" position can be very short between any of the other positions, so first wait a bit
+					clearTimeout(handleItemChange.contactKeyOffTimer);
+					handleItemChange.contactKeyOffTimer = setTimeout
+					(
+						function ()
+						{
+							handleItemChange.contactKeyOffTimer = null;
+							selectDefaultScreen();  // Even when in a menu: the original MFD switches off
+						},
+						500
+					);
+				} // case
+				break;
+			} // switch
 		} // case
 		break;
 
@@ -3886,6 +3909,19 @@ function handleItemChange(item, value)
 
 			// No further handling when in power-save mode
 			if (economyMode === "ON") break;
+
+			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION_AUDIO/))
+			{
+				showPopup("satnav_reached_destination_popup", 10000);
+			} // if
+
+			if (satnavStatus1.match(/STOPPING_GUIDANCE/)
+				// "0 m", "0 yd": we've reached the destination
+				&& handleItemChange.satnavDistanceToDestViaRoad.match(/^0\s/)
+				)
+			{
+				showPopup("satnav_reached_destination_popup", 10000);
+			} // if
 
 			if (satnavStatus1.match(/AUDIO/))
 			{
@@ -4216,7 +4252,8 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_personal_address_manage_buttons").is(":visible"))
 			{
-				$("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+				var title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
+				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value);
 
 				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
@@ -4241,7 +4278,8 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_professional_address_manage_buttons").is(":visible"))
 			{
-				$("#satnav_rename_entry_in_directory_title").text("Rename (" + value + ")");
+				var title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
+				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value);
 
 				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
@@ -4575,7 +4613,7 @@ function handleItemChange(item, value)
 		{
 			if (value !== "YES") break;
 		} // case
-		// Fall-through intended
+		// Fallthrough intended
 
 		case "satnav_system_id":
 		{
@@ -4586,7 +4624,7 @@ function handleItemChange(item, value)
 			hidePopup("satnav_initializing_popup");
 
 			// Show "Continue guidance? (yes/no)" popup if applicable
-			if (handleItemChange.contactKeyPosition === "ON" && localStorage.askForGuidanceContinuation === "YES")
+			if (contactKeyPosition === "ON" && localStorage.askForGuidanceContinuation === "YES")
 			{
 				// Show popup "Continue guidance to destination? [Yes]/No"
 				showPopup("satnav_continue_guidance_popup", 15000);
@@ -4596,8 +4634,12 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "satnav_service_address_distance":
 		case "satnav_distance_to_dest_via_road":
+		{
+			handleItemChange.satnavDistanceToDestViaRoad = value;
+		}
+		// No 'break': fallthrough intended
+		case "satnav_service_address_distance":
 		case "satnav_distance_to_dest_via_straight_line":
 		case "satnav_turn_at":
 		{
@@ -4920,7 +4962,8 @@ function handleItemChange(item, value)
 
 			// After 10 seconds, return to original color
 			clearTimeout(handleItemChange.revertCommsLedColorTimer);
-			handleItemChange.revertCommsLedColorTimer = setTimeout(
+			handleItemChange.revertCommsLedColorTimer = setTimeout
+			(
 				function () { $("#comms_led").css('background-color', ''); },
 				10000
 			);
@@ -5068,7 +5111,7 @@ function handleItemChange(item, value)
 		{
 			if (value === "MFD_SCREEN_ON")
 			{
-				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight") showPowerSavePopup();
+				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm === 0) showPowerSavePopup();
 			}
 			else if (value === "MFD_SCREEN_OFF")
 			{
@@ -5098,9 +5141,9 @@ function handleItemChange(item, value)
 				$("#fan_icon").toggleClass("ledOff", ! on);
 			} // if
 
-			if (inMenu() || currentLargeScreenId === "pre_flight") break;
-			if (engineRunning !== "YES") break;
-			if (suppressClimateControlPopup != null) break;  // Suppress timer still running?
+			if (inMenu() || currentLargeScreenId === "pre_flight") break;  // Not in menu or "pre_flight" screen
+			if (engineRunning !== "YES") break;  // Only when engine running
+			if (suppressClimateControlPopup != null) break;  // Not when suppress timer is running
 
 			showPopup("climate_control_popup", 5000);
 		} // case

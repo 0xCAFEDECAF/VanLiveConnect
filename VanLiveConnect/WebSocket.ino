@@ -1,5 +1,14 @@
 
 // Either this for "WebSockets" (https://github.com/Links2004/arduinoWebSockets):
+//
+// Hack: in the file:
+//    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
+// change the line:
+//   #define WEBSOCKETS_TCP_TIMEOUT (5000)
+// into:
+//   #define WEBSOCKETS_TCP_TIMEOUT (1000)
+// to prevent the VAN bus receiver from overrunning when the web socket disconnects
+
 #include <WebSocketsServer.h>
 
 // Or this for "WebSockets_Generic" (https://github.com/khoih-prog/WebSockets_Generic):
@@ -22,15 +31,12 @@ void NotificationPopupShowing(unsigned long since, long duration);
 // Defined in Esp.ino
 const char* EspSystemDataToJson(char* buf, const int n);
 
+WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket server on port 81
+uint8_t websocketNum = 0xFF;
 bool inMenu = false;  // true if user is browsing the menus
 
-// Create a web socket server on port 81
-WebSocketsServer webSocket = WebSocketsServer(81);
-
-uint8_t websocketNum = 0xFF;
-
 // Send a (JSON) message to the websocket client
-void SendJsonText(const char* json)
+void SendJsonOnWebSocket(const char* json)
 {
     if (strlen(json) <= 0) return;
     if (websocketNum == 0xFF) return;
@@ -61,7 +67,7 @@ void SendJsonText(const char* json)
         Serial.print(F("JSON object:\n"));
         PrintJsonText(json);
     } // if
-} // SendJsonText
+} // SendJsonOnWebSocket
 
 void ProcessWebSocketClientMessage(const char* payload)
 {
@@ -133,7 +139,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_DISCONNECTED:
         {
             Serial.printf("[webSocket %u] Disconnected!\n", num);
-            websocketNum = 0xFF;
+            if (num == websocketNum) websocketNum = 0xFF;
         }
         break;
 
@@ -148,13 +154,13 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             websocketNum = num;
 
             // Send ESP system data to client
-            SendJsonText(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+            SendJsonOnWebSocket(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send Wi-Fi and IP data to client
-            SendJsonText(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
+            SendJsonOnWebSocket(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send equipment status data, e.g. presence of sat nav and other devices
-            SendJsonText(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+            SendJsonOnWebSocket(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
         }
         break;
 

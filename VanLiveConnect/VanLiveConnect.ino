@@ -44,7 +44,7 @@ void SetupWebServer();
 void LoopWebServer();
 
 // Defined in WebSocket.ino
-void SendJsonText(const char* json);
+void SendJsonOnWebSocket(const char* json);
 void SetupWebSocket();
 void LoopWebSocket();
 
@@ -92,7 +92,7 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
-    #define VAN_PACKET_QUEUE_SIZE 100
+    #define VAN_PACKET_QUEUE_SIZE 150
 
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
@@ -234,7 +234,7 @@ void loop()
 
     // IR receiver
     TIrPacket irPacket;
-    if (IrReceive(irPacket)) SendJsonText(ParseIrPacketToJson(irPacket));
+    if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket));
 
     // VAN bus receiver
     TVanPacketRxDesc pkt;
@@ -245,7 +245,7 @@ void loop()
         if (pkt.getIfsDebugPacket().IsAbnormal()) pkt.getIfsDebugPacket().Dump(Serial);
       #endif // VAN_RX_IFS_DEBUGGING
 
-        SendJsonText(ParseVanPacketToJson(pkt));
+        SendJsonOnWebSocket(ParseVanPacketToJson(pkt));
     }
     if (isQueueOverrun)
     {
@@ -262,7 +262,7 @@ void loop()
         "}\n";
 
         snprintf_P(jsonBuffer, JSON_BUFFER_SIZE, jsonFormatter);
-        SendJsonText(jsonBuffer);
+        SendJsonOnWebSocket(jsonBuffer);
       #endif // DEBUG_WEBSOCKET
     } // if
 
@@ -273,7 +273,7 @@ void loop()
 
       #ifdef SHOW_ESP_RUNTIME_STATS
         // Send ESP runtime data to client
-        SendJsonText(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+        SendJsonOnWebSocket(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
       #endif // SHOW_ESP_RUNTIME_STATS
 
       #ifdef SHOW_VAN_RX_STATS
@@ -281,7 +281,7 @@ void loop()
         VanBusRx.DumpStats(Serial);
 
         // Send VAN bus receiver status string to client
-        SendJsonText(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
+        SendJsonOnWebSocket(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
       #endif // SHOW_VAN_RX_STATS
     } // if
 } // loop

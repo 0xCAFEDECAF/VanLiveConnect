@@ -27,7 +27,8 @@ char carInfo_css[] PROGMEM = R"=====(
 body
 {
   /* Nice "dark-theme" background with light-blue text */
-  background-color:rgb(41,55,74);
+  /* background-color:rgb(41,55,74); */
+  background-color:rgb(8,7,19);
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
   color:#dfe7f2;
   font-size:50px;
@@ -40,7 +41,7 @@ body
 
   /* TODO - background-blend-mode not supported by IE11 */
   /*background-blend-mode: luminosity;*/
-  background-blend-mode: multiply;
+  /*background-blend-mode: multiply; -- preferred */
   /*background-blend-mode: lighten;*/
 }
 .languageIcon
@@ -319,7 +320,7 @@ body
   border-radius:15px;
   left:55px;
   top:200px;
-  width:850px;
+  width:825px;
   height:200px;
 }
 .messagePopupArea
@@ -516,7 +517,7 @@ body
 }
 .satNavRoundabout
 {
-  /* fill:rgb(41,55,74); */
+  fill:rgb(41,55,74);
   stroke-width:5;
   stroke:#dfe7f2;
 }

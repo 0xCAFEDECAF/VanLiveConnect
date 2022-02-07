@@ -111,7 +111,8 @@
 // -----
 // Debugging
 
-// Define to see infrared key hash values and timing on the serial port
+// Define to see infrared key hash values and timing on the serial port. Also, the pressed button is shown
+// as three-letter tag in a small box in the bottom left of the MFD.html page.
 //#define DEBUG_IR_RECV
 
 //#define DEBUG_WEBSERVER
@@ -124,13 +125,14 @@
 // Define to show the ESP RAM and Wi-Fi statistics on the "system" screen
 //#define SHOW_ESP_RUNTIME_STATS
 
-// Prints each packet on serial port, highlighting the bytes that differ
-#define PRINT_RAW_PACKET_DATA
+// Prints each packet on serial port, highlighting the bytes that differ from the previous
+// packet with the same IDEN value
+//#define PRINT_RAW_PACKET_DATA
 
 // Define to see JSON buffers printed on the serial port
 // Note: for some reason, having JSON buffers printed on the serial port seems to reduce the number
 //   of CRC errors in the received VAN bus packets
-#define PRINT_JSON_BUFFERS_ON_SERIAL
+//#define PRINT_JSON_BUFFERS_ON_SERIAL
 
 // If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of VAN-bus packets will be printed on the serial port?
 #define SELECTED_PACKETS VAN_PACKETS_ALL_VAN_PKTS

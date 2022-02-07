@@ -2801,13 +2801,15 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0080 ? PSTR("READY") :
         status == 0x0101 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x0200 ? PSTR("READING_DISC") :
-        status == 0x0220 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
+        //status == 0x0220 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
+        //status == 0x0220 ? PSTR("NEARLY_AT_DESTINATION"):  // TODO - guessing
+        status == 0x0220 ? PSTR("READING_DISC") :  // TODO - guessing
         status == 0x0300 ? PSTR("IN_GUIDANCE_MODE") :
         status == 0x0301 ? PSTR("IN_GUIDANCE_MODE") :
         status == 0x0320 ? PSTR("STOPPING_GUIDANCE") :
         status == 0x0400 ? PSTR("START_OF_AUDIO_MESSAGE") :
         status == 0x0410 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :
-        status == 0x0600 ? ToHexStr(status) :  // Seen this but what is it??
+        status == 0x0600 ? PSTR("START_OF_AUDIO_MESSAGE") :  // TODO - guessing
         status == 0x0700 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START") :
         status == 0x0701 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START") :
         status == 0x0710 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :  // TODO - guessing
@@ -2815,7 +2817,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x4000 ? PSTR("GUIDANCE_STOPPED") :
         status == 0x4001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
         status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
-        status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :
+        status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
         status == 0x9000 ? PSTR("READING_DISC") :
         status == 0x9080 ? PSTR("START_COMPUTING_ROUTE") : // TODO - guessing
         status == 0xD001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing

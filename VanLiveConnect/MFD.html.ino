@@ -72,18 +72,18 @@ char mfd_html[] PROGMEM = R"=====(
 					 |
 					 `- "Large" informaton panel (right)
 					 |	|
-					 |	`- div id="clock"	# Nothing better to show
+					 |	`- div id="clock" # Nothing better to show
 					 |	|
-					 |	`- div id="audio"	# All audio-related screens
-					 |	|	`- div id="tuner"	# Radio
-					 |	|	`- div id="media"	# Removable media
+					 |	`- div id="audio" # All audio-related screens
+					 |	|	`- div id="tuner" # Radio
+					 |	|	`- div id="media" # Removable media
 					 |	|		 `- div id="tape"
 					 |	|		 `- div id="cd_player"
 					 |	|		 `- div id="cd_changer"
 					 |	|
-					 |	`- div id="pre_flight"	# "Pre-flight checks": screen shown at contact key turn to "ON"
+					 |	`- div id="pre_flight" # "Pre-flight checks": screen shown at contact key turn to "ON"
 					 |	|
-					 |	`- div id="instruments"	# Instrument cluster
+					 |	`- div id="instruments" # Instrument cluster
 					 |	|
 					 |	`- div id="main_menu"
 					 |	`- div id="screen_configuration_menu"
@@ -129,16 +129,16 @@ char mfd_html[] PROGMEM = R"=====(
 					 |	`- div id="satnav_reached_destination_popup"
 					 |	`- div id="trip_computer_popup"
 					 |	`- div id="door_open_popup"
-					 |	`- div id="notification_popup"	# Popup window with warning or information icon
+					 |	`- div id="notification_popup" # Popup window with warning or information icon
 					 |	`- div id="satnav_initializing_popup"
 					 |	`- div id="satnav_input_stored_in_personal_dir_popup"
 					 |	`- div id="satnav_input_stored_in_professional_dir_popup"
 					 |	`- div id="satnav_delete_item_popup"
 					 |	`- div id="satnav_computing_route_popup"
-					 |	`- div id="satnav_guidance_preference_popup"	# Change navigation preference popup
-					 |	`- div id="satnav_delete_directory_data_popup"	# Delete sat nav directory data popup
+					 |	`- div id="satnav_guidance_preference_popup" # Change navigation preference popup
+					 |	`- div id="satnav_delete_directory_data_popup" # Delete sat nav directory data popup
 					 |	`- div id="satnav_continue_guidance_popup"
-					 |	`- div id="status_popup"	# Simple popup without icon
+					 |	`- div id="status_popup" # Simple popup without icon
 					 |	`- div id="audio_settings_popup"
 					 |
 					 |	# Full-screen popups
@@ -1064,8 +1064,8 @@ char mfd_html[] PROGMEM = R"=====(
 					style="display:none;">
 
 					<!-- Current street and city -->
-					<div class="icon iconBorder" style="left:20px; top:150px; width:910px; height:250px;">
-						<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:60px; white-space:normal;"></div>
+					<div class="icon iconBorder" style="left:20px; top:150px; width:880px; height:250px; padding:10px;">
+						<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:60px;"></div>
 					</div>
 
 				</div>	<!-- "satnav_current_location" -->
@@ -1208,7 +1208,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div class="menuTitleLine">Vocal synthesis level<br /></div>
 
-					<div class="tag" style="left:50px; top:148px; width:200px;">Level</div>
+					<div class="tag" style="left:10px; top:148px; width:300px;">Level</div>
 
 					<!-- TODO - also show the volume as a linear gauge -->
 					<div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:115px; width:200px;">-</div>
@@ -1227,7 +1227,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_enter_characters" style="display:none;">
 
-						<!-- The city or street name that has been entered thus far -->
+						<!-- The city or street name that has been entered thus far, letter by letter -->
 						<div id="satnav_entered_string" class="dots satNavEnterDestination"></div>
 
 						<div class="tag" style="left:20px; top:240px; width:550px; text-align:left;">Choose next letter</div>
@@ -1304,8 +1304,8 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="tag satNavEnterDestinationTag">Enter city</div>
 
 							<!--
-								The following div will disappear as soon as the user starts choosing letters, which will then
-								appear one by one in "satnav_entered_string"
+								The following div will be hidden as soon as the user starts choosing letters, which
+								will then appear one by one in "satnav_entered_string"
 							-->
 							<div id="satnav_current_destination_city" class="dots satNavEnterDestination"></div>
 						</div>
@@ -1318,8 +1318,8 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="tag satNavEnterDestinationTag">Enter street</div>
 
 							<!--
-								The following div will disappear as soon as the user starts choosing letters, which will then
-								appear one by one in "satnav_entered_string"
+								The following div will be hidden as soon as the user starts choosing letters, which
+								will then appear one by one in "satnav_entered_string"
 							-->
 							<div id="satnav_current_destination_street" class="dots satNavEnterDestination"></div>
 						</div>
@@ -1868,7 +1868,7 @@ char mfd_html[] PROGMEM = R"=====(
 							</svg>
 							<div style="position:absolute; top:0px;">
 								<svg style="width:200px; height:80px;">
-									<circle stroke="#dfe7f2" stroke-width="14" stroke-linecap="round" cx="100" cy="80" r="40"></circle>
+									<circle class="satNavInstructionIcon" fill-opacity="0.0" cx="100" cy="80" r="40"></circle>
 								</svg>
 							</div>
 						</div>	<!-- "satnav_turn_around_if_possible_icon" -->
@@ -2294,13 +2294,13 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="satnav_reached_destination_popup"
 				class="icon notificationPopup" style="top:160px; height:280px; display:none;">
 
-				<div class="centerAligned" style="position:absolute; left:10px; width:780px; height:200px;">
+				<div class="centerAligned" style="position:absolute; left:10px; width:830px; height:200px;">
 					<div id="satnav_reached_destination_popup_title">Destination reached</div>
 					<div gid="satnav_last_destination_city" class="dots"
-						style="top:90px; width:780px; height:90px; font-size:40px; white-space:normal;">
+						style="top:90px; width:830px; height:90px; font-size:40px; white-space:norap;">
 					</div>
 					<div class="dots"
-						style="top:140px; width:780px; height:90px; font-size:40px; white-space:normal;">
+						style="top:140px; width:830px; height:80px; font-size:40px;">
 						<span gid="satnav_last_destination_street_shown"></span> - <span gid="satnav_last_destination_house_number_shown"></span>
 					</div>
 				</div>
@@ -2437,8 +2437,8 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="notification_icon_warning" class="glow centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
 					style="display:none; position:absolute; line-height:2.2; left:0px; width:260px; height:260px"></div>
 				<div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
-					style="display:block; position:absolute; left:30px;"></div>
-				<div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:180px; width:650px;">
+					style="display:block; position:absolute; left:50px;"></div>
+				<div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:610px;">
 				</div>
 			</div>
 
