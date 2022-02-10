@@ -431,7 +431,7 @@ body
   position:absolute;
   left:0px;
   top:0px;
-  width:180px;
+  width:260px;
   height:40px;
 }
 .correctionButton

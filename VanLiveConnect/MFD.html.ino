@@ -42,13 +42,13 @@ char mfd_html[] PROGMEM = R"=====(
 		<meta charset='utf-8'>
 
 		<!-- Works on mobile Firefox, also in full-screen mode -->
-		<meta name="viewport" content="width=1350, minimum-scale=0.2, maximum-scale=1, user-scalable=yes">
+		<meta name="viewport" content="width=1350, minimum-scale=0.2, maximum-scale=1, user-scalable=yes" />
 
 		<title>Multi-functional Display</title>
-		<link rel='icon' href='data:,'>
+		<link rel='icon' href='data:,' />
 
-		<link rel="stylesheet" href="CarInfo.css">
-		<link rel="stylesheet" href="css/all.css" async>	<!-- Font Awesome -->
+		<link rel="stylesheet" href="CarInfo.css" />
+		<link rel="stylesheet" href="css/all.css" async />	<!-- Font Awesome -->
 
 		<script src="jquery-3.5.1.min.js"></script>	<!-- jQuery -->
 
@@ -745,8 +745,8 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="main_menu" class="tag menuScreen">
 				<div class="menuTitleLine">Main menu<br /></div>
 				<div id="main_menu_goto_satnav_button"
-					class="button"
-					on_click="satnavGotoMainMenu();">
+					on_click="satnavGotoMainMenu();"
+					class="button">
 					Navigation / Guidance
 				</div>
 				<div id="main_menu_goto_screen_configuration_button"
@@ -858,9 +858,9 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<div id="set_date_time_validate_button"
-					class="button validateButton"
 					UP_BUTTON="set_date_time_increase_day"
 					on_click="exitMenu(); exitMenu(); exitMenu();"
+					class="button validateButton"
 					style="top:390px;">Validate</div>
 			</div>	<!-- "set_date_time" -->
 
@@ -872,52 +872,52 @@ char mfd_html[] PROGMEM = R"=====(
 				<div style="font-size:46px; text-align:left;">
 					<div style="position:absolute; left:0px; top:100px; width:280px; height:150px;">
 						<span id="set_language_german"
-							class="tickBox button"
 							LEFT_BUTTON="set_language_dutch"
 							RIGHT_BUTTON="set_language_spanish"
 							UP_BUTTON="set_language_validate_button"
-							on_click="toggleTick(); keyPressed('UP_BUTTON');">
+							on_click="toggleTick(); keyPressed('UP_BUTTON');"
+							class="tickBox button">
 						</span> Deutsch<br style="line-height:70px;" />
 						<span id="set_language_english"
-							class="tickBox button buttonSelected"
 							LEFT_BUTTON="set_language_italian"
 							RIGHT_BUTTON="set_language_french"
 							DOWN_BUTTON="set_language_validate_button"
-							on_click="toggleTick(); keyPressed('DOWN_BUTTON');">
+							on_click="toggleTick(); keyPressed('DOWN_BUTTON');"
+							class="tickBox button buttonSelected">
 						</span> English<br style="line-height:70px;" />
 					</div>
 
 					<div style="position:absolute; left:280px; top:100px; width:280px; height:150px;">
 						<span id="set_language_spanish"
-							class="tickBox button"
 							UP_BUTTON="set_language_french"
 							LEFT_BUTTON="set_language_german"
 							RIGHT_BUTTON="set_language_dutch"
-							on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');">
+							on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');"
+							class="tickBox button">
 						</span> Espa&ntilde;ol<br style="line-height:70px;" />
 						<span id="set_language_french"
-							class="tickBox button"
 							LEFT_BUTTON="set_language_english"
 							RIGHT_BUTTON="set_language_italian"
 							DOWN_BUTTON="set_language_spanish"
-							on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');">
+							on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');"
+							class="tickBox button">
 					</span> Fran&ccedil;ais<br style="line-height:70px;" />
 					</div>
 
 					<div style="position:absolute; left:560px; top:100px; width:280px; height:150px;">
 						<span id="set_language_dutch"
-							class="tickBox button"
 							UP_BUTTON="set_language_italian"
 							LEFT_BUTTON="set_language_spanish"
 							RIGHT_BUTTON="set_language_german"
-							on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');">
+							on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');"
+							class="tickBox button">
 						</span> Nederlands<br style="line-height:70px;" />
 						<span id="set_language_italian"
-							class="tickBox button"
 							LEFT_BUTTON="set_language_french"
 							RIGHT_BUTTON="set_language_english"
 							DOWN_BUTTON="set_language_dutch"
-							on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');">
+							on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');"
+							class="tickBox button">
 						</span> Italiano<br style="line-height:70px;" />
 					</div>
 				</div>
@@ -959,18 +959,18 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="set_temperature_unit">
 						<div style="position:absolute; left:430px; top:100px; width:180px; height:150px;">
 							<span id="set_units_deg_celsius"
-								class="tickBox button"
 								UP_BUTTON="set_units_validate_button"
 								LEFT_BUTTON="set_units_km_h"
 								RIGHT_BUTTON="set_units_24h"
-								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
+								class="tickBox button">
 							</span> &deg; C<br style="line-height:70px;" />
 							<span id="set_units_deg_fahrenheit"
-								class="tickBox button"
 								LEFT_BUTTON="set_units_mph"
 								RIGHT_BUTTON="set_units_12h"
 								DOWN_BUTTON="set_units_validate_button"
-								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
+								class="tickBox button">
 						</span> &deg; F<br style="line-height:70px;" />
 						</div>
 					</div>
@@ -978,28 +978,28 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="set_time_unit">
 						<div style="position:absolute; left:680px; top:100px; width:180px; height:150px;">
 							<span id="set_units_24h"
-								class="tickBox button"
 								UP_BUTTON="set_units_validate_button"
 								LEFT_BUTTON="set_units_deg_celsius"
 								RIGHT_BUTTON="set_units_km_h"
-								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
+								class="tickBox button">
 							</span> 24H<br style="line-height:70px;" />
 							<span id="set_units_12h"
-								class="tickBox button"
 								LEFT_BUTTON="set_units_deg_fahrenheit"
 								RIGHT_BUTTON="set_units_mph"
 								DOWN_BUTTON="set_units_validate_button"
-								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
+								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
+								class="tickBox button">
 							</span> 12H<br style="line-height:70px;" />
 						</div>
 					</div>
 				</div>
 
 				<div id="set_units_validate_button"
-					class="button validateButton"
 					UP_BUTTON="set_units_mph"
 					DOWN_BUTTON="set_units_km_h"
 					on_click="unitsValidate();"
+					class="button validateButton"
 					style="top:300px;">Validate</div>
 
 			</div>	<!-- "set_units" -->
@@ -1081,8 +1081,8 @@ char mfd_html[] PROGMEM = R"=====(
 							checked by the user.<br />
 						</div>
 						<div id="satnav_disclaimer_validate_button"
-							class="icon button buttonSelected" style="left:710px; top:300px; width:180px; height:40px;"
-							on_click="satnavDisclaimerAccepted = true; exitMenu(); satnavGotoMainMenu();">
+							on_click="satnavDisclaimerAccepted = true; exitMenu(); satnavGotoMainMenu();"
+							class="button validateButton buttonSelected" style="left:630px; top:300px;">
 							Validate
 						</div>
 					</div>
@@ -1101,8 +1101,8 @@ char mfd_html[] PROGMEM = R"=====(
 						is received
 					-->
 					<div id="satnav_main_menu_select_a_service_button"
-						class="button buttonDisabled"
-						goto_id="satnav_show_last_destination">Select a service</div>
+						goto_id="satnav_show_last_destination"
+						class="button buttonDisabled">Select a service</div>
 
 					<div class="button"
 						on_click="satnavSetDirectoryAddressScreenMode('SELECT');"
@@ -1270,7 +1270,8 @@ char mfd_html[] PROGMEM = R"=====(
 							<div id="satnav_enter_characters_validate_button"
 								UP_BUTTON="satnav_to_mfd_show_characters_line_2"
 								on_click="satnavGotoEnterStreetOrNumber();"
-								class="icon button buttonDisabled validateButton">
+								class="button buttonDisabled validateButton"
+								style="width:180px;">
 								Validate
 							</div>
 
@@ -1285,7 +1286,7 @@ char mfd_html[] PROGMEM = R"=====(
 								on_click="satnavGotoListScreenEmpty();"
 								class="icon button buttonDisabled"
 								style="left:470px; top:0px; width:240px; height:40px;">
-								List <span gid="satnav_to_mfd_list_size"></span>
+								<span id="satnav_to_mfd_list_tag">List</span> <span gid="satnav_to_mfd_list_size"></span>
 							</div>
 
 							<div id="satnav_enter_characters_change_or_city_center_button"
@@ -1404,7 +1405,7 @@ char mfd_html[] PROGMEM = R"=====(
 							<div id="satnav_enter_house_number_change_button"
 								UP_BUTTON="satnav_house_number_show_characters"
 								on_click="satnavHouseNumberEntryMode();"
-								class="icon button buttonDisabled correctionButton">
+								class="icon button buttonDisabled correctionButton" style="left:290px;">
 								Change
 							</div>
 						</div>
@@ -1432,8 +1433,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_personal_address_validate_buttons" style="display:block">
 							<div id="satnav_show_personal_address_validate_button"
 								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-								class="icon button validateButton"
-								style="left:25px; top:450px;">
+								class="icon button validateButton" style="left:25px; top:460px;">
 								Validate
 							</div>
 						</div>
@@ -1448,8 +1448,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 								<div id="satnav_manage_personal_address_delete_button"
 									on_click="satnavDirectoryEntry = $('#satnav_personal_address_entry').text(); showPopup('satnav_delete_item_popup', 30000);"
-									class="icon button validateButton"
-									style="left:210px;">
+									class="icon button validateButton" style="left:290px;">
 									Delete
 								</div>
 							</div>
@@ -1472,8 +1471,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_professional_address_validate_buttons" style="display:block">
 							<div id="satnav_show_professional_address_validate_button"
 								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-								class="icon button validateButton"
-								style="left:25px; top:450px;">
+								class="icon button validateButton" style="left:25px; top:460px;">
 								Validate
 							</div>
 						</div>
@@ -1488,8 +1486,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 								<div id="satnav_manage_professional_address_delete_button"
 									on_click="satnavDirectoryEntry = $('#satnav_professional_address_entry').text(); showPopup('satnav_delete_item_popup', 30000);"
-									class="icon button validateButton"
-									style="left:210px;">
+									class="icon button validateButton" style="left:290px;">
 									Delete
 								</div>
 							</div>
@@ -1525,11 +1522,11 @@ char mfd_html[] PROGMEM = R"=====(
 								Validate
 							</div>
 							<div id="satnav_service_address_previous_button"
-								class="icon button validateButton" style="left:210px;">
+								class="icon button validateButton" style="left:290px;">
 								Previous
 							</div>
 							<div id="satnav_service_address_next_button"
-								class="icon button buttonSelected validateButton" style="left:420px;">
+								class="icon button buttonSelected validateButton" style="left:580px;">
 								Next
 							</div>
 						</div>
@@ -1560,12 +1557,12 @@ char mfd_html[] PROGMEM = R"=====(
 							</div>
 							<div
 								on_click="satnavGotoEnterCity();"
-								class="icon button correctionButton">
+								class="icon button correctionButton" style="left:290px;">
 								Change
 							</div>
 							<div id="satnav_store_entry_in_directory"
 								goto_id="satnav_archive_in_directory_entry"
-								class="icon button correctionButton" style="left:470px;">
+								class="icon button correctionButton" style="left:550px; width:270px;">
 								Store
 							</div>
 						</div>
@@ -1596,7 +1593,7 @@ char mfd_html[] PROGMEM = R"=====(
 							</div>
 							<div
 								on_click="menuStack = [ 'satnav_guidance' ]; currentMenu = 'satnav_main_menu'; changeLargeScreenTo('satnav_main_menu'); selectFirstMenuItem('satnav_main_menu');"
-								class="icon button correctionButton">
+								class="icon button correctionButton" style="left:290px;">
 								Change
 							</div>
 						</div>
@@ -1615,15 +1612,16 @@ char mfd_html[] PROGMEM = R"=====(
 						<div gid="satnav_last_destination_street_shown" class="dots satNavShowAddressStreet"></div>
 
 						<div button_orientation="horizontal" class="buttonBar">
-							<div class="icon button buttonSelected validateButton" on_click="satnavGotoListScreenServiceList();">
+							<div on_click="satnavGotoListScreenServiceList();"
+								class="icon button buttonSelected validateButton">
 								Validate
 							</div>
-							<div class="icon button correctionButton" on_click="satnavEnterNewCityForService();">
+							<div on_click="satnavEnterNewCityForService();"
+								class="icon button correctionButton" style="left:290px;">
 								Change
 							</div>
-							<div
-								class="icon button" style="left:470px; top:0px; width:340px; height:40px;"
-								on_click="satnavGotoListScreenServiceList();">
+							<div on_click="satnavGotoListScreenServiceList();"
+								class="icon button" style="left:550px; top:0px; width:360px; height:40px;">
 								Current location
 							</div>
 						</div>
@@ -1696,7 +1694,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_rename_entry_in_directory_title" class="tag satNavShowAddress">Rename entry</div>
 
-					<div class="tag satNavEntryNameTag">Name</div>
+					<div class="tag satNavEntryNameTag" style="width:310px;">Name</div>
 
 					<div class="tag satNavEntryExistsTag">This entry already exists</div>
 
@@ -1704,7 +1702,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="satnav_rename_entry_in_directory_entry"
 						on_enter="satnavEnterRenameDirectoryEntryScreen();"
 						on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
-						class="dots satNavShowAddressCity" style="font-size:60px;">----------------</div>
+						class="dots satNavShowAddressCity" style="font-size:60px; left:350px;">----------------</div>
 
 					<div id="satnav_rename_entry_in_directory_characters_line_1"
 						UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
@@ -1741,7 +1739,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_rename_entry_in_directory_correction_button"
 							UP_BUTTON="satnav_rename_entry_in_directory_characters_line_2"
 							on_up_button="satnavDirectoryEntryMoveUpFromCorrectionButton('satnav_rename_entry_in_directory');"
-							class="icon button" style="left:270px; top:0px; width:260px; height:40px;">
+							class="icon button" style="left:290px; top:0px; width:260px; height:40px;">
 							Correction
 						</div>
 					</div>
@@ -2642,9 +2640,11 @@ char mfd_html[] PROGMEM = R"=====(
 		<!--
 			Small, invisible "div" covering top right area of screen, handling a taps that triggers changing to
 			full-screen mode.
-			TODO - indicate in some way that this area is sensitive to tapping?
 		-->
-		<div style="display:block; position:absolute; left:800px; top:0px; width:550px; height:250px;" onclick="goFullScreen();"></div>
+		<div onclick="toggleFullScreen();"
+			style="display:block; position:absolute; left:800px; top:0px; width:550px; height:250px; text-align:right; opacity:50%">
+			<i class="fas fa-expand"></i>
+		</div>
 
 		<!-- Full-screen popups -->
 
