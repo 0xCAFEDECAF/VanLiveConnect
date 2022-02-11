@@ -1299,7 +1299,7 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 
 						<div id="satnav_enter_city_characters"
-							on_enter="highlightFirstLine('satnav_choice_list'); $('#satnav_to_mfd_show_characters_spinning_disc').hide();"
+							on_enter="satnavEnterCityCharactersScreen();"
 							style="display:none;">
 
 							<div class="tag satNavEnterDestinationTag">Enter city</div>

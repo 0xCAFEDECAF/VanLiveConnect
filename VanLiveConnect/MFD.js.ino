@@ -16,13 +16,18 @@ function clamp(num, min, max)
 	return Math.min(Math.max(num, min), max);
 } // clamp
 
+function incModulo(i, mod)
+{
+	return (i + 1) % mod;
+} // clamp
+
 // -----
 // On-screen clocks
 
 // Capitalize first letter
 function CapFirstLetter(string)
 {
-	firstLetter = string.charAt(0);
+	var firstLetter = string.charAt(0);
 	if (string.charCodeAt(0) == 8206)  // IE11-special
 	{
 		firstLetter = string.charAt(1);
@@ -596,65 +601,42 @@ function nextLargeScreen()
 		"satnav_current_location",
 	];
 
-	var idIndex = screenIds.indexOf(currentLargeScreenId);  // -1 if not found
+	var i = screenIds.indexOf(currentLargeScreenId);  // -1 if not found
+	var n = screenIds.length;
 
-	idIndex = (idIndex + 1) % screenIds.length;  // ID of the next screen in the sequence
+	i = incModulo(i, n);  // ID of the next screen in the sequence
 
 	// Skip the "satnav_guidance" screen if the guidance is not active
-	if (idIndex === screenIds.indexOf("satnav_guidance"))
-	{
-		if (satnavMode !== "IN_GUIDANCE_MODE") idIndex = (idIndex + 1) % screenIds.length;
-	} // if
+	if (i === screenIds.indexOf("satnav_guidance") && satnavMode !== "IN_GUIDANCE_MODE") i = incModulo(i, n);
 
 	var audioSource = $("#audio_source").text();
 
 	// Skip the "tuner" screen if the radio is not the current source
-	if (idIndex === screenIds.indexOf("tuner"))
-	{
-		if (audioSource !== "TUNER") idIndex = (idIndex + 1) % screenIds.length;
-	} // if
+	if (i === screenIds.indexOf("tuner") && audioSource !== "TUNER") i = incModulo(i, n);
 
 	// Skip the "tape" screen if the cassette player is not the current source
-	if (idIndex === screenIds.indexOf("tape"))
-	{
-		if (audioSource !== "TAPE") idIndex = (idIndex + 1) % screenIds.length;
-	} // if
+	if (i === screenIds.indexOf("tape") && audioSource !== "TAPE") i = incModulo(i, n);
 
 	// Skip the "cd_player" screen if the CD player is not the current source
-	if (idIndex === screenIds.indexOf("cd_player"))
-	{
-		if (audioSource !== "CD") idIndex = (idIndex + 1) % screenIds.length;
-	} // if
+	if (i === screenIds.indexOf("cd_player") && audioSource !== "CD") i = incModulo(i, n);
 
 	// Skip the "cd_changer" screen if the CD changer is not the current source
-	if (idIndex === screenIds.indexOf("cd_changer"))
-	{
-		if (audioSource !== "CD_CHANGER") idIndex = (idIndex + 1) % screenIds.length;
-	} // if
+	if (i === screenIds.indexOf("cd_changer") && audioSource !== "CD_CHANGER") i = incModulo(i, n);
 
 	// Skip the "instruments" screen if the engine is not running
-	if (idIndex === screenIds.indexOf("instruments"))
-	{
-		if (engineRunning !== "YES") idIndex = (idIndex + 1) % screenIds.length;
-	} // if
+	if (i === screenIds.indexOf("instruments") && engineRunning !== "YES") i = incModulo(i, n);
 
 	// Skip the "satnav_current_location" screen if in guidance mode, or if the current street is empty
-	if (idIndex === screenIds.indexOf("satnav_current_location"))
+	if (i === screenIds.indexOf("satnav_current_location"))
 	{
-		if (satnavMode === "IN_GUIDANCE_MODE")
-		{
-			idIndex = screenIds.indexOf("satnav_guidance");
-		}
-		else
-		{
-			if (satnavCurrentStreet === "") idIndex = 0;  // Go back to the "clock" screen
-		} // if
+		if (satnavMode === "IN_GUIDANCE_MODE") i = screenIds.indexOf("satnav_guidance");
+		else if (satnavCurrentStreet === "") i = 0;  // Go back to the "clock" screen
 	} // if
 
 	// After the "satnav_current_location" screen, go back to the "clock" screen
-	if (idIndex === screenIds.indexOf("satnav_current_location") + 1) idIndex = 0;
+	if (i === screenIds.indexOf("satnav_current_location") + 1) i = 0;
 
-	changeLargeScreenTo(screenIds[idIndex]);
+	changeLargeScreenTo(screenIds[i]);
 } // nextLargeScreen
 
 function changeToTripCounter(id)
@@ -885,13 +867,16 @@ function showAudioPopup(id)
 {
 	if (typeof id === "undefined")
 	{
+		var map =
+		{
+			"TUNER": "tuner_popup",
+			"TAPE": "tape_popup",
+			"CD": "cd_player_popup",
+			"CD_CHANGER": "cd_changer_popup"
+		}; 
+
 		var audioSource = $("#audio_source").text();
-		id =
-			audioSource === "TUNER" ? "tuner_popup" :
-			audioSource === "TAPE" ? "tape_popup" :
-			audioSource === "CD" ? "cd_player_popup" :
-			audioSource === "CD_CHANGER" ? "cd_changer_popup" :
-			"";
+		id = ! (audioSource in map) ? "" : map[audioSource];
 	} // if
 
 	if (! id) return;
@@ -1173,6 +1158,17 @@ function getTextWidth(selector)
 
 // Associative array, using the button element ID as key
 var buttonOriginalWidths = {};
+
+function restoreButtonSizes()
+{
+	for (var id in buttonOriginalWidths)
+	{
+		var elem = $("#" + id);
+		elem.width(buttonOriginalWidths[id]);  // Reset width of button to original size
+		elem.css({ 'marginLeft': '' });  // Place back in original position
+		elem.css('z-index', '');  // No longer bring to front
+	} // for
+} // restoreButtonSizes
 
 // Handle an arrow key press in a screen with buttons
 function navigateButtons(key)
@@ -2009,8 +2005,16 @@ function satnavSelectFirstAvailableCharacter()
 	unhighlightLetter("satnav_to_mfd_show_characters_line_2");
 } // satnavSelectFirstAvailableCharacter
 
+function satnavEnterCityCharactersScreen()
+{
+	restoreButtonSizes();
+	highlightFirstLine('satnav_choice_list');
+	$('#satnav_to_mfd_show_characters_spinning_disc').hide();
+} // satnavEnterCityCharactersScreen
+
 function satnavEnterStreetCharactersScreen()
 {
+	restoreButtonSizes();
 	highlightFirstLine("satnav_choice_list");
 	$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
@@ -2583,10 +2587,15 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 		$(screenSelector).find(".button").removeClass("buttonSelected");
 	} // if
 
-	// Enable or disable buttons, depending on if there is anything in the entry field
-	$(screenSelector).find(".button").toggleClass("buttonDisabled", $(entrySelector).text()[0] === "-");
+	// Disable buttons if there is nothing in the entry field
+	if ($(entrySelector).text()[0] === "-")
+	{
+		$(screenSelector).find(".button").addClass("buttonDisabled");
+		$(".satNavEntryExistsTag" ).hide();
+		return;
+	} // if
 
-	// Enable or disable "Personal dir", "Professional d" and Validate" button if entered name already exists
+	// Enable or disable "Personal dir", "Professional dir" and Validate" button if entered name already exists
 	var enteredEntryName = $(entrySelector).text().replace(/-+$/, "");
 	var personalEntryExists = satnavPersonalDirectoryEntries.indexOf(enteredEntryName) >= 0;
 	var professionalEntryExists = satnavProfessionalDirectoryEntries.indexOf(enteredEntryName) >= 0;
