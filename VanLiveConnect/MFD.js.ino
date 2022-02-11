@@ -2587,10 +2587,12 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 		$(screenSelector).find(".button").removeClass("buttonSelected");
 	} // if
 
-	// Disable buttons if there is nothing in the entry field
+	// Enable or disable buttons, depending on if there is anything in the entry field
+	$(screenSelector).find(".button").toggleClass("buttonDisabled", $(entrySelector).text()[0] === "-");
+
+	// Nothing in the entry field?
 	if ($(entrySelector).text()[0] === "-")
 	{
-		$(screenSelector).find(".button").addClass("buttonDisabled");
 		$(".satNavEntryExistsTag" ).hide();
 		return;
 	} // if
