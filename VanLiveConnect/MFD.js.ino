@@ -22,6 +22,16 @@ function incModulo(i, mod)
 } // clamp
 
 // -----
+// MFD dimming
+
+function setDimLevel(opacity)
+{
+	var color = $(":root").css("--main-color").substring(0, 7);
+	if (typeof opacity === "undefined") opacity = 255; else opacity = clamp(opacity, 155, 255);
+	$(":root").css("--main-color", color + opacity.toString(16));
+} // setDimLevel
+
+// -----
 // On-screen clocks
 
 // Capitalize first letter
@@ -39,13 +49,15 @@ function CapFirstLetter(string)
 // Show the current date and time
 function updateDateTime()
 {
-	var locale = 
-		localStorage.mfdLanguage === "set_language_french" ? 'fr' :
-		localStorage.mfdLanguage === "set_language_german" ? 'de-DE' :
-		localStorage.mfdLanguage === "set_language_spanish" ? 'es-ES' :
-		localStorage.mfdLanguage === "set_language_italian" ? 'it' :
-		localStorage.mfdLanguage === "set_language_dutch" ? 'nl' :
-		'en-GB';
+	var locales =
+	{
+		"set_language_french": "fr",
+		"set_language_german": "de-DE",
+		"set_language_spanish": "es-ES",
+		"set_language_italian": "it",
+		"set_language_dutch": "nl"
+	};
+	var locale = locales[localStorage.mfdLanguage] || "en-GB";
 
 	var date = new Date().toLocaleDateString(locale, {weekday: 'short', day: 'numeric', month: 'short'});
 	date = date.replace(/0(\d)/, "$1");  // IE11 incorrectly shows leading "0"
@@ -490,6 +502,8 @@ function changeLargeScreenTo(id)
 
 	currentLargeScreenId = id;
 
+	if ($("#" + currentLargeScreenId + " .buttonBar").length > 0) restoreButtonSizes();
+
 	// Perform new screen's "on_enter" action, if specified
 	var onEnter = $("#" + currentLargeScreenId).attr("on_enter");
 	if (onEnter) eval(onEnter);
@@ -498,12 +512,45 @@ function changeLargeScreenTo(id)
 	if (! inMenu() && typeof webSocket !== "undefined") webSocket.send("in_menu:NO");
 } // changeLargeScreenTo
 
+var changeBackScreenId;
+var changeBackScreenTimer;
+
+// Temporarily switch to a specific screen on the right hand side of the display
+function temporarilyChangeLargeScreenTo(id)
+{
+	if (inMenu()) return;
+	if (id === currentLargeScreenId) return;
+
+	changeBackScreenId = currentLargeScreenId;
+	changeLargeScreenTo(id);
+
+	// Change back after 10 seconds
+	clearTimeout(changeBackScreenTimer);
+	changeBackScreenTimer = setTimeout
+	(
+		function ()
+		{
+			changeBackScreenTimer = null;
+			changeLargeScreenTo(changeBackScreenId);
+		},
+		10000
+	);
+} // temporarilyChangeLargeScreenTo
+
+function cancelChangeBackScreenTimer()
+{
+	clearTimeout(changeBackScreenTimer);
+	changeBackScreenTimer = null;
+} // cancelChangeBackScreenTimer
+
 var menuStack = [];
 
 var mfdLargeScreen = "CLOCK";  // Screen currently shown in the "large" (right hand side) area on the original MFD
 
 function selectDefaultScreen(audioSource)
 {
+	cancelChangeBackScreenTimer();
+
 	// Ignore invocation during engine start
 	if (currentLargeScreenId === "pre_flight" && contactKeyPosition === "START") return;
 
@@ -578,6 +625,8 @@ function changeSmallScreenTo(id)
 // Cycle through the large screens on the right hand side of the display
 function nextLargeScreen()
 {
+	cancelChangeBackScreenTimer();
+
 	// In "demo mode" we can cycle through all the screens, otherwise to a limited set of screens
 	if (inDemoMode)
 	{
@@ -873,10 +922,10 @@ function showAudioPopup(id)
 			"TAPE": "tape_popup",
 			"CD": "cd_player_popup",
 			"CD_CHANGER": "cd_changer_popup"
-		}; 
+		};
 
 		var audioSource = $("#audio_source").text();
-		id = ! (audioSource in map) ? "" : map[audioSource];
+		id = audioSource in map ? map[audioSource] : "";
 	} // if
 
 	if (! id) return;
@@ -925,6 +974,8 @@ function selectFirstMenuItem(id)
 // Enter a specific menu
 function gotoMenu(menu)
 {
+	cancelChangeBackScreenTimer();
+
 	// Change screen, but only if not already there
 	if (currentMenu !== menu)
 	{
@@ -1793,18 +1844,18 @@ function unitsSelectTickedButtons()
 function unitsValidate()
 {
 	// Save selected ids in local (persistent) store
-	localStorage.mfdDistanceUnit =
+	var newDistanceUnit =
 		$("#set_distance_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-	localStorage.mfdTemperatureUnit =
+	var newTemperatureUnit =
 		$("#set_temperature_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-	localStorage.mfdTimeUnit =
+	var newTimeUnit =
 		$("#set_time_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
 
-	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+	setUnits(newDistanceUnit, newTemperatureUnit, newTimeUnit);
 
-	webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
-	webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
-	webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
+	webSocket.send("mfd_distance_unit:" + newDistanceUnit);
+	webSocket.send("mfd_temperature_unit:" + newTemperatureUnit);
+	webSocket.send("mfd_time_unit:" + newTimeUnit);
 
 	exitMenu();
 	exitMenu();
@@ -1866,30 +1917,29 @@ function satnavGotoMainMenu()
 
 	if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
 	{
-		showStatusPopup(
-			localStorage.mfdLanguage === "set_language_french" ? "Le CD-ROM de navigation<br />est absent" :
-			localStorage.mfdLanguage === "set_language_german" ? "Die Navigations CD-ROM<br />fehlt" :
-			localStorage.mfdLanguage === "set_language_spanish" ? "No hay CD-ROM de<br />navegaci&oacute;n" :
-			localStorage.mfdLanguage === "set_language_italian" ? "Il CD-ROM di navigazione<br />&egrave; assente" :
-			localStorage.mfdLanguage === "set_language_dutch" ? "De navigatie CD-rom is<br />niet aanwezig" :
-			"Navigation CD-ROM is<br />missing",
-			8000
-		);
+		var translations =
+		{
+			"set_language_french": "Le CD-ROM de navigation<br />est absent",
+			"set_language_german": "Die Navigations CD-ROM<br />fehlt",
+			"set_language_spanish": "No hay CD-ROM de<br />navegaci&oacute;n",
+			"set_language_italian": "Il CD-ROM di navigazione<br />&egrave; assente",
+			"set_language_dutch": "De navigatie CD-rom is<br />niet aanwezig"
+		};
+		showStatusPopup(translations[localStorage.mfdLanguage] || "Navigation CD-ROM is<br />missing", 8000);
 		return;
 	} // if
 
 	if (satnavStatus1.match(/DISC_UNREADABLE/))
 	{
-		showStatusPopup(
-			localStorage.mfdLanguage === "set_language_french" ? "Le CD-ROM de navigation<br />est illisible" :
-			localStorage.mfdLanguage === "set_language_german" ? "Die Navigations CD-ROM<br />is unleserlich" :
-			localStorage.mfdLanguage === "set_language_spanish" ? "No se puede leer<br />CD-ROM de navegaci&oacute;n" :
-			localStorage.mfdLanguage === "set_language_italian" ? "Il CD-ROM di navigazione<br />&egrave; illeggibile" :
-			localStorage.mfdLanguage === "set_language_dutch" ? "De navigatie CD-rom is<br />onleesbaar" :
-			"Navigation CD-ROM<br />is unreadable",
-			10000
-		);
-
+		var translations =
+		{
+			"set_language_french": "Le CD-ROM de navigation<br />est illisible",
+			"set_language_german": "Die Navigations CD-ROM<br />is unleserlich",
+			"set_language_spanish": "No se puede leer<br />CD-ROM de navegaci&oacute;n",
+			"set_language_italian": "Il CD-ROM di navigazione<br />&egrave; illeggibile",
+			"set_language_dutch": "De navigatie CD-rom is<br />onleesbaar"
+		};
+		showStatusPopup(translations[localStorage.mfdLanguage] || "Navigation CD-ROM<br />is unreadable", 10000);
 		return;
 	} // if
 
@@ -2389,14 +2439,17 @@ function satnavCheckEnteredHouseNumber()
 	if (! ok)
 	{
 		satnavHouseNumberEntryMode();
-		showStatusPopup(
-			localStorage.mfdLanguage === "set_language_french" ? "Ce num&eacute;ro n'est<br />pas r&eacute;pertori&eacute;<br />dans cette voie" :
-			localStorage.mfdLanguage === "set_language_german" ? "Die Nummer ist<br />f&uuml;r diese Stra&szlig;e<br />nicht eingetragen" :
-			localStorage.mfdLanguage === "set_language_spanish" ? "N&uacute;mero no<br />identificado<br />para esta v&iacute;a" :
-			localStorage.mfdLanguage === "set_language_italian" ? "Questo numero<br />non &egrave; indicato<br />in questa via" :
-			localStorage.mfdLanguage === "set_language_dutch" ? "Straatnummer onbekend" :
-			"This number is<br />not listed for<br />this street",
-			7000);
+
+		var translations =
+		{
+			"set_language_french": "Ce num&eacute;ro n'est<br />pas r&eacute;pertori&eacute;<br />dans cette voie",
+			"set_language_german": "Die Nummer ist<br />f&uuml;r diese Stra&szlig;e<br />nicht eingetragen",
+			"set_language_spanish": "N&uacute;mero no<br />identificado<br />para esta v&iacute;a",
+			"set_language_italian": "Questo numero<br />non &egrave; indicato<br />in questa via",
+			"set_language_dutch": "Straatnummer onbekend"
+		};
+		showStatusPopup(translations[localStorage.mfdLanguage] || "This number is<br />not listed for<br />this street", 7000);
+
 		return;
 	} // if
 
@@ -2818,15 +2871,16 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	if (satnavGpsFix)
 	{
 		hidePopup();
-		showStatusPopup(
-			localStorage.mfdLanguage === "set_language_french" ? "La destination n'est<br />pas accessible par<br />voie routi&egrave;re" :
-			localStorage.mfdLanguage === "set_language_german" ? "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen" :
-			localStorage.mfdLanguage === "set_language_spanish" ? "Destino inaccesible<br />por carratera" :
-			localStorage.mfdLanguage === "set_language_italian" ? "La destinazione non<br />&egrave; accessibile<br />mediante strada" :
-			localStorage.mfdLanguage === "set_language_dutch" ? "De bestemming is niet<br />via de weg bereikbaar" :
-			"Destination is not<br />accessible by road",
-			8000
-		);
+
+		var translations =
+		{
+			"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
+			"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
+			"set_language_spanish": "Destino inaccesible<br />por carratera",
+			"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
+			"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
+		};
+		showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
 	} // if
 
 	satnavDestinationNotAccessibleByRoadPopupShown = true;
@@ -2968,11 +3022,13 @@ function satnavPoweringOff()
 
 function showPowerSavePopup()
 {
-	showNotificationPopup(
-		localStorage.mfdLanguage === "set_language_german" ? "Wechsel in<br />Energiesparmodus" :
-		localStorage.mfdLanguage === "set_language_dutch" ? "Omschakeling naar<br />energiebesparingsmodus" :
-		"Changing to<br />power-save mode",
-		15000);
+	// TODO - other languages
+	var translations =
+	{
+		"set_language_german": "Wechsel in<br />Energiesparmodus",
+		"set_language_dutch": "Omschakeling naar<br />energiebesparingsmodus"
+	};
+	showNotificationPopup(translations[localStorage.mfdLanguage] || "Changing to<br />power-save mode", 15000);
 } // showPowerSavePopup
 
 // -----
@@ -3010,6 +3066,70 @@ function handleItemChange(item, value)
 {
 	switch(item)
 	{
+		case "mfd_language":
+		{
+			var map =
+			{
+				"FRENCH": "set_language_french",
+				"ENGLISH": "set_language_english",
+				"GERMAN": "set_language_german",
+				"SPANISH": "set_language_spanish",
+				"ITALIAN": "set_language_italian",
+				"DUTCH": "set_language_dutch"
+			};
+
+			var newLanguage = value in map ? map[value] : "";
+			if (! newLanguage) break;
+			setLanguage(newLanguage);
+			webSocket.send("mfd_language:" + newLanguage);
+		} // case
+		break;
+
+		case "mfd_temperature_unit":
+		{
+			var map =
+			{
+				"FAHRENHEIT": "set_units_deg_fahrenheit",
+				"CELSIUS": "set_units_deg_celsius"
+			};
+
+			var newUnit = map[value] || "";
+			if (! newUnit) break;
+			setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
+			webSocket.send("mfd_distance_unit:" + newUnit);
+		} // case
+		break;
+
+		case "mfd_distance_unit":
+		{
+			var map =
+			{
+				"MILES_YARDS": "set_units_mph",
+				"KILOMETRES_METRES": "set_units_km_h"
+			};
+
+			var newUnit = map[value] || "";
+			if (! newUnit) break;
+			setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+			webSocket.send("mfd_distance_unit:" + newUnit);
+		} // case
+		break;
+
+		case "mfd_time_unit":
+		{
+			var map =
+			{
+				"24_H": "set_units_24h",
+				"12_H": "set_units_12h"
+			};
+
+			var newUnit = map[value] || "";
+			if (! newUnit) break;
+			setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
+			webSocket.send("mfd_time_unit:" + newUnit);
+		} // case
+		break;
+
 		case "volume_update":
 		{
 			if (value !== "YES") break;
@@ -3383,8 +3503,22 @@ function handleItemChange(item, value)
 			if (value === handleItemChange.infoTraffic) break;
 			handleItemChange.infoTraffic = value;
 
-			if (value === "YES") showNotificationPopup("Info Traffic!", 120000);  // At most 2 minutes
-			else hidePopup("notification_popup");
+			if (value === "YES")
+			{
+				var translations =
+				{
+					"set_language_french": "Info Traffic!",
+					"set_language_german": "Verkehrsinformationen",
+					"set_language_spanish": "Informaci&oacute;n de tr&aacute;fico",
+					"set_language_italian": "Informazioni sul traffico",
+					"set_language_dutch": "Verkeersinformatie"
+				};
+				showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information", 10000);
+			}
+			else
+			{
+				hidePopup("notification_popup");
+			} // if
 		} // case
 		break;
 
@@ -3416,6 +3550,13 @@ function handleItemChange(item, value)
 		case "cd_status_searching":
 		{
 			if (value === "ON") hideAudioSettingsPopup();
+		} // case
+		break;
+
+		case "cd_total_time":
+		{
+			$("#cd_total_time_tag").toggle(value !== "--:--");
+			$("#cd_total_time").toggle(value !== "--:--");
 		} // case
 		break;
 
@@ -3732,6 +3873,14 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "lights":
+		{
+			// Dim display if headlights are on
+			if (value.match(/BEAM/)) $(":root").css("--main-color", "#dfe7f29b");  // Go to fixed, low dim level
+			else setDimLevel(localStorage.dimLevel);  // Go back to saved dim level
+		} // case
+		break;
+
 		case "door_open":
 		{
 			// Note: If the system is in power save mode, "door_open" always reports "NO", even if a door is open.
@@ -3929,6 +4078,8 @@ function handleItemChange(item, value)
 				clearTimeout(handleItemChange.showSatnavAudioLed);
 				if (playingAudio)
 				{
+					temporarilyChangeLargeScreenTo("satnav_guidance");
+
 					// Set timeout on LED, in case the "AUDIO OFF" packet is missed
 					handleItemChange.showSatnavAudioLed = setTimeout
 					(
@@ -4071,14 +4222,16 @@ function handleItemChange(item, value)
 					if (! satnavRouteComputed)
 					{
 						// TODO - check translations from English
-						$("#satnav_guidance_next_street").html(
-							localStorage.mfdLanguage === "set_language_french" ? "Chercher instruction" :
-							localStorage.mfdLanguage === "set_language_german" ? "Anweisung suchen" :
-							localStorage.mfdLanguage === "set_language_spanish" ? "Buscar instrucci&oacute;n" :
-							localStorage.mfdLanguage === "set_language_italian" ? "Cercare istruzione" :
-							localStorage.mfdLanguage === "set_language_dutch" ? "Opzoeken instructie" :
-							"Retrieving next instruction"
-						);
+						var translations =
+						{
+							"set_language_french": "Chercher instruction",
+							"set_language_german": "Anweisung suchen",
+							"set_language_spanish": "Buscar instrucci&oacute;n",
+							"set_language_italian": "Cercare istruzione",
+							"set_language_dutch": "Opzoeken instructie"
+						};
+						var content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
+						$("#satnav_guidance_next_street").html(content);
 					}
 				}
 				else
@@ -4169,7 +4322,8 @@ function handleItemChange(item, value)
 
 		case "satnav_last_destination_city":
 		{
-			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION_POPUP/))
+			// if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/) || satnavStatus1 === "GUIDANCE_STOPPED")
+			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/))
 			{
 				showPopup("satnav_reached_destination_popup", 10000);
 			} // if
@@ -4233,8 +4387,8 @@ function handleItemChange(item, value)
 		{
 			// No data means: stay on current street.
 			// But if current street is empty (""), then just keep the current text.
-			if (value !== "") $("#satnav_guidance_next_street").text(value)
-			else if (satnavCurrentStreet !== "") $("#satnav_guidance_next_street").text(satnavCurrentStreet);
+			if (value !== "") $("#satnav_guidance_next_street").html(value)
+			else if (satnavCurrentStreet !== "") $("#satnav_guidance_next_street").html(satnavCurrentStreet);
 		} // case
 		break;
 
@@ -4644,6 +4798,13 @@ function handleItemChange(item, value)
 			var unit = a[1];
 			$("#" + item + "_number").text(distance);
 			$("#" + item + "_unit").text(unit);
+
+			if ((item === "satnav_turn_at" || item === "satnav_distance_to_dest_via_road")
+				&& (unit === "m" || unit === "yd")
+				&& parseInt(distance) <= 600)
+			{
+				temporarilyChangeLargeScreenTo("satnav_guidance");
+			} // if
 		} // case
 		break;
 
@@ -4831,14 +4992,16 @@ function handleItemChange(item, value)
 				// Hide the "Computing route in progress" popup, if showing
 				hidePopup("satnav_computing_route_popup");
 
-				$("#satnav_guidance_next_street").html(
-					localStorage.mfdLanguage === "set_language_french" ? "Suivez le cap indiqu&eacute;" :
-					localStorage.mfdLanguage === "set_language_german" ? "Folgen Sie dem Pfeil" :
-					localStorage.mfdLanguage === "set_language_spanish" ? "Siga el rumbo indicado" :
-					localStorage.mfdLanguage === "set_language_italian" ? "Sequire la direzione" :
-					localStorage.mfdLanguage === "set_language_dutch" ? "Volg deze richting" :
-					"Follow the heading"
-				);
+				var translations =
+				{
+					"set_language_french": "Suivez le cap indiqu&eacute;",
+					"set_language_german": "Folgen Sie dem Pfeil",
+					"set_language_spanish": "Siga el rumbo indicado",
+					"set_language_italian": "Sequire la direzione",
+					"set_language_dutch": "Volg deze richting"
+				};
+				var content = translations[localStorage.mfdLanguage] || "Follow the heading";
+				$("#satnav_guidance_next_street").html(content);
 
 				//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
 
@@ -5025,6 +5188,22 @@ function handleItemChange(item, value)
 					|| button === "LEFT_BUTTON"
 					|| button === "RIGHT_BUTTON")
 			{
+				// In non-menu screens, MFD dim level is adjusted with the IR remote control "UP" and "DOWN" buttons
+				if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
+				{
+					var color = $(":root").css("--main-color").substring(0, 7);
+					var opacity = parseInt($(":root").css("--main-color").substring(7, 9), 16);
+
+					// 10 steps to go up/down 100 alpha channel units (opacity)
+					opacity = button === "UP_BUTTON" ? opacity + 10 : opacity - 10;
+					opacity = clamp(opacity, 155, 255);
+
+					$(":root").css("--main-color", color + opacity.toString(16));  // Set the new value
+					localStorage.dimLevel = opacity;
+
+					break;
+				} // if
+
 				// While driving, it is not possible to navigate the main sat nav menu
 				// (but "satnav_guidance_tools_menu" can be navigated)
 				if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
@@ -5289,7 +5468,7 @@ function setLanguage(language)
 			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Name");
 			$("#satnav_archive_in_directory .button:eq(0)").html("Correction");
 			$("#satnav_archive_in_directory .button:eq(1)").html("Personal dir");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Professional d");
+			$("#satnav_archive_in_directory .button:eq(2)").html("Professional dir");
 
 			$("#satnav_rename_entry_in_directory_title").html("Rename entry");
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Name");
@@ -6122,6 +6301,10 @@ function setLanguage(language)
 
 function setUnits(distanceUnit, temperatureUnit, timeUnit)
 {
+	localStorage.mfdDistanceUnit = distanceUnit;
+	localStorage.mfdTemperatureUnit = temperatureUnit;
+	localStorage.mfdTimeUnit = timeUnit;
+
 	if (distanceUnit === "set_units_mph")
 	{
 		$('[gid="fuel_level_filtered_unit"]').text("gl");
@@ -6156,6 +6339,7 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 // To be called by the body "onload" event
 function htmlBodyOnLoad()
 {
+	setDimLevel(localStorage.dimLevel);
 	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
 	setLanguage(localStorage.mfdLanguage);
 

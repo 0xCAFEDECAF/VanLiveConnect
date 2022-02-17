@@ -24,13 +24,16 @@ char carInfo_css[] PROGMEM = R"=====(
   font-family:Dots-All-For-Now;
   src:url(DotsAllForNow.woff) format('woff');
 }
+:root {
+  --main-color:#dfe7f2ff;
+}
 body
 {
   /* Nice "dark-theme" background with light-blue text */
   /* background-color:rgb(41,55,74); */
   background-color:rgb(8,7,19);
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
-  color:#dfe7f2;
+  color:var(--main-color);
   font-size:50px;
   white-space:nowrap;
 
@@ -48,7 +51,7 @@ body
 {
   position:relative;
   font-size:30px;
-  border:#dfe7f2;
+  /* border:#dfe7f2; */
   border-width:4px;
   border-style:solid;
   border-radius:30px;
@@ -115,7 +118,7 @@ body
 }
 .ledOn
 {
-  background-color:#dfe7f2;
+  background-color:var(--main-color);
 }
 .ledOff
 {
@@ -124,8 +127,8 @@ body
 }
 .ledActive
 {
-  border-top:25px solid #dfe7f2;
-  border-bottom:25px solid #dfe7f2;
+  border-top:25px solid var(--main-color);
+  border-bottom:25px solid var(--main-color);
 }
 
 /* Style the "glow" effect */
@@ -173,17 +176,18 @@ body
 {
   position:absolute;
   overflow:hidden;
-  color:#dfe7f2;
+  /* color:#dfe7f2; */
   text-align:center;
 }
-.iconLed
-{
-  color:rgb(41,55,74);
-  border-radius:5px;
-}
+/* .iconLed */
+/* { */
+  /* color:rgb(41,55,74); */
+  /* border-radius:5px; */
+/* } */
 .iconBorder
 {
-  border:5px solid #dfe7f2;
+  /* border:5px solid #dfe7f2; */
+  border:5px solid;
   border-radius:15px;
 }
 .iconSmall
@@ -217,24 +221,24 @@ body
 {
   position:absolute;
   overflow:hidden;
-  color:#dfe7f2;
+  /* color:#dfe7f2; */
   text-align:center;
   line-height:1.3;
 }
 .tabTop
 {
-  border-top:5px solid #dfe7f2;
-  border-left:5px solid #dfe7f2;
-  border-right:5px solid #dfe7f2;
+  border-top:5px solid var(--main-color);
+  border-left:5px solid var(--main-color);
+  border-right:5px solid var(--main-color);
   border-top-left-radius:15px;
   border-top-right-radius:15px;
 }
 .tabBottom
 {
   height:70px;
-  border-bottom:5px solid #dfe7f2;
-  border-left:5px solid #dfe7f2;
-  border-right:5px solid #dfe7f2;
+  border-bottom:5px solid var(--main-color);
+  border-left:5px solid var(--main-color);
+  border-right:5px solid var(--main-color);
   border-bottom-left-radius:15px;
   border-bottom-right-radius:15px;
   line-height:1.5;
@@ -243,9 +247,9 @@ body
 {
   position:absolute;
   height:60px;
-  border-top:5px solid #dfe7f2;
-  border-left:5px solid #dfe7f2;
-  border-bottom:5px solid #dfe7f2;
+  border-top:5px solid var(--main-color);
+  border-left:5px solid var(--main-color);
+  border-bottom:5px solid var(--main-color);
   border-top-left-radius:15px;
   border-bottom-left-radius:15px;
   line-height:1.15;
@@ -257,14 +261,14 @@ body
   position:absolute;
   background:none;
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
-  color:#dfe7f2;
+  color:var(--main-color);
   font-size:50px;
   line-height:1.0;
   white-space:nowrap;
   outline: none;
-  border-top:5px solid #dfe7f2;
-  border-left:5px solid #dfe7f2;
-  border-right:5px solid #dfe7f2;
+  border-top:5px solid var(--main-color);
+  border-left:5px solid var(--main-color);
+  border-right:5px solid var(--main-color);
   border-bottom:none;
   border-top-left-radius:15px;
   border-top-right-radius:15px;
@@ -272,21 +276,22 @@ body
 .tab button.active
 {
   color:rgb(41,55,74);
-  background-color:#dfe7f2;
+  background-color:var(--main-color);
 }
 
 /* Style the tab content */
 .tabContent
 {
   display:none;
-  border:5px solid #dfe7f2;
+  /* border:5px solid #dfe7f2; */
+  border:5px solid;
   border-radius:15px;
   position:absolute;
 }
 .tabActive
 {
   color:rgb(41,55,74);
-  background-color:#dfe7f2;
+  background-color:var(--main-color);
 }
 .subScreen
 {
@@ -295,12 +300,14 @@ body
 .horizontalLine
 {
   position:absolute;
-  border-top:5px solid #dfe7f2;
+  /* border-top:5px solid #dfe7f2; */
+  border-top:5px solid;
 }
 .verticalLine
 {
   position:absolute;
-  border-left:5px solid #dfe7f2;
+  /* border-left:5px solid #dfe7f2; */
+  border-left:5px solid;
 }
 .centerAligned
 {
@@ -316,7 +323,8 @@ body
 .notificationPopup
 {
   background-color:rgba(15,19,23,0.95);
-  border:5px solid #dfe7f2;
+  /* border:5px solid #dfe7f2; */
+  border:5px solid;
   border-radius:15px;
   left:55px;
   top:200px;
@@ -340,7 +348,8 @@ body
 .highlight
 {
   display:none;
-  border:12px solid #dfe7f2;
+  /* border:12px solid #dfe7f2; */
+  border:12px solid;
   background-color:rgba(223,231,242,0.4);
 }
 .show
@@ -361,7 +370,8 @@ body
 {
   fill-opacity:0;
   stroke-width:8;
-  stroke:#dfe7f2;
+  /* stroke:#dfe7f2; */
+  stroke:var(--main-color);
 }
 .gaugeBoxDiv
 {
@@ -398,7 +408,8 @@ body
 .button
 {
   overflow:hidden;
-  border:5px solid #dfe7f2;
+  /* border:5px solid #dfe7f2; */
+  border:5px solid;
   border-radius:15px;
   border-style:dotted;
   text-align:center;
@@ -411,8 +422,9 @@ body
 .buttonSelected
 {
   color:rgb(41,55,74);
-  background-color:#dfe7f2;
-  border:5px solid #dfe7f2;
+  background-color:var(--main-color);
+  /* border:5px solid #dfe7f2; */
+  border:5px solid var(--main-color);
 }
 .buttonDisabled
 {
@@ -451,7 +463,7 @@ body
 
   /* Invert foreground and background color */
   color:rgb(41,55,74);
-  background-color:#dfe7f2;
+  background-color:var(--main-color);
 }
 .tickBox
 {
@@ -492,7 +504,7 @@ body
 /* Sat nav menu and screen element styles */
 .satNavInstructionIcon
 {
-  stroke:#dfe7f2;
+  stroke:var(--main-color);
   stroke-width:14;
   stroke-linecap:round;
   fill:rgb(41,55,74);
@@ -503,7 +515,7 @@ body
 }
 .satNavInstructionIconText
 {
-  fill:#dfe7f2;
+  fill:var(--main-color);
   dominant-baseline:middle;
   text-anchor:middle;
 }
@@ -517,9 +529,9 @@ body
 }
 .satNavRoundabout
 {
-  fill:rgb(41,55,74);
+  /* fill:rgb(41,55,74); */
   stroke-width:5;
-  stroke:#dfe7f2;
+  stroke:var(--main-color);
 }
 .satNavEnterDestination
 {
@@ -543,7 +555,7 @@ body
   line-height:1.5;
   display:inline-block;
   background:none;
-  color:#dfe7f2;
+  color:var(--main-color);
   border-style:none;
 }
 .satNavAddressEntry

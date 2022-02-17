@@ -1698,7 +1698,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"hazard_lights\": \"%S\",\n"
+            "\"hazard_lights_button\": \"%S\",\n"  // Not sure
             "\"door_lock\": \"%S\",\n"
             "\"dashboard_programmed_brightness\": \"%u\",\n"
             "\"esp\": \"%S\",\n"
@@ -2188,14 +2188,10 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitPkt
 
-VanPacketParseResult_t ParseTimePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseMfdLanguageUnitsPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#984
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#984
-
-    // TODO - seems to have nothing to do with time. Mine is always the same:
-    //   Raw: #2692 ( 7/15) 10 0E 984 W-0 00-00-00-06-08-D0-C8 NO_ACK OK D0C8 CRC_OK
-    // regardless of the time.
 
     const uint8_t* data = pkt.Data();
 
@@ -2204,22 +2200,34 @@ VanPacketParseResult_t ParseTimePkt(TVanPacketRxDesc& pkt, char* buf, const int 
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"uptime_battery\": \"%u\",\n"
-            "\"uptime\": \"%uh%um\"\n"
+            "\"mfd_language\": \"%S\",\n"
+            "\"mfd_temperature_unit\": \"%S\",\n"
+            "\"mfd_distance_unit\": \"%S\",\n"
+            "\"mfd_time_unit\": \"%S\"\n"
         "}\n"
     "}\n";
 
     int at = snprintf_P(buf, n, jsonFormatter,
-        (uint16_t)data[0] << 8 | data[1],
-        data[3],
-        data[4]
+        data[3] == 0x00 ? PSTR("FRENCH") :
+        data[3] == 0x01 ? PSTR("ENGLISH") :
+        data[3] == 0x02 ? PSTR("GERMAN") :
+        data[3] == 0x03 ? PSTR("SPANISH") :
+        data[3] == 0x04 ? PSTR("ITALIAN") :
+        data[3] == 0x06 ? PSTR("DUTCH") :
+        notApplicable3Str,
+
+        data[4] & 0x02 ? PSTR("FAHRENHEIT") : PSTR("CELSIUS"),
+        data[4] & 0x04 ? PSTR("MILES_YARDS") : PSTR("KILOMETRES_METRES"),
+        data[4] & 0x08 ? PSTR("24_H") : PSTR("12_H")
     );
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
+    // TODO - set variables 'mfdLanguage', 'mfdDistanceUnit', 'mfdTemperatureUnit', 'mfdTimeUnit'?
+
     return VAN_PACKET_PARSE_OK;
-} // ParseTimePkt
+} // ParseMfdLanguageUnitsPkt
 
 bool isHeadUnitPowerOn = false;
 bool seenTapePresence = false;
@@ -2809,6 +2817,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0320 ? PSTR("STOPPING_GUIDANCE") :
         status == 0x0400 ? PSTR("START_OF_AUDIO_MESSAGE") :
         status == 0x0410 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :
+        status == 0x0430 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :
         status == 0x0600 ? PSTR("START_OF_AUDIO_MESSAGE") :  // TODO - guessing
         status == 0x0700 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START") :
         status == 0x0701 ? PSTR("INSTRUCTION_AUDIO_MESSAGE_START") :
@@ -2946,6 +2955,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"satnav_gps_fix\": \"%S\",\n"
             "\"satnav_gps_fix_lost\": \"%S\",\n"
             "\"satnav_gps_scanning\": \"%S\",\n"
+            "\"satnav_language\": \"%S\",\n"
             "\"satnav_gps_speed\": \"%S%u\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
@@ -2965,6 +2975,14 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[2] & 0x01 ? yesStr : noStr,
         data[2] & 0x02 ? yesStr : noStr,
         data[2] & 0x04 ? yesStr : noStr,
+
+        data[5] == 0x00 ? PSTR("FRENCH") :
+        data[5] == 0x01 ? PSTR("ENGLISH") :
+        data[5] == 0x02 ? PSTR("GERMAN") :
+        data[5] == 0x03 ? PSTR("SPANISH") :
+        data[5] == 0x04 ? PSTR("ITALIAN") :
+        data[5] == 0x06 ? PSTR("DUTCH") :
+        notApplicable3Str,
 
         // 0xE0 as boundary for "reverse": just guessing. Do we ever drive faster than 224 km/h?
         data[16] >= 0xE0 ? dashStr : emptyStr,
@@ -4939,14 +4957,15 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             Serial.printf_P(PSTR("DIFF: %03X %1X (%s) "), iden, pkt.CommandFlags(), pkt.CommandFlagsStr());
             if (dataLen > 0)
             {
-                for (int i = 0; i < dataLen; i++)
+                int n = handler->prevDataLen < dataLen ? handler->prevDataLen : dataLen;
+                for (int i = 0; i < n; i++)
                 {
                     char diffByte[3] = "  ";
                     if (data[i] != handler->prevData[i])
                     {
                         snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);
                     } // if
-                    Serial.printf_P(PSTR("%s%S"), diffByte, i < dataLen - 1 ? dashStr : emptyStr);
+                    Serial.printf_P(PSTR("%s%S"), diffByte, i < n - 1 ? dashStr : emptyStr);
                 } // for
                 Serial.println();
             }
@@ -5010,7 +5029,7 @@ static IdenHandler_t handlers[] =
     { DASHBOARD_IDEN, "dashboard", 7, true, &ParseDashboardPkt, -1 },
     { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, true, &ParseDashboardButtonsPkt, -1 },
     { HEAD_UNIT_IDEN, "head_unit", -1, true, &ParseHeadUnitPkt, -1 },
-    { TIME_IDEN, "time", 5, true, &ParseTimePkt, -1 },
+    { MFD_LANGUAGE_UNITS_IDEN, "time", 5, true, &ParseMfdLanguageUnitsPkt, -1 },
     { AUDIO_SETTINGS_IDEN, "audio_settings", 11, true, &ParseAudioSettingsPkt, -1 },
     { MFD_STATUS_IDEN, "mfd_status", 2, true, &ParseMfdStatusPkt, -1 },
     { AIRCON1_IDEN, "aircon_1", 5, true, &ParseAirCon1Pkt, -1 },

@@ -11,6 +11,8 @@
 // - Removed all decoding stuff except decoding as hash
 //
 
+#include "Config.h"
+
 // Receiver states
 #define STATE_IDLE 2
 #define STATE_MARK 3
@@ -332,7 +334,7 @@ bool IrReceive(TIrPacket& irPacket)
     #define IR_BUTTON_HELD_INTV_MS (50UL)
 
     // Same IR decoded value seen within this time (milliseconds) is seen as "held" button
-    #define IR_BUTTON_HELD_2_MS (80UL)
+    #define IR_BUTTON_HELD_2_MS (95UL)
 
     irPacket.held = irPacket.value == lastValue && lastInterval < IR_BUTTON_HELD_2_MS;
 
