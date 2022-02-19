@@ -1891,6 +1891,9 @@ var satnavServices = JSON.parse(localStorage.satnavServices || "[]");
 var satnavPersonalDirectoryEntries = JSON.parse(localStorage.satnavPersonalDirectoryEntries || "[]");
 var satnavProfessionalDirectoryEntries = JSON.parse(localStorage.satnavProfessionalDirectoryEntries || "[]");
 
+var satnavDiscUnreadbleText = "Navigation CD-ROM<br />is unreadable";
+var satnavDiscMissingText = "Navigation CD-ROM is<br />missing";
+
 function satnavShowDisclaimer()
 {
 	if (satnavDisclaimerAccepted) return;
@@ -1917,29 +1920,13 @@ function satnavGotoMainMenu()
 
 	if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
 	{
-		var translations =
-		{
-			"set_language_french": "Le CD-ROM de navigation<br />est absent",
-			"set_language_german": "Die Navigations CD-ROM<br />fehlt",
-			"set_language_spanish": "No hay CD-ROM de<br />navegaci&oacute;n",
-			"set_language_italian": "Il CD-ROM di navigazione<br />&egrave; assente",
-			"set_language_dutch": "De navigatie CD-rom is<br />niet aanwezig"
-		};
-		showStatusPopup(translations[localStorage.mfdLanguage] || "Navigation CD-ROM is<br />missing", 8000);
+		showStatusPopup(satnavDiscMissingText, 8000);
 		return;
 	} // if
 
 	if (satnavStatus1.match(/DISC_UNREADABLE/))
 	{
-		var translations =
-		{
-			"set_language_french": "Le CD-ROM de navigation<br />est illisible",
-			"set_language_german": "Die Navigations CD-ROM<br />is unleserlich",
-			"set_language_spanish": "No se puede leer<br />CD-ROM de navegaci&oacute;n",
-			"set_language_italian": "Il CD-ROM di navigazione<br />&egrave; illeggibile",
-			"set_language_dutch": "De navigatie CD-rom is<br />onleesbaar"
-		};
-		showStatusPopup(translations[localStorage.mfdLanguage] || "Navigation CD-ROM<br />is unreadable", 10000);
+		showStatusPopup(satnavDiscUnreadbleText, 10000);
 		return;
 	} // if
 
@@ -4106,12 +4093,12 @@ function handleItemChange(item, value)
 			}
 			else if (satnavStatus1.match(/NO_DISC/))
 			{
-				showStatusPopup("Navigation CD-ROM is<br />missing", 5000);
+				showStatusPopup(satnavDiscMissingText, 5000);
 			} // if
 			else if (satnavStatus1.match(/DISC_UNREADABLE/))
 			{
 				// TODO - show popup not directly, but only after a few times this status
-				showStatusPopup("Navigation CD-ROM<br />is unreadable", 5000);
+				showStatusPopup(satnavDiscUnreadbleText, 5000);
 			} // if
 		} // case
 		break;
@@ -4283,7 +4270,7 @@ function handleItemChange(item, value)
 			// At the 6-th and 14-th time of consequently reporting "NO", shortly show a status popup
 			if (handleItemChange.nSatNavDiscUnreadable == 6 || handleItemChange.nSatNavDiscUnreadable == 14)
 			{
-				showStatusPopup("Navigation CD-ROM<br />is unreadable", 4000);
+				showStatusPopup(satnavDiscUnreadbleText, 4000);
 			} // if
 		} // case
 		break;
@@ -5387,6 +5374,8 @@ function setLanguage(language)
 			stopGuidanceText = "Stop guidance";
 			resumeGuidanceText = "Resume guidance";
 			streetNotListedText = "Street not listed";
+			satnavDiscUnreadbleText = "Navigation CD-ROM<br />is unreadable";
+			satnavDiscMissingText = "Navigation CD-ROM is<br />missing";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Enter new destination");
@@ -5545,6 +5534,8 @@ function setLanguage(language)
 			stopGuidanceText = "Arr&ecirc;ter le guidage";
 			resumeGuidanceText = "Reprendre le guidage";
 			streetNotListedText = "Rue non r&eacute;pertori&eacute;e";  // TODO - check
+			satnavDiscUnreadbleText = "Le CD-ROM de navigation<br />est illisible";
+			satnavDiscMissingText = "Le CD-ROM de navigation<br />est absent";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Saisie d'une nouvelle destination");
@@ -5703,6 +5694,8 @@ function setLanguage(language)
 			stopGuidanceText = "F&uuml;hrung abbrechen";
 			resumeGuidanceText = "F&uuml;hrung wieder aufnehmen";
 			streetNotListedText = "Stra&szlig;e unbekannt";  // TODO - check
+			satnavDiscUnreadbleText = "Die Navigations CD-ROM<br />is unleserlich";
+			satnavDiscMissingText = "Die Navigations CD-ROM<br />fehlt";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigation / F&uuml;hrung<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Neues Ziel eingeben");
@@ -5862,6 +5855,8 @@ function setLanguage(language)
 			stopGuidanceText = "Interrumpir guiado";
 			resumeGuidanceText = "Reanudar el guiado";
 			streetNotListedText = "Calle no listada"; // TODO - check
+			satnavDiscUnreadbleText = "No se puede leer<br />CD-ROM de navegaci&oacute;n";
+			satnavDiscMissingText = "No hay CD-ROM de<br />navegaci&oacute;n";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navegaci&oacute;n / Guiado<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Introducir nuevo destino");
@@ -6020,6 +6015,8 @@ function setLanguage(language)
 			stopGuidanceText = "Interrompere la guida";
 			resumeGuidanceText = "Riprendere la guida";
 			streetNotListedText = "Strada non elencata";  // TODO - check
+			satnavDiscUnreadbleText = "Il CD-ROM di navigazione<br />&egrave; illeggibile";
+			satnavDiscMissingText = "Il CD-ROM di navigazione<br />&egrave; assente";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigazione/Guida<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Inserire una nuova destinazione");
@@ -6178,6 +6175,8 @@ function setLanguage(language)
 			stopGuidanceText = "Stop navigatie";
 			resumeGuidanceText = "Laatste bestemming";
 			streetNotListedText = "Straat onbekend";  // TODO - check
+			satnavDiscUnreadbleText = "De navigatie CD-rom is<br />onleesbaar";
+			satnavDiscMissingText = "De navigatie CD-rom is<br />niet aanwezig";
 
 			$("#satnav_main_menu .menuTitleLine").html("Navigatie/ Begeleiding<br />");
 			$("#satnav_main_menu .button:eq(0)").html("Nieuwe bestemming invoeren");
