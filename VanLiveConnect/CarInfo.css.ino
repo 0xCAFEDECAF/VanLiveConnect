@@ -51,32 +51,12 @@ body
 {
   position:relative;
   font-size:30px;
-  /* border:#dfe7f2; */
   border-width:4px;
   border-style:solid;
   border-radius:30px;
   padding-left: 5px;
   padding-right: 5px;
 }
-/* Breaking of lines is prevented by setting 'white-space:pre', but in IE, that shoud *NOT* be set to achieve
-   the same */
-/*
-@-moz-document url-prefix()
-{
-  textarea
-  {
-    white-space:pre;
-  }
-}
-@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none)
-{
-  textarea
-  {
-    background-color:rgb(41,55,74);
-    color:#dfe7f2;
-  }
-}
-*/
 .tag
 {
   position:absolute;
@@ -176,17 +156,10 @@ body
 {
   position:absolute;
   overflow:hidden;
-  /* color:#dfe7f2; */
   text-align:center;
 }
-/* .iconLed */
-/* { */
-  /* color:rgb(41,55,74); */
-  /* border-radius:5px; */
-/* } */
 .iconBorder
 {
-  /* border:5px solid #dfe7f2; */
   border:5px solid;
   border-radius:15px;
 }
@@ -221,7 +194,6 @@ body
 {
   position:absolute;
   overflow:hidden;
-  /* color:#dfe7f2; */
   text-align:center;
   line-height:1.3;
 }
@@ -283,7 +255,6 @@ body
 .tabContent
 {
   display:none;
-  /* border:5px solid #dfe7f2; */
   border:5px solid;
   border-radius:15px;
   position:absolute;
@@ -300,13 +271,11 @@ body
 .horizontalLine
 {
   position:absolute;
-  /* border-top:5px solid #dfe7f2; */
   border-top:5px solid;
 }
 .verticalLine
 {
   position:absolute;
-  /* border-left:5px solid #dfe7f2; */
   border-left:5px solid;
 }
 .centerAligned
@@ -323,7 +292,6 @@ body
 .notificationPopup
 {
   background-color:rgba(15,19,23,0.95);
-  /* border:5px solid #dfe7f2; */
   border:5px solid;
   border-radius:15px;
   left:55px;
@@ -348,7 +316,6 @@ body
 .highlight
 {
   display:none;
-  /* border:12px solid #dfe7f2; */
   border:12px solid;
   background-color:rgba(223,231,242,0.4);
 }
@@ -370,7 +337,6 @@ body
 {
   fill-opacity:0;
   stroke-width:8;
-  /* stroke:#dfe7f2; */
   stroke:var(--main-color);
 }
 .gaugeBoxDiv
@@ -408,7 +374,6 @@ body
 .button
 {
   overflow:hidden;
-  /* border:5px solid #dfe7f2; */
   border:5px solid;
   border-radius:15px;
   border-style:dotted;
@@ -423,7 +388,6 @@ body
 {
   color:rgb(41,55,74);
   background-color:var(--main-color);
-  /* border:5px solid #dfe7f2; */
   border:5px solid var(--main-color);
 }
 .buttonDisabled
@@ -479,7 +443,7 @@ body
   line-height:70px;
 }
 
-/* Multi media */
+/* Multimedia */
 .mediaStatus
 {
   display:none;

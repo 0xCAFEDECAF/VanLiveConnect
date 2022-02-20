@@ -1,18 +1,22 @@
 
 // Either this for "WebSockets" (https://github.com/Links2004/arduinoWebSockets):
 //
-// Hack: in the file:
-//    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
-// change the line:
-//   #define WEBSOCKETS_TCP_TIMEOUT (5000)
-// into:
-//   #define WEBSOCKETS_TCP_TIMEOUT (1000)
-// to prevent the VAN bus receiver from overrunning when the web socket disconnects
-
 #include <WebSocketsServer.h>
 
 // Or this for "WebSockets_Generic" (https://github.com/khoih-prog/WebSockets_Generic):
 //#include <WebSocketsServer_Generic.h>
+
+// In the file:
+//    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
+// the line:
+//   #define WEBSOCKETS_TCP_TIMEOUT (5000)
+// must be changed to:
+//   #define WEBSOCKETS_TCP_TIMEOUT (1000)
+// to prevent the VAN bus receiver from overrunning when the web socket disconnects
+#if WEBSOCKETS_TCP_TIMEOUT > 1000
+#error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
+#error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; set to at most 1000!"
+#endif
 
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;

@@ -59,94 +59,94 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- Hierarchy of screens:
 
-				 |
-				 ` body
-					 |
-					 `- "Small" informaton panel (left)
-					 |	`- div id="trip_info"
-					 |	`- div id="gps_info"
-					 |	`- div id="instrument_small"
-					 |	`- div id="tuner_small"
-					 |
-					 `- Vertical separator line
-					 |
-					 `- "Large" informaton panel (right)
-					 |	|
-					 |	`- div id="clock" # Nothing better to show
-					 |	|
-					 |	`- div id="audio" # All audio-related screens
-					 |	|	`- div id="tuner" # Radio
-					 |	|	`- div id="media" # Removable media
-					 |	|		 `- div id="tape"
-					 |	|		 `- div id="cd_player"
-					 |	|		 `- div id="cd_changer"
-					 |	|
-					 |	`- div id="pre_flight" # "Pre-flight checks": screen shown at contact key turn to "ON"
-					 |	|
-					 |	`- div id="instruments" # Instrument cluster
-					 |	|
-					 |	`- div id="main_menu"
-					 |	`- div id="screen_configuration_menu"
-					 |	`- div id="set_screen_brightness"
-					 |	`- div id="set_date_time"
-					 |	`- div id="set_language"
-					 |	`- div id="set_units"
-					 |	|
-					 |	`- div id="sat_nav"	# Satellite navigation
-					 |	| `- div id="satnav_current_location"
-					 |	| `- div id="satnav_disclaimer"
-					 |	| `- div id="satnav_main_menu"
-					 |	| `- div id="satnav_select_from_memory_menu"
-					 |	| `- div id="satnav_navigation_options_menu"
-					 |	| `- div id="satnav_directory_management_menu"
-					 |	| `- div id="satnav_guidance_tools_menu"
-					 |	| `- div id="satnav_guidance_preference_menu"
-					 |	| `- div id="satnav_vocal_synthesis_level"
-					 |	| `- div id="satnav_enter_destination"
-					 |	| | `- div id="satnav_enter_characters"
-					 |	| | | `- div id="satnav_enter_city_characters"
-					 |	| | | `- div id="satnav_enter_street_characters"
-					 |	| | `- div id="satnav_choose_from_list"
-					 |	| | `- div id="satnav_enter_house_number"
-					 |	| |	 `- div id="satnav_current_destination_house_number"
-					 |	| `- div id="satnav_show_address"
-					 |	| | `- div id="satnav_show_personal_address"
-					 |	| | `- div id="satnav_show_professional_address"
-					 |	| | `- div id="satnav_show_service_address"
-					 |	| | `- div id="satnav_show_current_destination"
-					 |	| | `- div id="satnav_show_last_destination"
-					 |	| `- div id="satnav_archive_in_directory"
-					 |	| `- div id="satnav_rename_entry_in_directory"
-					 |	| `- div id="satnav_guidance"
-					 |	|
-					 |	|	# Popups in the "large" information panel
-					 |	`- div id="climate_control_popup"
-					 |	`- div id="audio_popup"
-					 |	|	`- div id="tuner_popup"
-					 |	|	`- div id="tape_popup"
-					 |	|	`- div id="cd_player_popup"
-					 |	|	`- div id="cd_changer_popup"
-					 |	`- div id="satnav_reached_destination_popup"
-					 |	`- div id="trip_computer_popup"
-					 |	`- div id="door_open_popup"
-					 |	`- div id="notification_popup" # Popup window with warning or information icon
-					 |	`- div id="satnav_initializing_popup"
-					 |	`- div id="satnav_input_stored_in_personal_dir_popup"
-					 |	`- div id="satnav_input_stored_in_professional_dir_popup"
-					 |	`- div id="satnav_delete_item_popup"
-					 |	`- div id="satnav_computing_route_popup"
-					 |	`- div id="satnav_guidance_preference_popup" # Change navigation preference popup
-					 |	`- div id="satnav_delete_directory_data_popup" # Delete sat nav directory data popup
-					 |	`- div id="satnav_continue_guidance_popup"
-					 |	`- div id="status_popup" # Simple popup without icon
-					 |	`- div id="audio_settings_popup"
-					 |
-					 |	# Full-screen popups
-					 `- div id="tuner_presets_popup"
-					 |
-					 `- div id="system"
-					 |
-					 `- Status line
+		 |
+		 ` body
+			 |
+			 `- "Small" informaton panel (left)
+			 |	`- div id="trip_info"
+			 |	`- div id="gps_info"
+			 |	`- div id="instrument_small"
+			 |	`- div id="tuner_small"
+			 |
+			 `- Vertical separator line
+			 |
+			 `- "Large" informaton panel (right)
+			 |	|
+			 |	`- div id="clock" # Nothing better to show
+			 |	|
+			 |	`- div id="audio" # All audio-related screens
+			 |	|	`- div id="tuner" # Radio
+			 |	|	`- div id="media" # Removable media
+			 |	|		 `- div id="tape"
+			 |	|		 `- div id="cd_player"
+			 |	|		 `- div id="cd_changer"
+			 |	|
+			 |	`- div id="pre_flight" # "Pre-flight checks": screen shown at contact key turn to "ON"
+			 |	|
+			 |	`- div id="instruments" # Instrument cluster
+			 |	|
+			 |	`- div id="main_menu"
+			 |	`- div id="screen_configuration_menu"
+			 |	`- div id="set_screen_brightness"
+			 |	`- div id="set_date_time"
+			 |	`- div id="set_language"
+			 |	`- div id="set_units"
+			 |	|
+			 |	`- div id="sat_nav"	# Satellite navigation
+			 |	| `- div id="satnav_current_location"
+			 |	| `- div id="satnav_disclaimer"
+			 |	| `- div id="satnav_main_menu"
+			 |	| `- div id="satnav_select_from_memory_menu"
+			 |	| `- div id="satnav_navigation_options_menu"
+			 |	| `- div id="satnav_directory_management_menu"
+			 |	| `- div id="satnav_guidance_tools_menu"
+			 |	| `- div id="satnav_guidance_preference_menu"
+			 |	| `- div id="satnav_vocal_synthesis_level"
+			 |	| `- div id="satnav_enter_destination"
+			 |	| | `- div id="satnav_enter_characters"
+			 |	| | | `- div id="satnav_enter_city_characters"
+			 |	| | | `- div id="satnav_enter_street_characters"
+			 |	| | `- div id="satnav_choose_from_list"
+			 |	| | `- div id="satnav_enter_house_number"
+			 |	| |	 `- div id="satnav_current_destination_house_number"
+			 |	| `- div id="satnav_show_address"
+			 |	| | `- div id="satnav_show_personal_address"
+			 |	| | `- div id="satnav_show_professional_address"
+			 |	| | `- div id="satnav_show_service_address"
+			 |	| | `- div id="satnav_show_current_destination"
+			 |	| | `- div id="satnav_show_last_destination"
+			 |	| `- div id="satnav_archive_in_directory"
+			 |	| `- div id="satnav_rename_entry_in_directory"
+			 |	| `- div id="satnav_guidance"
+			 |	|
+			 |	|	# Popups in the "large" information panel
+			 |	`- div id="climate_control_popup"
+			 |	`- div id="audio_popup"
+			 |	|	`- div id="tuner_popup"
+			 |	|	`- div id="tape_popup"
+			 |	|	`- div id="cd_player_popup"
+			 |	|	`- div id="cd_changer_popup"
+			 |	`- div id="satnav_reached_destination_popup"
+			 |	`- div id="trip_computer_popup"
+			 |	`- div id="door_open_popup"
+			 |	`- div id="notification_popup" # Popup window with warning or information icon
+			 |	`- div id="satnav_initializing_popup"
+			 |	`- div id="satnav_input_stored_in_personal_dir_popup"
+			 |	`- div id="satnav_input_stored_in_professional_dir_popup"
+			 |	`- div id="satnav_delete_item_popup"
+			 |	`- div id="satnav_computing_route_popup"
+			 |	`- div id="satnav_guidance_preference_popup" # Change navigation preference popup
+			 |	`- div id="satnav_delete_directory_data_popup" # Delete sat nav directory data popup
+			 |	`- div id="satnav_continue_guidance_popup"
+			 |	`- div id="status_popup" # Simple popup without icon
+			 |	`- div id="audio_settings_popup"
+			 |
+			 |	# Full-screen popups
+			 `- div id="tuner_presets_popup"
+			 |
+			 `- div id="system"
+			 |
+			 `- Status line
 		-->
 
 		<!-- "Small" information panel -->
@@ -234,7 +234,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			</div>	<!-- Trip info -->
 
-			<!-- GPS info: compass, GPS fix icon and current street -->
+			<!-- GPS info: GPS fix icon and current street -->
 
 			<div id="gps_info" style="display:none;">
 
@@ -263,6 +263,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div gid="engine_rpm" class="dseg7" style="font-size:70px; left:10px; top:213px; width:260px;">0</div>
 				<div class="tag" style="text-align:left; left:280px; top:235px; width:140px;">rpm</div>
 
+				<!-- Fuel level -->
 				<div class="icon iconSmall" style="left:30px; top:320px; height:104px;">
 					<div class="centerAligned fas fa-gas-pump"></div>
 				</div>
@@ -293,12 +294,6 @@ char mfd_html[] PROGMEM = R"=====(
 					<div gid="pi_country" class="dots" style="left:10px; top:480px; width:370px; text-align:right;">--</div>
 				</div>
 			</div>
-
-			<!--
-				Invisible "div" covering entire screen, handling "gorilla-style" taps that trigger a change to the
-				next screen. Leaving top 100 pixels "uncovered" so that the trip info tabs can be reached.
-			-->
-			<!-- <div style="display:block; position:absolute; left:0px; top:100px; width:390px; height:550px;" onclick="nextSmallScreen();"></div> -->
 		</div>	<!-- "Small" information panel -->
 
 		<!-- "Large" information panel -->
@@ -342,6 +337,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="audio" style="display:none;">
 
 				<!-- Head unit status LEDs -->
+
 				<div id="head_unit_power" class="iconSmall led ledOn" style="left:870px; top:40px;">
 					<div class="centerAligned fas fa-power-off"></div>
 				</div>
@@ -365,8 +361,6 @@ char mfd_html[] PROGMEM = R"=====(
 						<line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
 					</svg>
 				</div>
-
-				<!-- Tuner (full) -->
 
 				<div id="tuner" style="display:none;">
 
@@ -422,15 +416,13 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="left:690px; top:420px; width:160px;">Signal</div>
 					<div id="signal_strength" class="dots" style=" left:870px; top:420px;">--</div>
 
-				</div>	<!-- Tuner -->
+				</div>	<!-- "tuner" -->
 
 				<!-- Removable media -->
 
 				<div id="media" style="display:none;">
 
 					<div class="tag" style="left:50px; top:50px; width:200px;">Source</div>
-
-					<!-- Tape -->
 
 					<div id="tape" style="display:none;">
 
@@ -492,8 +484,8 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="centerAligned fas fa-eject"></div>
 						</div>
 
-						<div id="cd_total_time_tag" class="tag" style="left:0px; top:320px; width:180px;">Total</div>
-						<div id="cd_total_time" class="dots" style="left:180px; top:315px; width:200px; text-align:right;">--:--</div>
+						<div id="cd_total_time_tag" class="tag" style="display:none; left:0px; top:320px; width:180px;">Total</div>
+						<div id="cd_total_time" class="dots" style="display:none; left:180px; top:315px; width:200px; text-align:right;">--:--</div>
 
 						<div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
 						<div gid="cd_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
@@ -599,7 +591,7 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 				</div>
 
-				<!-- Engine coolant temperature, both as number (in degrees Celsius) and as linear gauge -->
+				<!-- Engine coolant temperature, both as number (in degrees) and as linear gauge -->
 
 				<div class="icon iconMedium" style="left:580px; top:25px;">
 					<div class="centerAligned fas fa-thermometer-half"></div>
@@ -686,7 +678,6 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
 
 					<!-- Contact key position -->
-
 					<div class="icon iconSmall" style="left:20px; top:366px;">
 						<div class="centerAligned fas fa-key"></div>
 					</div>
@@ -694,14 +685,12 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;"></div>
 
 					<!-- Dashboard illumination level -->
-
 					<div class="icon iconSmall" style="left:710px; top:366px;">
 						<div class="centerAligned fas fa-tachometer-alt"></div>
 					</div>
 					<div class="icon iconSmall" style="left:770px; top:363px;">
 						<div class="centerAligned fas fa-sun"></div>
 					</div>
-
 					<div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:365px; width:130px;">--</div>
 
 					<!-- VIN number (very small) -->
@@ -765,7 +754,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="set_screen_brightness" class="tag menuScreen">
 				<div class="menuTitleLine">Set brightness<br /></div>
-				<small>[Not yet implemented]</small>
+				<small>[Screen not yet implemented]</small>
+				<div style="font-size:35px;">Use "UP" and "DOWN" buttons on remote control</div>
 				<!-- TODO - design this screen -->
 			</div>	<!-- "set_screen_brightness" -->
 
@@ -927,7 +917,8 @@ char mfd_html[] PROGMEM = R"=====(
 					UP_BUTTON="set_language_english"
 					DOWN_BUTTON="set_language_german"
 					on_click="languageValidate();"
-					style="top:300px;">Validate</div>
+					style="top:300px;">Validate
+				</div>
 
 			</div>	<!-- "set_language" -->
 
@@ -1000,7 +991,8 @@ char mfd_html[] PROGMEM = R"=====(
 					DOWN_BUTTON="set_units_km_h"
 					on_click="unitsValidate();"
 					class="button validateButton"
-					style="top:300px;">Validate</div>
+					style="top:300px;">Validate
+				</div>
 
 			</div>	<!-- "set_units" -->
 
@@ -1009,8 +1001,8 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="sat_nav" style="display:none;">
 
 				<!--
-					Top line shows navigation data we always want to see, whether in guidance mode, setting a destination,
-					or just viewing current location
+					Top line shows navigation data we always want to see, whether in guidance mode,
+					setting a destination, or just viewing current location
 				-->
 
 				<!-- Status LEDs -->
@@ -1037,7 +1029,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<!-- Current heading, shown as compass needle -->
-
 				<div id="satnav_curr_heading_compass_needle" class="satNavCompassNeedle" style="transform:rotate(0deg);">
 					<svg>
 						<path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z" transform="scale(0.6)"></path>
@@ -1052,12 +1043,10 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<!-- Current GPS speed -->
-
 				<div id="satnav_gps_speed" class="dots" style="left:40px; top:36px; width:160px; text-align:right;">--</div>
 				<div class="tag" style="left:210px; top:40px; width:120px;">km/h</div>
 
 				<!-- Current location -->
-
 				<div id="satnav_current_location"
 					on_enter="$('#satnav_curr_street_small').hide();"
 					on_exit="$('#satnav_curr_street_small').show();"
@@ -1071,7 +1060,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>	<!-- "satnav_current_location" -->
 
 				<!-- Sat nav disclaimer screen -->
-
 				<div id="satnav_disclaimer" style="display:none;">
 					<div class="tag" style="font-size:45px; left:20px; top:150px; width:920px; height:400px; text-align:center;">
 						<div id="satnav_disclaimer_text">
@@ -1097,8 +1085,9 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
 					<!--
-						This button is disabled until a {"satnav_to_mfd_response":"service","satnav_to_mfd_list_size":"<x>"} packet
-						is received
+						This button is disabled until a
+						  {"satnav_to_mfd_response":"service","satnav_to_mfd_list_size":"<x>"}
+						packet is received
 					-->
 					<div id="satnav_main_menu_select_a_service_button"
 						goto_id="satnav_show_last_destination"
@@ -1114,7 +1103,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>	<!-- "satnav_main_menu" -->
 
 				<!-- Sat nav select from memory menu -->
-
 				<div id="satnav_select_from_memory_menu" class="tag menuScreen">
 					<div class="menuTitleLine">Select from memory<br /></div>
 
@@ -1128,7 +1116,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>	<!-- "satnav_select_from_memory_menu" -->
 
 				<!-- Sat nav navigation options menu -->
-
 				<div id="satnav_navigation_options_menu" class="tag menuScreen">
 					<div class="menuTitleLine">Navigation options<br /></div>
 
@@ -1142,11 +1129,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_navigation_options_menu_stop_guidance_button" class="button"
 						on_click="satnavStopOrResumeGuidance();">Resume guidance</div>
-
 				</div>	<!-- "satnav_navigation_options_menu" -->
 
 				<!-- Sat nav directory management menu -->
-
 				<div id="satnav_directory_management_menu" class="tag menuScreen">
 					<div class="menuTitleLine">Directory management<br /></div>
 
@@ -1158,7 +1143,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>	<!-- "satnav_directory_management_menu" -->
 
 				<!-- Sat nav guidance tools (context) menu -->
-
 				<div id="satnav_guidance_tools_menu" class="tag menuScreen">
 					<div class="menuTitleLine">Guidance tools<br /></div>
 
@@ -1170,11 +1154,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_tools_menu_stop_guidance_button" class="button"
 						on_click="satnavStopGuidance();">Stop guidance</div>
-
 				</div>	<!-- "satnav_guidance_tools_menu" -->
 
 				<!-- Sat nav guidance criteria menu -->
-
 				<div id="satnav_guidance_preference_menu"
 					on_goto="satnavGuidancePreferenceSelectTickedButton();"
 					on_esc="satnavSwitchToGuidanceScreen();"
@@ -1199,11 +1181,9 @@ char mfd_html[] PROGMEM = R"=====(
 						style="top:300px;">
 						Validate
 					</div>
-
 				</div>	<!-- "satnav_guidance_preference_menu" -->
 
 				<!-- Sat nav vocal synthesis level screen -->
-
 				<div id="satnav_vocal_synthesis_level" on_esc="satnavEscapeVocalSynthesisLevel();" class="tag menuScreen">
 
 					<div class="menuTitleLine">Vocal synthesis level<br /></div>
@@ -1239,8 +1219,8 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 
 						<!--
-							On the original MFD, there is only room for 24 characters. If there are more characters to choose
-							from, they spill over to the next line
+							On the original MFD, there is only room for 24 characters. If there are more characters to
+							choose from, they spill over to the next line
 							TODO - sometimes, there is room for 25 characters....
 						-->
 						<div id="satnav_to_mfd_show_characters_line_1"
@@ -1372,8 +1352,8 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_entered_number" class="dots" style="left:25px; top:180px; width:930px;"></div>
 
 						<!--
-							The following div will disappear as soon as the user starts choosing numbers, which will then
-							appear one by one in "satnav_entered_number"
+							The following div will disappear as soon as the user starts choosing numbers, which will
+							then appear one by one in "satnav_entered_number"
 						-->
 						<div id="satnav_current_destination_house_number"
 							on_enter="satnavConfirmHouseNumber();"
@@ -1756,14 +1736,18 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 
 					<div id="satnav_distance_to_dest_via_road_visible">
-						<div id="satnav_distance_to_dest_via_road_number" class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
-						<div id="satnav_distance_to_dest_via_road_unit" class="dots" style="font-size:30px; left:560px; top:480px;"></div>
+						<div id="satnav_distance_to_dest_via_road_number"
+							class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
+						<div id="satnav_distance_to_dest_via_road_unit"
+							class="dots" style="font-size:30px; left:560px; top:480px;"></div>
 					</div>
 
 					<!-- This one is shown instead of the above, in case "Destination is not accessible by road" -->
 					<div id="satnav_distance_to_dest_via_straight_line_visible" style="display:none">
-						<div id="satnav_distance_to_dest_via_straight_line_number" class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
-						<div id="satnav_distance_to_dest_via_straight_line_unit" class="dots" style="font-size:30px; left:560px; top:480px;"></div>
+						<div id="satnav_distance_to_dest_via_straight_line_number"
+							class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
+						<div id="satnav_distance_to_dest_via_straight_line_unit"
+							class="dots" style="font-size:30px; left:560px; top:480px;"></div>
 					</div>
 
 					<!-- Heading to destination -->
@@ -1774,14 +1758,16 @@ char mfd_html[] PROGMEM = R"=====(
 							Rotating round an abstract transform-origin like 'center' is better supported for a <div>
 							than an <svg> element
 						-->
-						<div id="satnav_heading_to_dest_pointer" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
+						<div id="satnav_heading_to_dest_pointer"
+							style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:rotate(0deg); transform-origin:center;">
 							<svg>
 								<path class="satNavInstructionIcon satNavInstructionDisabledIcon" style="stroke-width:8;" d="M40 15 l30 100 l-60 0 Z"></path>
 							</svg>
 						</div>
 
 						<!-- Small "D" at end of arrow, indicating "Destination" -->
-						<div id="satnav_heading_to_dest_tag" style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:translate(0px,-70px); transform-origin:center;">
+						<div id="satnav_heading_to_dest_tag"
+							style="position:absolute; left:60px; top:5px; width:80px; height:120px; transform:translate(0px,-70px); transform-origin:center;">
 							<svg>
 								<text class="satNavInstructionIconText satNavInstructionDisabledIconText" x="40" y="60" font-size="30px">D</text>
 							</svg>
@@ -1996,7 +1982,8 @@ char mfd_html[] PROGMEM = R"=====(
 							</svg>
 
 							<!-- Roundabout -->
-							<div id="satnav_curr_turn_roundabout" style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
+							<div id="satnav_curr_turn_roundabout"
+								style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
 								<svg width="300" height="300">
 									<circle class="satNavRoundabout" cx="150" cy="150" r="40"></circle>
 									<circle class="satNavRoundabout" cx="150" cy="150" r="20"></circle>
@@ -2011,7 +1998,9 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>	<!-- "satnav_curr_turn_icon" -->
 
 						<!-- Next turn icon -->
-						<div id="satnav_next_turn_icon" class="icon" style="display:none; position:absolute; left:160px; top:0px; width:180px; height:180px;">
+						<div id="satnav_next_turn_icon"
+							class="icon"
+							style="display:none; position:absolute; left:160px; top:0px; width:180px; height:180px;">
 
 							<!-- "To" direction as arrow -->
 							<div id="satnav_next_turn_icon_direction" style="z-index:-1; position:absolute; left:60px; top:90px; width:60px; height:110px; transform-origin:top center;">
@@ -2069,7 +2058,8 @@ char mfd_html[] PROGMEM = R"=====(
 									</svg>
 
 									<!-- Roundabout -->
-									<div id="satnav_next_turn_roundabout" style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
+									<div id="satnav_next_turn_roundabout"
+										style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
 										<svg width="300" height="300">
 											<circle class="satNavRoundabout" cx="150" cy="150" r="40"></circle>
 											<circle class="satNavRoundabout" cx="150" cy="150" r="20"></circle>

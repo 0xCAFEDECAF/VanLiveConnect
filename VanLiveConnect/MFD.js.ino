@@ -135,18 +135,14 @@ var fancyWebSocket = function(url)
 
 	conn.onclose = function(event)
 	{
-		console.log("// Connection to WebSocket '" + url + "' died!");
 		dispatch('close', null);
 
-		//conn = new WebSocket(_url);
 		if (event.code == 3001)
 		{
 			console.log("// WebSocket '" + url + "' closed");
-			//conn = null;
 		}
 		else
 		{
-			//conn = null;
 			console.log("// WebSocket '" + url + "' connection error: " + event.code);
 			connectToWebSocket();
 		} // if
@@ -405,7 +401,9 @@ function connectToWebSocket()
 	webSocket = new fancyWebSocket(wsUrl);
 
 	// Bind WebSocket to server events
-	webSocket.bind('display', function(data)
+	webSocket.bind
+	(
+		'display', function(data)
 		{
 			// Re-start the "keep alive" timer
 			clearInterval(keepAliveWebSocketTimer);
@@ -414,7 +412,9 @@ function connectToWebSocket()
 			writeToDom(data);
 		}
 	);
-	webSocket.bind('open', function ()
+	webSocket.bind
+	(
+		'open', function ()
 		{
 			webSocket.send("mfd_language:" + localStorage.mfdLanguage);
 			webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
@@ -426,10 +426,11 @@ function connectToWebSocket()
 			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
 		}
 	);
-	webSocket.bind('close', function ()
+	webSocket.bind
+	(
+		'close', function ()
 		{
 			clearInterval(keepAliveWebSocketTimer);
-			// demoMode();
 		}
 	);
 } // connectToWebSocket
@@ -524,7 +525,7 @@ function temporarilyChangeLargeScreenTo(id)
 	changeBackScreenId = currentLargeScreenId;
 	changeLargeScreenTo(id);
 
-	// Change back after 10 seconds
+	// Change back after 14 seconds
 	clearTimeout(changeBackScreenTimer);
 	changeBackScreenTimer = setTimeout
 	(
@@ -533,7 +534,7 @@ function temporarilyChangeLargeScreenTo(id)
 			changeBackScreenTimer = null;
 			changeLargeScreenTo(changeBackScreenId);
 		},
-		10000
+		14000
 	);
 } // temporarilyChangeLargeScreenTo
 
@@ -1165,6 +1166,16 @@ function setTick(id)
 	$("#" + id).html("<b>&#10004;</b>");
 } // setTick
 
+function hasTick(groupId, valueId)
+{
+	return $("#" + groupId).find(".tickBox").map(function() { return this.id; }).get().indexOf(valueId) >= 0;
+} // hasTick
+
+function getTickedId(groupId)
+{
+	return $("#" + groupId).find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+} // getTickedId
+
 function toggleTick(id)
 {
 	id = getFocusId(id);
@@ -1210,15 +1221,40 @@ function getTextWidth(selector)
 // Associative array, using the button element ID as key
 var buttonOriginalWidths = {};
 
+function resizeButton(id)
+{
+	if (typeof id === "undefined") return;
+
+	var button = $("#" + id);
+
+	var widthAtLeast = getTextWidth(button);
+	if (button.width() < widthAtLeast)
+	{
+		buttonOriginalWidths[id] = button.width();  // Save original width of button
+
+		// Move left a bit if necessary
+		var right = button.position().left + widthAtLeast;
+		var moveLeft = right - 910;
+		if (moveLeft > 0) button.css({ 'marginLeft': '-=' + moveLeft + 'px' });
+
+		button.width(widthAtLeast);  // Resize button to fit text
+		button.css('z-index', 1);  // Bring to front
+	} // if
+} // resizeButton
+
+function restoreButtonSize(id)
+{
+	if (! id in buttonOriginalWidths) return;
+
+	var elem = $("#" + id);
+	elem.width(buttonOriginalWidths[id]);  // Reset width of button to original size
+	elem.css({ 'marginLeft': '' });  // Place back in original position
+	elem.css('z-index', '');  // No longer bring to front
+} // restoreButtonSize
+
 function restoreButtonSizes()
 {
-	for (var id in buttonOriginalWidths)
-	{
-		var elem = $("#" + id);
-		elem.width(buttonOriginalWidths[id]);  // Reset width of button to original size
-		elem.css({ 'marginLeft': '' });  // Place back in original position
-		elem.css('z-index', '');  // No longer bring to front
-	} // for
+	for (var id in buttonOriginalWidths) restoreButtonSize(id);
 } // restoreButtonSizes
 
 // Handle an arrow key press in a screen with buttons
@@ -1262,11 +1298,9 @@ function navigateButtons(key)
 			if (nextIdx === currIdx) break;
 
 			// Skip disabled or invisible buttons
-
 			var isButtonEnabled =
 				$(allButtons[nextIdx]).is(":visible")
 				&& ! $(allButtons[nextIdx]).hasClass("buttonDisabled");
-
 			if (isButtonEnabled) break;
 		}
 		while (true);
@@ -1326,12 +1360,7 @@ function navigateButtons(key)
 		gotoButton = $("#" + gotoButtonId);
 	} // if
 
-	if (typeof currentButtonId !== "undefined" && typeof buttonOriginalWidths[currentButtonId] !== "undefined")
-	{
-		currentButton.width(buttonOriginalWidths[currentButtonId]);  // Reset width of button to original size
-		currentButton.css({ 'marginLeft': '' });  // Place back in original position
-		currentButton.css('z-index', '');  // No longer bring to front
-	} // if
+	restoreButtonSize(currentButtonId);
 
 	// Perform "on_exit" action, if specified
 	var onExit = currentButton.attr("on_exit");
@@ -1340,22 +1369,7 @@ function navigateButtons(key)
 	currentButton.removeClass("buttonSelected");
 	gotoButton.addClass("buttonSelected");
 
-	if (typeof gotoButtonId !== "undefined")
-	{
-		var widthAtLeast = getTextWidth(gotoButton);
-		if (gotoButton.width() < widthAtLeast)
-		{
-			buttonOriginalWidths[gotoButtonId] = gotoButton.width();  // Save original width of button
-
-			// Move left a bit if necessary
-			var right = gotoButton.position().left + widthAtLeast;
-			var moveLeft = right - 910;
-			if (moveLeft > 0) gotoButton.css({ 'marginLeft': '-=' + moveLeft + 'px' });
-
-			gotoButton.width(widthAtLeast);  // Resize button to fit text
-			gotoButton.css('z-index', 1);  // Bring to front
-		} // if
-	} // if
+	resizeButton(gotoButtonId);
 
 	// Perform "on_enter" action, if specified
 	var onEnter = gotoButton.attr("on_enter");
@@ -1376,8 +1390,7 @@ function highlightLetter(id, index)
 
 	var text = $("#" + id).text();
 
-	// Nothing to highlight?
-	if (text.length === 0) return;
+	if (text.length === 0) return;  // Nothing to highlight?
 
 	if (typeof index !== "undefined")
 	{
@@ -1455,8 +1468,7 @@ function highlightLine(id)
 
 	var lines = splitIntoLines(id);
 
-	// Nothing to highlight?
-	if (lines.length === 0) return;
+	if (lines.length === 0) return;  // Nothing to highlight?
 
 	if (highlightIndexes[id] === undefined) highlightIndexes[id] = 0;
 
@@ -1503,19 +1515,6 @@ function unhighlightLine(id)
 	lines[highlightIndexes[id]] = lines[highlightIndexes[id]].replace(/<[^>]*>/g, '');
 
 	$("#" + id).html(lines.join('<br />'));
-/*
-	// Resize box such that a whole number of lines is shown
-	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
-	var heightOfBox = $("#" + id).height();
-	var nVisibleLines = heightOfBox / heightOfUnhighlightedLine;
-	var wantNVisibleLines = Math.ceil(nVisibleLines);
-	var tooLittlePixels = (wantNVisibleLines - nVisibleLines) * heightOfUnhighlightedLine;
-	if (tooLittlePixels > 0)
-	{
-		// Expand a bit
-		$("#" + id).height($("#" + id).height() + tooLittlePixels);
-	} // if
-*/
 } // unhighlightLine
 
 function highlightFirstLine(id)
@@ -1758,7 +1757,9 @@ function languageSelectTickedButton()
 		var id = "set_language_english";  // Default
 
 		// Puppy powerrrrrr :-)
-		if ($("#set_language").find(".tickBox").map(function() { return this.id; }).get().indexOf(lang) >= 0)
+		//if ($("#set_language").find(".tickBox").map(function() { return this.id; }).get().indexOf(lang) >= 0)
+		var found = hasTick("set_language", lang);
+		if (found)
 		{
 			id = lang;
 		}
@@ -1776,7 +1777,9 @@ function languageSelectTickedButton()
 
 function languageValidate()
 {
-	var newLanguage = $("#set_language").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+	// var newLanguage = $("#set_language").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+	var newLanguage = getTickedId("set_language");
+
 	setLanguage(newLanguage);
 	webSocket.send("mfd_language:" + newLanguage);
 
@@ -1797,7 +1800,9 @@ function unitsSelectTickedButtons()
 	var distUnit = localStorage.mfdDistanceUnit;
 	var id = "set_units_km_h";  // Default
 
-	if ($("#set_distance_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(distUnit) >= 0)
+	//if ($("#set_distance_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(distUnit) >= 0)
+	var found = hasTick("set_distance_unit", distUnit);
+	if (found)
 	{
 		id = distUnit;
 	}
@@ -1812,7 +1817,9 @@ function unitsSelectTickedButtons()
 	var tempUnit = localStorage.mfdTemperatureUnit;
 	var id = "set_units_deg_celsius";  // Default
 
-	if ($("#set_temperature_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(tempUnit) >= 0)
+	//if ($("#set_temperature_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(tempUnit) >= 0)
+	var found = hasTick("set_temperature_unit", tempUnit);
+	if (found)
 	{
 		id = tempUnit;
 	}
@@ -1827,7 +1834,9 @@ function unitsSelectTickedButtons()
 	var timeUnit = localStorage.mfdTimeUnit;
 	id = "set_units_24h";  // Default
 
-	if ($("#set_time_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(timeUnit) >= 0)
+	//if ($("#set_time_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(timeUnit) >= 0)
+	var found = hasTick("set_time_unit", timeUnit);
+	if (found)
 	{
 		id = timeUnit;
 	}
@@ -1844,12 +1853,15 @@ function unitsSelectTickedButtons()
 function unitsValidate()
 {
 	// Save selected ids in local (persistent) store
-	var newDistanceUnit =
-		$("#set_distance_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-	var newTemperatureUnit =
-		$("#set_temperature_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-	var newTimeUnit =
-		$("#set_time_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+	// var newDistanceUnit =
+		// $("#set_distance_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+	// var newTemperatureUnit =
+		// $("#set_temperature_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+	// var newTimeUnit =
+		// $("#set_time_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
+	var newDistanceUnit = getTickedId("set_distance_unit");
+	var newTemperatureUnit = getTickedId("set_temperature_unit");
+	var newTimeUnit = getTickedId("set_time_unit");
 
 	setUnits(newDistanceUnit, newTemperatureUnit, newTimeUnit);
 
@@ -2531,11 +2543,15 @@ function satnavSetDirectoryAddressScreenMode(mode)
 
 		$("#satnav_personal_address_validate_buttons").hide();
 		$("#satnav_personal_address_manage_buttons").show();
+
 		$("#satnav_manage_personal_address_rename_button").addClass("buttonSelected");
+		resizeButton("satnav_manage_personal_address_rename_button");
 
 		$("#satnav_professional_address_validate_buttons").hide();
 		$("#satnav_professional_address_manage_buttons").show();
+
 		$("#satnav_manage_professional_address_rename_button").addClass("buttonSelected");
+		resizeButton("satnav_manage_professional_address_rename_button");
 	} // if
 } // satnavSetDirectoryAddressScreenMode
 
@@ -3150,7 +3166,6 @@ function handleItemChange(item, value)
 
 			if ($("#contact_key_position").text() != "" && $("#contact_key_position").text() !== "OFF")
 			{
-				// Show the audio settings popup
 				$("#audio_settings_popup").show();
 			}
 			else
@@ -3298,7 +3313,6 @@ function handleItemChange(item, value)
 			// Ignore if audio menu is visible (the head unit ignores the button press in that case)
 			if (isAudioMenuVisible) break;
 
-			// Show the tuner presets popup
 			showTunerPresetsPopup();
 		} // case
 		break;
@@ -3805,7 +3819,6 @@ function handleItemChange(item, value)
 			{
 				if (! wasRiskOfIceWarningShown && vehicleSpeed >= 5)
 				{
-					// Show warning popup
 					showNotificationPopup("Risk of ice!", 10000);
 					wasRiskOfIceWarningShown = true;
 				} // if
@@ -4120,8 +4133,6 @@ function handleItemChange(item, value)
 			// Button texts in menus
 			$("#satnav_navigation_options_menu_stop_guidance_button").html(
 				value === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
-			// $("#satnav_tools_menu_stop_guidance_button").text(
-				// value === "IN_GUIDANCE_MODE" ? "Stop guidance" : "Resume guidance");
 
 			// Just entered guidance mode?
 			if (value === "IN_GUIDANCE_MODE")
@@ -4309,7 +4320,6 @@ function handleItemChange(item, value)
 
 		case "satnav_last_destination_city":
 		{
-			// if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/) || satnavStatus1 === "GUIDANCE_STOPPED")
 			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/))
 			{
 				showPopup("satnav_reached_destination_popup", 10000);
@@ -4365,8 +4375,7 @@ function handleItemChange(item, value)
 			// Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
 			if (! $("#clock").is(":visible")) break;
 
-			// Show the current location
-			changeLargeScreenTo("satnav_current_location");
+			changeLargeScreenTo("satnav_current_location");  // Show the current location
 		} // case
 		break;
 
@@ -4396,6 +4405,7 @@ function handleItemChange(item, value)
 				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
 				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonSelected", entryOnDisc);
 				$("#satnav_manage_personal_address_delete_button").toggleClass("buttonSelected", ! entryOnDisc);
+				if (entryOnDisc) resizeButton("satnav_manage_personal_address_rename_button");
 			}
 			else
 			{
@@ -4422,6 +4432,7 @@ function handleItemChange(item, value)
 				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
 				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonSelected", entryOnDisc);
 				$("#satnav_manage_professional_address_delete_button").toggleClass("buttonSelected", ! entryOnDisc);
+				if (entryOnDisc) resizeButton("satnav_manage_professional_address_rename_button");
 			}
 			else
 			{
@@ -4447,8 +4458,7 @@ function handleItemChange(item, value)
 
 			if (value === "Esc")
 			{
-				// Going into "character roll-back" mode
-				satnavRollingBackEntryByCharacter = true;
+				satnavRollingBackEntryByCharacter = true;  // Going into "character roll-back" mode
 				break;
 			} // if
 
@@ -4504,7 +4514,7 @@ function handleItemChange(item, value)
 			if (value === "satnav_current_destination_house_number")
 			{
 				satnavLastEnteredChar = null;
-				satnavClearEnteredNumber();  // Clear the entered house number
+				satnavClearEnteredNumber();
 				gotoMenu(value);
 				break;
 			} // if
@@ -4659,8 +4669,6 @@ function handleItemChange(item, value)
 					else
 					{
 						// Follow-up chunk
-						//unhighlightLine("satnav_choice_list");
-
 						var lines = splitIntoLines("satnav_choice_list");
 						lines = lines.slice(0, handleItemChange.mfdToSatnavOffset);
 						lines = lines.concat(value);
@@ -4760,12 +4768,10 @@ function handleItemChange(item, value)
 			// Hide any popup "Navigation system being initialized" (if shown)
 			hidePopup("satnav_initializing_popup");
 
-			// Show "Continue guidance? (yes/no)" popup if applicable
+			// Show "Continue guidance to destination?" popup if applicable
 			if (contactKeyPosition === "ON" && localStorage.askForGuidanceContinuation === "YES")
 			{
-				// Show popup "Continue guidance to destination? [Yes]/No"
 				showPopup("satnav_continue_guidance_popup", 15000);
-
 				localStorage.askForGuidanceContinuation = "NO";
 			} // if
 		} // case
@@ -4787,11 +4793,14 @@ function handleItemChange(item, value)
 			$("#" + item + "_unit").text(unit);
 
 			if ((item === "satnav_turn_at" || item === "satnav_distance_to_dest_via_road")
+				&& handleItemChange.satnavTurnAt !== value
 				&& (unit === "m" || unit === "yd")
 				&& parseInt(distance) <= 600)
 			{
 				temporarilyChangeLargeScreenTo("satnav_guidance");
+				handleItemChange.satnavTurnAt = value;
 			} // if
+
 		} // case
 		break;
 
@@ -5139,15 +5148,6 @@ function handleItemChange(item, value)
 			}
 			else if (button === "ESC_BUTTON")
 			{
-				// Ignore if just changed screen; sometimes the screen change is triggered by the system, not the
-				// remote control. If the user wanted pressed a button on the previous screen, it will end up
-				// being handled by the current screen, which is confusing.
-				// if (Date.now() - lastScreenChangedAt < 250)
-				// {
-					// console.log("// mfd_remote_control - ESC_BUTTON: ignored");
-					// break;
-				// } // if
-
 				// If a popup is showing, hide it and break
 				if (hideTunerPresetsPopup()) break;
 				if (hideAudioSettingsPopup()) break;
@@ -5176,7 +5176,8 @@ function handleItemChange(item, value)
 					|| button === "RIGHT_BUTTON")
 			{
 				// In non-menu screens, MFD dim level is adjusted with the IR remote control "UP" and "DOWN" buttons
-				if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
+				if ((! inMenu() || currentLargeScreenId == "set_screen_brightness")
+					&& (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
 				{
 					var color = $(":root").css("--main-color").substring(0, 7);
 					var opacity = parseInt($(":root").css("--main-color").substring(7, 9), 16);
