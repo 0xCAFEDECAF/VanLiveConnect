@@ -4249,7 +4249,10 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
                     "\"mfd_to_satnav_enter_character\": \"%s\""
                 ),
 
-                (data[3] >= 'A' && data[3] <= 'Z') || (data[3] >= '0' && data[3] <= '9') || data[3] == '\'' ? buffer :
+                (data[3] >= 'A' && data[3] <= 'Z') ||
+                (data[3] >= '0' && data[3] <= '9') ||
+                data[3] == '.' || data[3] == '\'' ?
+                    buffer :
                 data[3] == ' ' ? "_" : // Space
                 data[3] == 0x01 ? "Esc" :
                 "?"
@@ -4382,6 +4385,12 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     {
         // <Space>, will be shown as '_'
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("_"));
+    } // if
+
+    if (data[22] >> 3 & 0x01)
+    {
+        // Special character: dot (.)
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("."));
     } // if
 
     at += at >= n ? 0 :

@@ -296,7 +296,7 @@ body
   border-radius:15px;
   left:55px;
   top:200px;
-  width:825px;
+  width:850px;
   height:200px;
 }
 .messagePopupArea

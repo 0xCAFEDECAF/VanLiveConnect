@@ -865,14 +865,14 @@ char mfd_html[] PROGMEM = R"=====(
 							LEFT_BUTTON="set_language_dutch"
 							RIGHT_BUTTON="set_language_spanish"
 							UP_BUTTON="set_language_validate_button"
-							on_click="toggleTick(); keyPressed('UP_BUTTON');"
+							on_click="toggleTick(); languageTickSet(); keyPressed('UP_BUTTON');"
 							class="tickBox button">
 						</span> Deutsch<br style="line-height:70px;" />
 						<span id="set_language_english"
 							LEFT_BUTTON="set_language_italian"
 							RIGHT_BUTTON="set_language_french"
 							DOWN_BUTTON="set_language_validate_button"
-							on_click="toggleTick(); keyPressed('DOWN_BUTTON');"
+							on_click="toggleTick(); languageTickSet(); keyPressed('DOWN_BUTTON');"
 							class="tickBox button buttonSelected">
 						</span> English<br style="line-height:70px;" />
 					</div>
@@ -882,14 +882,14 @@ char mfd_html[] PROGMEM = R"=====(
 							UP_BUTTON="set_language_french"
 							LEFT_BUTTON="set_language_german"
 							RIGHT_BUTTON="set_language_dutch"
-							on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');"
+							on_click="toggleTick(); languageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');"
 							class="tickBox button">
 						</span> Espa&ntilde;ol<br style="line-height:70px;" />
 						<span id="set_language_french"
 							LEFT_BUTTON="set_language_english"
 							RIGHT_BUTTON="set_language_italian"
 							DOWN_BUTTON="set_language_spanish"
-							on_click="toggleTick(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');"
+							on_click="toggleTick(); languageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');"
 							class="tickBox button">
 					</span> Fran&ccedil;ais<br style="line-height:70px;" />
 					</div>
@@ -899,14 +899,14 @@ char mfd_html[] PROGMEM = R"=====(
 							UP_BUTTON="set_language_italian"
 							LEFT_BUTTON="set_language_spanish"
 							RIGHT_BUTTON="set_language_german"
-							on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');"
+							on_click="toggleTick(); languageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');"
 							class="tickBox button">
 						</span> Nederlands<br style="line-height:70px;" />
 						<span id="set_language_italian"
 							LEFT_BUTTON="set_language_french"
 							RIGHT_BUTTON="set_language_english"
 							DOWN_BUTTON="set_language_dutch"
-							on_click="toggleTick(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');"
+							on_click="toggleTick(); languageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');"
 							class="tickBox button">
 						</span> Italiano<br style="line-height:70px;" />
 					</div>
@@ -2422,9 +2422,9 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Notification popup, with warning or information icon -->
 			<div id="notification_popup" class="icon notificationPopup" style="display:none;">
 				<div id="notification_icon_warning" class="glow centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
-					style="display:none; position:absolute; line-height:2.2; left:0px; width:260px; height:260px"></div>
+					style="display:none; position:absolute; line-height:2.2; left:-20px; width:260px; height:260px"></div>
 				<div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
-					style="display:block; position:absolute; left:50px;"></div>
+					style="display:block; position:absolute; left:30px;"></div>
 				<div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:610px;">
 				</div>
 			</div>

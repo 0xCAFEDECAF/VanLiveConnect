@@ -915,6 +915,9 @@ function showStatusPopup(message, msec)
 
 function showAudioPopup(id)
 {
+	// This popup only appears in the following screens:
+	if (currentLargeScreenId !== "satnav_guidance" && currentLargeScreenId !== "instruments") return;
+
 	if (typeof id === "undefined")
 	{
 		var map =
@@ -1389,7 +1392,6 @@ function highlightLetter(id, index)
 	if (id === undefined) return;
 
 	var text = $("#" + id).text();
-
 	if (text.length === 0) return;  // Nothing to highlight?
 
 	if (typeof index !== "undefined")
@@ -1651,7 +1653,7 @@ function hideAudioSettingsPopupAfter(msec)
 	audioSettingsPopupHideTimer = setTimeout(hideAudioSettingsPopup, msec);
 } // hideAudioSettingsPopupAfter
 
-// The IDs of the audio settings highlight boxes ("divs") to be cycled through
+// The IDs of the audio settings highlight boxes to be cycled through
 var highlightIds =
 [
 	"bass_select",
@@ -1670,14 +1672,14 @@ function highlightAudioSetting(goToFirst)
 
 	$("#" + highlightIds[audioSettingHighlightIndex]).hide();  // Hide the current box
 
-	// Either reset to the first ID, or get the ID of the next box
+	// Either reset to the first ID, or get the ID of the next box to highlight
 	audioSettingHighlightIndex = goToFirst ? 0 : audioSettingHighlightIndex + 1;
 
-	// If going past the last setting, highlight nothing
+	// Going past the last setting?
 	if (audioSettingHighlightIndex >= highlightIds.length)
 	{
 		audioSettingHighlightIndex = 0;
-		hideAudioSettingsPopup();  // Also hide the audio settings popup
+		hideAudioSettingsPopup();
 		return;
 	} // if
 
@@ -1755,19 +1757,7 @@ function languageSelectTickedButton()
 	{
 		var lang = localStorage.mfdLanguage;
 		var id = "set_language_english";  // Default
-
-		// Puppy powerrrrrr :-)
-		//if ($("#set_language").find(".tickBox").map(function() { return this.id; }).get().indexOf(lang) >= 0)
-		var found = hasTick("set_language", lang);
-		if (found)
-		{
-			id = lang;
-		}
-		else
-		{
-			localStorage.mfdLanguage = id;
-		} // if
-
+		if (hasTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
 		setTick(id);
 		$("#" + id).addClass("buttonSelected");
 	} // if
@@ -1775,14 +1765,15 @@ function languageSelectTickedButton()
 	$("#set_language_validate_button").removeClass("buttonSelected");
 } // languageSelectTickedButton
 
-function languageValidate()
+function languageTickSet()
 {
-	// var newLanguage = $("#set_language").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
 	var newLanguage = getTickedId("set_language");
-
 	setLanguage(newLanguage);
 	webSocket.send("mfd_language:" + newLanguage);
+} // languageTickSet
 
+function languageValidate()
+{
 	// TODO - the original MFD sometimes shows a popup when the language is changed
 
 	exitMenu();
@@ -1799,52 +1790,18 @@ function unitsSelectTickedButtons()
 
 	var distUnit = localStorage.mfdDistanceUnit;
 	var id = "set_units_km_h";  // Default
-
-	//if ($("#set_distance_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(distUnit) >= 0)
-	var found = hasTick("set_distance_unit", distUnit);
-	if (found)
-	{
-		id = distUnit;
-	}
-	else
-	{
-		localStorage.mfdDistanceUnit = id;
-	} // if
-
+	if (hasTick("set_distance_unit", distUnit)) id = distUnit; else localStorage.mfdDistanceUnit = id;
 	setTick(id);
-	$("#" + id).addClass("buttonSelected");
+	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
 
 	var tempUnit = localStorage.mfdTemperatureUnit;
-	var id = "set_units_deg_celsius";  // Default
-
-	//if ($("#set_temperature_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(tempUnit) >= 0)
-	var found = hasTick("set_temperature_unit", tempUnit);
-	if (found)
-	{
-		id = tempUnit;
-	}
-	else
-	{
-		localStorage.mfdTemperatureUnit = id;
-	} // if
-
+	id = "set_units_deg_celsius";  // Default
+	if (hasTick("set_temperature_unit", tempUnit)) id = tempUnit; else localStorage.mfdTemperatureUnit = id;
 	setTick(id);
-
 
 	var timeUnit = localStorage.mfdTimeUnit;
 	id = "set_units_24h";  // Default
-
-	//if ($("#set_time_unit").find(".tickBox").map(function() { return this.id; }).get().indexOf(timeUnit) >= 0)
-	var found = hasTick("set_time_unit", timeUnit);
-	if (found)
-	{
-		id = timeUnit;
-	}
-	else
-	{
-		localStorage.mfdTimeUnit = id;
-	} // if
-
+	if (hasTick("set_time_unit", timeUnit)) id = timeUnit; else localStorage.mfdTimeUnit = id;
 	setTick(id);
 
 	$("#set_units_validate_button").removeClass("buttonSelected");
@@ -1852,13 +1809,6 @@ function unitsSelectTickedButtons()
 
 function unitsValidate()
 {
-	// Save selected ids in local (persistent) store
-	// var newDistanceUnit =
-		// $("#set_distance_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-	// var newTemperatureUnit =
-		// $("#set_temperature_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-	// var newTimeUnit =
-		// $("#set_time_unit").find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
 	var newDistanceUnit = getTickedId("set_distance_unit");
 	var newTemperatureUnit = getTickedId("set_temperature_unit");
 	var newTimeUnit = getTickedId("set_time_unit");
@@ -2904,7 +2854,7 @@ function showOrTimeoutDestinationNotAccessiblePopup()
 	);
 } // showOrTimeoutDestinationNotAccessiblePopup 
 
-// Format a string like "45 km" or "7000 m" or "60 m". Return an array [distance, unit]
+// Format a string like "45 km", "15 mi", "7000 m", "880 yd" or "60 m". Return an array [distance, unit]
 function satnavFormatDistance(distanceStr)
 {
 	// We want compatibility with IE11 so cannot assign result array directly to variables
@@ -3025,10 +2975,12 @@ function satnavPoweringOff()
 
 function showPowerSavePopup()
 {
-	// TODO - other languages
 	var translations =
 	{
+		"set_language_french": "Passer en mode<br />d'&eacute;conomie d'&eacute;nergie",  // TODO - check
 		"set_language_german": "Wechsel in<br />Energiesparmodus",
+		"set_language_spanish": "Cambiar al modo<br />de ahorro de energ&iacute;a",  // TODO - check
+		"set_language_italian": "Passaggio alla modalit&agrave;<br />di risparmio energetico",  // TODO - check
 		"set_language_dutch": "Omschakeling naar<br />energiebesparingsmodus"
 	};
 	showNotificationPopup(translations[localStorage.mfdLanguage] || "Changing to<br />power-save mode", 15000);
@@ -3278,7 +3230,7 @@ function handleItemChange(item, value)
 
 			if (audioSource === "CD_CHANGER")
 			{
-				if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+				showAudioPopup();
 
 				var selector = "#cd_changer_disc_" + value + "_present";
 				if ($(selector).hasClass("ledOn")) break;
@@ -3325,7 +3277,7 @@ function handleItemChange(item, value)
 
 			hideAudioSettingsPopup();
 
-			if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+			showAudioPopup();
 		} // case
 		break;
 
@@ -3337,7 +3289,7 @@ function handleItemChange(item, value)
 
 			hideAudioSettingsPopup();
 
-			if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+			showAudioPopup();
 		} // case
 		break;
 
@@ -3351,7 +3303,7 @@ function handleItemChange(item, value)
 			hideTunerPresetsPopup();
 			hideAudioSettingsPopup();
 
-			if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+			showAudioPopup();
 		} // case
 		break;
 
@@ -3459,7 +3411,7 @@ function handleItemChange(item, value)
 			hideAudioSettingsPopup();
 			hideTunerPresetsPopup();
 
-			if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+			showAudioPopup();
 
 			var rdsText = $("#rds_text").text();
 			var showRdsText = $("#fm_band").hasClass("ledOn") && rdsText !== "" && value !== "MANUAL_TUNING";
@@ -3541,7 +3493,7 @@ function handleItemChange(item, value)
 					|| value ===  "FAST_FORWARD" || value === "REWIND"
 				)
 			{
-				if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+				showAudioPopup();
 			} // if
 		} // case
 		break;
@@ -3580,7 +3532,7 @@ function handleItemChange(item, value)
 					|| value ===  "FAST_FORWARD" || value === "REWIND"
 				)
 			{
-				if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+				showAudioPopup();
 			} // if
 		} // case
 		break;
@@ -3590,7 +3542,7 @@ function handleItemChange(item, value)
 			// Has anything changed?
 			if (value === cdChangerCurrentDisc) break;
 
-			if (currentLargeScreenId === "satnav_guidance") showAudioPopup();
+			showAudioPopup();
 
 			if (cdChangerCurrentDisc != null && cdChangerCurrentDisc.match(/^[1-6]$/))
 			{
@@ -3741,8 +3693,8 @@ function handleItemChange(item, value)
 			var level = parseFloat(value);
 
 			var lowFuelCondition = false;
-			if (localStorage.mfdDistanceUnit === "set_units_mph") lowFuelCondition = level <= 1;  // 1 gallon left
-			else lowFuelCondition = level <= 5;  // 5 litres left
+			if (localStorage.mfdDistanceUnit === "set_units_mph") lowFuelCondition = level <= 1.5;  // 1.5 gallons left
+			else lowFuelCondition = level <= 5.5;  // 5.5 litres left
 
 			$('[gid="fuel_level_filtered"]').toggleClass("glow", lowFuelCondition);
 		} // case
@@ -4619,16 +4571,19 @@ function handleItemChange(item, value)
 				if (handleItemChange.mfdToSatnavRequest.match(/^service/))
 				{
 					// User selected a service which has no address entries for the specified location
+					// TODO - other languages
 					showStatusPopup("This service is<br />not available for<br />this location", 8000);
 				}
 				else if (handleItemChange.mfdToSatnavRequest === "personal_address_list")
 				{
 					exitMenu();
+					// TODO - other languages
 					showStatusPopup("Personal directory<br />is empty", 8000);
 				}
 				else if (handleItemChange.mfdToSatnavRequest === "professional_address_list")
 				{
 					exitMenu();
+					// TODO - other languages
 					showStatusPopup("Professional directory<br />is empty", 8000);
 				} // if
 			} // if
