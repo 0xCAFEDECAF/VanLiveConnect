@@ -116,12 +116,10 @@ See also the [screen shots](#screenshots) above.
 * Notifications and warnings
 * Satellite Navigation (maps are out of date but it's a nice gimmick 😇)
 * Multiple languages (but some menus and screens are only in English)
+* Setting color theme and brightness
 * Setting format and units
 
 > 👉 Note: availability will depend on your vehicle's configuration.
-
-Not yet supported:
-* Setting brightness and contrast
 
 Will not support:
 * Setting date and time: your smartphone already knows...
@@ -343,7 +341,6 @@ will take time...
 
 <b>Answer:</b> I have tested successfully on:
 * Windows Desktop
-  * Internet Explorer 11 (the dinosaur)
   * Firefox, any recent version
   * Chrome, any recent version
 * Mobile
