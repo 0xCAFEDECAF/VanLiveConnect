@@ -22,14 +22,74 @@ function incModulo(i, mod)
 } // clamp
 
 // -----
-// MFD dimming
+// Color theme and dimming
 
-function setDimLevel(opacity)
+function setColorTheme(theme)
 {
-	var color = $(":root").css("--main-color").substring(0, 7);
-	if (typeof opacity === "undefined") opacity = 255; else opacity = clamp(opacity, 155, 255);
-	$(":root").css("--main-color", color + opacity.toString(16));
+	localStorage.theme = typeof theme === "undefined" ? "set_dark_theme" : theme;
+
+	$(":root").css("--main-color", theme === "set_light_theme" ? "#271b42" : "hsl(215,42%,91%)");
+	$(":root").css("--background-color", theme === "set_light_theme" ? "hsl(240,6%,91%)" : "rgb(8,7,19)");
+	$(":root").css("--led-off-color", theme === "set_light_theme" ? "rgb(189,189,189)" : "rgb(25,31,40)");
+	$(":root").css("--notification-color", theme === "set_light_theme" ? "rgba(205,209,213,0.95)" : "rgba(15,19,23,0.95)");
+	$(":root").css("--highlight-color", theme === "set_light_theme" ? "rgba(84,101,125,0.4)" : "rgba(223,231,242,0.4)");
+	$(":root").css("--selected-element-color", theme === "set_light_theme" ? "rgb(207,205,217)" : "rgb(41,55,74)");
+	$(":root").css("--disabled-element-color", theme === "set_light_theme" ? "rgb(172,183,202)" : "rgb(67,82,105)");
+
+	setDimLevel(headlightStatus);
+} // setColorTheme
+
+function colorThemeTickSet()
+{
+	setColorTheme(getTickedId("set_screen_brightness"));
+} // colorThemeTickSet
+
+function colorThemeSelectTickedButton()
+{
+	$("#set_screen_brightness").find(".tickBox").removeClass("buttonSelected");
+
+	var theme = localStorage.theme;
+	var id = "set_dark_theme";  // Default
+	if (hasTick("set_screen_brightness", theme)) id = theme; else localStorage.mfdDistanceUnit = theme;
+	setTick(id);
+	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
+} // colorThemeSelectTickedButton
+
+function setLuminosity(luminosity)
+{
+	var luminosity = clamp(luminosity, 63, 91);
+
+	if (localStorage.theme === "set_light_theme") $(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
+	else $(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
+
+	return luminosity;
+} // setLuminosity
+
+function setDimLevel(headlightStatus)
+{
+	// Default dim level luminosity values
+	if (isNaN(localStorage.dimLevelReduced)) localStorage.dimLevelReduced = 63;
+	if (isNaN(localStorage.dimLevel)) localStorage.dimLevel = 91;
+
+	var luminosity = headlightStatus.match(/BEAM/) ? localStorage.dimLevelReduced : localStorage.dimLevel;
+	luminosity = setLuminosity(luminosity);
+
+	$("#display_brightness_level").text((+luminosity - 63) / 2);
 } // setDimLevel
+
+function adjustDimLevel(headlightStatus, button)
+{
+	var luminosity = headlightStatus.match(/BEAM/) ? localStorage.dimLevelReduced : localStorage.dimLevel;
+
+	// Luminosity adjustable in 15 levels from 63 ... 91
+	luminosity = setLuminosity(button === "UP_BUTTON" ? +luminosity + 2 : +luminosity - 2);
+
+	$("#display_brightness_level").text((+luminosity - 63) / 2);
+
+	// Store in the appropriate storage variable
+	if (headlightStatus.match(/BEAM/)) localStorage.dimLevelReduced = luminosity;
+	else localStorage.dimLevel = luminosity;
+} // adjustDimLevel
 
 // -----
 // On-screen clocks
@@ -446,6 +506,7 @@ var engineCoolantTemperature = 80;  // In degrees Celsius
 var vehicleSpeed = 0;
 var icyConditions = false;
 var wasRiskOfIceWarningShown = false;
+var headlightStatus = "";
 
 var suppressClimateControlPopup = null;
 
@@ -897,6 +958,9 @@ function hideAllPopups(except)
 function showNotificationPopup(message, msec, isWarning)
 {
 	if (isWarning === undefined) isWarning = false;  // IE11 does not support default parameters
+
+	// No "info" popups while browsing the menu's
+	if (! isWarning && inMenu()) return;
 
 	// Show the required icon: "information" or "warning"
 	$("#notification_icon_info").toggle(! isWarning);
@@ -3706,6 +3770,8 @@ function handleItemChange(item, value)
 
 			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit")
 			{
+				engineCoolantTemperature = (temp - 32) * 5 / 9;  // convert deg F to deg C
+
 				// If more than 230 degrees, add glow effect
 				$("#coolant_temp").toggleClass("glow", temp > 230);
 
@@ -3714,6 +3780,8 @@ function handleItemChange(item, value)
 			}
 			else
 			{
+				engineCoolantTemperature = temp;
+
 				// If more than 110 degrees, add glow effect
 				$("#coolant_temp").toggleClass("glow", temp > 110);
 
@@ -3827,9 +3895,8 @@ function handleItemChange(item, value)
 
 		case "lights":
 		{
-			// Dim display if headlights are on
-			if (value.match(/BEAM/)) $(":root").css("--main-color", "#dfe7f29b");  // Go to fixed, low dim level
-			else setDimLevel(localStorage.dimLevel);  // Go back to saved dim level
+			headlightStatus = value;
+			setDimLevel(value);
 		} // case
 		break;
 
@@ -3843,8 +3910,9 @@ function handleItemChange(item, value)
 			$("#door_open").removeClass("ledOff");
 			$("#door_open").toggleClass("glow", value === "YES");
 
-			// Show or hide the "door open" popup, but not in the "pre_flight" screen
-			if (value === "YES" && currentLargeScreenId !== "pre_flight")
+			// Show or hide the "door open" popup. Always hide if in the "pre_flight" screen or
+			// while browsing the menu's
+			if (value === "YES" && currentLargeScreenId !== "pre_flight" && ! inMenu())
 			{
 				$("#door_open_popup_text").html(doorOpenText);
 				showPopupAndNotifyServer("door_open_popup", 8000);
@@ -3901,6 +3969,9 @@ function handleItemChange(item, value)
 				isBootOpen && nDoorsOpen == 0 ? bootOpenText :
 				nDoorsOpen > 1 ? doorsOpenText :
 				doorOpenText;
+
+			// No popup when in the "pre_flight" screen, or while browsing the menu's
+			if (currentLargeScreenId === "pre_flight" || ! inMenu()) break;
 
 			// Set the correct text and show the "door open" popup
 			$("#door_open_popup_text").html(popupText);
@@ -4571,20 +4642,54 @@ function handleItemChange(item, value)
 				if (handleItemChange.mfdToSatnavRequest.match(/^service/))
 				{
 					// User selected a service which has no address entries for the specified location
-					// TODO - other languages
-					showStatusPopup("This service is<br />not available for<br />this location", 8000);
+
+					// TODO - check translations
+					var translations =
+					{
+						"set_language_french": "Ce service n'est pas<br />disponible pour<br />ce lieu",
+						"set_language_german": "Dieser Dienst ist f&uuml;r<br />diesen Standort<br />nicht verf&uuml;gbar",
+						"set_language_spanish": "Este servicio no est&aacute;<br />disponible para<br />esta ubicaci&oacute;n",
+						"set_language_italian": "Questo servizio non<br />&egrave; disponibile per<br />questa localit&agrave;",
+						"set_language_dutch": "Deze dienst is<br />niet beschikbaar voor<br />deze locatie"
+					};
+					var content = translations[localStorage.mfdLanguage] ||
+						"This service is<br />not available for<br />this location";
+
+					showStatusPopup(content, 8000);
 				}
 				else if (handleItemChange.mfdToSatnavRequest === "personal_address_list")
 				{
 					exitMenu();
-					// TODO - other languages
-					showStatusPopup("Personal directory<br />is empty", 8000);
+
+					// TODO - check translations
+					var translations =
+					{
+						"set_language_french": "R&eacute;pertoire personnel<br />est vide",
+						"set_language_german": "Pers&ouml;nliches Zielverzeichnis<br />ist leer",
+						"set_language_spanish": "Directorio personal<br />est&aacute; vac&iacute;o",
+						"set_language_italian": "Rub. personale<br />&egrave; vuota",
+						"set_language_dutch": "Lijst van priv&eacute;-<br />adressen is leeg"
+					};
+					var content = translations[localStorage.mfdLanguage] || "Personal directory<br />is empty";
+
+					showStatusPopup(content, 8000);
 				}
 				else if (handleItemChange.mfdToSatnavRequest === "professional_address_list")
 				{
 					exitMenu();
-					// TODO - other languages
-					showStatusPopup("Professional directory<br />is empty", 8000);
+
+					// TODO - check translations
+					var translations =
+					{
+						"set_language_french": "R&eacute;pertoire professionnel<br />est vide",
+						"set_language_german": "Berufliches Zielverzeichnis<br />ist leer",
+						"set_language_spanish": "Directorio profesional<br />est&aacute; vac&iacute;o",
+						"set_language_italian": "Rub. professionale<br />&egrave; vuota",
+						"set_language_dutch": "Lijst van zaken-<br />adressen is leeg"
+					};
+					var content = translations[localStorage.mfdLanguage] || "Professional directory<br />is empty";
+
+					showStatusPopup(content, 8000);
 				} // if
 			} // if
 		} // case
@@ -4826,22 +4931,21 @@ function handleItemChange(item, value)
 
 		case "satnav_to_mfd_show_characters":
 		{
-			if (value === "") break;
-
-			clearTimeout(showAvailableCharactersTimer);
+			// Hide the spinning disc
+			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
+			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 
 			if ($("#satnav_enter_characters").is(":visible"))
 			{
-				satnavEnterOrDeleteCharacter(1);
-
 				if (satnavRollingBackEntryByCharacter) satnavAvailableCharactersStack.pop()
 				else satnavAvailableCharactersStack.push(value);
 			} // if
 
-			// if (value.length > 1)
-			// {
-				// satnavRollingBackEntryByCharacter = false;
-			// } // if
+			if (value === "") break;
+
+			clearTimeout(showAvailableCharactersTimer);
+
+			if ($("#satnav_enter_characters").is(":visible")) satnavEnterOrDeleteCharacter(1);
 
 			if (value.length == 1)
 			{
@@ -5131,18 +5235,9 @@ function handleItemChange(item, value)
 					|| button === "RIGHT_BUTTON")
 			{
 				// In non-menu screens, MFD dim level is adjusted with the IR remote control "UP" and "DOWN" buttons
-				if ((! inMenu() || currentLargeScreenId == "set_screen_brightness")
-					&& (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
+				if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
 				{
-					var color = $(":root").css("--main-color").substring(0, 7);
-					var opacity = parseInt($(":root").css("--main-color").substring(7, 9), 16);
-
-					// 10 steps to go up/down 100 alpha channel units (opacity)
-					opacity = button === "UP_BUTTON" ? opacity + 10 : opacity - 10;
-					opacity = clamp(opacity, 155, 255);
-
-					$(":root").css("--main-color", color + opacity.toString(16));  // Set the new value
-					localStorage.dimLevel = opacity;
+					adjustDimLevel(headlightStatus, button)
 
 					break;
 				} // if
@@ -6294,7 +6389,8 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 // To be called by the body "onload" event
 function htmlBodyOnLoad()
 {
-	setDimLevel(localStorage.dimLevel);
+	setColorTheme(localStorage.theme);
+	setDimLevel(headlightStatus);
 	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
 	setLanguage(localStorage.mfdLanguage);
 

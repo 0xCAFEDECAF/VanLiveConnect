@@ -358,7 +358,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div gid="ta_selected" class="led ledOn" style="left:670px; top:490px; width:100px;">TA</div>
 				<div gid="ta_not_available" class="icon" style="position:absolute; left:670px; top:490px; width:100px;">
 					<svg>
-						<line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
+						<line stroke="var(--disabled-element-color)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
 					</svg>
 				</div>
 
@@ -408,7 +408,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div gid="rds_selected" class="led ledOff" style="left:795px; top:490px; width:140px;">RDS</div>
 						<div gid="rds_not_available" class="icon" style="position:absolute; left:795px; top:490px; width:140px;">
 							<svg>
-								<line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
+								<line stroke="var(--disabled-element-color)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
 							</svg>
 						</div>
 					</div>
@@ -752,11 +752,63 @@ char mfd_html[] PROGMEM = R"=====(
 				<div class="button" goto_id="set_units">Set format and units</div>
 			</div>	<!-- "screen_configuration_menu" -->
 
-			<div id="set_screen_brightness" class="tag menuScreen">
+			<div id="set_screen_brightness" class="tag menuScreen" style="top:100px; height:430px;"
+				on_goto="colorThemeSelectTickedButton();">
 				<div class="menuTitleLine">Set brightness<br /></div>
-				<small>[Screen not yet implemented]</small>
-				<div style="font-size:35px;">Use "UP" and "DOWN" buttons on remote control</div>
-				<!-- TODO - design this screen -->
+
+				<div style="position:absolute; font-size:46px; text-align:left; left:0px; top:100px; width:280px; height:150px;">
+					<span id="set_dark_theme"
+						LEFT_BUTTON="set_brightness_higher"
+						RIGHT_BUTTON="set_brightness_lower"
+						UP_BUTTON="set_brightness_validate_button"
+						on_click="toggleTick(); colorThemeTickSet();"
+						class="tickBox button">
+					</span> Normal video<br style="line-height:120px;" />
+					<span id="set_light_theme"
+						LEFT_BUTTON="set_brightness_higher"
+						RIGHT_BUTTON="set_brightness_lower"
+						DOWN_BUTTON="set_brightness_validate_button"
+						on_click="toggleTick(); colorThemeTickSet();"
+						class="tickBox button buttonSelected">
+					</span> Reverse video
+				</div>
+
+				<div class="tag"
+					style="left:600px; top:100px; width:290px; text-align:center; font-size:46px;">
+					Brightness
+				</div>
+
+				<div style="position:absolute; left:600px; top:170px; text-align:left;">
+					<div id="set_brightness_lower"
+						style="width:60px" class="button"
+						LEFT_BUTTON="set_dark_theme"
+						RIGHT_BUTTON="set_brightness_higher"
+						DOWN_BUTTON="set_brightness_validate_button"
+						on_click="adjustDimLevel(headlightStatus, 'DOWN_BUTTON');"
+						>&ndash;</div>
+					<div id="set_brightness_higher"
+						style="position:absolute; left:200px; top: 0px; width:60px;" class="button"
+						LEFT_BUTTON="set_brightness_lower"
+						RIGHT_BUTTON="set_dark_theme"
+						DOWN_BUTTON="set_brightness_validate_button"
+						on_click="adjustDimLevel(headlightStatus, 'UP_BUTTON');"
+						>&plus;</div>
+				</div>
+
+				<div id="display_brightness_level"
+					class="dseg7" style="left:600px; top:280px; width:290px; text-align:center;">
+					5
+				</div>
+
+				<div id="set_brightness_validate_button"
+					class="button validateButton"
+					style="top:340px;"
+					UP_BUTTON="set_light_theme"
+					DOWN_BUTTON="set_dark_theme"
+					on_click="exitMenu(); exitMenu(); exitMenu();">
+					Validate
+				</div>
+
 			</div>	<!-- "set_screen_brightness" -->
 
 			<div id="set_date_time" class="tag menuScreen" style="top:50px; height:460px;">
@@ -854,9 +906,7 @@ char mfd_html[] PROGMEM = R"=====(
 					style="top:390px;">Validate</div>
 			</div>	<!-- "set_date_time" -->
 
-			<div id="set_language"
-				on_goto="languageSelectTickedButton();"
-				class="tag menuScreen">
+			<div id="set_language" class="tag menuScreen" on_goto="languageSelectTickedButton();">
 				<div class="menuTitleLine">Select a language<br /></div>
 
 				<div style="font-size:46px; text-align:left;">
@@ -914,10 +964,10 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="set_language_validate_button"
 					class="button validateButton"
+					style="top:300px;"
 					UP_BUTTON="set_language_english"
 					DOWN_BUTTON="set_language_german"
-					on_click="languageValidate();"
-					style="top:300px;">Validate
+					on_click="languageValidate();">Validate
 				</div>
 
 			</div>	<!-- "set_language" -->
@@ -1078,7 +1128,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Sat nav main menu -->
 
-				<div id="satnav_main_menu" on_enter="highlightFirstLine('satnav_choice_list');" class="tag menuScreen">
+				<div id="satnav_main_menu" class="tag menuScreen" on_enter="highlightFirstLine('satnav_choice_list');">
 					<div class="menuTitleLine">Navigation / Guidance<br /></div>
 
 					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
@@ -1957,7 +2007,6 @@ char mfd_html[] PROGMEM = R"=====(
 									<!-- "No entry" icon definition -->
 									<defs>
 										<g id="no_entry">
-											<!--<text x="150" y="270" fill="var(--main-color)" font-family="FontAwesome" font-size="30px" dominant-baseline="middle" text-anchor="middle">&#xf056;</text>-->
 											<path style="fill:var(--main-color)" transform="translate(130 250) scale(0.08)" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zM124 296c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h264c6.6 0 12 5.4 12 12v56c0 6.6-5.4 12-12 12H124z"></path>
 										</g>
 									</defs>
@@ -1986,7 +2035,7 @@ char mfd_html[] PROGMEM = R"=====(
 								style="display:none; position:absolute; left:0px; top:0px; width:300px; height:300px;">
 								<svg width="300" height="300">
 									<circle class="satNavRoundabout" cx="150" cy="150" r="40"></circle>
-									<circle class="satNavRoundabout" cx="150" cy="150" r="20"></circle>
+									<circle class="satNavRoundabout" style="fill:var(--background-color);" cx="150" cy="150" r="20"></circle>
 								</svg>
 								<div style="position:absolute; left:0px; top:0px; width:300px; height:300px;">
 									<!-- Indicate the "to" direction also in the roundabout -->
@@ -2117,7 +2166,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div gid="ta_selected" class="led ledOn" style="left:500px; top:290px; width:100px;">TA</div>
 				<div gid="ta_not_available" class="icon" style="position:absolute; left:500px; top:290px; width:100px;">
 					<svg>
-						<line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
+						<line stroke="var(--disabled-element-color)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="87" y2="8"></line>
 					</svg>
 				</div>
 				<div gid="loudness" class="led ledOff" style="left:625px; top:290px; width:140px;">LOUD</div>
@@ -2149,7 +2198,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div gid="rds_selected" class="led ledOff" style="left:335px; top:290px; width:140px;">RDS</div>
 						<div gid="rds_not_available" class="icon" style="position:absolute; left:335px; top:290px; width:140px;">
 							<svg>
-								<line stroke="rgb(67,82,105)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
+								<line stroke="var(--disabled-element-color)" stroke-width="14" stroke-linecap="round" x1="10" y1="30" x2="127" y2="8"></line>
 							</svg>
 						</div>
 					</div>
@@ -2734,7 +2783,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- System -->
 
-		<div id="system" style="position:absolute; font-size:30px; background-color:rgba(41,55,74,0.95); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
+		<div id="system" style="position:absolute; font-size:30px; background-color:var(--selected-element-color); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
 			on_enter="$('#web_socket_server_host').text(webSocketServerHost);">
 
 			<div style="font-size:50px; text-align:center; padding-top:10px;">System</div>

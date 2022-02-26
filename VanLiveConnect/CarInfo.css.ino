@@ -24,14 +24,21 @@ char carInfo_css[] PROGMEM = R"=====(
   font-family:Dots-All-For-Now;
   src:url(DotsAllForNow.woff) format('woff');
 }
-:root {
-  --main-color:#dfe7f2ff;
+/* Default: "dark-theme" background with light-blue text */
+  /* --main-color:#dfe7f2ff; */
+:root
+{
+  --main-color:hsl(215,42%,91%);
+  --background-color:rgb(8,7,19);
+  --led-off-color:rgb(25,31,40);
+  --notification-color:rgba(15,19,23,0.95);
+  --highlight-color:rgba(223,231,242,0.4);
+  --selected-element-color:rgb(41,55,74);
+  --disabled-element-color:rgb(67,82,105);
 }
 body
 {
-  /* Nice "dark-theme" background with light-blue text */
-  /* background-color:rgb(41,55,74); */
-  background-color:rgb(8,7,19);
+  background-color:var(--background-color);
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
   color:var(--main-color);
   font-size:50px;
@@ -43,9 +50,9 @@ body
   background-size: 1350px 650px;
 
   /* TODO - background-blend-mode not supported by IE11 */
-  /*background-blend-mode: luminosity;*/
-  /*background-blend-mode: multiply; -- preferred */
-  /*background-blend-mode: lighten;*/
+  /* background-blend-mode: luminosity; */
+  /*background-blend-mode: multiply; */
+  background-blend-mode: lighten;
 }
 .languageIcon
 {
@@ -90,7 +97,7 @@ body
 {
   position:absolute;
   overflow:hidden;
-  color:rgb(41,55,74);
+  color:var(--selected-element-color);
   border-radius:5px;
   text-align:center;
   font-size:44px;
@@ -102,8 +109,7 @@ body
 }
 .ledOff
 {
-  /*background-color:rgb(67,82,105); - too light*/
-  background-color:rgb(25,31,40); /* TODO - maybe a bit too dark */
+  background-color:var(--led-off-color);
 }
 .ledActive
 {
@@ -247,7 +253,7 @@ body
 }
 .tab button.active
 {
-  color:rgb(41,55,74);
+  color:var(--selected-element-color);
   background-color:var(--main-color);
 }
 
@@ -261,7 +267,7 @@ body
 }
 .tabActive
 {
-  color:rgb(41,55,74);
+  color:var(--selected-element-color);
   background-color:var(--main-color);
 }
 .subScreen
@@ -291,7 +297,7 @@ body
 /* Styles for popups */
 .notificationPopup
 {
-  background-color:rgba(15,19,23,0.95);
+  background-color:var(--notification-color);
   border:5px solid;
   border-radius:15px;
   left:55px;
@@ -317,7 +323,7 @@ body
 {
   display:none;
   border:12px solid;
-  background-color:rgba(223,231,242,0.4);
+  background-color:var(--highlight-color);
 }
 .show
 {
@@ -386,13 +392,13 @@ body
 }
 .buttonSelected
 {
-  color:rgb(41,55,74);
+  color:var(--selected-element-color);
   background-color:var(--main-color);
   border:5px solid var(--main-color);
 }
 .buttonDisabled
 {
-  color:rgb(67,82,105);
+  color:var(--disabled-element-color);
 }
 .buttonBar
 {
@@ -426,7 +432,7 @@ body
   padding-right:5px;
 
   /* Invert foreground and background color */
-  color:rgb(41,55,74);
+  color:var(--selected-element-color);
   background-color:var(--main-color);
 }
 .tickBox
@@ -471,11 +477,11 @@ body
   stroke:var(--main-color);
   stroke-width:14;
   stroke-linecap:round;
-  fill:rgb(41,55,74);
+  fill:var(--selected-element-color);
 }
 .satNavInstructionDisabledIcon
 {
-  stroke:rgb(67,82,105);
+  stroke:var(--disabled-element-color);
 }
 .satNavInstructionIconText
 {
@@ -485,7 +491,7 @@ body
 }
 .satNavInstructionDisabledIconText
 {
-  fill:rgb(67,82,105);
+  fill:var(--disabled-element-color);
 }
 .satNavInstructionIconLeg
 {
@@ -493,7 +499,7 @@ body
 }
 .satNavRoundabout
 {
-  /* fill:rgb(41,55,74); */
+  fill:var(--selected-element-color);
   stroke-width:5;
   stroke:var(--main-color);
 }
