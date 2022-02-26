@@ -115,7 +115,7 @@ See also the [screen shots](#screenshots) above.
 * CD changer unit
 * Notifications and warnings
 * Satellite Navigation (maps are out of date but it's a nice gimmick 😇)
-* Multiple languages (but some menus and screens are only in English)
+* Multiple languages: English, French, German, Spanish, Italian and Dutch
 * Setting color theme and brightness
 * Setting format and units
 
@@ -310,7 +310,7 @@ I am investigating how to improve on the error-free reception of VAN bus frames.
 
 ## 👷 Work to be Done<a name = "todo"></a>
 
-* Some menus and screens need to be translated to other languages than English.
+* No plans 😊
 
 ## ❓ Frequently Asked Questions<a name = "faq"></a>
 
