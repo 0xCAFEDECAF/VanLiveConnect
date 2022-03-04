@@ -347,6 +347,7 @@ bool IrReceive(TIrPacket& irPacket)
   #endif // DEBUG_IR_RECV
 
     // "MENU_BUTTON", "MODE_BUTTON" and "VAL_BUTTON" are never "held". They fire only once.
+    // TODO - "VAL_BUTTON" does fire repeatedly in "set_brightness" screen
     if (irPacket.held
         && (
             irPacket.value == IB_MENU

@@ -25,7 +25,6 @@ char carInfo_css[] PROGMEM = R"=====(
   src:url(DotsAllForNow.woff) format('woff');
 }
 /* Default: "dark-theme" background with light-blue text */
-  /* --main-color:#dfe7f2ff; */
 :root
 {
   --main-color:hsl(215,42%,91%);

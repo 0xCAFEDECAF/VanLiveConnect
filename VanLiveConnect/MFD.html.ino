@@ -753,6 +753,7 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>	<!-- "screen_configuration_menu" -->
 
 			<div id="set_screen_brightness" class="tag menuScreen" style="top:100px; height:430px;"
+				on_esc="setBrightnessEscape(); upMenu();"
 				on_goto="colorThemeSelectTickedButton();">
 				<div class="menuTitleLine">Set brightness<br /></div>
 
@@ -761,14 +762,14 @@ char mfd_html[] PROGMEM = R"=====(
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						UP_BUTTON="set_brightness_validate_button"
-						on_click="toggleTick(); colorThemeTickSet();"
+						on_click="colorThemeTickSet();"
 						class="tickBox button">
 					</span> Normal video<br style="line-height:120px;" />
 					<span id="set_light_theme"
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						DOWN_BUTTON="set_brightness_validate_button"
-						on_click="toggleTick(); colorThemeTickSet();"
+						on_click="colorThemeTickSet();"
 						class="tickBox button buttonSelected">
 					</span> Reverse video
 				</div>
@@ -797,7 +798,12 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="display_brightness_level"
 					class="dseg7" style="left:600px; top:280px; width:290px; text-align:center;">
-					5
+					14
+				</div>
+
+				<div id="display_reduced_brightness_level"
+					class="dseg7" style="left:600px; top:280px; width:290px; text-align:center;">
+					0
 				</div>
 
 				<div id="set_brightness_validate_button"
@@ -805,7 +811,7 @@ char mfd_html[] PROGMEM = R"=====(
 					style="top:340px;"
 					UP_BUTTON="set_light_theme"
 					DOWN_BUTTON="set_dark_theme"
-					on_click="exitMenu(); exitMenu(); exitMenu();">
+					on_click="setBrightnessValidate();">
 					Validate
 				</div>
 
@@ -906,7 +912,9 @@ char mfd_html[] PROGMEM = R"=====(
 					style="top:390px;">Validate</div>
 			</div>	<!-- "set_date_time" -->
 
-			<div id="set_language" class="tag menuScreen" on_goto="languageSelectTickedButton();">
+			<div id="set_language" class="tag menuScreen"
+				on_esc="setLanguage(localStorage.mfdLanguage); upMenu();"
+				on_goto="setLanguageSelectTickedButton();">
 				<div class="menuTitleLine">Select a language<br /></div>
 
 				<div style="font-size:46px; text-align:left;">
@@ -915,14 +923,14 @@ char mfd_html[] PROGMEM = R"=====(
 							LEFT_BUTTON="set_language_dutch"
 							RIGHT_BUTTON="set_language_spanish"
 							UP_BUTTON="set_language_validate_button"
-							on_click="toggleTick(); languageTickSet(); keyPressed('UP_BUTTON');"
+							on_click="setLanguageTickSet(); keyPressed('UP_BUTTON');"
 							class="tickBox button">
 						</span> Deutsch<br style="line-height:70px;" />
 						<span id="set_language_english"
 							LEFT_BUTTON="set_language_italian"
 							RIGHT_BUTTON="set_language_french"
 							DOWN_BUTTON="set_language_validate_button"
-							on_click="toggleTick(); languageTickSet(); keyPressed('DOWN_BUTTON');"
+							on_click="setLanguageTickSet(); keyPressed('DOWN_BUTTON');"
 							class="tickBox button buttonSelected">
 						</span> English<br style="line-height:70px;" />
 					</div>
@@ -932,14 +940,14 @@ char mfd_html[] PROGMEM = R"=====(
 							UP_BUTTON="set_language_french"
 							LEFT_BUTTON="set_language_german"
 							RIGHT_BUTTON="set_language_dutch"
-							on_click="toggleTick(); languageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');"
+							on_click="setLanguageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');"
 							class="tickBox button">
 						</span> Espa&ntilde;ol<br style="line-height:70px;" />
 						<span id="set_language_french"
 							LEFT_BUTTON="set_language_english"
 							RIGHT_BUTTON="set_language_italian"
 							DOWN_BUTTON="set_language_spanish"
-							on_click="toggleTick(); languageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');"
+							on_click="setLanguageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');"
 							class="tickBox button">
 					</span> Fran&ccedil;ais<br style="line-height:70px;" />
 					</div>
@@ -949,14 +957,14 @@ char mfd_html[] PROGMEM = R"=====(
 							UP_BUTTON="set_language_italian"
 							LEFT_BUTTON="set_language_spanish"
 							RIGHT_BUTTON="set_language_german"
-							on_click="toggleTick(); languageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');"
+							on_click="setLanguageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');"
 							class="tickBox button">
 						</span> Nederlands<br style="line-height:70px;" />
 						<span id="set_language_italian"
 							LEFT_BUTTON="set_language_french"
 							RIGHT_BUTTON="set_language_english"
 							DOWN_BUTTON="set_language_dutch"
-							on_click="toggleTick(); languageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');"
+							on_click="setLanguageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');"
 							class="tickBox button">
 						</span> Italiano<br style="line-height:70px;" />
 					</div>
@@ -967,7 +975,7 @@ char mfd_html[] PROGMEM = R"=====(
 					style="top:300px;"
 					UP_BUTTON="set_language_english"
 					DOWN_BUTTON="set_language_german"
-					on_click="languageValidate();">Validate
+					on_click="setLanguageValidate();">Validate
 				</div>
 
 			</div>	<!-- "set_language" -->
@@ -1343,7 +1351,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div id="satnav_enter_street_characters"
 							on_enter="satnavEnterStreetCharactersScreen();"
-							on_esc="satnavConfirmCityMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
+							on_esc="satnavConfirmCityMode(); upMenu();"
 							style="display:none;">
 
 							<div class="tag satNavEnterDestinationTag">Enter street</div>
@@ -1407,7 +1415,7 @@ char mfd_html[] PROGMEM = R"=====(
 						-->
 						<div id="satnav_current_destination_house_number"
 							on_enter="satnavConfirmHouseNumber();"
-							on_esc="satnavConfirmStreetMode(); currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
+							on_esc="satnavConfirmStreetMode(); upMenu();"
 							class="dots" style="left:25px; top:180px; width:930px;"></div>
 
 						<div id="satnav_house_number_range" class="dots" style="left:25px; top:230px; width:930px; text-align:right;"></div>
@@ -1667,7 +1675,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag satNavEntryNameTag">Name</div>
 					<div id="satnav_archive_in_directory_entry"
 						on_enter="satnavEnterArchiveInDirectoryScreen();"
-						on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
+						on_esc="satnavLastEnteredChar = null; currentMenu = upMenu();"
 						class="dots satNavShowAddressCity" style="font-size:60px;">----------------</div>
 
 					<div id="satnav_archive_in_directory_characters_line_1"
@@ -1730,7 +1738,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- on_esc: this goes back to the "List" screen -->
 					<div id="satnav_rename_entry_in_directory_entry"
 						on_enter="satnavEnterRenameDirectoryEntryScreen();"
-						on_esc="satnavLastEnteredChar = null; currentMenu = menuStack.pop(); changeLargeScreenTo(currentMenu);"
+						on_esc="satnavLastEnteredChar = null; currentMenu = upMenu();"
 						class="dots satNavShowAddressCity" style="font-size:60px; left:350px;">----------------</div>
 
 					<div id="satnav_rename_entry_in_directory_characters_line_1"
@@ -2552,7 +2560,7 @@ char mfd_html[] PROGMEM = R"=====(
 				class="icon notificationPopup" style="display:none; height:300px;">
 				<div class="centerAligned yesNoPopupArea">
 					<span id="satnav_guidance_preference_popup_title">Keep criteria</span>
-					"<span id="satnav_guidance_current_preference_text">Fastest route</span>"?
+					"<span id="satnav_guidance_current_preference_text">fastest route</span>"?
 
 					<div button_orientation="horizontal">
 						<div id="satnav_guidance_preference_popup_yes_button"

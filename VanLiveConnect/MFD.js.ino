@@ -22,76 +22,6 @@ function incModulo(i, mod)
 } // clamp
 
 // -----
-// Color theme and dimming
-
-function setColorTheme(theme)
-{
-	localStorage.theme = typeof theme === "undefined" ? "set_dark_theme" : theme;
-
-	$(":root").css("--main-color", theme === "set_light_theme" ? "#271b42" : "hsl(215,42%,91%)");
-	$(":root").css("--background-color", theme === "set_light_theme" ? "hsl(240,6%,91%)" : "rgb(8,7,19)");
-	$(":root").css("--led-off-color", theme === "set_light_theme" ? "rgb(189,189,189)" : "rgb(25,31,40)");
-	$(":root").css("--notification-color", theme === "set_light_theme" ? "rgba(205,209,213,0.95)" : "rgba(15,19,23,0.95)");
-	$(":root").css("--highlight-color", theme === "set_light_theme" ? "rgba(84,101,125,0.4)" : "rgba(223,231,242,0.4)");
-	$(":root").css("--selected-element-color", theme === "set_light_theme" ? "rgb(207,205,217)" : "rgb(41,55,74)");
-	$(":root").css("--disabled-element-color", theme === "set_light_theme" ? "rgb(172,183,202)" : "rgb(67,82,105)");
-
-	setDimLevel(headlightStatus);
-} // setColorTheme
-
-function colorThemeTickSet()
-{
-	setColorTheme(getTickedId("set_screen_brightness"));
-} // colorThemeTickSet
-
-function colorThemeSelectTickedButton()
-{
-	$("#set_screen_brightness").find(".tickBox").removeClass("buttonSelected");
-
-	var theme = localStorage.theme;
-	var id = "set_dark_theme";  // Default
-	if (hasTick("set_screen_brightness", theme)) id = theme; else localStorage.mfdDistanceUnit = theme;
-	setTick(id);
-	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
-} // colorThemeSelectTickedButton
-
-function setLuminosity(luminosity)
-{
-	var luminosity = clamp(luminosity, 63, 91);
-
-	if (localStorage.theme === "set_light_theme") $(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
-	else $(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
-
-	return luminosity;
-} // setLuminosity
-
-function setDimLevel(headlightStatus)
-{
-	// Default dim level luminosity values
-	if (isNaN(localStorage.dimLevelReduced)) localStorage.dimLevelReduced = 63;
-	if (isNaN(localStorage.dimLevel)) localStorage.dimLevel = 91;
-
-	var luminosity = headlightStatus.match(/BEAM/) ? localStorage.dimLevelReduced : localStorage.dimLevel;
-	luminosity = setLuminosity(luminosity);
-
-	$("#display_brightness_level").text((+luminosity - 63) / 2);
-} // setDimLevel
-
-function adjustDimLevel(headlightStatus, button)
-{
-	var luminosity = headlightStatus.match(/BEAM/) ? localStorage.dimLevelReduced : localStorage.dimLevel;
-
-	// Luminosity adjustable in 15 levels from 63 ... 91
-	luminosity = setLuminosity(button === "UP_BUTTON" ? +luminosity + 2 : +luminosity - 2);
-
-	$("#display_brightness_level").text((+luminosity - 63) / 2);
-
-	// Store in the appropriate storage variable
-	if (headlightStatus.match(/BEAM/)) localStorage.dimLevelReduced = luminosity;
-	else localStorage.dimLevel = luminosity;
-} // adjustDimLevel
-
-// -----
 // On-screen clocks
 
 // Capitalize first letter
@@ -163,7 +93,6 @@ function showViewportSizes()
 // Inspired by https://gist.github.com/ismasan/299789
 var fancyWebSocket = function(url)
 {
-	var _url = url;
 	var conn = new WebSocket(url);
 
 	var callbacks = {};
@@ -210,38 +139,16 @@ var fancyWebSocket = function(url)
 
 	conn.onerror = function(event)
 	{
-		if (conn.readyState == 1)
-		{
-			console.log("// WebSocket '" + url + "' normal error: " + event.type);
-		} // if
+		if (conn.readyState == 1) console.log("// WebSocket '" + url + "' normal error: " + event.type);
 	}; // function
 
 	var dispatch = function(event_name, message)
 	{
 		var chain = callbacks[event_name];
-		if (chain == undefined) return;  // No callbacks for this event
-		for (var i = 0; i < chain.length; i++)
-		{
-			chain[i](message)
-		} // for
+		if (chain === undefined) return;  // No callbacks for this event
+		for (var i = 0; i < chain.length; i++) chain[i](message);
 	}; // function
 }; // fancyWebSocket
-
-// In "demo mode", specific fields will not be updated
-var inDemoMode = false;
-
-var fixFieldsOnDemo =
-[
-	// During demo, don't show the real VIN
-	"vin",
-
-	// During demo, don't show where we are
-	"satnav_curr_street_shown",
-	"satnav_guidance_curr_street",
-	"satnav_guidance_next_street",
-	"satnav_distance_to_dest_via_road_number",
-	"satnav_distance_to_dest_via_road_unit"
-];
 
 function processJsonObject(item, jsonObject)
 {
@@ -270,13 +177,6 @@ function processJsonObject(item, jsonObject)
 	if (domItem.match(/^__.+/)) domItem = processJsonObject.prefix + domItem;
 
 	domItem = domItem.replace("__", "_"); 
-
-	// In demo mode, skip certain updates and just call the handler
-	if (inDemoMode && fixFieldsOnDemo.indexOf(domItem) >= 0)
-	{
-		handleItemChange(domItem, jsonObject);
-		return;
-	} // if
 
 	var selectorById = '#' + domItem;  // Select by 'id' attribute (must be unique in the DOM)
 	var selectorByAttr = '[gid="' + domItem + '"]';  // Select also by custom attribute 'gid' (need not be unique)
@@ -385,7 +285,7 @@ function writeToDom(jsonObj)
 	// for later re-playing at your desk.
 
 	var now = Date.now();
-	if (typeof writeToDom.lastInvoked === "undefined")
+	if (writeToDom.lastInvoked === undefined)
 	{
 		// First time: print the sleep function for easy copy-pasting into the browser console.
 		// Intervals will be at most 300 milliseconds.
@@ -498,12 +398,12 @@ function connectToWebSocket()
 // -----
 // Handling of vehicle data
 
-var economyMode= "";
+var economyMode;
 var contactKeyPosition;
 var engineRpm = 0;
-var engineRunning = "";  // Either "" (unknown), "YES" or "NO"
-var engineCoolantTemperature = 80;  // In degrees Celsius
-var vehicleSpeed = 0;
+var engineRunning;
+var engineCoolantTemperature;  // In degrees Celsius
+var vehicleSpeed;
 var icyConditions = false;
 var wasRiskOfIceWarningShown = false;
 var headlightStatus = "";
@@ -571,7 +471,7 @@ function changeLargeScreenTo(id)
 	if (onEnter) eval(onEnter);
 
 	// Report back to server (ESP) that user is browsing the menus
-	if (! inMenu() && typeof webSocket !== "undefined") webSocket.send("in_menu:NO");
+	if (! inMenu() && webSocket !== undefined) webSocket.send("in_menu:NO");
 } // changeLargeScreenTo
 
 var changeBackScreenId;
@@ -623,7 +523,7 @@ function selectDefaultScreen(audioSource)
 	var selectedScreenId = "";
 
 	// Explicitly passed a value for 'audioSource'?
-	if (typeof audioSource !== "undefined")
+	if (audioSource !== undefined)
 	{
 		selectedScreenId =
 			audioSource === "TUNER" ? "tuner" :
@@ -640,7 +540,7 @@ function selectDefaultScreen(audioSource)
 
 	if (selectedScreenId === "")
 	{
-		if (typeof audioSource === "undefined") audioSource = $("#audio_source").text();
+		if (audioSource === undefined) audioSource = $("#audio_source").text();
 
 		selectedScreenId =
 			audioSource === "TUNER" ? "tuner" :
@@ -656,7 +556,7 @@ function selectDefaultScreen(audioSource)
 		// But don't switch away from instrument screen, if the engine is running
 		if (currentLargeScreenId === "instruments")
 		{
-			if (engineRunning !== "NO" && engineRpm !== 0 && contactKeyPosition === "ON") return;
+			if (engineRunning === "YES" && engineRpm !== 0 && contactKeyPosition === "ON") return;
 		} // if
 
 		selectedScreenId = "satnav_current_location";
@@ -745,7 +645,7 @@ function nextLargeScreen()
 	} // if
 
 	// After the "satnav_current_location" screen, go back to the "clock" screen
-	if (i === screenIds.indexOf("satnav_current_location") + 1) i = 0;
+	if (i >= screenIds.length) i = 0;
 
 	changeLargeScreenTo(screenIds[i]);
 } // nextLargeScreen
@@ -915,7 +815,7 @@ function showPopupAndNotifyServer(id, msec, message)
 {
 	showPopup(id, msec);
 
-	var messageText = typeof message !== "undefined" ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
+	var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
 	webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
 
 	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
@@ -959,9 +859,6 @@ function showNotificationPopup(message, msec, isWarning)
 {
 	if (isWarning === undefined) isWarning = false;  // IE11 does not support default parameters
 
-	// No "info" popups while browsing the menu's
-	if (! isWarning && inMenu()) return;
-
 	// Show the required icon: "information" or "warning"
 	$("#notification_icon_info").toggle(! isWarning);
 	$("#notification_icon_warning").toggle(isWarning);
@@ -982,7 +879,7 @@ function showAudioPopup(id)
 	// This popup only appears in the following screens:
 	if (currentLargeScreenId !== "satnav_guidance" && currentLargeScreenId !== "instruments") return;
 
-	if (typeof id === "undefined")
+	if (id === undefined)
 	{
 		var map =
 		{
@@ -1090,7 +987,7 @@ function gotoTopLevelMenu(menu)
 	if (menu === undefined) menu = "main_menu";
 
 	// Report back that user is not browsing the menus
-	if (typeof webSocket !== "undefined") webSocket.send("in_menu:YES");
+	if (webSocket !== undefined) webSocket.send("in_menu:YES");
 
 	// This is the screen we want to go back to when pressing "Esc" on the remote control inside the top level menu
 	currentMenu = currentLargeScreenId;
@@ -1178,7 +1075,7 @@ function findSelectedButton()
 	};
 } // findSelectedButton
 
-// Handle the 'val' (enter) button
+// Handle the 'Val' (enter) button
 function buttonClicked()
 {
 	var selected = findSelectedButton();
@@ -1195,18 +1092,18 @@ function buttonClicked()
 	gotoMenu(goto_id);  // Change to the menu screen with that ID
 } // buttonClicked
 
+function upMenu()
+{
+	currentMenu = menuStack.pop();
+	if (currentMenu) changeLargeScreenTo(currentMenu); else selectDefaultScreen();
+} // upMenu
+
 function exitMenu()
 {
 	// If specified, perform the current screen's "on_esc" action instead of the default "menu-up" action
 	var onEsc = $("#" + currentLargeScreenId).attr("on_esc");
-	if (onEsc)
-	{
-		eval(onEsc);
-		return;
-	} // if
-
-	currentMenu = menuStack.pop();
-	if (currentMenu) changeLargeScreenTo(currentMenu); else selectDefaultScreen();
+	if (onEsc) return eval(onEsc);
+	upMenu();
 } // exitMenu
 
 // Returns the passed id or, if undefined, the id of the button that has focus (has class "selectedButton")
@@ -1290,7 +1187,7 @@ var buttonOriginalWidths = {};
 
 function resizeButton(id)
 {
-	if (typeof id === "undefined") return;
+	if (id === undefined) return;
 
 	var button = $("#" + id);
 
@@ -1458,7 +1355,7 @@ function highlightLetter(id, index)
 	var text = $("#" + id).text();
 	if (text.length === 0) return;  // Nothing to highlight?
 
-	if (typeof index !== "undefined")
+	if (index !== undefined)
 	{
 		index = clamp (index, 0, text.length);
 		highlightIndexes[id] = index;
@@ -1487,8 +1384,8 @@ function unhighlightLetter(id)
 
 function highlightFirstLetter(id)
 {
-	id = getFocusId(id);
-	if (id === undefined) return;
+	// id = getFocusId(id);
+	// if (id === undefined) return;
 
 	highlightLetter(id, 0);
 } // highlightFirstLetter
@@ -1792,6 +1689,100 @@ function showTunerPresetsPopup()
 } // showTunerPresetsPopup
 
 // -----
+// Color theme and dimming
+
+function setColorTheme(theme)
+{
+	$(":root").css("--main-color", theme === "set_light_theme" ? "#271b42" : "hsl(215,42%,91%)");
+	$(":root").css("--background-color", theme === "set_light_theme" ? "hsl(240,6%,91%)" : "rgb(8,7,19)");
+	$(":root").css("--led-off-color", theme === "set_light_theme" ? "rgb(189,189,189)" : "rgb(25,31,40)");
+	$(":root").css("--notification-color", theme === "set_light_theme" ? "rgba(205,209,213,0.95)" : "rgba(15,19,23,0.95)");
+	$(":root").css("--highlight-color", theme === "set_light_theme" ? "rgba(84,101,125,0.4)" : "rgba(223,231,242,0.4)");
+	$(":root").css("--selected-element-color", theme === "set_light_theme" ? "rgb(207,205,217)" : "rgb(41,55,74)");
+	$(":root").css("--disabled-element-color", theme === "set_light_theme" ? "rgb(172,183,202)" : "rgb(67,82,105)");
+
+	setDimLevel(headlightStatus, theme);  // Will adjust main color (dark theme) or background color (light theme)
+} // setColorTheme
+
+function colorThemeTickSet()
+{
+	toggleTick(); 
+	setColorTheme(getTickedId("set_screen_brightness"));
+} // colorThemeTickSet
+
+function colorThemeSelectTickedButton()
+{
+	$("#set_screen_brightness").find(".tickBox").removeClass("buttonSelected");
+
+	var theme = localStorage.colorTheme;
+	var id = "set_dark_theme";  // Default
+	if (hasTick("set_screen_brightness", theme)) id = theme; else localStorage.colorTheme = id;
+	setTick(id);
+	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
+} // colorThemeSelectTickedButton
+
+function setLuminosity(luminosity, theme)
+{
+	var luminosity = clamp(luminosity, 63, 91);
+	if (theme === undefined) theme = localStorage.colorTheme;
+
+	if (theme === "set_light_theme") $(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
+	else $(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
+
+	return luminosity;
+} // setLuminosity
+
+function initDimLevel()
+{
+	// Default dim level luminosity values
+	if (! (localStorage.dimLevelReduced >= 0 && localStorage.dimLevelReduced <= 14)) localStorage.dimLevelReduced = 0;
+	if (! (localStorage.dimLevel >= 0 && localStorage.dimLevel <= 14)) localStorage.dimLevel = 14;
+
+	$("#display_brightness_level").text(localStorage.dimLevel);
+	$("#display_reduced_brightness_level").text(localStorage.dimLevelReduced);
+} // initDimLevel
+
+function setDimLevel(headlightStatus, theme)
+{
+	var headlightsOn = headlightStatus.match(/BEAM/) !== null;
+	var id = headlightsOn ? "display_reduced_brightness_level" : "display_brightness_level";
+	var dimLevel = parseInt($("#" + id).text());
+	var luminosity = dimLevel * 2 + 63
+	setLuminosity(luminosity, theme);
+
+	$("#display_brightness_level").toggle(! headlightsOn);
+	$("#display_reduced_brightness_level").toggle(headlightsOn);
+} // setDimLevel
+
+function adjustDimLevel(headlightStatus, button)
+{
+	var id = headlightStatus.match(/BEAM/) ? "display_reduced_brightness_level" : "display_brightness_level";
+
+	// Luminosity is adjustable in 15 levels from 63 ... 91
+	var luminosity = (parseInt($("#" + id).text()) * 2) + 63 + (button === "UP_BUTTON" ? 2 : -2);
+	luminosity = setLuminosity(luminosity, getTickedId("set_screen_brightness"));
+
+	$("#" + id).text((+luminosity - 63) / 2);
+} // adjustDimLevel
+
+function setBrightnessEscape()
+{
+	initDimLevel();  // Go back to saved setting
+	setColorTheme(localStorage.colorTheme);
+} // setBrightnessEscape
+
+function setBrightnessValidate()
+{
+	localStorage.colorTheme = getTickedId("set_screen_brightness");
+	localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
+	localStorage.dimLevel = $("#display_brightness_level").text();
+
+	exitMenu();
+	exitMenu();
+	exitMenu();
+} // setBrightnessValidate
+
+// -----
 // Functions for selecting MFD language
 
 var notDigitizedAreaText = "Not digitized area";
@@ -1803,47 +1794,36 @@ var resumeGuidanceText = "Resume guidance";
 var streetNotListedText = "Street not listed";
 
 // Find the ticked button and select it
-function languageSelectTickedButton()
+function setLanguageSelectTickedButton()
 {
-	var foundTick = false;
+	$("#set_language").find(".tickBox").removeClass("buttonSelected");
 
-	$("#set_language").find(".tickBox").each(
-		function()
-		{
-			var isTicked = $(this).text().trim() !== "";
-			$(this).toggleClass("buttonSelected", isTicked);
-			if (isTicked) foundTick = true;
-		}
-	);
-
-	// If nothing is ticked, retrieve from local store
-	if (! foundTick)
-	{
-		var lang = localStorage.mfdLanguage;
-		var id = "set_language_english";  // Default
-		if (hasTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
-		setTick(id);
-		$("#" + id).addClass("buttonSelected");
-	} // if
+    var lang = localStorage.mfdLanguage;
+    var id = "set_language_english";  // Default
+    if (hasTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
+    setTick(id);
+    $("#" + id).addClass("buttonSelected");
 
 	$("#set_language_validate_button").removeClass("buttonSelected");
-} // languageSelectTickedButton
+} // setLanguageSelectTickedButton
 
-function languageTickSet()
+function setLanguageTickSet()
 {
-	var newLanguage = getTickedId("set_language");
-	setLanguage(newLanguage);
-	webSocket.send("mfd_language:" + newLanguage);
-} // languageTickSet
+	toggleTick();
+	setLanguage(getTickedId("set_language"));
+} // setLanguageTickSet
 
-function languageValidate()
+function setLanguageValidate()
 {
+	localStorage.mfdLanguage = getTickedId("set_language");
+	webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+
 	// TODO - the original MFD sometimes shows a popup when the language is changed
 
 	exitMenu();
 	exitMenu();
 	exitMenu();
-} // languageValidate
+} // setLanguageValidate
 
 // -----
 // Functions for selecting MFD formats and units
@@ -1982,8 +1962,8 @@ function satnavGotoListScreen()
 
 	gotoMenu("satnav_choose_from_list");
 
-	if (handleItemChange.mfdToSatnavRequestType === "REQ_ITEMS"
-		|| handleItemChange.mfdToSatnavRequestType === "REQ_N_ITEMS")
+	var reqType = handleItemChange.mfdToSatnavRequestType;
+	if (reqType === "REQ_ITEMS" || reqType === "REQ_N_ITEMS")
 	{
 		switch(handleItemChange.mfdToSatnavRequest)
 		{
@@ -2070,17 +2050,22 @@ function satnavSelectFirstAvailableCharacter()
 
 function satnavEnterCityCharactersScreen()
 {
-	restoreButtonSizes();
 	highlightFirstLine('satnav_choice_list');
 	$('#satnav_to_mfd_show_characters_spinning_disc').hide();
+	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");  // TODO - check
+	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");  // TODO - check
+	restoreButtonSizes();
+	satnavSelectFirstAvailableCharacter();  // TODO - check
 } // satnavEnterCityCharactersScreen
 
 function satnavEnterStreetCharactersScreen()
 {
-	restoreButtonSizes();
 	highlightFirstLine("satnav_choice_list");
 	$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
+	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");  // TODO - check
+	restoreButtonSizes();
+	satnavSelectFirstAvailableCharacter();  // TODO - check
 } // satnavEnterStreetCharactersScreen
 
 var satnavAvailableCharactersStack = [];
@@ -2100,7 +2085,8 @@ function satnavConfirmCityMode()
 	$("#satnav_current_destination_city").show();
 
 	// If a current destination city is known, enable the "Validate" button
-	$("#satnav_enter_characters_validate_button").toggleClass(
+	$("#satnav_enter_characters_validate_button").toggleClass
+	(
 		"buttonDisabled",
 		$("#satnav_current_destination_city").text() === ""
 	);
@@ -2144,7 +2130,8 @@ function satnavConfirmStreetMode()
 	$("#satnav_current_destination_street").show();
 
 	// If a current destination street is known, enable the "Validate" button
-	$("#satnav_enter_characters_validate_button").toggleClass(
+	$("#satnav_enter_characters_validate_button").toggleClass
+	(
 		"buttonDisabled",
 		$("#satnav_current_destination_street").text() === ""
 	);
@@ -2222,8 +2209,15 @@ function satnavGotoEnterStreetOrNumber()
 {
 	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText)
 	{
-		gotoMenu("satnav_enter_street_characters");
-		satnavConfirmStreetMode();
+		if ($("#satnav_to_mfd_show_characters_line_1").text() === "")
+		{
+			gotoMenu("satnav_enter_street_characters");
+			satnavConfirmStreetMode();
+		}
+		else
+		{
+			satnavGotoListScreenEmpty();
+		} // if
 	}
 	else
 	{
@@ -2260,7 +2254,7 @@ var showAvailableCharactersTimer = null;
 
 // Handler for the "Correction" button in the "satnav_enter_characters" screen.
 // Removes the last entered character.
-function satnavRemoveEnteredCharacter()
+function satnavRemoveEnteredCharacter(newState)
 {
 	var currentText = $("#satnav_entered_string").text();
 	currentText = currentText.slice(0, -1);
@@ -2269,7 +2263,7 @@ function satnavRemoveEnteredCharacter()
 	//satnavLastEnteredChar = null;
 
 	// Just in case we miss the "satnav_to_mfd_show_characters" packet
-	if (satnavAvailableCharactersStack.length >= 2)
+	if (newState == 0 && satnavAvailableCharactersStack.length >= 2)
 	{
 		var availableCharacters = satnavAvailableCharactersStack[satnavAvailableCharactersStack.length - 2];
 
@@ -2302,15 +2296,7 @@ function satnavEnterOrDeleteCharacter(newState)
 {
 	if (newState <= satnavEnterOrDeleteCharacterExpectedState)
 	{
-		if (satnavRollingBackEntryByCharacter)
-		{
-			// In "character roll-back" mode, remove the last entered character
-			satnavRemoveEnteredCharacter();
-		}
-		else
-		{
-			satnavEnterCharacter();
-		} // if
+		if (satnavRollingBackEntryByCharacter) satnavRemoveEnteredCharacter(newState); else satnavEnterCharacter();
 	} // if
 
 	satnavEnterOrDeleteCharacterExpectedState = newState;
@@ -2415,7 +2401,6 @@ function satnavHouseNumberEntryMode()
 	// Navigate back up to the list of numbers and highlight the first
 	keyPressed("UP_BUTTON");
 
-	//highlightFirstLetter("satnav_house_number_show_characters");  // This is already done in "on_enter"
 	$("#satnav_house_number_show_characters").addClass("buttonSelected");
 
 	// No entered number, so disable the "Change" button
@@ -2746,7 +2731,7 @@ function satnavDirectoryEntryMoveUpFromCorrectionButton(screenId)
 {
 	var line2id = screenId + "_characters_line_2";
 
-	if (typeof highlightIndexes[line2id] === "undefined")
+	if (highlightIndexes[line2id] === undefined)
 	{
 		// In this case, "UP" moves the cursor to the first letter of in the first line
 		satnavSelectFirstLineOfDirectoryEntryScreen(screenId);
@@ -2781,7 +2766,7 @@ function satnavSwitchToGuidanceScreen()
 
 function satnavGuidanceSetPreference(value)
 {
-	if (typeof value === "undefined" || value === "---") return;
+	if (value === undefined || value === "---") return;
 
 	// Copy the correct text into the sat nav guidance preference popup
 	var satnavGuidancePreferenceText =
@@ -2790,7 +2775,7 @@ function satnavGuidanceSetPreference(value)
 		value === "AVOID_HIGHWAY" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").text() :
 		value === "COMPROMISE_FAST_SHORT" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").text() :
 		"??";
-	$("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText);
+	$("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText.toLowerCase());
 
 	// Also set the correct tick box in the sat nav guidance preference menu
 	var satnavGuidancePreferenceTickBoxId =
@@ -2807,7 +2792,8 @@ function satnavGuidancePreferenceSelectTickedButton()
 {
 	var foundTick = false;
 
-	$("#satnav_guidance_preference_menu").find(".tickBox").each(
+	$("#satnav_guidance_preference_menu").find(".tickBox").each
+	(
 		function()
 		{
 			var isTicked = $(this).text() !== "";
@@ -2989,17 +2975,7 @@ function satnavEscapeVocalSynthesisLevel()
 	} // if
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
-	if (comingFromMenu === "satnav_guidance_tools_menu")
-	{
-		// Go back to guidance screen
-		satnavSwitchToGuidanceScreen();
-	}
-	else
-	{
-		// In main menu
-		currentMenu = menuStack.pop();
-		changeLargeScreenTo(currentMenu);
-	} // if
+	if (comingFromMenu === "satnav_guidance_tools_menu") satnavSwitchToGuidanceScreen(); else upMenu();
 } // satnavEscapeVocalSynthesisLevel
 
 function satnavStopGuidance()
@@ -3010,7 +2986,9 @@ function satnavStopGuidance()
 
 function satnavStopOrResumeGuidance()
 {
-	if ($("#satnav_navigation_options_menu_stop_guidance_button").html() === stopGuidanceText) 
+	// TODO - check
+	//if ($("#satnav_navigation_options_menu_stop_guidance_button").html() === stopGuidanceText) 
+	if (satnavMode === "IN_GUIDANCE_MODE")
 	{
 		satnavStopGuidance();
 	}
@@ -3069,7 +3047,7 @@ function gearIconAreaClicked()
 // -----
 // Handling of doors and boot status
 
-var isDoorOpen = {};  // Associative array, using the door ID as key, mapping to true (open) or false (closed)
+var isDoorOpen = {};  // Maps door ID to either true (open) or false (closed)
 var isBootOpen = false;
 
 var doorOpenText = "Door open";
@@ -3100,6 +3078,7 @@ function handleItemChange(item, value)
 			var newLanguage = value in map ? map[value] : "";
 			if (! newLanguage) break;
 			setLanguage(newLanguage);
+			localStorage.mfdLanguage = newLanguage;
 			webSocket.send("mfd_language:" + newLanguage);
 		} // case
 		break;
@@ -3205,11 +3184,9 @@ function handleItemChange(item, value)
 
 			// Bug in original MFD: if source is cd-changer, audio_menu is always "OPEN"... So ignore for now.
 
-			// Ignore when audio volume is being set
-			if (updatingAudioVolume) break;
+			if (updatingAudioVolume) break;  // Ignore when audio volume is being set
 
-			// Hide the audio popup now
-			hideAudioSettingsPopup();
+			hideAudioSettingsPopup();  // Hide the audio popup now
 		} // case
 		break;
 
@@ -3352,7 +3329,6 @@ function handleItemChange(item, value)
 			handleItemChange.tapeStatus = value;
 
 			hideAudioSettingsPopup();
-
 			showAudioPopup();
 		} // case
 		break;
@@ -3511,7 +3487,7 @@ function handleItemChange(item, value)
 
 		case "info_traffic":
 		{
-			if (typeof handleItemChange.infoTraffic === "undefined") handleItemChange.infoTraffic = "NO";
+			if (handleItemChange.infoTraffic === undefined) handleItemChange.infoTraffic = "NO";
 
 			// Don't pop up when browsing the menus, or in the sat nav guidance screen
 			if (inMenu() || $("#satnav_guidance").is(":visible")) break;
@@ -3715,13 +3691,9 @@ function handleItemChange(item, value)
 			if (engineCoolantTemperature < 80) thresholdRpm = 3500 - (80 - engineCoolantTemperature) * 30;
 			if (thresholdRpm < 1700) thresholdRpm = 1700;
 
-			$('[gid="engine_rpm"]').toggleClass("glow",
-				(parseInt(value) < 500 && parseInt(value) > 0) || parseInt(value) > thresholdRpm);
+			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm > 0) || engineRpm > thresholdRpm);
 
-			if (contactKeyPosition === "START" && parseInt(value) > 150)
-			{
-				changeToInstrumentsScreen();
-			} // if
+			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
 		} // case
 		break;
 
@@ -3874,7 +3846,6 @@ function handleItemChange(item, value)
 
 		case "economy_mode":
 		{
-			// Check if anything actually changed
 			if (value === economyMode) break;
 			economyMode = value;
 
@@ -3955,8 +3926,8 @@ function handleItemChange(item, value)
 			// If on, add glow effect to "door_open" icon in the "pre_flight" screen
 			$("#door_open").toggleClass("glow", isBootOpen || nDoorsOpen > 0);
 
-			// All closed, or in the "pre_flight" screen?
-			if ((! isBootOpen && nDoorsOpen == 0) || currentLargeScreenId === "pre_flight")
+			// All closed, or in the "pre_flight" or a menu screen?
+			if ((! isBootOpen && nDoorsOpen == 0) || currentLargeScreenId === "pre_flight" || inMenu())
 			{
 				hidePopup("door_open_popup");
 				break;
@@ -3969,9 +3940,6 @@ function handleItemChange(item, value)
 				isBootOpen && nDoorsOpen == 0 ? bootOpenText :
 				nDoorsOpen > 1 ? doorsOpenText :
 				doorOpenText;
-
-			// No popup when in the "pre_flight" screen, or while browsing the menu's
-			if (currentLargeScreenId === "pre_flight" || ! inMenu()) break;
 
 			// Set the correct text and show the "door open" popup
 			$("#door_open_popup_text").html(popupText);
@@ -3988,8 +3956,8 @@ function handleItemChange(item, value)
 			// Engine just started?
 			if (engineRunning === "YES") changeToInstrumentsScreen();
 
-			// If engine just stopped, and currently in "instruments" screen, then switch to default screen
-			if (engineRunning === "NO" && $("#instruments").is(":visible")) selectDefaultScreen();
+			// Engine just stopped, and currently in "instruments" screen?
+			else if ($("#instruments").is(":visible")) selectDefaultScreen();
 		} // case
 		break;
 
@@ -4011,7 +3979,7 @@ function handleItemChange(item, value)
 					if (inMenu()) break;
 
 					// Show "Pre-flight checks" screen if contact key is in "ON" position, without engine running
-					if (engineRunning === "NO" && engineRpm === 0)
+					if (engineRunning !== "YES" && engineRpm === 0)
 					{
 						changeLargeScreenTo("pre_flight");
 
@@ -4019,7 +3987,7 @@ function handleItemChange(item, value)
 						hideAllPopups("satnav_continue_guidance_popup");
 					} // if
 
-					if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES" && economyMode === "OFF")
+					if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES" && economyMode !== "ON")
 					{
 						// Show popup "Continue guidance to destination? [Yes]/No"
 						showPopup("satnav_continue_guidance_popup", 15000);
@@ -4941,9 +4909,9 @@ function handleItemChange(item, value)
 				else satnavAvailableCharactersStack.push(value);
 			} // if
 
-			if (value === "") break;
-
 			clearTimeout(showAvailableCharactersTimer);
+
+			if (value === "") break;
 
 			if ($("#satnav_enter_characters").is(":visible")) satnavEnterOrDeleteCharacter(1);
 
@@ -5238,6 +5206,8 @@ function handleItemChange(item, value)
 				if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
 				{
 					adjustDimLevel(headlightStatus, button)
+					localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
+					localStorage.dimLevel = $("#display_brightness_level").text();
 
 					break;
 				} // if
@@ -6343,8 +6313,6 @@ function setLanguage(language)
 		break;
 	} // switch
 
-	localStorage.mfdLanguage = language;
-
 	$("#door_open_popup_text").html(doorOpenText);
 	satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
 } // setLanguage
@@ -6389,8 +6357,8 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 // To be called by the body "onload" event
 function htmlBodyOnLoad()
 {
-	setColorTheme(localStorage.theme);
-	setDimLevel(headlightStatus);
+	setColorTheme(localStorage.colorTheme);
+	initDimLevel();
 	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
 	setLanguage(localStorage.mfdLanguage);
 
