@@ -1793,7 +1793,6 @@ var stopGuidanceText = "Stop guidance";
 var resumeGuidanceText = "Resume guidance";
 var streetNotListedText = "Street not listed";
 
-// Find the ticked button and select it
 function setLanguageSelectTickedButton()
 {
 	$("#set_language").find(".tickBox").removeClass("buttonSelected");
@@ -2063,7 +2062,7 @@ function satnavEnterStreetCharactersScreen()
 	highlightFirstLine("satnav_choice_list");
 	$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
-	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");  // TODO - check
+	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");
 	restoreButtonSizes();
 	satnavSelectFirstAvailableCharacter();  // TODO - check
 } // satnavEnterStreetCharactersScreen
@@ -2150,11 +2149,16 @@ function satnavToggleCityEntryMode()
 	if ($("#satnav_current_destination_city").is(":visible")) satnavEnterByLetterMode(); else satnavConfirmCityMode();
 } // satnavToggleCityEntryMode
 
+function enteringCity()
+{
+	return $("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText;
+} // enteringCity
+
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
 // "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
-	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText)
+	if (enteringCity())
 	{
 		// Entering city: toggle to the entry mode
 		satnavToggleCityEntryMode();
@@ -2207,15 +2211,17 @@ function satnavGotoEnterCity()
 // "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavGotoEnterStreetOrNumber()
 {
-	if ($("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText)
+	if (enteringCity())
 	{
-		if ($("#satnav_to_mfd_show_characters_line_1").text() === "")
+		if ($("#satnav_entered_string").text() === "")
 		{
+			// "Validate" clicked in "confirm city" mode
 			gotoMenu("satnav_enter_street_characters");
 			satnavConfirmStreetMode();
 		}
 		else
 		{
+			// "Validate" clicked in "enter by letter" mode, after having entered a few characters
 			satnavGotoListScreenEmpty();
 		} // if
 	}
@@ -4665,15 +4671,20 @@ function handleItemChange(item, value)
 
 		case "satnav_to_mfd_list_2_size":
 		{
+			var noText = false;
+			if (enteringCity()) noText = $("#satnav_current_destination_city").text() === "";
+			else noText = $("#satnav_current_destination_street").text() === "";
+
 			// Sometimes there is a second list size. "satnav_to_mfd_list_size" (above) is the number of items
 			// *containing* the selected characters; "satnav_to_mfd_list_2_size" (this one) is the number of items
 			// *starting* with the selected characters.
 
 			// If there is a second list size, enable the "Validate" button
-			if (value !== "" && value !== "0")
-			{
-				$("#satnav_enter_characters_validate_button").removeClass("buttonDisabled");
-			} // if
+			$("#satnav_enter_characters_validate_button").toggleClass
+			(
+				"buttonDisabled",
+				(value === "" || value === "0") && noText
+			);
 		} // case
 		break;
 

@@ -4338,10 +4338,9 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     // - 0x50 : No second list
     // - 0x61 : Second list
     // - 0xF1 : Second list with same length as first list
-    if ((data[10] == 0x41) || (data[10] == 0x61) && list2Size >= 0)
-    {
-        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_2_size\": \"%d\""), list2Size);
-    } // if
+    // if ((data[10] == 0x41) || (data[10] == 0x61) && list2Size >= 0)
+
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_2_size\": \"%d\""), list2Size);
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_show_characters\": \""));
 
