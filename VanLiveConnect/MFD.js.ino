@@ -589,13 +589,6 @@ function nextLargeScreen()
 {
 	cancelChangeBackScreenTimer();
 
-	// In "demo mode" we can cycle through all the screens, otherwise to a limited set of screens
-	if (inDemoMode)
-	{
-		nextLargeDemoScreen();
-		return;
-	} // if
-
 	if (inMenu()) return;  // Don't cycle through menu screens
 
 	// The IDs of the screens ("divs") that will be cycled through.
