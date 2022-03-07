@@ -899,6 +899,10 @@ function showAudioPopup(id)
 
 var currentMenu;
 
+// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
+// The only exceptions are the '+' and '-' buttons in specific menu screens.
+var acceptingHeldValButton = false;
+
 function inMenu()
 {
 	var mainScreenIds =
@@ -4949,8 +4953,14 @@ function handleItemChange(item, value)
 			{
 				// On the original MFD, there is only room for 24 characters. If there are more characters, spill
 				// over to the next line.
-				var line_1 = value.substr(0, 24);
-				var line_2 = value.substr(24);
+				var splitAt = 24;
+
+				// If the first line contains both 'I' and '1', the first line can contain 25 characters
+				if (value.indexOf("I") > 0 && value.indexOf("1") > 0 && value.indexOf("1") <= 24) splitAt = 25;
+
+				var line_1 = value.substr(0, splitAt);
+				var line_2 = value.substr(splitAt);
+
 
 				$("#satnav_to_mfd_show_characters_line_1").text(line_1);
 				$("#satnav_to_mfd_show_characters_line_2").text(line_2);
@@ -5242,6 +5252,9 @@ function handleItemChange(item, value)
 					console.log("// mfd_remote_control - VAL_BUTTON: ignored");
 					break;
 				} // if
+
+				var held = parts[1];
+				if (held && ! acceptingHeldValButton) break;
 
 				// If a popup is showing, hide it and break
 				if (hideTunerPresetsPopup()) break;

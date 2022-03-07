@@ -753,7 +753,7 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>	<!-- "screen_configuration_menu" -->
 
 			<div id="set_screen_brightness" class="tag menuScreen" style="top:100px; height:430px;"
-				on_esc="setBrightnessEscape(); upMenu();"
+				on_esc="acceptingHeldValButton = false; setBrightnessEscape(); upMenu();"
 				on_goto="colorThemeSelectTickedButton();">
 				<div class="menuTitleLine">Set brightness<br /></div>
 
@@ -785,6 +785,8 @@ char mfd_html[] PROGMEM = R"=====(
 						LEFT_BUTTON="set_dark_theme"
 						RIGHT_BUTTON="set_brightness_higher"
 						DOWN_BUTTON="set_brightness_validate_button"
+						on_enter="acceptingHeldValButton = true;"
+						on_exit="acceptingHeldValButton = false;"
 						on_click="adjustDimLevel(headlightStatus, 'DOWN_BUTTON');"
 						>&ndash;</div>
 					<div id="set_brightness_higher"
@@ -792,6 +794,8 @@ char mfd_html[] PROGMEM = R"=====(
 						LEFT_BUTTON="set_brightness_lower"
 						RIGHT_BUTTON="set_dark_theme"
 						DOWN_BUTTON="set_brightness_validate_button"
+						on_enter="acceptingHeldValButton = true;"
+						on_exit="acceptingHeldValButton = false;"
 						on_click="adjustDimLevel(headlightStatus, 'UP_BUTTON');"
 						>&plus;</div>
 				</div>
@@ -1277,9 +1281,8 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 
 						<!--
-							On the original MFD, there is only room for 24 characters. If there are more characters to
-							choose from, they spill over to the next line
-							TODO - sometimes, there is room for 25 characters....
+							On the original MFD, there is only room for 24 or 25 characters. If there are more
+							characters to choose from, they spill over to the next line
 						-->
 						<div id="satnav_to_mfd_show_characters_line_1"
 							UP_BUTTON="satnav_to_mfd_show_characters_line_1"

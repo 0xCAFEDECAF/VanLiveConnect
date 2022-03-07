@@ -77,6 +77,7 @@ void ICACHE_RAM_ATTR irPinChangeIsr()
     uint32_t now = system_get_time();
     if (irparams.rcvstate == STATE_IDLE)
     {
+        irparams.millis_ = millis();  // TODO - check this
         irparams.rcvstate = STATE_MARK;
         irparams.rawbuf[irparams.rawlen++] = 20;
     }
@@ -91,7 +92,7 @@ void ICACHE_RAM_ATTR irPinChangeIsr()
         if (ticks > TIMEOUT_TICKS)
         {
             irparams.rcvstate = STATE_STOP;
-            irparams.millis_ = millis();
+            // irparams.millis_ = millis();  // TODO - do this always? Not just if ticks > TIMEOUT_TICKS ?
         }
         else if (irparams.rawlen < RAWBUF)
         {
@@ -142,8 +143,8 @@ enum IrButton_t
     IB_LEFT = 0x77678D53,
     IB_RIGHT = 0xF79A2397,
     IB_UP = 0xF59A2071,
-    IB_ENTER = 0xF98D3EE1
-}; // enum TunerBand_t
+    IB_VALIDATE = 0xF98D3EE1
+}; // enum IrButton_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
 PGM_P IrButtonStr(unsigned long data)
@@ -156,7 +157,7 @@ PGM_P IrButtonStr(unsigned long data)
         data == IB_LEFT ? PSTR("LEFT_BUTTON") :
         data == IB_RIGHT ? PSTR("RIGHT_BUTTON") :
         data == IB_UP ? PSTR("UP_BUTTON") :
-        data == IB_ENTER ? PSTR("VAL_BUTTON") :  // "Enter" button
+        data == IB_VALIDATE ? PSTR("VAL_BUTTON") :
         emptyStr;
 } // IrButtonStr
 
@@ -176,7 +177,9 @@ int IRrecv::decode(TIrPacket* results)
         if (ticks > TIMEOUT_TICKS)
         {
             irparams.rcvstate = STATE_STOP;
-            irparams.millis_ = millis();
+
+            // TODO - remove this? IRrecv::decode may be called many (milli)seconds later! See also TODO above.
+            //irparams.millis_ = millis();
         } // if
     } // if
     interrupts();
@@ -267,7 +270,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     } // while
 
     // "Esc" and "Val" buttons will hide any visible popup
-    if (pkt.value == IB_ESC || pkt.value == IB_ENTER) NoPopup();
+    if (pkt.value == IB_ESC || pkt.value == IB_VALIDATE) NoPopup();
 
     at += at >= IR_JSON_BUFFER_SIZE ? 0 : snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR("\n}\n}\n"));
 
@@ -346,18 +349,8 @@ bool IrReceive(TIrPacket& irPacket)
         irPacket.value, irPacket.buttonStr, lastValue, lastInterval, irPacket.held ? yesStr : noStr);
   #endif // DEBUG_IR_RECV
 
-    // "MENU_BUTTON", "MODE_BUTTON" and "VAL_BUTTON" are never "held". They fire only once.
-    // TODO - "VAL_BUTTON" does fire repeatedly in "set_brightness" screen
-    if (irPacket.held
-        && (
-            irPacket.value == IB_MENU
-            || irPacket.value == IB_MODE
-            || irPacket.value == IB_ENTER
-           )
-       )
-    {
-        return false;
-    } // if
+    // "MENU_BUTTON" and "MODE_BUTTON" are never "held". They fire only once.
+    if (irPacket.held && (irPacket.value == IB_MENU || irPacket.value == IB_MODE)) return false;
 
     // IR controller button codes
     enum IrButtonHeldState_t

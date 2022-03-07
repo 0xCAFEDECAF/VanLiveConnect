@@ -519,7 +519,7 @@ body
 .satNavShowCharacters
 {
   left:25px;
-  width:925px;
+  width:940px;
   font-size:50px;
   line-height:1.5;
   display:inline-block;
