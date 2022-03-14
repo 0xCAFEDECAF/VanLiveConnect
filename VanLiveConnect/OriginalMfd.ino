@@ -440,7 +440,7 @@ void UpdateLargeScreenForHeadUnitOff()
   #endif // DEBUG_ORIGINAL_MFD
 } // UpdateLargeScreenForHeadUnitOff
 
-// Called when going into sat nav guidance mode.  The original MFD switches to the guidance instruction screen.
+// Called when going into sat nav guidance mode. The original MFD switches to the guidance instruction screen.
 void UpdateLargeScreenForGuidanceModeOn()
 {
     largeScreenBeforeGoingIntoGuidanceMode = largeScreen;  // To return to later, when guidance ends

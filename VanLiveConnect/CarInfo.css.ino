@@ -269,10 +269,6 @@ body
   color:var(--selected-element-color);
   background-color:var(--main-color);
 }
-.subScreen
-{
-  position:absolute;
-}
 .horizontalLine
 {
   position:absolute;

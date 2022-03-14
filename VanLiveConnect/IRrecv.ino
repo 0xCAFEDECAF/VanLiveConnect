@@ -49,6 +49,7 @@ void PrintJsonText(const char* jsonBuffer);
 void NoPopup();
 PGM_P TripComputerStr();
 PGM_P LargeScreenStr();
+PGM_P PopupStr();
 void CycleLargeScreen();
 
 // Main class for receiving IR
@@ -77,7 +78,7 @@ void ICACHE_RAM_ATTR irPinChangeIsr()
     uint32_t now = system_get_time();
     if (irparams.rcvstate == STATE_IDLE)
     {
-        irparams.millis_ = millis();  // TODO - check this
+        irparams.millis_ = millis();
         irparams.rcvstate = STATE_MARK;
         irparams.rawbuf[irparams.rawlen++] = 20;
     }
@@ -89,15 +90,8 @@ void ICACHE_RAM_ATTR irPinChangeIsr()
         #define TIMEOUT_USECS (10000)
         #define TIMEOUT_TICKS (TIMEOUT_USECS / USECPERTICK)
 
-        if (ticks > TIMEOUT_TICKS)
-        {
-            irparams.rcvstate = STATE_STOP;
-            // irparams.millis_ = millis();  // TODO - do this always? Not just if ticks > TIMEOUT_TICKS ?
-        }
-        else if (irparams.rawlen < RAWBUF)
-        {
-            irparams.rawbuf[irparams.rawlen++] = ticks;
-        } // if
+        if (ticks > TIMEOUT_TICKS) irparams.rcvstate = STATE_STOP;
+        else if (irparams.rawlen < RAWBUF) irparams.rawbuf[irparams.rawlen++] = ticks;
     }
     lastIrPulse = now;
 } // irPinChangeIsr
@@ -174,13 +168,7 @@ int IRrecv::decode(TIrPacket* results)
         uint32_t now = system_get_time();
         uint32_t then = lastIrPulse;
         uint32_t ticks = (now - then) / USECPERTICK + 1;
-        if (ticks > TIMEOUT_TICKS)
-        {
-            irparams.rcvstate = STATE_STOP;
-
-            // TODO - remove this? IRrecv::decode may be called many (milli)seconds later! See also TODO above.
-            //irparams.millis_ = millis();
-        } // if
+        if (ticks > TIMEOUT_TICKS) irparams.rcvstate = STATE_STOP;
     } // if
     interrupts();
 
@@ -255,17 +243,19 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     // "MOD" button pressed?
     if (pkt.value == IB_MODE && ! inMenu && ! economyMode)
     {
-        // Will update 'LargeScreenStr()', may update 'TripComputerStr()'
+        // Will update 'LargeScreenStr()', may update 'TripComputerStr()' and 'PopupStr()'
         CycleLargeScreen();
 
         at += at >= IR_JSON_BUFFER_SIZE ? 0 :
             snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR(
                     ",\n"
                     "\"large_screen\": \"%S\",\n"
-                    "\"trip_computer_screen_tab\": \"%S\""
+                    "\"trip_computer_screen_tab\": \"%S\",\n"
+                    "\"mfd_popup\": \"%S\""
                 ),
                 LargeScreenStr(),
-                TripComputerStr()
+                TripComputerStr(),
+                PopupStr()
             );
     } // while
 

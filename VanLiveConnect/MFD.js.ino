@@ -450,6 +450,8 @@ function changeLargeScreenTo(id)
 {
 	if (id === currentLargeScreenId) return;
 
+	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
+
 	hidePopup("audio_popup");
 
 	// Perform current screen's "on_exit" action, if specified
@@ -481,12 +483,13 @@ var changeBackScreenTimer;
 function temporarilyChangeLargeScreenTo(id)
 {
 	if (inMenu()) return;
-	if (id === currentLargeScreenId) return;
+	if (id !== currentLargeScreenId)
+	{
+		changeBackScreenId = currentLargeScreenId;
+		changeLargeScreenTo(id);
+	} // if
 
-	changeBackScreenId = currentLargeScreenId;
-	changeLargeScreenTo(id);
-
-	// Change back after 14 seconds
+	// (Re-)arm the timer to change back to the previous screen
 	clearTimeout(changeBackScreenTimer);
 	changeBackScreenTimer = setTimeout
 	(
@@ -1922,12 +1925,14 @@ function satnavGotoMainMenu()
 
 	if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
 	{
+		hidePopup("satnav_initializing_popup");
 		showStatusPopup(satnavDiscMissingText, 8000);
 		return;
 	} // if
 
 	if (satnavStatus1.match(/DISC_UNREADABLE/))
 	{
+		hidePopup("satnav_initializing_popup");
 		showStatusPopup(satnavDiscUnreadbleText, 10000);
 		return;
 	} // if
@@ -2093,22 +2098,6 @@ function satnavConfirmCityMode()
 	satnavSelectFirstAvailableCharacter();
 } // satnavConfirmCityMode
 
-// Puts the "Enter city" and "Enter street" screen into the mode where the user is entering a new city resp. street
-// character by character
-function satnavEnterByLetterMode()
-{
-	$("#satnav_current_destination_city").hide();
-	$("#satnav_current_destination_street").hide();
-
-	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
-
-	// Set button text
-	$("#satnav_enter_characters_change_or_city_center_button").text(
-		currentMenu === "satnav_enter_street_characters" ? cityCenterText : changeText);
-
-	satnavSelectFirstAvailableCharacter();
-} // satnavEnterByLetterMode
-
 var userHadOpportunityToEnterStreet = false;
 
 // Puts the "Enter street" screen into the mode where the user simply has to confirm the current destination street
@@ -2140,29 +2129,65 @@ function satnavConfirmStreetMode()
 	userHadOpportunityToEnterStreet = false;
 } // satnavConfirmStreetMode
 
-// Toggle between character-by-character entry mode, and confirming the current destination city
-function satnavToggleCityEntryMode()
+// Puts the "Enter city" and "Enter street" screen into the mode where the user is entering a new city resp. street
+// character by character
+function satnavEnterByLetterMode()
 {
-	if ($("#satnav_current_destination_city").is(":visible")) satnavEnterByLetterMode(); else satnavConfirmCityMode();
-} // satnavToggleCityEntryMode
+	$("#satnav_current_destination_city").hide();
+	$("#satnav_current_destination_street").hide();
 
-function enteringCity()
+	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");
+
+	// Set button text
+	$("#satnav_enter_characters_change_or_city_center_button").text(
+		currentMenu === "satnav_enter_street_characters" ? cityCenterText : changeText);
+
+	satnavSelectFirstAvailableCharacter();
+} // satnavEnterByLetterMode
+
+// Currently entering destination city?
+function satnavEnteringCity()
 {
 	return $("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText;
-} // enteringCity
+} // satnavEnteringCity
+
+// Currently entering destination city in "character-by-character entry" mode?
+function satnavEnteringCityByLetter()
+{
+	return $("#satnav_current_destination_city").is(":hidden");
+} // satnavEnteringCityByLetter
+
+// Currently entering destination street in "character-by-character entry" mode?
+function satnavEnteringStreetByLetter()
+{
+	return $("#satnav_current_destination_street").is(":hidden");
+} // satnavEnteringStreetByLetter
+
+// Currently entering destination in "character-by-character entry" mode?
+function satnavEnteringByLetter()
+{
+	if (satnavEnteringCity()) return satnavEnteringCityByLetter();
+	return satnavEnteringStreetByLetter();
+} // satnavEnteringByLetter
+
+// Toggle between "character-by-character entry" mode, and "confirm current destination city" mode
+function satnavToggleCityEntryMode()
+{
+	if (satnavEnteringCityByLetter()) satnavConfirmCityMode(); else satnavEnterByLetterMode();
+} // satnavToggleCityEntryMode
 
 // The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
 // "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
-	if (enteringCity())
+	if (satnavEnteringCity())
 	{
-		// Entering city: toggle to the entry mode
+		// Entering city and chosen "Change" button: toggle to the entry mode
 		satnavToggleCityEntryMode();
 	}
 	else
 	{
-		// Entering street and chosen "City centre": directly go to the "Programmed destination" screen
+		// Entering street and chosen "City centre" button: directly go to the "Programmed destination" screen
 		gotoMenu("satnav_show_current_destination");
 	} // if
 } // satnavEnterCharactersChangeOrCityCenterButtonPress
@@ -2208,7 +2233,7 @@ function satnavGotoEnterCity()
 // "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavGotoEnterStreetOrNumber()
 {
-	if (enteringCity())
+	if (satnavEnteringCity())
 	{
 		if ($("#satnav_entered_string").text() === "")
 		{
@@ -2465,8 +2490,17 @@ function satnavClearLastDestination()
 {
 	$('[gid="satnav_last_destination_city"]').empty();
 	$('[gid="satnav_last_destination_street_shown"]').empty();
-	$('[gid="satnav_last_destination_house_number_shown"]').empty();
+	$("#satnav_last_destination_house_number_shown").empty();
+	$("#satnav_reached_destination_house_number").empty();
 } // satnavClearLastDestination
+
+function satnavEnterShowServiceAddress()
+{
+	// Empty all fields except 'satnav_to_mfd_list_size'
+	$("#satnav_show_service_address .dots:not(#satnav_to_mfd_list_size)").empty();
+
+	$("#satnav_service_address_entry_number").text("1");
+} // satnavEnterShowServiceAddress
 
 // Enable/disable the buttons in the "satnav_show_service_address" screen. Also select the appropriate button.
 function satnavServiceAddressSetButtons(selectedEntry)
@@ -4042,12 +4076,17 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "satnav_arrived_at_destination":
+		{
+			if (value === "YES") showPopup("satnav_reached_destination_popup", 10000);
+		} // case
+		break;
+
 		case "satnav_status_1":
 		{
 			satnavStatus1 = value;
 
-			// No further handling when in power-save mode
-			if (economyMode === "ON") break;
+			if (economyMode === "ON") break;  // No further handling
 
 			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION_AUDIO/))
 			{
@@ -4100,10 +4139,13 @@ function handleItemChange(item, value)
 			}
 			else if (satnavStatus1.match(/NO_DISC/))
 			{
+				hidePopup("satnav_initializing_popup");
 				showStatusPopup(satnavDiscMissingText, 5000);
 			} // if
 			else if (satnavStatus1.match(/DISC_UNREADABLE/))
 			{
+				hidePopup("satnav_initializing_popup");
+
 				// TODO - show popup not directly, but only after a few times this status
 				showStatusPopup(satnavDiscUnreadbleText, 5000);
 			} // if
@@ -4275,6 +4317,7 @@ function handleItemChange(item, value)
 			// At the 6-th and 14-th time of consequently reporting "NO", shortly show a status popup
 			if (handleItemChange.nSatNavDiscUnreadable == 6 || handleItemChange.nSatNavDiscUnreadable == 14)
 			{
+				hidePopup("satnav_initializing_popup");
 				showStatusPopup(satnavDiscUnreadbleText, 4000);
 			} // if
 		} // case
@@ -4304,7 +4347,7 @@ function handleItemChange(item, value)
 
 		case "satnav_current_destination_street":
 		{
-			$("#satnav_current_destination_street_shown").html(value === "" ? cityCenterText : value);
+			$("#satnav_current_destination_street_shown").text(value === "" ? cityCenterText : value);
 
 			if (! $("#satnav_enter_street_characters").is(":visible")) break;
 
@@ -4324,13 +4367,13 @@ function handleItemChange(item, value)
 		case "satnav_personal_address_street":
 		case "satnav_professional_address_street":
 		{
-			$("#" + item + "_shown").html(value === "" ? cityCenterText : value);
+			$("#" + item + "_shown").text(value === "" ? cityCenterText : value);
 		} // case
 		break;
 
 		case "satnav_last_destination_street":
 		{
-			$('[gid="satnav_last_destination_street_shown"]').html(value === "" ? cityCenterText : value);
+			$('[gid="satnav_last_destination_street_shown"]').text(value === "" ? cityCenterText : value);
 		} // case
 		break;
 
@@ -4344,7 +4387,15 @@ function handleItemChange(item, value)
 
 		case "satnav_last_destination_house_number":
 		{
-			$('[gid="satnav_last_destination_house_number_shown"]').html(value === "" ? noNumberText : value);
+			$("#satnav_last_destination_house_number_shown").html(value === "" ? noNumberText : value);
+
+			$("#satnav_reached_destination_house_number").html
+			(
+				// Say "No number" only if a street is known, not for "City center"
+				value === "" && $('[gid="satnav_last_destination_street_shown"]').last().text() !== cityCenterText
+					? noNumberText
+					: value
+			);
 		} // case
 		break;
 
@@ -4668,20 +4719,14 @@ function handleItemChange(item, value)
 
 		case "satnav_to_mfd_list_2_size":
 		{
-			var noText = false;
-			if (enteringCity()) noText = $("#satnav_current_destination_city").text() === "";
-			else noText = $("#satnav_current_destination_street").text() === "";
-
 			// Sometimes there is a second list size. "satnav_to_mfd_list_size" (above) is the number of items
 			// *containing* the selected characters; "satnav_to_mfd_list_2_size" (this one) is the number of items
 			// *starting* with the selected characters.
 
+			if (! satnavEnteringByLetter()) break;  // Only applicable in "character-by-character entry" mode
+
 			// If there is a second list size, enable the "Validate" button
-			$("#satnav_enter_characters_validate_button").toggleClass
-			(
-				"buttonDisabled",
-				(value === "" || value === "0") && noText
-			);
+			$("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "" || value === "0");
 		} // case
 		break;
 
@@ -4777,7 +4822,7 @@ function handleItemChange(item, value)
 
 			handleItemChange.mfdToSatnavOffset = value;
 
-			if (! $("#satnav_show_service_address").is(":visible")) break;
+			//if (! $("#satnav_show_service_address").is(":visible")) break;
 			satnavServiceAddressSetButtons(parseInt(value) + 1);
 		} // case
 		break;
@@ -4844,8 +4889,6 @@ function handleItemChange(item, value)
 		{
 			// Show or hide the roundabout
 			$("#satnav_curr_turn_roundabout").toggle(value !== "---");
-
-			// TODO - do we ever need to make "satnav_next_turn_roundabout" visible?
 		} // case
 		break;
 
@@ -4865,26 +4908,6 @@ function handleItemChange(item, value)
 			(
 				"d",
 				describeArc(150, 150, 30, Math.max(value, 0.1) - 180, 180)
-			);
-		} // case
-		break;
-
-		case "satnav_next_turn_icon_direction_as_text":
-		{
-			if (value === "") break;
-
-			// Break out if next turn roundabout is not visible
-			if (! $("#satnav_next_turn_roundabout").is(":visible")) break;
-
-			// Has anything changed?
-			if (value === handleItemChange.nextTurnDirection) break;
-			handleItemChange.nextTurnDirection = value;
-
-			// Draw the small arc inside the roundabout
-			document.getElementById("satnav_next_turn_icon_direction_on_roundabout").setAttribute
-			(
-				"d",
-				describeArc(50, 150, 30, Math.max(value, 0.1) - 180, 180)
 			);
 		} // case
 		break;
@@ -5256,7 +5279,7 @@ function handleItemChange(item, value)
 				var held = parts[1];
 				if (held && ! acceptingHeldValButton) break;
 
-				// If a popup is showing, hide it and break
+				// If one of these popups is showing, hide it and break
 				if (hideTunerPresetsPopup()) break;
 				if (hideAudioSettingsPopup()) break;
 				if (hidePopup("status_popup")) break;
@@ -5551,7 +5574,7 @@ function setLanguage(language)
 			$("#set_language .menuTitleLine").html("Choix de la langue<br />");
 			$("#set_units .menuTitleLine").html("R&eacute;glage des formats et unit&eacute;s<br />");
 
-			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
+			$("#satnav_initializing_popup .messagePopupArea").html("Initialisation du syst&egrave;me<br />de navigation"); // TODO - check
 			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
 				L'entre&eacute;e a &eacute;t&eacute; archiv&eacute;e<br />dans le r&eacute;pertoire<br />personnel");
 			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
@@ -5657,14 +5680,14 @@ function setLanguage(language)
 			$("#satnav_archive_in_directory .button:eq(1)").html("R&eacute;p. personnel");
 			$("#satnav_archive_in_directory .button:eq(2)").html("R&eacute;p. professionel");
 
-			// $("#satnav_rename_entry_in_directory_title").html("Rename entry");
+			$("#satnav_rename_entry_in_directory_title").html("Renommer libell&eacute;");  // TODO - check
 			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Libell&eacute;");
 			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corriger");
 
 			$("#satnav_reached_destination_popup_title").html("Destination atteinte");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Voulez-vous supprimer<br />la fiche ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conserver le crit&egrave;re");
-			// $("#satnav_delete_directory_data_popup_title").html("This will delete all data in directories");
+			$("#satnav_delete_directory_data_popup_title").html("Cela supprimera toutes les donn&eacute;es des r&eacute;pertoires");  // TODO - check
 			$("#satnav_continue_guidance_popup_title").html("Continuer la navigation?");  // TODO - check
 
 			$(".yesButton").html("Oui");
@@ -5727,7 +5750,7 @@ function setLanguage(language)
 
 			notDigitizedAreaText = "Nicht kartographiert";
 			cityCenterText = "Stadtmitte";
-			changeText = "Ändern";  // TODO - &Auml;nderen
+			changeText = "Ändern";  // Not "&Auml;nderen": text-based comparison doesn't work with HTML special chars
 			noNumberText = "Keine Nummer";
 			stopGuidanceText = "F&uuml;hrung abbrechen";
 			resumeGuidanceText = "F&uuml;hrung wieder aufnehmen";
@@ -5871,7 +5894,7 @@ function setLanguage(language)
 			$("#set_language .menuTitleLine").html("Seleccionar idioma<br />");
 			$("#set_units .menuTitleLine").html("Ajustar formatos y unidades<br />");
 
-			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
+			$("#satnav_initializing_popup .messagePopupArea").html("Sistema de navegaci&oacute;n<br />en proceso de<br />inicializaci&oacute;n");  // TODO - check
 			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
 				Datos memorizados en el<br />directorio personal");
 			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
@@ -5984,7 +6007,7 @@ function setLanguage(language)
 
 			$("#satnav_reached_destination_popup_title").html("Destino alcanzado");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?");
-			// $("#satnav_guidance_preference_popup_title").html("Keep criteria");
+			$("#satnav_guidance_preference_popup_title").html("&iquest;Mantener criterios");  // TODO - check
 			$("#satnav_delete_directory_data_popup_title").html("Se borrar&aacute;n todos los<br />catos de los directorios");
 			$("#satnav_continue_guidance_popup_title").html("&iquest;Continuar la navegaci&oacute;n?");  // TODO - check
 
@@ -6032,7 +6055,7 @@ function setLanguage(language)
 			$("#set_language .menuTitleLine").html("Scelta della lingua<br />");
 			$("#set_units .menuTitleLine").html("Regolazione formato e unita<br />");
 
-			// $("#satnav_initializing_popup .messagePopupArea").html("Navigation system<br>being initialised");
+			$("#satnav_initializing_popup .messagePopupArea").html("Sistema di navigazione<br />inizializzato");  // TODO - check
 			$("#satnav_input_stored_in_personal_dir_popup .messagePopupArea").html("\
 				L'informazione &egrave; stata<br />salvata nella rubrica<br />personale");
 			$("#satnav_input_stored_in_professional_dir_popup .messagePopupArea").html("\
@@ -6047,7 +6070,7 @@ function setLanguage(language)
 				verificata dall'utente<br>");
 
 			notDigitizedAreaText = "Area non mappata";
-			cityCenterText = "Centro della citt&agrave;";
+			cityCenterText = "Centro della città";  // Not "citt&agrave;": text-based comparison doesn't work with HTML special chars
 			changeText = "Modificare";
 			noNumberText = "Nessun numero";
 			stopGuidanceText = "Interrompere la guida";

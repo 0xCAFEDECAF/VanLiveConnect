@@ -63,12 +63,14 @@ extern bool inMenu;
 bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter);
 
 // Defined in OriginalMfd.ino
+extern uint8_t largeScreen;
 extern uint8_t mfdLanguage;
 extern int tripComputerPopupTab;
 PGM_P TripComputerStr(uint8_t idx);
 PGM_P TripComputerStr();
 PGM_P SmallScreenStr();
 PGM_P LargeScreenStr();
+void NotificationPopupShowing(unsigned long since, long duration);
 bool IsTripComputerPopupShowing();
 void InitSmallScreen();
 void ResetTripInfo(uint16_t mfdStatus);
@@ -1118,7 +1120,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     (data[2] & 0x1F) == 0x13 ? PSTR("SEEK_BACKWARD") :
                     (data[2] & 0x1F) == 0x14 ? PSTR("SEEK_FORWARD") :
                     (data[2] & 0x1F) == 0x16 ? PSTR("AUDIO") :
-                    (data[2] & 0x1F) == 0x17 ? PSTR("MAN") :
+                    (data[2] & 0x1F) == 0x17 ? PSTR("MAN") :  // Not seen
                     (data[2] & 0x1F) == 0x1B ? PSTR("TUNER") :
                     (data[2] & 0x1F) == 0x1C ? PSTR("TAPE") :
                     (data[2] & 0x1F) == 0x1D ? PSTR("CD") :
@@ -1130,6 +1132,32 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     data[2] & 0x80 ? PSTR(" (repeat)") :
                     emptyStr
                 );
+        } // if
+
+        if (largeScreen == LARGE_SCREEN_GUIDANCE || largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
+        {
+            // The following keys result in head unit popup during sat nav guidance or trip computer screen:
+            if (
+                (data[2] & 0x1F) == 0x13 ||  // SEEK_BACKWARD
+                (data[2] & 0x1F) == 0x14 ||  // SEEK_FORWARD
+                (data[2] & 0x1F) == 0x17 ||  // MAN
+                (data[2] & 0x1F) == 0x1B ||  // TUNER
+                (data[2] & 0x1F) == 0x1C ||  // TAPE
+                (data[2] & 0x1F) == 0x1D ||  // CD
+                (data[2] & 0x1F) == 0x1E     // CD_CHANGER
+               )
+            {
+                NotificationPopupShowing(millis(), 8000);
+
+                at += at >= n ? 0 :
+                    snprintf_P(buf + at, n - at,
+                        PSTR(
+                            ",\n"
+                            "\"mfd_popup\": \"%S\""
+                        ),
+                        PopupStr()
+                    );
+            } // if
         } // if
 
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
@@ -1215,6 +1243,8 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // User clicks on "Accept" button (usually bottom left of dialog screen)
             code == 0x0001 ? PSTR("Accept") :
 
+            code == 0x0002 ? ToHexStr(code) :
+
             // Always follows 0x1000
             code == 0x0100 ? PSTR("End_of_button_press") :
 
@@ -1230,6 +1260,8 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // (Or: select from list using "Val"?)
             code == 0x2000 ? PSTR("Request_next_sat_nav_report_packet") :
 
+            code == 0x2100 ? ToHexStr(code) :  // ??
+
             // User selects city from list
             code == 0x2101 ? PSTR("Selected_city_from_list") :
 
@@ -1239,6 +1271,9 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
             // MFD asks for sat nav guidance data packet (IDEN 0x9CE) and satnav_status_2 (IDEN 0x7CE)
             code == 0x4400 ? PSTR("Request_sat_nav_guidance_data") :
+
+            code == 0x4700 ? ToHexStr(code) :  // Route computed?
+            code == 0x6000 ? ToHexStr(code) :  // ??
 
             ToHexStr(code),
 
@@ -2797,7 +2832,9 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_status_1\": \"%S%S\"\n"
+            "\"satnav_status_1\": \"%S%S\",\n"
+            "\"satnav_destination_not_on_map\": \"%S\",\n"
+            "\"satnav_arrived_at_destination\": \"%S\"\n"
         "}\n"
     "}\n";
 
@@ -2835,7 +2872,10 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[4] == 0x0B ? emptyStr :  // Seen with status 0x4001 and 0xD001
         data[4] == 0x0C ? PSTR(" DISC_UNREADABLE") :
         data[4] == 0x0E ? PSTR(" NO_DISC") :
-        emptyStr
+        emptyStr,
+
+        data[2] & 0x01 ? yesStr : noStr,
+        data[2] & 0x10 ? yesStr : noStr
     );
 
     // JSON buffer overflow?
@@ -3114,7 +3154,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
             status == 0x0000 ? PSTR("COMPUTING_ROUTE") :
             status == 0x0001 ? PSTR("STOPPING_NAVIGATION") :
-            status == 0x0101 ? ToHexStr(status) :
+            status == 0x0101 ? ToHexStr(status) :  // Setting vocal synthesis level?
 
             // This starts when the nag screen is accepted and is seen repeatedly when selecting a destination
             // and during guidance. It stops after a "STOPPING_NAVIGATION" status message.
@@ -3123,6 +3163,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             status == 0x0110 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING") :
             status == 0x0120 ? PSTR("ACCEPTED_TERMS_AND_CONDITIONS") :
             status == 0x0140 ? PSTR("GPS_POS_FOUND") :
+            status == 0x0180 ? ToHexStr(status) :  // Changing distance unit (km <--> mi)?
             status == 0x0306 ? PSTR("SATNAV_DISC_ID_READ") :
             status == 0x0C01 ? PSTR("CD_ROM_FOUND") :
             status == 0x0C02 ? PSTR("POWERING_OFF") :
