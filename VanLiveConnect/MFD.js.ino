@@ -337,11 +337,7 @@ function writeToDom(jsonObj)
 } // writeToDom
 
 var webSocketServerHost = window.location.hostname;
-// Send some data so that a webSocket event triggers when the connection has failed
-function keepAliveWebSocket()
-{
-	webSocket.send("keepalive");
-} // keepAliveWebSocket
+
 
 var webSocket;
 var keepAliveWebSocketTimer = null;
@@ -394,6 +390,12 @@ function connectToWebSocket()
 		}
 	);
 } // connectToWebSocket
+
+// Send some data so that a webSocket event triggers when the connection has failed
+function keepAliveWebSocket()
+{
+	webSocket.send("keepalive");
+} // keepAliveWebSocket
 
 // -----
 // Handling of vehicle data
@@ -448,6 +450,7 @@ var lastScreenChangedAt = 0;  // Last time the large screen changed
 // Switch to a specific screen on the right hand side of the display
 function changeLargeScreenTo(id)
 {
+	if (id === undefined) return;
 	if (id === currentLargeScreenId) return;
 
 	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
@@ -488,6 +491,8 @@ function temporarilyChangeLargeScreenTo(id)
 		changeBackScreenId = currentLargeScreenId;
 		changeLargeScreenTo(id);
 	} // if
+
+	if (changeBackScreenId === undefined) return;
 
 	// (Re-)arm the timer to change back to the previous screen
 	clearTimeout(changeBackScreenTimer);
@@ -2666,7 +2671,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 	}
 	else
 	{
-		if (satnavLastEnteredChar != null)
+		if (satnavLastEnteredChar !== null)
 		{
 			// Replace the '-' characters one by one, left to right
 			var s = $(entrySelector).text();
@@ -3171,7 +3176,7 @@ function handleItemChange(item, value)
 
 			// Just changed audio source? Then suppress the audio settings popup (which would otherwise pop up every
 			// time the audio source changes).
-			if (handleItemChange.hideHeadUnitPopupsTimer != null) break;
+			if (handleItemChange.hideHeadUnitPopupsTimer !== null) break;
 
 			// Bail out if no audio is playing
 			var audioSource = $("#audio_source").text();
@@ -3276,7 +3281,7 @@ function handleItemChange(item, value)
 				// Not busy loading, and cartridge contains no discs?
 				if (
 					 $("#cd_changer_status_loading").css("display") !== "block"
-					 && (cdChangerCurrentDisc == null || ! cdChangerCurrentDisc.match(/^[1-6]$/))
+					 && (cdChangerCurrentDisc === null || ! cdChangerCurrentDisc.match(/^[1-6]$/))
 				   )
 				{
 					showStatusPopup("No CD", 3000);  // Show "No CD" popup for a few seconds
@@ -3446,7 +3451,7 @@ function handleItemChange(item, value)
 			hideAudioSettingsPopup();
 
 			// Changed to a non-preset frequency? Or just changed audio source? Then suppress the tuner presets popup.
-			if (value === "-" || handleItemChange.hideHeadUnitPopupsTimer != null)
+			if (value === "-" || handleItemChange.hideHeadUnitPopupsTimer !== null)
 			{
 				hideTunerPresetsPopup();
 			}
@@ -3621,7 +3626,7 @@ function handleItemChange(item, value)
 
 			showAudioPopup();
 
-			if (cdChangerCurrentDisc != null && cdChangerCurrentDisc.match(/^[1-6]$/))
+			if (cdChangerCurrentDisc !== null && cdChangerCurrentDisc.match(/^[1-6]$/))
 			{
 				var selector = "#cd_changer_disc_" + cdChangerCurrentDisc + "_present";
 				$(selector).removeClass("ledActive");
@@ -3654,7 +3659,7 @@ function handleItemChange(item, value)
 			if (inMenu()) break;
 
 			// Suppress timer still running?
-			if (suppressScreenChangeToAudio != null) break;
+			if (suppressScreenChangeToAudio !== null) break;
 
 			// Hide the audio settings or tuner presets popup (if visible)
 			hideAudioSettingsPopup();
@@ -5366,7 +5371,7 @@ function handleItemChange(item, value)
 
 			if (inMenu() || currentLargeScreenId === "pre_flight") break;  // Not in menu or "pre_flight" screen
 			if (engineRunning !== "YES") break;  // Only when engine running
-			if (suppressClimateControlPopup != null) break;  // Not when suppress timer is running
+			if (suppressClimateControlPopup !== null) break;  // Not when suppress timer is running
 
 			showPopup("climate_control_popup", 5000);
 		} // case
