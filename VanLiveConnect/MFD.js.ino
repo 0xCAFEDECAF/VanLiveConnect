@@ -4372,13 +4372,13 @@ function handleItemChange(item, value)
 		case "satnav_personal_address_street":
 		case "satnav_professional_address_street":
 		{
-			$("#" + item + "_shown").text(value === "" ? cityCenterText : value);
+			$("#" + item + "_shown").html(value === "" ? cityCenterText : value);
 		} // case
 		break;
 
 		case "satnav_last_destination_street":
 		{
-			$('[gid="satnav_last_destination_street_shown"]').text(value === "" ? cityCenterText : value);
+			$('[gid="satnav_last_destination_street_shown"]').html(value === "" ? cityCenterText : value);
 		} // case
 		break;
 
@@ -4393,14 +4393,7 @@ function handleItemChange(item, value)
 		case "satnav_last_destination_house_number":
 		{
 			$("#satnav_last_destination_house_number_shown").html(value === "" ? noNumberText : value);
-
-			$("#satnav_reached_destination_house_number").html
-			(
-				// Say "No number" only if a street is known, not for "City center"
-				value === "" && $('[gid="satnav_last_destination_street_shown"]').last().text() !== cityCenterText
-					? noNumberText
-					: value
-			);
+			$("#satnav_reached_destination_house_number").html(value);  // If empty, don't say "No number"
 		} // case
 		break;
 
