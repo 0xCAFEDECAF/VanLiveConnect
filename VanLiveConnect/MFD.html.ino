@@ -486,7 +486,7 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 					<div gid="fuel_level_filtered_perc" class="gauge">
 						<svg style="width:324px;">
-							<line style="stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
+							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
 						</svg>
 					</div>
 					<div class="gaugeBoxDiv">
@@ -518,14 +518,14 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 					<div id="coolant_temp_perc" class="gauge">
 						<svg style="width:324px;">
-							<line style="stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
+							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
 						</svg>
 					</div>
 					<div class="gaugeBoxDiv">
 						<svg style="width:348px;">
 							<rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
-							<line style="stroke:var(--main-color); stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
-							<line style="stroke:var(--main-color); stroke-width:5;" x1="259" y1="8" x2="259" y2="32"></line> <!-- 100 degrees -->
+							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
+							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="259" y1="8" x2="259" y2="32"></line> <!-- 100 degrees -->
 						</svg>
 					</div>
 				</div>
@@ -545,7 +545,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div style="position:absolute; left:20px; top:280px; width:350px; height:60px;">
 						<div id="oil_level_raw_perc" class="gauge">
 							<svg style="width:324px;">
-								<line style="stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+								<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
 							</svg>
 						</div>
 						<div class="gaugeBoxDiv">
@@ -569,7 +569,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div style="position:absolute; left:590px; top:280px; width:350px; height:60px;">
 						<div id="distance_to_service_perc" class="gauge">
 							<svg style="width:324px;">
-								<line style="stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+								<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
 							</svg>
 						</div>
 						<div class="gaugeBoxDiv">

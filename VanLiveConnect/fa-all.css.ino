@@ -4585,39 +4585,29 @@ readers do not read off random characters that represent icons */
   overflow: visible;
   position: static;
   width: auto; }
+
 @font-face {
   font-family: 'Font Awesome 5 Brands';
   font-style: normal;
   font-weight: 400;
   font-display: block;
-  src: url("../webfonts/fa-brands-400.eot");
-  src: url("../webfonts/fa-brands-400.eot?#iefix") format("embedded-opentype"), url("../webfonts/fa-brands-400.woff") format("woff"), url("../webfonts/fa-brands-400.ttf") format("truetype"), url("../webfonts/fa-brands-400.svg#fontawesome") format("svg"); }
+  src: url("../webfonts/fa-brands-400.woff") format("woff"); }
 
 .fab {
   font-family: 'Font Awesome 5 Brands';
   font-weight: 400; }
-@font-face {
-  font-family: 'Font Awesome 5 Free';
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("../webfonts/fa-regular-400.eot");
-  src: url("../webfonts/fa-regular-400.eot?#iefix") format("embedded-opentype"), url("../webfonts/fa-regular-400.woff") format("woff"), url("../webfonts/fa-regular-400.ttf") format("truetype"), url("../webfonts/fa-regular-400.svg#fontawesome") format("svg"); }
 
-.far {
-  font-family: 'Font Awesome 5 Free';
-  font-weight: 400; }
 @font-face {
   font-family: 'Font Awesome 5 Free';
   font-style: normal;
   font-weight: 900;
   font-display: block;
-  src: url("../webfonts/fa-solid-900.eot");
-  src: url("../webfonts/fa-solid-900.eot?#iefix") format("embedded-opentype"), url("../webfonts/fa-solid-900.woff") format("woff"), url("../webfonts/fa-solid-900.ttf") format("truetype"), url("../webfonts/fa-solid-900.svg#fontawesome") format("svg"); }
+  src: url("../webfonts/fa-solid-900.woff") format("woff"); }
 
 .fa,
 .fas {
   font-family: 'Font Awesome 5 Free';
   font-weight: 900; }
+
 )=====";
 

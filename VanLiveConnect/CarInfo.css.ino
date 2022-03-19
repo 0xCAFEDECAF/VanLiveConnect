@@ -37,8 +37,10 @@ char carInfo_css[] PROGMEM = R"=====(
 }
 body
 {
+  background-color:rgb(8,7,19); /* fallback */
   background-color:var(--background-color);
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
+  color:hsl(215,42%,91%); /* fallback */
   color:var(--main-color);
   font-size:50px;
   white-space:nowrap;
@@ -96,6 +98,7 @@ body
 {
   position:absolute;
   overflow:hidden;
+  color:rgb(41,55,74); /* fallback */
   color:var(--selected-element-color);
   border-radius:5px;
   text-align:center;
@@ -104,15 +107,19 @@ body
 }
 .ledOn
 {
+  background-color:hsl(215,42%,91%); /* fallback */
   background-color:var(--main-color);
 }
 .ledOff
 {
+  background-color:rgb(25,31,40); /* fallback */
   background-color:var(--led-off-color);
 }
 .ledActive
 {
+  border-top:25px solid hsl(215,42%,91%); /* fallback */
   border-top:25px solid var(--main-color);
+  border-bottom:25px solid hsl(215,42%,91%); /* fallback */
   border-bottom:25px solid var(--main-color);
 }
 
@@ -238,6 +245,7 @@ body
   position:absolute;
   background:none;
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
+  color:hsl(215,42%,91%); /* fallback */
   color:var(--main-color);
   font-size:50px;
   line-height:1.0;
@@ -338,6 +346,7 @@ body
 {
   fill-opacity:0;
   stroke-width:8;
+  stroke:hsl(215,42%,91%); /* fallback */
   stroke:var(--main-color);
 }
 .gaugeBoxDiv
@@ -469,6 +478,7 @@ body
 /* Sat nav menu and screen element styles */
 .satNavInstructionIcon
 {
+  stroke:hsl(215,42%,91%); /* fallback */
   stroke:var(--main-color);
   stroke-width:14;
   stroke-linecap:round;
@@ -496,6 +506,7 @@ body
 {
   fill:var(--selected-element-color);
   stroke-width:5;
+  stroke:hsl(215,42%,91%); /* fallback */
   stroke:var(--main-color);
 }
 .satNavEnterDestination

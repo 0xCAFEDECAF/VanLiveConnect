@@ -112,8 +112,8 @@ var fancyWebSocket = function(url)
 	// Dispatch to the right handlers
 	conn.onmessage = function(evt)
 	{
-		var json = JSON.parse(evt.data)
-		dispatch(json.event, json.data)
+		var json = JSON.parse(evt.data);
+		dispatch(json.event, json.data);
 	}; // function
 
 	conn.onopen = function()
@@ -324,7 +324,7 @@ function writeToDom(jsonObj)
 		//
 		// The above update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
 		//
-		if (item.endsWith('_') && !!jsonObj[item] && typeof(jsonObj[item]) === "object")
+		if (item.slice(-1) === "_" && !!jsonObj[item] && typeof(jsonObj[item]) === "object")
 		{
 			var subObj = jsonObj[item];
 			for (var subItem in subObj) processJsonObject(item + subItem, subObj[subItem]);  // Use 'item' as prefix
@@ -502,6 +502,7 @@ function temporarilyChangeLargeScreenTo(id)
 		{
 			changeBackScreenTimer = null;
 			changeLargeScreenTo(changeBackScreenId);
+			changeBackScreenId = undefined;
 		},
 		14000
 	);
@@ -511,6 +512,7 @@ function cancelChangeBackScreenTimer()
 {
 	clearTimeout(changeBackScreenTimer);
 	changeBackScreenTimer = null;
+	changeBackScreenId = undefined;
 } // cancelChangeBackScreenTimer
 
 var menuStack = [];
@@ -704,12 +706,10 @@ function gotoSmallScreen(smallScreenName)
 // If the "trip_computer_popup" is has no tab selected, select that of the current small screen
 function initTripComputerPopup()
 {
-	// Retrieve all tab buttons and content elements
-	var tabs = $("#trip_computer_popup").find(".tabContent");
+	// Retrieve all tab buttons
 	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
 
-	// Retrieve current tab button and content element
-	var currActiveTab = $("#trip_computer_popup .tabContent:visible");
+	// Retrieve current tab button
 	var currActiveButton = $("#trip_computer_popup .tabLeft.tabActive");
 
 	var currButtonIdx = tabButtons.index(currActiveButton);
@@ -846,7 +846,7 @@ function hidePopup(id)
 // Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
 function hideAllPopups(except)
 {
-	allPopups = $(".notificationPopup:visible");
+	var allPopups = $(".notificationPopup:visible");
 
 	$.each(allPopups, function (index, selector)
 	{
@@ -967,7 +967,7 @@ function gotoMenu(menu)
 	// Skip disabled buttons
 	do
 	{
-		isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
+		var isButtonEnabled = $(buttons[nextIdx]).is(":visible") && ! $(buttons[nextIdx]).hasClass("buttonDisabled");
 		if (isButtonEnabled) break;
 		nextIdx = (nextIdx + 1) % buttons.length;
 	} // while
@@ -1163,7 +1163,6 @@ function keyPressed(key)
 	var selected = findSelectedButton();
 	if (selected === undefined) return;
 
-	var screen = selected.screen;
 	var currentButton = selected.button;
 
 	// Retrieve the specified action, like e.g. on_left_button="doSomething();"
@@ -1213,7 +1212,7 @@ function resizeButton(id)
 
 function restoreButtonSize(id)
 {
-	if (! id in buttonOriginalWidths) return;
+	if (! (id in buttonOriginalWidths)) return;
 
 	var elem = $("#" + id);
 	elem.width(buttonOriginalWidths[id]);  // Reset width of button to original size
@@ -1515,7 +1514,7 @@ function highlightNextLine(id)
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
 	var heightOfBox = $("#" + id).height();
 
-	var scrollBy = (topOfHighlightedLine + heightOfHighlightedLine) - (heightOfBox - heightOfUnhighlightedLine)
+	var scrollBy = (topOfHighlightedLine + heightOfHighlightedLine) - (heightOfBox - heightOfUnhighlightedLine);
 	if (scrollBy > 0)
 	{
 		// Try to keep at least one next line visible
@@ -1539,9 +1538,7 @@ function highlightPreviousLine(id)
 	// Scroll along if necessary
 
 	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top);
-	var heightOfHighlightedLine = $("#" + id + " .invertedText").height();
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
-	var heightOfBox = $("#" + id).height();
 
 	if (topOfHighlightedLine < heightOfUnhighlightedLine - 1)
 	{
@@ -1728,7 +1725,7 @@ function colorThemeSelectTickedButton()
 
 function setLuminosity(luminosity, theme)
 {
-	var luminosity = clamp(luminosity, 63, 91);
+	luminosity = clamp(luminosity, 63, 91);
 	if (theme === undefined) theme = localStorage.colorTheme;
 
 	if (theme === "set_light_theme") $(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
@@ -1752,7 +1749,7 @@ function setDimLevel(headlightStatus, theme)
 	var headlightsOn = headlightStatus.match(/BEAM/) !== null;
 	var id = headlightsOn ? "display_reduced_brightness_level" : "display_brightness_level";
 	var dimLevel = parseInt($("#" + id).text());
-	var luminosity = dimLevel * 2 + 63
+	var luminosity = dimLevel * 2 + 63;
 	setLuminosity(luminosity, theme);
 
 	$("#display_brightness_level").toggle(! headlightsOn);
@@ -1928,14 +1925,14 @@ function satnavGotoMainMenu()
 		return;
 	} // if
 
-	if (satnavStatus1.match(/NO_DISC/) || $("#satnav_disc_recognized").hasClass("ledOff"))
+	if (satnavStatus1.match(/NO_DISC/))
 	{
 		hidePopup("satnav_initializing_popup");
 		showStatusPopup(satnavDiscMissingText, 8000);
 		return;
 	} // if
 
-	if (satnavStatus1.match(/DISC_UNREADABLE/))
+	if (satnavStatus1.match(/DISC_UNREADABLE/) || $("#satnav_disc_recognized").hasClass("ledOff"))
 	{
 		hidePopup("satnav_initializing_popup");
 		showStatusPopup(satnavDiscUnreadbleText, 10000);
@@ -3445,7 +3442,7 @@ function handleItemChange(item, value)
 			if (value === handleItemChange.currentTunerPresetMemoryValue) break;
 
 			// Un-highlight any previous entry in the "tuner_presets_popup"
-			$('div[id^=presets_memory_][id$=_select]').hide()
+			$('div[id^=presets_memory_][id$=_select]').hide();
 
 			// Make sure the audio settings popup is hidden
 			hideAudioSettingsPopup();
@@ -4081,6 +4078,12 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "satnav_destination_not_on_map":
+		{
+			if (value === "YES") showDestinationNotAccessiblePopupIfApplicable();
+		} // case
+		break;
+
 		case "satnav_arrived_at_destination":
 		{
 			if (value === "YES") showPopup("satnav_reached_destination_popup", 10000);
@@ -4426,7 +4429,7 @@ function handleItemChange(item, value)
 		{
 			// No data means: stay on current street.
 			// But if current street is empty (""), then just keep the current text.
-			if (value !== "") $("#satnav_guidance_next_street").html(value)
+			if (value !== "") $("#satnav_guidance_next_street").html(value);
 			else if (satnavCurrentStreet !== "") $("#satnav_guidance_next_street").html(satnavCurrentStreet);
 		} // case
 		break;
@@ -4934,7 +4937,7 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_enter_characters").is(":visible"))
 			{
-				if (satnavRollingBackEntryByCharacter) satnavAvailableCharactersStack.pop()
+				if (satnavRollingBackEntryByCharacter) satnavAvailableCharactersStack.pop();
 				else satnavAvailableCharactersStack.push(value);
 			} // if
 
