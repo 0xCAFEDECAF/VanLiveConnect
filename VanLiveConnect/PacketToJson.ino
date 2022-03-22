@@ -2839,8 +2839,8 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"satnav_destination_not_accessible\": \"%S\",\n"
             "\"satnav_arrived_at_destination\": \"%S\",\n"
 
-            "\"satnav_new_guidance_instruction\": \"%S\",\n"
             "\"satnav_guidance_display_can_be_dimmed\": \"%S\",\n"
+            "\"satnav_new_guidance_instruction\": \"%S\",\n"
             "\"satnav_audio_start\": \"%S\",\n"
             "\"satnav_audio_end\": \"%S\",\n"
             "\"satnav_calculating_route\": \"%S\",\n"
@@ -2891,8 +2891,8 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[2] & 0x01 ? yesStr : noStr,  // satnav_destination_not_accessible
         data[2] & 0x10 ? yesStr : noStr,  // satnav_arrived_at_destination
 
-        data[1] & 0x01 ? yesStr : noStr,  // satnav_new_guidance_instruction
         data[1] & 0x02 ? yesStr : noStr,  // satnav_guidance_display_can_be_dimmed (next instruction is far away)
+        data[1] & 0x01 ? yesStr : noStr,  // satnav_new_guidance_instruction
         data[1] & 0x04 ? yesStr : noStr,  // satnav_audio_start
         data[1] & 0x08 ? yesStr : noStr,  // satnav_audio_end
         data[1] & 0x10 ? yesStr : noStr,  // satnav_calculating_route

@@ -1898,6 +1898,7 @@ var satnavOnMap = false;
 var satnavStatus1 = "";
 var satnavDestinationNotAccessible = false;
 var satnavComputingRoute = false;
+var satnavDisplayCanBeDimmed = true;
 
 // Show this popup only once at start of guidance or after recalculation
 var satnavDestinationNotAccessibleByRoadPopupShown = false;
@@ -2924,7 +2925,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	//if (satnavCurrentStreet !== "")
 	//if (satnavOnMap)
 	//if (satnavGpsFix)
-	if (! satnavDestinationReachable)
+	if (! satnavDestinationReachable && satnavOnMap)
 	{
 		hidePopup();
 
@@ -3783,11 +3784,11 @@ function handleItemChange(item, value)
 			$("#n_rpm_speed").text("n: " + n.toFixed(2));
 
 			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
-			if (n > 130 && n < 140) $("#chosen_gear").text("1");
-			else if (n > 62 && n < 68) $("#chosen_gear").text("2");
-			else if (n > 38 && n < 42) $("#chosen_gear").text("3");
-			else if (n > 27 && n < 29) $("#chosen_gear").text("4");
-			else if (n > 20 && n < 22) $("#chosen_gear").text("5");
+			if (n >= 130 && n <= 140) $("#chosen_gear").text("1");
+			else if (n >= 62 && n <= 68) $("#chosen_gear").text("2");
+			else if (n >= 37 && n <= 42) $("#chosen_gear").text("3");
+			else if (n >= 26 && n <= 29) $("#chosen_gear").text("4");
+			else if (n >= 20 && n <= 22) $("#chosen_gear").text("5");
 			else $("#chosen_gear").text("-");
 		} // case
 		break;
@@ -4166,6 +4167,7 @@ function handleItemChange(item, value)
 		case "satnav_new_guidance_instruction":
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+			if (! satnavDisplayCanBeDimmed) break;
 
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance");
 			else if (value === "NO") changeBackLargeScreenAfter(5000);
@@ -4175,6 +4177,8 @@ function handleItemChange(item, value)
 		case "satnav_guidance_display_can_be_dimmed":
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+
+			satnavDisplayCanBeDimmed = value === "YES";
 
 			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance");
 			else if (value === "YES") changeBackLargeScreenAfter(5000);
