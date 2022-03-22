@@ -482,6 +482,24 @@ function changeLargeScreenTo(id)
 var changeBackScreenId;
 var changeBackScreenTimer;
 
+// (Re-)arm the timer to change back to the previous screen
+function changeBackLargeScreenAfter(msec)
+{
+	if (changeBackScreenId === undefined) return;
+
+	clearTimeout(changeBackScreenTimer);
+	changeBackScreenTimer = setTimeout
+	(
+		function ()
+		{
+			changeBackScreenTimer = null;
+			changeLargeScreenTo(changeBackScreenId);
+			changeBackScreenId = undefined;
+		},
+		msec
+	);
+} // changeBackLargeScreenAfter
+
 // Temporarily switch to a specific screen on the right hand side of the display
 function temporarilyChangeLargeScreenTo(id)
 {
@@ -492,20 +510,9 @@ function temporarilyChangeLargeScreenTo(id)
 		changeLargeScreenTo(id);
 	} // if
 
-	if (changeBackScreenId === undefined) return;
-
-	// (Re-)arm the timer to change back to the previous screen
-	clearTimeout(changeBackScreenTimer);
-	changeBackScreenTimer = setTimeout
-	(
-		function ()
-		{
-			changeBackScreenTimer = null;
-			changeLargeScreenTo(changeBackScreenId);
-			changeBackScreenId = undefined;
-		},
-		14000
-	);
+	// Note: reception of "satnav_new_guidance_instruction" or "satnav_guidance_display_can_be_dimmed" will cause
+	// this to happen faster
+	changeBackLargeScreenAfter(120000);
 } // temporarilyChangeLargeScreenTo
 
 function cancelChangeBackScreenTimer()
@@ -1708,7 +1715,7 @@ function setColorTheme(theme)
 
 function colorThemeTickSet()
 {
-	toggleTick(); 
+	toggleTick();
 	setColorTheme(getTickedId("set_screen_brightness"));
 } // colorThemeTickSet
 
@@ -1726,7 +1733,11 @@ function colorThemeSelectTickedButton()
 function setLuminosity(luminosity, theme)
 {
 	luminosity = clamp(luminosity, 63, 91);
-	if (theme === undefined) theme = localStorage.colorTheme;
+	if (theme === undefined)
+	{
+		theme = localStorage.colorTheme;
+		if ($("#set_screen_brightness").is(":visible")) theme = getTickedId("set_screen_brightness");
+	} // if
 
 	if (theme === "set_light_theme") $(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
 	else $(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
@@ -1881,17 +1892,18 @@ var satnavRouteComputed = false;
 var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
-var satnavDestinationReachable = true;
+var satnavDestinationReachable = false;
 var satnavGpsFix = false;
 var satnavOnMap = false;
 var satnavStatus1 = "";
-var satnavDestinationAccessible = true;
+var satnavDestinationNotAccessible = false;
 var satnavComputingRoute = false;
 
 // Show this popup only once at start of guidance or after recalculation
 var satnavDestinationNotAccessibleByRoadPopupShown = false;
 
 var satnavCurrentStreet = "";
+var satnavNextStreet = "";
 var satnavDirectoryEntry = "";
 
 var satnavServices = JSON.parse(localStorage.satnavServices || "[]");
@@ -2899,9 +2911,10 @@ function satnavCalculatingRoute()
 // Show the "Destination is not accessible by road" popup, if applicable
 function showDestinationNotAccessiblePopupIfApplicable()
 {
-	if (satnavDestinationAccessible) return false;
+	if (! satnavDestinationNotAccessible) return false;
 
-	// Don't show this popup while still in the guidance preference menu
+	// Don't show this popup while still in the guidance preference popup or menu
+	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
 
 	// Show this popup only once at start of guidance or after recalculation
@@ -2910,7 +2923,8 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// But only if the current location is known (to emulate behaviour of MFD)
 	//if (satnavCurrentStreet !== "")
 	//if (satnavOnMap)
-	if (satnavGpsFix)
+	//if (satnavGpsFix)
+	if (! satnavDestinationReachable)
 	{
 		hidePopup();
 
@@ -2969,6 +2983,29 @@ function satnavFormatDistance(distanceStr)
 	} // if
 } // satnavFormatDistance
 
+function satnavSetAudioLed(playingAudio)
+{
+	$("#satnav_audio").toggleClass("ledOn", playingAudio);
+	$("#satnav_audio").toggleClass("ledOff", ! playingAudio);
+
+	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
+	if (playingAudio)
+	{
+		//temporarilyChangeLargeScreenTo("satnav_guidance");
+
+		// Set timeout on LED, in case the "AUDIO OFF" packet is missed
+		satnavSetAudioLed.showSatnavAudioLed = setTimeout
+		(
+			function ()
+			{
+				$("#satnav_audio").removeClass("ledOn");
+				$("#satnav_audio").addClass("ledOff");
+			},
+			5000
+		);
+	} // if
+} // satnavSetAudioLed
+
 var suppressScreenChangeToAudio = null;
 
 function satnavValidateVocalSynthesisLevel()
@@ -3019,7 +3056,7 @@ function satnavEscapeVocalSynthesisLevel()
 
 function satnavStopGuidance()
 {
-	localStorage.askForGuidanceContinuation = 'NO';
+	localStorage.askForGuidanceContinuation = "NO";
 	selectDefaultScreen();
 } // satnavStopGuidance
 
@@ -3048,7 +3085,7 @@ function satnavPoweringOff()
 	} // if
 
 	satnavInitialized = false;
-	$("#satnav_disc_recognized").addClass("ledOff");
+	// $("#satnav_disc_recognized").addClass("ledOff");
 	handleItemChange.nSatNavDiscUnreadable = 1;
 	satnavDisclaimerAccepted = false;
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
@@ -3733,6 +3770,25 @@ function handleItemChange(item, value)
 			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm > 0) || engineRpm > thresholdRpm);
 
 			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
+
+			// Deduce the chosen gear
+			if (vehicleSpeed === undefined || vehicleSpeed < 2)
+			{
+				$("#chosen_gear").text("-");
+				$("#n_rpm_speed").text("n: -.--");
+				$("#clutch_slip").text("slip: -.-%");
+				break;
+			} // if
+			var n = engineRpm / vehicleSpeed;
+			$("#n_rpm_speed").text("n: " + n.toFixed(2));
+
+			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
+			if (n > 130 && n < 140) $("#chosen_gear").text("1");
+			else if (n > 62 && n < 68) $("#chosen_gear").text("2");
+			else if (n > 38 && n < 42) $("#chosen_gear").text("3");
+			else if (n > 27 && n < 29) $("#chosen_gear").text("4");
+			else if (n > 20 && n < 22) $("#chosen_gear").text("5");
+			else $("#chosen_gear").text("-");
 		} // case
 		break;
 
@@ -4002,6 +4058,19 @@ function handleItemChange(item, value)
 
 		case "contact_key_position":
 		{
+			if (localStorage.askForGuidanceContinuation === "YES"
+				&& !inMenu()
+				&& value === "ON"
+				&& satnavInitialized
+				&& economyMode !== "ON"
+				)
+			{
+				// Show popup "Continue guidance to destination? [Yes]/No"
+				showPopup("satnav_continue_guidance_popup", 15000);
+
+				localStorage.askForGuidanceContinuation = "NO";
+			} // if
+
 			// Has anything changed?
 			if (value === contactKeyPosition) break;
 			contactKeyPosition = value;
@@ -4024,14 +4093,6 @@ function handleItemChange(item, value)
 
 						// Hide all popups except "satnav_continue_guidance_popup"
 						hideAllPopups("satnav_continue_guidance_popup");
-					} // if
-
-					if (satnavInitialized && localStorage.askForGuidanceContinuation === "YES" && economyMode !== "ON")
-					{
-						// Show popup "Continue guidance to destination? [Yes]/No"
-						showPopup("satnav_continue_guidance_popup", 15000);
-
-						localStorage.askForGuidanceContinuation = "NO";
 					} // if
 				} // case
 				break;
@@ -4058,6 +4119,7 @@ function handleItemChange(item, value)
 						function ()
 						{
 							handleItemChange.contactKeyOffTimer = null;
+							satnavPoweringOff();
 							selectDefaultScreen();  // Even when in a menu: the original MFD switches off
 						},
 						500
@@ -4078,9 +4140,20 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "satnav_destination_not_on_map":
+		case "satnav_destination_not_accessible":
 		{
-			if (value === "YES") showDestinationNotAccessiblePopupIfApplicable();
+			satnavDestinationNotAccessible = value === "YES";
+
+			// Show one or the other
+			$("#satnav_distance_to_dest_via_road_visible").toggle(! satnavDestinationNotAccessible);
+			$("#satnav_distance_to_dest_via_straight_line_visible").toggle(satnavDestinationNotAccessible);
+
+			if (satnavDestinationNotAccessible)
+			{
+				// Note: this popup must be shown just after the "Computing route in progress" popup closes, not
+				// during navigation
+				showDestinationNotAccessiblePopupIfApplicable();
+			}
 		} // case
 		break;
 
@@ -4090,62 +4163,47 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "satnav_new_guidance_instruction":
+		{
+			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance");
+			else if (value === "NO") changeBackLargeScreenAfter(5000);
+		} // case
+		break;
+
+		case "satnav_guidance_display_can_be_dimmed":
+		{
+			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance");
+			else if (value === "YES") changeBackLargeScreenAfter(5000);
+		} // case
+		break;
+
+		case "satnav_audio_start":
+		{
+			if (value === "YES") satnavSetAudioLed(true);
+		} // case
+		break;
+
+		case "satnav_audio_end":
+		{
+			if (value === "YES") satnavSetAudioLed(false);
+		} // case
+		break;
+
 		case "satnav_status_1":
 		{
 			satnavStatus1 = value;
 
 			if (economyMode === "ON") break;  // No further handling
 
-			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION_AUDIO/))
-			{
-				showPopup("satnav_reached_destination_popup", 10000);
-			} // if
+			// if (satnavStatus1.match(/STOPPING_GUIDANCE/)
+				// // "0 m", "0 yd": we've reached the destination
+				// && handleItemChange.satnavDistanceToDestViaRoad.match(/^0\s/)
+				// )
+			// {
+				// showPopup("satnav_reached_destination_popup", 10000);
+			// } // if
 
-			if (satnavStatus1.match(/STOPPING_GUIDANCE/)
-				// "0 m", "0 yd": we've reached the destination
-				&& handleItemChange.satnavDistanceToDestViaRoad.match(/^0\s/)
-				)
-			{
-				showPopup("satnav_reached_destination_popup", 10000);
-			} // if
-
-			if (satnavStatus1.match(/AUDIO/))
-			{
-				// Turn on or off "satnav_audio" LED
-				var playingAudio = satnavStatus1.match(/START/) !== null;
-				$("#satnav_audio").toggleClass("ledOn", playingAudio);
-				$("#satnav_audio").toggleClass("ledOff", ! playingAudio);
-
-				clearTimeout(handleItemChange.showSatnavAudioLed);
-				if (playingAudio)
-				{
-					temporarilyChangeLargeScreenTo("satnav_guidance");
-
-					// Set timeout on LED, in case the "AUDIO OFF" packet is missed
-					handleItemChange.showSatnavAudioLed = setTimeout
-					(
-						function ()
-						{
-							$("#satnav_audio").removeClass("ledOn");
-							$("#satnav_audio").addClass("ledOff");
-						},
-						5000
-					);
-				} // if
-			} // if
-
-			// Show one or the other
-			satnavDestinationAccessible = satnavStatus1.match(/DESTINATION_NOT_ON_MAP/) === null;
-			$("#satnav_distance_to_dest_via_road_visible").toggle(satnavDestinationAccessible);
-			$("#satnav_distance_to_dest_via_straight_line_visible").toggle(! satnavDestinationAccessible);
-
-			if (! satnavDestinationAccessible)
-			{
-				// Note: this popup must be shown just after the "Computing route in progress" popup closes, not
-				// during navigation
-				showDestinationNotAccessiblePopupIfApplicable();
-			}
-			else if (satnavStatus1.match(/NO_DISC/))
+			if (satnavStatus1.match(/NO_DISC/))
 			{
 				hidePopup("satnav_initializing_popup");
 				showStatusPopup(satnavDiscMissingText, 5000);
@@ -4409,6 +4467,9 @@ function handleItemChange(item, value)
 
 			if (satnavMode === "IN_GUIDANCE_MODE")
 			{
+				// Last received value empty ("")? Then copy current street into next street (if not empty)
+				if (satnavNextStreet === "" && value !== "") $("#satnav_guidance_next_street").html(value);
+
 				// In the guidance screen, show "Street (City)", otherwise "Street not listed"
 				$("#satnav_guidance_curr_street").html(value.match(/\(.*\)/) ? value : streetNotListedText);
 			} // if
@@ -4427,6 +4488,8 @@ function handleItemChange(item, value)
 
 		case "satnav_next_street":
 		{
+			satnavNextStreet = value;  // Store what was received
+
 			// No data means: stay on current street.
 			// But if current street is empty (""), then just keep the current text.
 			if (value !== "") $("#satnav_guidance_next_street").html(value);
@@ -4874,14 +4937,14 @@ function handleItemChange(item, value)
 			$("#" + item + "_number").text(distance);
 			$("#" + item + "_unit").text(unit);
 
-			if ((item === "satnav_turn_at" || item === "satnav_distance_to_dest_via_road")
-				&& handleItemChange.satnavTurnAt !== value
-				&& (unit === "m" || unit === "yd")
-				&& parseInt(distance) <= 600)
-			{
-				temporarilyChangeLargeScreenTo("satnav_guidance");
-				handleItemChange.satnavTurnAt = value;
-			} // if
+			// if ((item === "satnav_turn_at" || item === "satnav_distance_to_dest_via_road")
+				// && handleItemChange.satnavTurnAt !== value
+				// && (unit === "m" || unit === "yd")
+				// && parseInt(distance) <= 600)
+			// {
+				// temporarilyChangeLargeScreenTo("satnav_guidance");
+				// handleItemChange.satnavTurnAt = value;
+			// } // if
 
 		} // case
 		break;
@@ -4980,7 +5043,10 @@ function handleItemChange(item, value)
 				var splitAt = 24;
 
 				// If the first line contains both 'I' and '1', the first line can contain 25 characters
-				if (value.indexOf("I") > 0 && value.indexOf("1") > 0 && value.indexOf("1") <= 24) splitAt = 25;
+				//if (value.indexOf("I") > 0 && value.indexOf("1") > 0 && value.indexOf("1") <= 24) splitAt = 25;
+
+				// If there are exactly 23 letters, 2 numbers can be put behind it
+				if (value.replace(/[^A-Z]/gi, "").length === 23) splitAt = 25;
 
 				var line_1 = value.substr(0, splitAt);
 				var line_2 = value.substr(splitAt);

@@ -2458,11 +2458,14 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
         isSatnavGuidanceActive = false;
         isCurrentStreetKnown = false;
-        isHeadUnitPowerOn = false;
 
-        UpdateLargeScreenForMfdOff();
-
-        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""), LargeScreenStr());
+        // In the "minimal VAN network" (only MFD + head unit), the mfdStatus "MFD_SCREEN_OFF" does not imply that
+        // the MFD has switched off
+        if (! isHeadUnitPowerOn)
+        {
+            at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""), LargeScreenStr());
+            UpdateLargeScreenForMfdOff();
+        } // if
     } // if
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
@@ -2833,8 +2836,19 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"data\":\n"
         "{\n"
             "\"satnav_status_1\": \"%S%S\",\n"
-            "\"satnav_destination_not_on_map\": \"%S\",\n"
-            "\"satnav_arrived_at_destination\": \"%S\"\n"
+            "\"satnav_destination_not_accessible\": \"%S\",\n"
+            "\"satnav_arrived_at_destination\": \"%S\",\n"
+
+            "\"satnav_new_guidance_instruction\": \"%S\",\n"
+            "\"satnav_guidance_display_can_be_dimmed\": \"%S\",\n"
+            "\"satnav_audio_start\": \"%S\",\n"
+            "\"satnav_audio_end\": \"%S\",\n"
+            "\"satnav_calculating_route\": \"%S\",\n"
+            "\"satnav_guidance_ended\": \"%S\",\n"
+            "\"satnav_calculating_route_2\": \"%S\",\n"
+
+            "\"satnav_1_led_2_6\": \"%S\",\n"
+            "\"satnav_entering_new_dest\": \"%S\"\n"
         "}\n"
     "}\n";
 
@@ -2874,8 +2888,19 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[4] == 0x0E ? PSTR(" NO_DISC") :
         emptyStr,
 
-        data[2] & 0x01 ? yesStr : noStr,
-        data[2] & 0x10 ? yesStr : noStr
+        data[2] & 0x01 ? yesStr : noStr,  // satnav_destination_not_accessible
+        data[2] & 0x10 ? yesStr : noStr,  // satnav_arrived_at_destination
+
+        data[1] & 0x01 ? yesStr : noStr,  // satnav_new_guidance_instruction
+        data[1] & 0x02 ? yesStr : noStr,  // satnav_guidance_display_can_be_dimmed (next instruction is far away)
+        data[1] & 0x04 ? yesStr : noStr,  // satnav_audio_start
+        data[1] & 0x08 ? yesStr : noStr,  // satnav_audio_end
+        data[1] & 0x10 ? yesStr : noStr,  // satnav_calculating_route
+        data[1] & 0x40 ? yesStr : noStr,  // satnav_guidance_ended ?
+        data[1] & 0x80 ? yesStr : noStr,  // satnav_calculating_route_2
+
+        data[2] & 0x20 ? yesStr : noStr,  // satnav_1_led_2_6; seen very seldomly, what is it?
+        data[2] & 0x80 ? yesStr : noStr   // satnav_entering_new_dest ?
     );
 
     // JSON buffer overflow?
@@ -3678,16 +3703,25 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
     switch(report)
     {
         case SR_CURRENT_STREET:
-        {
-            isCurrentStreetKnown = true;
-        } // case
-        // No 'break': fallthrough intended
-
         case SR_NEXT_STREET:
         {
             if (records[6].length() == 0)
             {
                 // In this case, the original MFD says: "Street not listed". We just show the city.
+
+                // City (if any) + optional district
+                String city = ComposeCityString(records[3], records[4]);
+
+                if (report == SR_CURRENT_STREET && city.length() > 0)
+                {
+                    // Bug in original MFD: it seems to not "know" the current street as long as we're not driving
+                    //if (IsVehicleSpeedValid()) isCurrentStreetKnown = true;
+
+                    // Bug in original MFD: it seems to not "know" the current street as long as we're
+                    // "IN_GUIDANCE_MODE" ?
+                    // TODO - not sure
+                    if (strlen_P(satnavStatus2Str) != 16) isCurrentStreetKnown = true;
+                } // if
 
                 const static char jsonFormatter[] PROGMEM =
                     ",\n"
@@ -3696,12 +3730,21 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatter,
                         report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
-
-                        // City (if any) + optional district
-                        ComposeCityString(records[3], records[4]).c_str()
+                        city.c_str()
                     );
 
                 break;
+            } // if
+
+            if (report == SR_CURRENT_STREET)
+            {
+                // Bug in original MFD: it seems to not "know" the current street as long as we're not driving
+                //if (IsVehicleSpeedValid()) isCurrentStreetKnown = true;
+
+                // Bug in original MFD: it seems to not "know" the current street as long as we're
+                // "IN_GUIDANCE_MODE" ?
+                // TODO - not sure
+                if (strlen_P(satnavStatus2Str) != 16) isCurrentStreetKnown = true;
             } // if
 
             const static char jsonFormatter[] PROGMEM =
@@ -3712,14 +3755,9 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // street [5, 6]; skip the other strings.
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
-
                     report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
-
-                    // Street
-                    ComposeStreetString(records[5], records[6]).c_str(),
-
-                    // City + optional district
-                    ComposeCityString(records[3], records[4]).c_str()
+                    ComposeStreetString(records[5], records[6]).c_str(),  // Street
+                    ComposeCityString(records[3], records[4]).c_str()  // City + optional district
                 );
         } // case
         break;

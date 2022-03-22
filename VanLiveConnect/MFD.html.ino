@@ -626,6 +626,10 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="odometer_1" class="dseg7" style="font-size:40px; left:120px; top:480px; width:280px;">--.-</div>
 					<div gid="distance_unit" class="tag" style="font-size:40px; text-align:left; left:415px; top:482px;">km</div>
 
+					<!-- Chosen gear -->
+					<div id="chosen_gear" class="dseg7" style="font-size:40px; left:370px; top:415px; width:200px;">-</div>
+					<div class="tag" style="font-size:40px; left:580px; top:417px;">Gear</div>
+
 					<!-- Delivered power (estimation) -->
 					<div id="delivered_power" class="dseg7" style="font-size:40px; left:630px; top:415px; width:200px;">--.-</div>
 					<div class="tag" style="font-size:40px; left:840px; top:417px;">HP</div>
@@ -2451,6 +2455,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_guidance_preference_popup"
 				on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
+				on_exit="showDestinationNotAccessiblePopupIfApplicable();"
 				class="icon notificationPopup" style="display:none; height:300px;">
 				<div class="centerAligned yesNoPopupArea">
 					<span id="satnav_guidance_preference_popup_title">Keep criteria</span>

@@ -492,6 +492,13 @@ void UpdateLargeScreenForGuidanceModeOff()
         {
             largeScreen = largeScreenBeforeGoingIntoGuidanceMode;
             if (largeScreen == LARGE_SCREEN_HEAD_UNIT && ! isHeadUnitPowerOn) largeScreen = LARGE_SCREEN_CLOCK;
+
+            // Not sure about following. Only while driving?
+            if (largeScreen == LARGE_SCREEN_CLOCK && isCurrentStreetKnown) largeScreen = LARGE_SCREEN_CURRENT_STREET;
+
+            // largeScreen = LARGE_SCREEN_HEAD_UNIT;
+            // if (! isHeadUnitPowerOn) largeScreen = LARGE_SCREEN_CURRENT_STREET;
+            // if (largeScreen == LARGE_SCREEN_CURRENT_STREET && ! isCurrentStreetKnown) largeScreen = LARGE_SCREEN_CLOCK;
         }
         else if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
         {
