@@ -4165,6 +4165,8 @@ function handleItemChange(item, value)
 
 		case "satnav_new_guidance_instruction":
 		{
+			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance");
 			else if (value === "NO") changeBackLargeScreenAfter(5000);
 		} // case
@@ -4172,6 +4174,8 @@ function handleItemChange(item, value)
 
 		case "satnav_guidance_display_can_be_dimmed":
 		{
+			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+
 			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance");
 			else if (value === "YES") changeBackLargeScreenAfter(5000);
 		} // case
