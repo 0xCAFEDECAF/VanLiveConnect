@@ -8,6 +8,45 @@ const char* GetHostname()
     return HOST_NAME;
 } // GetHostname
 
+String macToString(const unsigned char* mac)
+{
+  char buf[20];
+  snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return String(buf);
+} // macToString
+
+void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
+{
+    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+
+    Serial.print("Station connected: ");
+    Serial.println(macToString(evt.mac));
+} // onStationConnected
+
+void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
+{
+    Serial.print("Station disconnected: ");
+    Serial.println(macToString(evt.mac));
+} // onStationDisconnected
+
+void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
+{
+    Serial.print("Probe request from: ");
+    Serial.print(macToString(evt.mac));
+    Serial.print(" RSSI: ");
+    Serial.println(evt.rssi);
+} // onProbeRequestPrint
+
+void onProbeRequestBlink(const WiFiEventSoftAPModeProbeRequestReceived&)
+{
+    // Flash the LED
+    digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN) == LOW ? HIGH : LOW);
+} // onProbeRequestBlink
+
+WiFiEventHandler stationConnectedHandler;
+WiFiEventHandler stationDisconnectedHandler;
+WiFiEventHandler probeRequestHandler;
+
 void SetupWifi()
 {
     WiFi.hostname(GetHostname());
@@ -19,10 +58,16 @@ void SetupWifi()
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   #ifdef WIFI_PASSWORD
-    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
+    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 1);
   #else
-    WiFi.softAP(WIFI_SSID);
+    WiFi.softAP(WIFI_SSID, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 1);
   #endif
+
+    // Register event handlers
+    stationConnectedHandler = WiFi.onSoftAPModeStationConnected(&onStationConnected);
+    stationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(&onStationDisconnected);
+    //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequestPrint);
+    //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequestBlink);
 
   #else  // ! WIFI_AP_MODE
 

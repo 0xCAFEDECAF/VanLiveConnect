@@ -36,6 +36,7 @@ void NotificationPopupShowing(unsigned long since, long duration);
 const char* EspSystemDataToJson(char* buf, const int n);
 
 WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket server on port 81
+uint8_t prevWebsocketNum = 0xFF;
 uint8_t websocketNum = 0xFF;
 bool inMenu = false;  // true if user is browsing the menus
 
@@ -79,10 +80,6 @@ void ProcessWebSocketClientMessage(const char* payload)
 
     if (clientMessage == "") return;
 
-  #ifdef DEBUG_WEBSOCKET
-    Serial.println("[webSocket] received text: '" + clientMessage + "'");
-  #endif // DEBUG_WEBSOCKET
-
     if (clientMessage.startsWith("in_menu:"))
     {
         inMenu = clientMessage.endsWith(":YES");
@@ -110,21 +107,23 @@ void ProcessWebSocketClientMessage(const char* payload)
     {
         String value = clientMessage.substring(18);
 
+        uint8_t prevMfdDistanceUnit = mfdDistanceUnit;
         mfdDistanceUnit =
             value == "set_units_mph" ? MFD_DISTANCE_UNIT_IMPERIAL :
             MFD_DISTANCE_UNIT_METRIC;
 
-        ResetPacketPrevData();
+        if (mfdDistanceUnit != prevMfdDistanceUnit) ResetPacketPrevData();
     }
     else if (clientMessage.startsWith("mfd_temperature_unit:"))
     {
         String value = clientMessage.substring(21);
 
+        uint8_t prevMfdTemperatureUnit = mfdTemperatureUnit;
         mfdTemperatureUnit =
             value == "set_units_deg_fahrenheit" ? MFD_TEMPERATURE_UNIT_FAHRENHEIT :
             MFD_TEMPERATURE_UNIT_CELSIUS;
 
-        ResetPacketPrevData();
+        if (mfdTemperatureUnit != prevMfdTemperatureUnit) ResetPacketPrevData();
     }
     else if (clientMessage.startsWith("mfd_time_unit:"))
     {
@@ -143,7 +142,11 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_DISCONNECTED:
         {
             Serial.printf("[webSocket %u] Disconnected!\n", num);
-            if (num == websocketNum) websocketNum = 0xFF;
+            if (num == websocketNum)
+            {
+                websocketNum = prevWebsocketNum;
+                prevWebsocketNum = 0xFF;
+            } // if
         }
         break;
 
@@ -155,6 +158,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
                 clientIp[0], clientIp[1], clientIp[2], clientIp[3],
                 payload);
 
+            prevWebsocketNum = websocketNum;
             websocketNum = num;
 
             // Send ESP system data to client
@@ -170,6 +174,10 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
         case WStype_TEXT:
         {
+          #ifdef DEBUG_WEBSOCKET
+            Serial.printf("[webSocket %u] received text: '%s'\n", num, payload);
+          #endif // DEBUG_WEBSOCKET
+
             ProcessWebSocketClientMessage((char*)payload);  // Process the message
         }
         break;

@@ -88,67 +88,7 @@ function showViewportSizes()
 } // showViewportSizes
 
 // -----
-// Functions for parsing and handling JSON data as it comes in on a WebSocket
-
-// Inspired by https://gist.github.com/ismasan/299789
-var fancyWebSocket = function(url)
-{
-	var conn = new WebSocket(url);
-
-	var callbacks = {};
-
-	this.bind = function(event_name, callback)
-	{
-		callbacks[event_name] = callbacks[event_name] || [];
-		callbacks[event_name].push(callback);
-		return this;  // chainable
-	}; // function
-
-	this.send = function(data)
-	{
-		if (conn.readyState === 1) conn.send(data);
-	}; // function
-
-	// Dispatch to the right handlers
-	conn.onmessage = function(evt)
-	{
-		var json = JSON.parse(evt.data);
-		dispatch(json.event, json.data);
-	}; // function
-
-	conn.onopen = function()
-	{
-		console.log("// Connected to WebSocket '" + url + "'!");
-		dispatch('open', null);
-	}; // function
-
-	conn.onclose = function(event)
-	{
-		dispatch('close', null);
-
-		if (event.code == 3001)
-		{
-			console.log("// WebSocket '" + url + "' closed");
-		}
-		else
-		{
-			console.log("// WebSocket '" + url + "' connection error: " + event.code);
-			connectToWebSocket();
-		} // if
-	}; // function
-
-	conn.onerror = function(event)
-	{
-		if (conn.readyState == 1) console.log("// WebSocket '" + url + "' normal error: " + event.type);
-	}; // function
-
-	var dispatch = function(event_name, message)
-	{
-		var chain = callbacks[event_name];
-		if (chain === undefined) return;  // No callbacks for this event
-		for (var i = 0; i < chain.length; i++) chain[i](message);
-	}; // function
-}; // fancyWebSocket
+// Functions for parsing and handling VAN bus packet data as received in JSON format
 
 function processJsonObject(item, jsonObject)
 {
@@ -250,16 +190,14 @@ function processJsonObject(item, jsonObject)
 			if ($(selector).hasClass("led"))
 			{
 				// Handle "led" class objects: no text copy, just turn ON or OFF
-				var itemTextUc = itemText.toUpperCase();
-				var on = itemTextUc === "ON" || itemTextUc === "YES";
+				var on = itemText === "ON" || itemText === "YES";
 				$(selector).toggleClass("ledOn", on);
 				$(selector).toggleClass("ledOff", ! on);
 			}
 			else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
 			{
 				// Handle SVG elements and "icon" class objects: no text copy, just show or hide
-				var itemTextUc = itemText.toUpperCase();
-				var on = itemTextUc === "ON" || itemTextUc === "YES";
+				var on = itemText === "ON" || itemText === "YES";
 				$(selector).toggle(on);
 			}
 			else
@@ -336,14 +274,82 @@ function writeToDom(jsonObj)
 	} // for
 } // writeToDom
 
+// -----
+// Functions for handling the WebSocket
+
+// Inspired by https://gist.github.com/ismasan/299789
+var fancyWebSocket = function(url)
+{
+	var conn = new WebSocket(url);
+
+	var callbacks = {};
+
+	this.bind = function(event_name, callback)
+	{
+		callbacks[event_name] = callbacks[event_name] || [];
+		callbacks[event_name].push(callback);
+		return this;  // chainable
+	}; // function
+
+	this.send = function(data)
+	{
+		if (conn.readyState === 1) conn.send(data);
+	}; // function
+
+	// Dispatch to the right handlers
+	conn.onmessage = function(evt)
+	{
+		var json = JSON.parse(evt.data);
+		dispatch(json.event, json.data);
+	}; // function
+
+	conn.onopen = function()
+	{
+		console.log("// Connected to WebSocket '" + url + "'!");
+		dispatch('open', null);
+	}; // function
+
+	conn.onclose = function(event)
+	{
+		dispatch('close', null);
+
+		if (event.code == 3001)
+		{
+			console.log("// WebSocket '" + url + "' closed");
+		}
+		else
+		{
+			console.log("// WebSocket '" + url + "' connection error: " + event.code);
+			connectToWebSocket();
+		} // if
+	}; // function
+
+	conn.onerror = function(event)
+	{
+		if (conn.readyState == 1) console.log("// WebSocket '" + url + "' normal error: " + event.type);
+	}; // function
+
+	var dispatch = function(event_name, message)
+	{
+		var chain = callbacks[event_name];
+		if (chain === undefined) return;  // No callbacks for this event
+		for (var i = 0; i < chain.length; i++) chain[i](message);
+	}; // function
+}; // fancyWebSocket
+
 var webSocketServerHost = window.location.hostname;
 
-
 var webSocket;
+
+// Send some data so that a webSocket event triggers when the connection has failed
 var keepAliveWebSocketTimer = null;
-var websocketPreventConnect = false;
+function keepAliveWebSocket()
+{
+	webSocket.send("keepalive");
+} // keepAliveWebSocket
 
 // Prevent double re-connecting when user reloads the page
+var websocketPreventConnect = false;
 window.onbeforeunload = function() { websocketPreventConnect = true; };
 
 function connectToWebSocket()
@@ -391,49 +397,209 @@ function connectToWebSocket()
 	);
 } // connectToWebSocket
 
-// Send some data so that a webSocket event triggers when the connection has failed
-function keepAliveWebSocket()
-{
-	webSocket.send("keepalive");
-} // keepAliveWebSocket
-
 // -----
-// Handling of vehicle data
+// Functions for popups
 
-var economyMode;
-var contactKeyPosition;
-var engineRpm = 0;
-var engineRunning;
-var engineCoolantTemperature;  // In degrees Celsius
-var vehicleSpeed;
-var icyConditions = false;
-var wasRiskOfIceWarningShown = false;
-var headlightStatus = "";
+// Associative array, using the popup element ID as key
+var popupTimer = {};
 
-var suppressClimateControlPopup = null;
-
-function changeToInstrumentsScreen()
+// Hide the specified or the current (top) popup
+function hidePopup(id)
 {
-	changeLargeScreenTo("instruments");
+	var popup;
+	if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
+	if (popup.length === 0 || ! popup.is(":visible")) return false;
 
-	// Suppress climate control popup during the next 2 seconds
-	clearTimeout(suppressClimateControlPopup);
-	suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
-} // changeToInstrumentsScreen
+	popup.hide();
+
+	if (webSocket) webSocket.send("mfd_popup_showing:NO");
+	$("#original_mfd_popup").empty();  // Debug info
+
+	clearTimeout(popupTimer[id]);
+
+	// Perform "on_exit" action, if specified
+	var onExit = popup.attr("on_exit");
+	if (onExit) eval(onExit);
+
+	return true;
+} // hidePopup
+
+// Show the specified popup, with an optional timeout
+function showPopup(id, msec)
+{
+	var popup = $("#" + id);
+	if (! popup.is(":visible"))
+	{
+		popup.show();
+
+		// A popup can appear under another. In that case, don't register the time.
+		var topLevelPopup = $(".notificationPopup:visible").slice(-1)[0];
+		if (id === topLevelPopup.id) lastScreenChangedAt = Date.now();
+
+		// Perform "on_enter" action, if specified
+		var onEnter = popup.attr("on_enter");
+		if (onEnter) eval(onEnter);
+	} // if
+
+	if (! msec) return;
+
+	// Hide popup after specified milliseconds
+	clearTimeout(popupTimer[id]);
+	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
+} // showPopup
+
+// Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
+// e.g. to know when to ignore a "MOD" button press from the IR remote control.
+function showPopupAndNotifyServer(id, msec, message)
+{
+	showPopup(id, msec);
+
+	var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
+	webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
+
+	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
+} // showPopupAndNotifyServer
+
+// Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
+function hideAllPopups(except)
+{
+	var allPopups = $(".notificationPopup:visible");
+
+	$.each(allPopups, function (index, selector)
+	{
+		if ($(selector).attr("id") !== except) hidePopup($(selector).attr("id"));
+	});
+} // hideAllPopups
+
+// Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
+// (isWarning == false, default) or "warning" (isWarning == true).
+function showNotificationPopup(message, msec, isWarning)
+{
+	if (isWarning === undefined) isWarning = false;  // IE11 does not support default parameters
+
+	// Show the required icon: "information" or "warning"
+	$("#notification_icon_info").toggle(! isWarning);
+	$("#notification_icon_warning").toggle(isWarning);
+
+	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
+	showPopupAndNotifyServer("notification_popup", msec, message);  // Show the notification popup
+} // showNotificationPopup
+
+// Show a simple status popup (no icon) with a message and an optional timeout
+function showStatusPopup(message, msec)
+{
+	$("#status_popup_text").html(message);  // Set the popup text
+	showPopupAndNotifyServer("status_popup", msec);  // Show the popup
+} // showStatusPopup
+
+function showAudioPopup(id)
+{
+	// This popup only appears in the following screens:
+	if (currentLargeScreenId !== "satnav_guidance" && currentLargeScreenId !== "instruments") return;
+
+	if (id === undefined)
+	{
+		var map =
+		{
+			"TUNER": "tuner_popup",
+			"TAPE": "tape_popup",
+			"CD": "cd_player_popup",
+			"CD_CHANGER": "cd_changer_popup"
+		};
+
+		var audioSource = $("#audio_source").text();
+		id = audioSource in map ? map[audioSource] : "";
+	} // if
+
+	if (! id) return;
+
+	if (! $("#audio_popup").is(":visible")) hidePopup();  // Hide other popup, if showing
+	showPopupAndNotifyServer("audio_popup", 8000);
+	$("#" + id).siblings("div[id$=popup]").hide();
+	$("#" + id).show();
+} // showAudioPopup
+
+// If the "trip_computer_popup" is has no tab selected, select that of the current small screen
+function initTripComputerPopup()
+{
+	// Retrieve all tab buttons
+	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
+
+	// Retrieve current tab button
+	var currActiveButton = $("#trip_computer_popup .tabLeft.tabActive");
+
+	var currButtonIdx = tabButtons.index(currActiveButton);
+	if (currButtonIdx >= 0) return;
+
+	// No tab selected
+
+	var selectedId =
+			localStorage.smallScreen === "TRIP_INFO_1" ? "trip_computer_popup_trip_1" :
+			localStorage.smallScreen === "TRIP_INFO_2" ? "trip_computer_popup_trip_2" :
+			"trip_computer_popup_fuel_data"; // Tab chosen if the small screen was showing GPS data
+	$("#" + selectedId).show();
+
+	$("#" + selectedId + "_button").addClass("tabActive");
+} // initTripComputerPopup
+
+// Unselect any tab in the trip computer popup
+function resetTripComputerPopup()
+{
+	$("#trip_computer_popup .tabContent").hide();
+	$("#trip_computer_popup .tabLeft").removeClass("tabActive");
+} // resetTripComputerPopup
+
+// In the "trip_computer_popup", select a specific tab
+function selectTabInTripComputerPopup(index)
+{
+	// Unselect the current tab
+	resetTripComputerPopup();
+
+	// Retrieve all tab buttons and content elements
+	var tabs = $("#trip_computer_popup").find(".tabContent");
+	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
+
+	// Select the specified tab
+	$(tabs[index]).show();
+	$(tabButtons[index]).addClass("tabActive");
+} // selectTabInTripComputerPopup
 
 // -----
 // Functions for navigating through the screens and their subscreens/elements
 
-// Open a "trip_info" tab in the small (left) information panel
-function openTripInfoTab(evt, tabName)
+// Toggle full-screen mode
+//
+// Note: when going full-screen, Android Chrome no longer respects the view port, i.e zooms in. This seems
+// to be a known issue; see also:
+// - https://stackoverflow.com/questions/39236875/fullscreen-api-on-androind-chrome-moble-disregards-meta-viewport-scale-setting?rq=1
+//   ("the scale is hard fixed to 1 when you enter fullscreen.")
+// - https://stackoverflow.com/questions/47954761/the-values-of-meta-viewport-attribute-are-not-reflected-when-in-full-screen-mode
+//   ("When in fullscreen, the meta viewport values are ignored by mobile browsers.")
+// - https://github.com/whatwg/fullscreen/issues/111
+//
+// Note that Firefox for Android (version >= 68.11.0) *does* work fine when going full-screen.
+function toggleFullScreen()
 {
-	$("#trip_info .tabContent").hide();
-	$("#trip_info .tablinks").removeClass("active");
-	$("#" + tabName).show();
-	evt.currentTarget.className += " active";
-} // openTripInfoTab
+	if (! document.fullscreenElement && ! document.mozFullScreenElement && ! document.webkitFullscreenElement && ! document.msFullscreenElement)
+	{
+		// Enter full screen mode
+		var elem = document.documentElement;
+		if (elem.requestFullscreen) elem.requestFullscreen();
+		else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen(); // Firefox
+		else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); // Chrome and Safari
+		else if (elem.msRequestFullscreen) elem.msRequestFullscreen(); // IE
+	}
+	else
+	{
+		// Exit full screen mode
+		if (document.exitFullscreen) document.exitFullscreen();
+		else if (document.msExitFullscreen) document.msExitFullscreen();
+		else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+		else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+	} // if
+} // toggleFullScreen
 
- // Set visibility of an element by ID, together with all its parents in the 'div' hierarchy
+// Set visibility of an element by ID, together with all its parents in the 'div' hierarchy
 function setVisibilityOfElementAndParents(id, value)
 {
 	var el = document.getElementById(id);
@@ -444,10 +610,12 @@ function setVisibilityOfElementAndParents(id, value)
 	} // while
 } // setVisibilityOfElementAndParents
 
-var currentLargeScreenId = "clock";  // Currently shown large (right) screen. Initialize to the first screen visible.
+// Functions setting the large screen (right hand side of the display)
+
+var currentLargeScreenId = "clock";  // Currently shown large screen. Initialize to the first screen visible.
 var lastScreenChangedAt = 0;  // Last time the large screen changed
 
-// Switch to a specific screen on the right hand side of the display
+// Switch to a specific large screen
 function changeLargeScreenTo(id)
 {
 	if (id === undefined) return;
@@ -475,7 +643,7 @@ function changeLargeScreenTo(id)
 	var onEnter = $("#" + currentLargeScreenId).attr("on_enter");
 	if (onEnter) eval(onEnter);
 
-	// Report back to server (ESP) that user is browsing the menus
+	// Report back to server (ESP) that user is not browsing the menus
 	if (! inMenu() && webSocket !== undefined) webSocket.send("in_menu:NO");
 } // changeLargeScreenTo
 
@@ -522,9 +690,12 @@ function cancelChangeBackScreenTimer()
 	changeBackScreenId = undefined;
 } // cancelChangeBackScreenTimer
 
-var menuStack = [];
+// Vehicle data
+var contactKeyPosition;
+var engineRpm = 0;
+var engineRunning;
 
-var mfdLargeScreen = "CLOCK";  // Screen currently shown in the "large" (right hand side) area on the original MFD
+var menuStack = [];
 
 function selectDefaultScreen(audioSource)
 {
@@ -588,20 +759,7 @@ function selectDefaultScreen(audioSource)
 	changeLargeScreenTo(selectedScreenId);
 } // selectDefaultScreen
 
-// Keep track of currently shown small screen
-var currentSmallScreenId = "trip_info";  // Make sure this is the first screen visible
-
-// Switch to a specific screen on the left hand side of the display
-function changeSmallScreenTo(id)
-{
-	if (currentSmallScreenId === id) return;
-
-	setVisibilityOfElementAndParents(currentSmallScreenId, "none");
-	setVisibilityOfElementAndParents(id, "block");
-	currentSmallScreenId = id;
-} // changeSmallScreenTo
-
-// Cycle through the large screens on the right hand side of the display
+// Cycle through the large screens (right hand side of the display)
 function nextLargeScreen()
 {
 	cancelChangeBackScreenTimer();
@@ -651,7 +809,11 @@ function nextLargeScreen()
 	if (i === screenIds.indexOf("satnav_current_location"))
 	{
 		if (satnavMode === "IN_GUIDANCE_MODE") i = screenIds.indexOf("satnav_guidance");
-		else if (satnavCurrentStreet === "") i = 0;  // Go back to the "clock" screen
+		else if (satnavCurrentStreet === "")
+		{
+			if (engineRunning == "YES") i = screenIds.indexOf("instruments");
+			else i = 0;  // Go back to the "clock" screen
+		} // if
 	} // if
 
 	// After the "satnav_current_location" screen, go back to the "clock" screen
@@ -660,6 +822,29 @@ function nextLargeScreen()
 	changeLargeScreenTo(screenIds[i]);
 } // nextLargeScreen
 
+// Functions setting the small screen (left hand side of the display)
+
+var currentSmallScreenId = "trip_info";  // Currently shown small screen. Initialize to the first screen visible.
+
+// Switch to a specific small screen
+function changeSmallScreenTo(id)
+{
+	if (currentSmallScreenId === id) return;
+
+	setVisibilityOfElementAndParents(currentSmallScreenId, "none");
+	setVisibilityOfElementAndParents(id, "block");
+	currentSmallScreenId = id;
+} // changeSmallScreenTo
+
+// Open a "trip_info" tab in the small (left) information panel
+function openTripInfoTab(evt, tabName)
+{
+	$("#trip_info .tabContent").hide();
+	$("#trip_info .tablinks").removeClass("active");
+	$("#" + tabName).show();
+	evt.currentTarget.className += " active";
+} // openTripInfoTab
+
 function changeToTripCounter(id)
 {
 	// Simulate a "tab click" event
@@ -667,6 +852,7 @@ function changeToTripCounter(id)
 	openTripInfoTab(event, id);
 } // changeToTripCounter
 
+// Only for debugging
 function tripComputerShortStr(tripComputerStr)
 {
 	return tripComputerStr === "TRIP_INFO_1" ? "TR1" :
@@ -710,213 +896,10 @@ function gotoSmallScreen(smallScreenName)
 	} // switch
 } // gotoSmallScreen
 
-// If the "trip_computer_popup" is has no tab selected, select that of the current small screen
-function initTripComputerPopup()
-{
-	// Retrieve all tab buttons
-	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
-
-	// Retrieve current tab button
-	var currActiveButton = $("#trip_computer_popup .tabLeft.tabActive");
-
-	var currButtonIdx = tabButtons.index(currActiveButton);
-	if (currButtonIdx >= 0) return;
-
-	// No tab selected
-
-	var selectedId =
-			localStorage.smallScreen === "TRIP_INFO_1" ? "trip_computer_popup_trip_1" :
-			localStorage.smallScreen === "TRIP_INFO_2" ? "trip_computer_popup_trip_2" :
-			"trip_computer_popup_fuel_data"; // Tab chosen if the small screen was showing GPS data
-	$("#" + selectedId).show();
-
-	$("#" + selectedId + "_button").addClass("tabActive");
-} // initTripComputerPopup
-
-// Unselect any tab in the trip computer popup
-function resetTripComputerPopup()
-{
-	$("#trip_computer_popup .tabContent").hide();
-	$("#trip_computer_popup .tabLeft").removeClass("tabActive");
-} // resetTripComputerPopup
-
-// In the "trip_computer_popup", select a specific tab
-function selectTabInTripComputerPopup(index)
-{
-	// Unselect the current tab
-	resetTripComputerPopup();
-
-	// Retrieve all tab buttons and content elements
-	var tabs = $("#trip_computer_popup").find(".tabContent");
-	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
-
-	// Select the specified tab
-	$(tabs[index]).show();
-	$(tabButtons[index]).addClass("tabActive");
-} // selectTabInTripComputerPopup
-
-// Toggle full-screen mode
-//
-// Note: when going full-screen, Android Chrome no longer respects the view port, i.e zooms in. This seems
-// to be a known issue; see also:
-// - https://stackoverflow.com/questions/39236875/fullscreen-api-on-androind-chrome-moble-disregards-meta-viewport-scale-setting?rq=1
-//   ("the scale is hard fixed to 1 when you enter fullscreen.")
-// - https://stackoverflow.com/questions/47954761/the-values-of-meta-viewport-attribute-are-not-reflected-when-in-full-screen-mode
-//   ("When in fullscreen, the meta viewport values are ignored by mobile browsers.")
-// - https://github.com/whatwg/fullscreen/issues/111
-//
-// Note that Firefox for Android (version >= 68.11.0) *does* work fine when going full-screen.
-function toggleFullScreen()
-{
-	if (! document.fullscreenElement && ! document.mozFullScreenElement && ! document.webkitFullscreenElement && ! document.msFullscreenElement)
-	{
-		// Enter full screen mode
-		var elem = document.documentElement;
-		if (elem.requestFullscreen) elem.requestFullscreen();
-		else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen(); // Firefox
-		else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); // Chrome and Safari
-		else if (elem.msRequestFullscreen) elem.msRequestFullscreen(); // IE
-	}
-	else
-	{
-		// Exit full screen mode
-		if (document.exitFullscreen) document.exitFullscreen();
-		else if (document.msExitFullscreen) document.msExitFullscreen();
-		else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-		else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-	} // if
-} // toggleFullScreen
-
-// -----
-// Functions for popups
-
-// Associative array, using the popup element ID as key
-var popupTimer = {};
-
-// Show the specified popup, with an optional timeout
-function showPopup(id, msec)
-{
-	var popup = $("#" + id);
-	if (! popup.is(":visible"))
-	{
-		popup.show();
-
-		// A popup can appear under another. In that case, don't register the time.
-		var topLevelPopup = $(".notificationPopup:visible").slice(-1)[0];
-		if (id === topLevelPopup.id) lastScreenChangedAt = Date.now();
-
-		// Perform "on_enter" action, if specified
-		var onEnter = popup.attr("on_enter");
-		if (onEnter) eval(onEnter);
-	} // if
-
-	if (! msec) return;
-
-	// Hide popup after specified milliseconds
-	clearTimeout(popupTimer[id]);
-	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
-} // showPopup
-
-// Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
-// e.g. to know when to ignore a "MOD" button press from the IR remote control.
-function showPopupAndNotifyServer(id, msec, message)
-{
-	showPopup(id, msec);
-
-	var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
-	webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
-
-	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
-} // showPopupAndNotifyServer
-
-// Hide the specified or the current (top) popup
-function hidePopup(id)
-{
-	var popup;
-	if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
-	if (popup.length === 0 || ! popup.is(":visible")) return false;
-
-	popup.hide();
-
-	if (webSocket) webSocket.send("mfd_popup_showing:NO");
-	$("#original_mfd_popup").empty();  // Debug info
-
-	clearTimeout(popupTimer[id]);
-
-	// Perform "on_exit" action, if specified
-	var onExit = popup.attr("on_exit");
-	if (onExit) eval(onExit);
-
-	return true;
-} // hidePopup
-
-// Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
-function hideAllPopups(except)
-{
-	var allPopups = $(".notificationPopup:visible");
-
-	$.each(allPopups, function (index, selector)
-	{
-		if ($(selector).attr("id") !== except) hidePopup($(selector).attr("id"));
-	});
-} // hideAllPopups
-
-// Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
-// (isWarning == false, default) or "warning" (isWarning == true).
-function showNotificationPopup(message, msec, isWarning)
-{
-	if (isWarning === undefined) isWarning = false;  // IE11 does not support default parameters
-
-	// Show the required icon: "information" or "warning"
-	$("#notification_icon_info").toggle(! isWarning);
-	$("#notification_icon_warning").toggle(isWarning);
-
-	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
-	showPopupAndNotifyServer("notification_popup", msec, message);  // Show the notification popup
-} // showNotificationPopup
-
-// Show a simple status popup (no icon) with a message and an optional timeout
-function showStatusPopup(message, msec)
-{
-	$("#status_popup_text").html(message);  // Set the popup text
-	showPopupAndNotifyServer("status_popup", msec);  // Show the popup
-} // showStatusPopup
-
-function showAudioPopup(id)
-{
-	// This popup only appears in the following screens:
-	if (currentLargeScreenId !== "satnav_guidance" && currentLargeScreenId !== "instruments") return;
-
-	if (id === undefined)
-	{
-		var map =
-		{
-			"TUNER": "tuner_popup",
-			"TAPE": "tape_popup",
-			"CD": "cd_player_popup",
-			"CD_CHANGER": "cd_changer_popup"
-		};
-
-		var audioSource = $("#audio_source").text();
-		id = audioSource in map ? map[audioSource] : "";
-	} // if
-
-	if (! id) return;
-
-	if (! $("#audio_popup").is(":visible")) hidePopup();  // Hide other popup, if showing
-	showPopupAndNotifyServer("audio_popup", 8000);
-	$("#" + id).siblings("div[id$=popup]").hide();
-	$("#" + id).show();
-} // showAudioPopup
-
 // -----
 // Functions for navigating through button sets and menus
 
-var currentMenu;
-
-// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
-// The only exceptions are the '+' and '-' buttons in specific menu screens.
-var acceptingHeldValButton = false;
+var currentMenu = null;
 
 function inMenu()
 {
@@ -933,14 +916,7 @@ function inMenu()
 		&& mainScreenIds.indexOf(currentLargeScreenId) < 0;  // And not in one of the "main" screens?
 } // inMenu
 
-// TODO - there are now three algorithms for selecting the first menu item resp. button:
-// 1. in function selectFirstMenuItem: just selects the first found (even if disabled)
-// 2. in function gotoMenu: selects the first button, thereby skipping disabled buttons
-// 3. in function selectButton: selects the specified button, thereby skipping disabled buttons, following
-//	"DOWN_BUTTON" / "RIGHT_BUTTON" attributes if and where present
-// --> Let's choose a single algorithm and stick to that.
-
-// Select the first menu item
+// Select the first menu item (even if disabled)
 function selectFirstMenuItem(id)
 {
 	var allButtons = $("#" + id).find(".button");
@@ -948,7 +924,7 @@ function selectFirstMenuItem(id)
 	allButtons.slice(1).removeClass("buttonSelected");
 } // selectFirstMenuItem
 
-// Enter a specific menu
+// Enter a specific menu. Selects the first button, thereby skipping disabled buttons.
 function gotoMenu(menu)
 {
 	cancelChangeBackScreenTimer();
@@ -1007,8 +983,8 @@ function gotoTopLevelMenu(menu)
 	gotoMenu(menu);
 } // gotoTopLevelMenu
 
-// Make the indicated button selected, or, if disabled, the first button below or to the right (wrap if necessary).
-// Also de-select all other buttons within the same div
+// Selects the specified button, thereby skipping disabled buttons, following "DOWN_BUTTON" / "RIGHT_BUTTON"
+// attributes if and where present. Wraps if necessary. Also de-selects all other buttons within the same div.
 function selectButton(id)
 {
 	var selectedButton = $("#" + id);
@@ -1017,33 +993,33 @@ function selectButton(id)
 	var allButtons = selectedButton.parent().find(".button");
 	allButtons.removeClass("buttonSelected");
 
-	var buttonOrientation = selectedButton.parent().attr("button_orientation");
-	var buttonForNext = "DOWN_BUTTON";
-	if (buttonOrientation === "horizontal") buttonForNext = "RIGHT_BUTTON";
+	// var buttonOrientation = selectedButton.parent().attr("button_orientation");
+	// var buttonForNext = "DOWN_BUTTON";
+	// if (buttonOrientation === "horizontal") buttonForNext = "RIGHT_BUTTON";
 
-	// Skip disabled buttons
-	var nButtons = allButtons.length;
-	var currentButtonId = id;
-	while (selectedButton.hasClass("buttonDisabled"))
-	{
-		var gotoButtonId = selectedButton.attr(buttonForNext);
+	// // Skip disabled buttons
+	// var nButtons = allButtons.length;
+	// var currentButtonId = id;
+	// while (selectedButton.hasClass("buttonDisabled"))
+	// {
+		// var gotoButtonId = selectedButton.attr(buttonForNext);
 
-		// Nothing specified?
-		if (! gotoButtonId)
-		{
-			var currIdx = allButtons.index(selectedButton);
-			var nextIdx = (currIdx + 1) % nButtons;
-			id = $(allButtons[nextIdx]).attr("id");
-		}
-		else
-		{
-			id = selectedButton.attr("RIGHT_BUTTON");
-		} // if
+		// // Nothing specified?
+		// if (! gotoButtonId)
+		// {
+			// var currIdx = allButtons.index(selectedButton);
+			// var nextIdx = (currIdx + 1) % nButtons;
+			// id = $(allButtons[nextIdx]).attr("id");
+		// }
+		// else
+		// {
+			// id = selectedButton.attr("RIGHT_BUTTON");
+		// } // if
 
-		if (! id || id === currentButtonId) return;  // No further button in that direction? Or went all the way round?
+		// if (! id || id === currentButtonId) return;  // No further button in that direction? Or went all the way round?
 
-		selectedButton = $("#" + id);
-	} // while
+		// selectedButton = $("#" + id);
+	// } // while
 
 	selectedButton.addClass("buttonSelected");
 } // selectButton
@@ -1700,6 +1676,8 @@ function showTunerPresetsPopup()
 // -----
 // Color theme and dimming
 
+var headlightStatus = "";
+
 function setColorTheme(theme)
 {
 	$(":root").css("--main-color", theme === "set_light_theme" ? "#271b42" : "hsl(215,42%,91%)");
@@ -1880,6 +1858,19 @@ function unitsValidate()
 	exitMenu();
 } // unitsValidate
 
+var mfdLargeScreen = "CLOCK";  // Screen currently shown in the "large" (right hand side) area on the original MFD
+
+var suppressClimateControlPopup = null;
+
+function changeToInstrumentsScreen()
+{
+	changeLargeScreenTo("instruments");
+
+	// Suppress climate control popup during the next 2 seconds
+	clearTimeout(suppressClimateControlPopup);
+	suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
+} // changeToInstrumentsScreen
+
 // -----
 // Functions for satellite navigation menu and screen handling
 
@@ -1956,7 +1947,6 @@ function satnavGotoMainMenu()
 	menuStack = [ "main_menu" ];
 	currentMenu = "satnav_main_menu";
 	changeLargeScreenTo(currentMenu);
-
 	selectFirstMenuItem(currentMenu);  // Select the top button
 
 	satnavShowDisclaimer();
@@ -2820,7 +2810,7 @@ function satnavGuidanceSetPreference(value)
 {
 	if (value === undefined || value === "---") return;
 
-	// Copy the correct text into the sat nav guidance preference popup
+	// Copy the correct text into the guidance preference popup
 	var satnavGuidancePreferenceText =
 		value === "FASTEST_ROUTE" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").text() :
 		value === "SHORTEST_DISTANCE" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").text() :
@@ -2829,7 +2819,7 @@ function satnavGuidanceSetPreference(value)
 		"??";
 	$("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText.toLowerCase());
 
-	// Also set the correct tick box in the sat nav guidance preference menu
+	// Also set the correct tick box in the guidance preference menu
 	var satnavGuidancePreferenceTickBoxId =
 		value === "FASTEST_ROUTE" ? "satnav_guidance_preference_fastest" :
 		value === "SHORTEST_DISTANCE" ? "satnav_guidance_preference_shortest" :
@@ -3135,6 +3125,17 @@ var bootAndDoorsOpenText = "Boot and doors open";
 
 // -----
 // Handling of changed items
+
+// Vehicle data
+var economyMode;
+var engineCoolantTemperature;  // In degrees Celsius
+var vehicleSpeed;
+var icyConditions = false;
+var wasRiskOfIceWarningShown = false;
+
+// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
+// The only exceptions are the '+' and '-' buttons in specific menu screens.
+var acceptingHeldValButton = false;
 
 function handleItemChange(item, value)
 {
@@ -5205,7 +5206,7 @@ function handleItemChange(item, value)
 			{
 				// Show the first few letters of the screen name plus the first few letters of the trip computer tab
 				$("#original_mfd_large_screen").text(
-					mfdLargeScreen.substring(0, 4) + " " + tripComputerShortStr(localStorage.smallScreen)
+					mfdLargeScreen.substring(0, 4) + " " + tripComputerShortStr(localStorage.smallScreen)  // Debug info
 				);
 			}
 		} // case
