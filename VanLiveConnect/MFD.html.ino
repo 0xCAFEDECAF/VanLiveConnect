@@ -1754,7 +1754,7 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>
 					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:590px; height:140px;">
-						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:40px; white-space:normal;">
+						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:40px;">
 						</div>
 					</div>
 

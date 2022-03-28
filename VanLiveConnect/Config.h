@@ -29,8 +29,8 @@
   // Note: many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
   //#define WIFI_PASSWORD "99999999"
 
-  // Set between (1) and (13)
-  #define WIFI_CHANNEL (13)
+  // Set between (1) and (13). Note: some devices cannot connect to channels above 11.
+  #define WIFI_CHANNEL (11)
 
   #define IP_ADDR "192.168.244.1"
 

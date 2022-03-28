@@ -80,6 +80,9 @@ void CycleTripInfo();
 void WriteEeprom(int const address, uint8_t const val);
 void CommitEeprom();
 
+// Forward declaration
+void ResetPacketPrevData();
+
 // Default, and unless otherwise specified, the following units are used:
 // - Distance: kilometers
 // - Contents: litres
@@ -2256,10 +2259,26 @@ VanPacketParseResult_t ParseMfdLanguageUnitsPkt(TVanPacketRxDesc& pkt, char* buf
         data[4] & 0x08 ? PSTR("24_H") : PSTR("12_H")
     );
 
+    mfdLanguage =
+        data[3] == 0x00 ? MFD_LANGUAGE_FRENCH :
+        data[3] == 0x02 ? MFD_LANGUAGE_GERMAN :
+        data[3] == 0x03 ? MFD_LANGUAGE_SPANISH :
+        data[3] == 0x04 ? MFD_LANGUAGE_ITALIAN :
+        data[3] == 0x06 ? MFD_LANGUAGE_DUTCH :
+        MFD_LANGUAGE_ENGLISH;
+
+    uint8_t prevMfdTemperatureUnit = mfdTemperatureUnit;
+    mfdTemperatureUnit = data[4] & 0x02 ? MFD_TEMPERATURE_UNIT_FAHRENHEIT : MFD_TEMPERATURE_UNIT_CELSIUS;
+
+    uint8_t prevMfdDistanceUnit = mfdDistanceUnit;
+    mfdDistanceUnit = data[4] & 0x04 ? MFD_DISTANCE_UNIT_IMPERIAL : MFD_DISTANCE_UNIT_METRIC;
+
+    mfdTimeUnit = data[4] & 0x08 ? MFD_TIME_UNIT_12H : MFD_TIME_UNIT_24H;
+
+    if (mfdTemperatureUnit != prevMfdTemperatureUnit || mfdDistanceUnit != prevMfdDistanceUnit) ResetPacketPrevData();
+
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
-
-    // TODO - set variables 'mfdLanguage', 'mfdDistanceUnit', 'mfdTemperatureUnit', 'mfdTimeUnit'?
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdLanguageUnitsPkt

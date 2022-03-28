@@ -260,7 +260,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     } // while
 
     // "Esc" and "Val" buttons will hide any visible popup
-    if (pkt.value == IB_ESC || pkt.value == IB_VALIDATE) NoPopup();
+    if ((pkt.value == IB_ESC || pkt.value == IB_VALIDATE) && ! economyMode) NoPopup();
 
     at += at >= IR_JSON_BUFFER_SIZE ? 0 : snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR("\n}\n}\n"));
 

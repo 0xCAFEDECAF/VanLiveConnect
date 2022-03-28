@@ -316,6 +316,7 @@ var fancyWebSocket = function(url)
 		if (event.code == 3001)
 		{
 			console.log("// WebSocket '" + url + "' closed");
+			//connectToWebSocket(); // TODO - check
 		}
 		else
 		{
@@ -378,11 +379,6 @@ function connectToWebSocket()
 	(
 		'open', function ()
 		{
-			webSocket.send("mfd_language:" + localStorage.mfdLanguage);
-			webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
-			webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
-			webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
-
 			// (Re-)start the "keep alive" timer
 			clearInterval(keepAliveWebSocketTimer);
 			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
@@ -661,7 +657,7 @@ function changeBackLargeScreenAfter(msec)
 		function ()
 		{
 			changeBackScreenTimer = null;
-			changeLargeScreenTo(changeBackScreenId);
+			if (! inMenu()) changeLargeScreenTo(changeBackScreenId);
 			changeBackScreenId = undefined;
 		},
 		msec
@@ -669,7 +665,7 @@ function changeBackLargeScreenAfter(msec)
 } // changeBackLargeScreenAfter
 
 // Temporarily switch to a specific screen on the right hand side of the display
-function temporarilyChangeLargeScreenTo(id)
+function temporarilyChangeLargeScreenTo(id, msec)
 {
 	if (inMenu()) return;
 	if (id !== currentLargeScreenId)
@@ -678,9 +674,7 @@ function temporarilyChangeLargeScreenTo(id)
 		changeLargeScreenTo(id);
 	} // if
 
-	// Note: reception of "satnav_new_guidance_instruction" or "satnav_guidance_display_can_be_dimmed" will cause
-	// this to happen faster
-	changeBackLargeScreenAfter(120000);
+	changeBackLargeScreenAfter(msec);
 } // temporarilyChangeLargeScreenTo
 
 function cancelChangeBackScreenTimer()
@@ -738,20 +732,20 @@ function selectDefaultScreen(audioSource)
 			"";
 	} // if
 
+	// Show instrument screen if engine is running
+	if (selectedScreenId === "" && engineRunning === "YES") selectedScreenId = "instruments";
+
 	// Show current street, if known
 	if (selectedScreenId === "" && satnavCurrentStreet !== "")
 	{
-		// But don't switch away from instrument screen, if the engine is running
-		if (currentLargeScreenId === "instruments")
-		{
-			if (engineRunning === "YES" && engineRpm !== 0 && contactKeyPosition === "ON") return;
-		} // if
+		// // But don't switch away from instrument screen, if the engine is running
+		// if (currentLargeScreenId === "instruments")
+		// {
+			// if (engineRunning === "YES" && engineRpm !== 0 && contactKeyPosition === "ON") return;
+		// } // if
 
 		selectedScreenId = "satnav_current_location";
 	} // if
-
-	// Fall back to instrument screen if engine is running
-	if (selectedScreenId === "" && engineRunning === "YES") selectedScreenId = "instruments";
 
 	// Final fallback screen...
 	if (selectedScreenId === "") selectedScreenId = "clock";
@@ -992,35 +986,6 @@ function selectButton(id)
 	// De-select all buttons within the same div
 	var allButtons = selectedButton.parent().find(".button");
 	allButtons.removeClass("buttonSelected");
-
-	// var buttonOrientation = selectedButton.parent().attr("button_orientation");
-	// var buttonForNext = "DOWN_BUTTON";
-	// if (buttonOrientation === "horizontal") buttonForNext = "RIGHT_BUTTON";
-
-	// // Skip disabled buttons
-	// var nButtons = allButtons.length;
-	// var currentButtonId = id;
-	// while (selectedButton.hasClass("buttonDisabled"))
-	// {
-		// var gotoButtonId = selectedButton.attr(buttonForNext);
-
-		// // Nothing specified?
-		// if (! gotoButtonId)
-		// {
-			// var currIdx = allButtons.index(selectedButton);
-			// var nextIdx = (currIdx + 1) % nButtons;
-			// id = $(allButtons[nextIdx]).attr("id");
-		// }
-		// else
-		// {
-			// id = selectedButton.attr("RIGHT_BUTTON");
-		// } // if
-
-		// if (! id || id === currentButtonId) return;  // No further button in that direction? Or went all the way round?
-
-		// selectedButton = $("#" + id);
-	// } // while
-
 	selectedButton.addClass("buttonSelected");
 } // selectButton
 
@@ -1150,11 +1115,7 @@ function keyPressed(key)
 
 	// Retrieve the specified action, like e.g. on_left_button="doSomething();"
 	var action = currentButton.attr("on_" + key.toLowerCase());
-	if (action)
-	{
-		eval(action);
-		return;
-	} // if
+	if (action) return eval(action);
 
 	navigateButtons(key);
 } // keyPressed
@@ -1371,9 +1332,6 @@ function unhighlightLetter(id)
 
 function highlightFirstLetter(id)
 {
-	// id = getFocusId(id);
-	// if (id === undefined) return;
-
 	highlightLetter(id, 0);
 } // highlightFirstLetter
 
@@ -1417,7 +1375,6 @@ function highlightLine(id)
 	if (id === undefined) return;
 
 	var lines = splitIntoLines(id);
-
 	if (lines.length === 0) return;  // Nothing to highlight?
 
 	if (highlightIndexes[id] === undefined) highlightIndexes[id] = 0;
@@ -1925,7 +1882,7 @@ function satnavGotoMainMenu()
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
 	if (! satnavInitialized)
 	{
-		showPopup("satnav_initializing_popup", 20000);
+		showPopupAndNotifyServer("satnav_initializing_popup", 20000);
 		return;
 	} // if
 
@@ -2153,6 +2110,8 @@ function satnavEnterByLetterMode()
 // Currently entering destination city?
 function satnavEnteringCity()
 {
+	// The right-most button in the "Enter city/street" screens is "Change" when entering city
+	// ("City centre" when entering street)
 	return $("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText;
 } // satnavEnteringCity
 
@@ -2181,8 +2140,6 @@ function satnavToggleCityEntryMode()
 	if (satnavEnteringCityByLetter()) satnavConfirmCityMode(); else satnavEnterByLetterMode();
 } // satnavToggleCityEntryMode
 
-// The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
-// "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
 	if (satnavEnteringCity())
@@ -2234,8 +2191,6 @@ function satnavGotoEnterCity()
 	satnavEnterCity();
 } // satnavGotoEnterCity
 
-// The right-most button in the "Enter city/street" screens is either "Change" (for "Enter city") or
-// "City centre" for ("Enter street"). Depending on the button text, perform the appropriate action.
 function satnavGotoEnterStreetOrNumber()
 {
 	if (satnavEnteringCity())
@@ -2912,8 +2867,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
 
 	// But only if the current location is known (to emulate behaviour of MFD)
-	//if (satnavCurrentStreet !== "")
-	//if (satnavOnMap)
+	//if (satnavCurrentStreet !== "") --> This seems to be the criterion used by the original MFD (which is also incorrect)
 	//if (satnavGpsFix)
 	if (! satnavDestinationReachable && satnavOnMap)
 	{
@@ -2982,8 +2936,6 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
-		//temporarilyChangeLargeScreenTo("satnav_guidance");
-
 		// Set timeout on LED, in case the "AUDIO OFF" packet is missed
 		satnavSetAudioLed.showSatnavAudioLed = setTimeout
 		(
@@ -3157,7 +3109,6 @@ function handleItemChange(item, value)
 			if (! newLanguage) break;
 			setLanguage(newLanguage);
 			localStorage.mfdLanguage = newLanguage;
-			webSocket.send("mfd_language:" + newLanguage);
 		} // case
 		break;
 
@@ -3172,7 +3123,6 @@ function handleItemChange(item, value)
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
 			setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
-			webSocket.send("mfd_distance_unit:" + newUnit);
 		} // case
 		break;
 
@@ -3187,7 +3137,6 @@ function handleItemChange(item, value)
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
 			setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
-			webSocket.send("mfd_distance_unit:" + newUnit);
 		} // case
 		break;
 
@@ -3202,7 +3151,6 @@ function handleItemChange(item, value)
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
 			setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
-			webSocket.send("mfd_time_unit:" + newUnit);
 		} // case
 		break;
 
@@ -3781,12 +3729,14 @@ function handleItemChange(item, value)
 				$("#clutch_slip").text("slip: -.-%");
 				break;
 			} // if
-			var n = engineRpm / vehicleSpeed;
+			var speedKmh = vehicleSpeed;
+			if (localStorage.mfdDistanceUnit === "set_units_mph") speedKmh = vehicleSpeed * 1.609;
+			var n = engineRpm / speedKmh;
 			$("#n_rpm_speed").text("n: " + n.toFixed(2));
 
 			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
-			if (n >= 130 && n <= 140) $("#chosen_gear").text("1");
-			else if (n >= 62 && n <= 68) $("#chosen_gear").text("2");
+			if (n >= 110 && n <= 150) $("#chosen_gear").text("1");
+			else if (n >= 60 && n <= 68) $("#chosen_gear").text("2");
 			else if (n >= 37 && n <= 42) $("#chosen_gear").text("3");
 			else if (n >= 26 && n <= 29) $("#chosen_gear").text("4");
 			else if (n >= 20 && n <= 22) $("#chosen_gear").text("5");
@@ -4170,8 +4120,8 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 
-			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance");
-			else if (value === "NO") changeBackLargeScreenAfter(5000);
+			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
+			//else if (value === "NO") changeBackLargeScreenAfter(5000);
 		} // case
 		break;
 
@@ -4181,7 +4131,7 @@ function handleItemChange(item, value)
 
 			satnavDisplayCanBeDimmed = value === "YES";
 
-			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance");
+			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance", 120000);
 			else if (value === "YES") changeBackLargeScreenAfter(5000);
 		} // case
 		break;
@@ -4203,14 +4153,6 @@ function handleItemChange(item, value)
 			satnavStatus1 = value;
 
 			if (economyMode === "ON") break;  // No further handling
-
-			// if (satnavStatus1.match(/STOPPING_GUIDANCE/)
-				// // "0 m", "0 yd": we've reached the destination
-				// && handleItemChange.satnavDistanceToDestViaRoad.match(/^0\s/)
-				// )
-			// {
-				// showPopup("satnav_reached_destination_popup", 10000);
-			// } // if
 
 			if (satnavStatus1.match(/NO_DISC/))
 			{
@@ -4945,16 +4887,6 @@ function handleItemChange(item, value)
 			var unit = a[1];
 			$("#" + item + "_number").text(distance);
 			$("#" + item + "_unit").text(unit);
-
-			// if ((item === "satnav_turn_at" || item === "satnav_distance_to_dest_via_road")
-				// && handleItemChange.satnavTurnAt !== value
-				// && (unit === "m" || unit === "yd")
-				// && parseInt(distance) <= 600)
-			// {
-				// temporarilyChangeLargeScreenTo("satnav_guidance");
-				// handleItemChange.satnavTurnAt = value;
-			// } // if
-
 		} // case
 		break;
 
@@ -5051,11 +4983,8 @@ function handleItemChange(item, value)
 				// over to the next line.
 				var splitAt = 24;
 
-				// If the first line contains both 'I' and '1', the first line can contain 25 characters
-				//if (value.indexOf("I") > 0 && value.indexOf("1") > 0 && value.indexOf("1") <= 24) splitAt = 25;
-
-				// If there are exactly 23 letters, 2 numbers can be put behind it
-				if (value.replace(/[^A-Z]/gi, "").length === 23) splitAt = 25;
+				// If the first 24 characters contain both 'I' and '1', the first line can contain 25 characters
+				if (value.indexOf("I") > 0 && value.indexOf("1") > 0 && value.indexOf("1") <= 23) splitAt = 25;
 
 				var line_1 = value.substr(0, splitAt);
 				var line_2 = value.substr(splitAt);
