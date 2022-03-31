@@ -91,6 +91,8 @@ void ProcessWebSocketClientMessage(const char* payload)
         if (clientMessage.endsWith(":NO")) NoPopup();
         else NotificationPopupShowing(millis(), clientMessage.substring(18).toInt());
     }
+
+    // TODO - keep this?
     else if (clientMessage.startsWith("mfd_language:"))
     {
         String value = clientMessage.substring(13);
@@ -102,6 +104,14 @@ void ProcessWebSocketClientMessage(const char* payload)
             value == "set_language_italian" ? MFD_LANGUAGE_ITALIAN :
             value == "set_language_dutch" ? MFD_LANGUAGE_DUTCH :
             MFD_LANGUAGE_ENGLISH;
+
+        decimalSeparatorChar =
+            mfdLanguage == MFD_LANGUAGE_FRENCH ? ',' :
+            mfdLanguage == MFD_LANGUAGE_GERMAN ? ',' :
+            mfdLanguage == MFD_LANGUAGE_SPANISH ? ',' :
+            mfdLanguage == MFD_LANGUAGE_ITALIAN ? ',' :
+            mfdLanguage == MFD_LANGUAGE_DUTCH ? ',' :
+            '.';
     }
     else if (clientMessage.startsWith("mfd_distance_unit:"))
     {

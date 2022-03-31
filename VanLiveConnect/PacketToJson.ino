@@ -233,6 +233,27 @@ char* ToHexStr(uint16_t data)
     return buffer;
 } // ToHexStr
 
+// Generate a string representation of a float value.
+// Note: passed buffer size must be (at least) MAX_FLOAT_SIZE bytes, e.g. declare like this:
+//   char buffer[MAX_FLOAT_SIZE];
+char decimalSeparatorChar = '.';
+char* ToFloatStr(char* buffer, float f, int prec, bool useGlobalDecimalSeparatorChar = true)
+{
+    dtostrf(f, MAX_FLOAT_SIZE - 1, prec, buffer);
+
+    // Strip leading spaces
+    char* strippedStr = buffer;
+    while (isspace(*strippedStr)) strippedStr++;
+
+    if (prec > 0 && useGlobalDecimalSeparatorChar && decimalSeparatorChar != '.')
+    {
+        char* p  = strchr(buffer, '.');
+        if (p) *p = decimalSeparatorChar;
+    } // if
+
+    return strippedStr;
+} // ToFloatStr
+
 // Replace special (e.g. extended Ascii) characters by their HTML-safe representation.
 // See also: https://www.ascii-code.com/ .
 void AsciiToHtml(String& in)
@@ -743,6 +764,7 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
     return VAN_PACKET_PARSE_OK;
 } // ParseVinPkt
 
+int contactKeyPosition = 0;  // 0 = OFF, 1 = ACC, 2 = START, 3 = ON
 bool economyMode = false;
 
 VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -752,6 +774,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
     const uint8_t* data = pkt.Data();
 
+    contactKeyPosition = data[1] & 0x03;
     economyMode = data[1] & 0x10;
 
     // Coolant water temperature value often falls back to 'invalid' (0xFF), even if a valid value was previously
@@ -805,10 +828,10 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         data[0] & 0x80 ? PSTR("FULL") : PSTR("DIMMED (LIGHTS ON)"),
         data[0] & 0x0F,
 
-        (data[1] & 0x03) == 0x00 ? offStr :
-        (data[1] & 0x03) == 0x01 ? PSTR("ACC") :
-        (data[1] & 0x03) == 0x03 ? onStr :
-        (data[1] & 0x03) == 0x02 ? PSTR("START") :
+        contactKeyPosition == 0x00 ? offStr :
+        contactKeyPosition == 0x01 ? PSTR("ACC") :
+        contactKeyPosition == 0x03 ? onStr :
+        contactKeyPosition == 0x02 ? PSTR("START") :
         ToHexStr((uint8_t)(data[1] & 0x03)),
 
         data[1] & 0x04 ? yesStr : noStr,
@@ -825,15 +848,15 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         #define MAX_COOLANT_TEMP (130)
         ! isCoolantTempValid || coolantTemp <= 0 ? PSTR("0") :
             coolantTemp >= MAX_COOLANT_TEMP ? PSTR("1") :
-                FloatToStr(floatBuf[0], (float)coolantTemp / MAX_COOLANT_TEMP, 2),
+                ToFloatStr(floatBuf[0], (float)coolantTemp / MAX_COOLANT_TEMP, 2, false),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-            FloatToStr(floatBuf[1], odometer, 1) :
-            FloatToStr(floatBuf[1], ToMiles(odometer), 1),
+            ToFloatStr(floatBuf[1], odometer, 1) :
+            ToFloatStr(floatBuf[1], ToMiles(odometer), 1),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            FloatToStr(floatBuf[2], extTemp, 1) :
-            FloatToStr(floatBuf[2], ToFahrenheit(extTemp), 0)
+            ToFloatStr(floatBuf[2], extTemp, 1) :
+            ToFloatStr(floatBuf[2], ToFahrenheit(extTemp), 0)
     );
 
     // JSON buffer overflow?
@@ -943,7 +966,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         #define SERVICE_INTERVAL (30000)
         remainingKmToService <= 0 ? PSTR("0") :
             remainingKmToService >= SERVICE_INTERVAL ? PSTR("1") :
-                FloatToStr(floatBuf, (float)remainingKmToService / SERVICE_INTERVAL, 2),
+                ToFloatStr(floatBuf, (float)remainingKmToService / SERVICE_INTERVAL, 2, false),
 
         data[5] & 0x80 ? PSTR("DIPPED_BEAM ") : emptyStr,
         data[5] & 0x40 ? PSTR("HIGH_BEAM ") : emptyStr,
@@ -1003,7 +1026,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
 
             #define MAX_OIL_LEVEL (85)
             data[8] >= MAX_OIL_LEVEL ? PSTR("1") :
-                FloatToStr(floatBuf, (float)data[8] / MAX_OIL_LEVEL, 2)
+                ToFloatStr(floatBuf, (float)data[8] / MAX_OIL_LEVEL, 2, false)
         );
 
     at += at >= n ? 0 :
@@ -1518,15 +1541,15 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             //
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? (uint16_t)data[13] : ToMiles((uint16_t)data[13]),
 
-            deliveredPower >= 0.0 ? FloatToStr(floatBuf[0], deliveredPower, 1) : notApplicableFloatStr,
-            deliveredTorque >= 0.0 ? FloatToStr(floatBuf[1], deliveredTorque, 1) : notApplicableFloatStr,
+            deliveredPower >= 0.0 ? ToFloatStr(floatBuf[0], deliveredPower, 1) : notApplicableFloatStr,
+            deliveredTorque >= 0.0 ? ToFloatStr(floatBuf[1], deliveredTorque, 1) : notApplicableFloatStr,
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 ! instConsumptionValid ? notApplicableFloatStr :
-                    FloatToStr(floatBuf[2], (float)instConsumptionLt100_x10 / 10.0, 1) :
+                    ToFloatStr(floatBuf[2], (float)instConsumptionLt100_x10 / 10.0, 1) :
                 ! instConsumptionValid ? notApplicable2Str :
                     instConsumptionLt100_x10 <= 2 ? PSTR("&infin;") :
-                    FloatToStr(floatBuf[2], ToMilesPerGallon(instConsumptionLt100_x10), 0),
+                    ToFloatStr(floatBuf[2], ToMilesPerGallon(instConsumptionLt100_x10), 0),
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 distanceToEmpty :
@@ -1541,10 +1564,10 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 avgConsumptionLt100Trip1 == 0xFFFF ? notApplicableFloatStr :
-                    FloatToStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
+                    ToFloatStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
                 avgConsumptionLt100Trip1 == 0xFFFF ? notApplicable2Str :
                     avgConsumptionLt100Trip1 <= 1 ? PSTR("&infin;") :
-                    FloatToStr(floatBuf[3], ToMilesPerGallon(avgConsumptionLt100Trip1), 0)
+                    ToFloatStr(floatBuf[3], ToMilesPerGallon(avgConsumptionLt100Trip1), 0)
         );
 
     const static char jsonFormatter3[] PROGMEM =
@@ -1567,10 +1590,10 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 avgConsumptionLt100Trip2 == 0xFFFF ? notApplicableFloatStr :
-                    FloatToStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1) :
+                    ToFloatStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1) :
                 avgConsumptionLt100Trip2 == 0xFFFF ? notApplicable2Str :
                     avgConsumptionLt100Trip2 <= 1 ? PSTR("&infin;") :
-                    FloatToStr(floatBuf[0], ToMilesPerGallon(avgConsumptionLt100Trip2), 0)
+                    ToFloatStr(floatBuf[0], ToMilesPerGallon(avgConsumptionLt100Trip2), 0)
         );
 
     // JSON buffer overflow?
@@ -1705,12 +1728,12 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     int at = snprintf_P(buf, n, jsonFormatter,
         ! IsEngineRpmValid() ?
             notApplicable3Str :
-            FloatToStr(floatBuf[0], engineRpm_x8 / 8.0, 0),
+            ToFloatStr(floatBuf[0], engineRpm_x8 / 8.0, 0),
         ! IsVehicleSpeedValid() ?
             notApplicable2Str :
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                FloatToStr(floatBuf[1], vehicleSpeed, 0) :
-                FloatToStr(floatBuf[1], ToMiles(vehicleSpeed), 0)
+                ToFloatStr(floatBuf[1], vehicleSpeed, 0) :
+                ToFloatStr(floatBuf[1], ToMiles(vehicleSpeed), 0)
     );
 
     // JSON buffer overflow?
@@ -1764,18 +1787,18 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         // Surely fuel level. Test with tank full shows definitely level is in litres.
         data[4] == 0xFF || data[4] == 0x00 ? notApplicable3Str :
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                FloatToStr(floatBuf[0], fuelLevelFiltered, 1) :
-                FloatToStr(floatBuf[0], ToGallons(fuelLevelFiltered), 1),
+                ToFloatStr(floatBuf[0], fuelLevelFiltered, 1) :
+                ToFloatStr(floatBuf[0], ToGallons(fuelLevelFiltered), 1),
 
         #define FULL_TANK_LITRES (73.0)
         data[4] == 0xFF ? PSTR("0") :
             fuelLevelFiltered >= FULL_TANK_LITRES ? PSTR("1") :
-                FloatToStr(floatBuf[1], fuelLevelFiltered / FULL_TANK_LITRES, 2),
+                ToFloatStr(floatBuf[1], fuelLevelFiltered / FULL_TANK_LITRES, 2, false),
 
         data[5] == 0xFF || data[5] == 0x00 ? notApplicable3Str :
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                FloatToStr(floatBuf[2], fuelLevelRaw, 1) :
-                FloatToStr(floatBuf[2], ToGallons(fuelLevelRaw), 1)
+                ToFloatStr(floatBuf[2], fuelLevelRaw, 1) :
+                ToFloatStr(floatBuf[2], ToGallons(fuelLevelRaw), 1)
     );
 
     // JSON buffer overflow?
@@ -1919,10 +1942,14 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 band == TB_FMAST ? onStr : offStr,
                 band == TB_AM ? onStr : offStr,
                 presetMemory == 0 ? notApplicable1Str : presetMemoryBuffer,
+
                 frequency == 0x07FF ? notApplicable3Str :
                     band == TB_AM
-                        ? FloatToStr(floatBuf, frequency, 0)  // AM and LW bands
-                        : FloatToStr(floatBuf, (frequency / 2 + 500) / 10.0, 1),  // FM bands
+                        ? ToFloatStr(floatBuf, frequency, 0)  // AM and LW bands
+
+                        // Note: want decimal point here as 'DSEG7Classic' font cannot elegantly show decimal comma
+                        : ToFloatStr(floatBuf, (frequency / 2 + 500) / 10.0, 1, false),  // FM bands
+
                 frequency == 0x07FF ? notApplicable1Str :
                     band == TB_AM
                         ? emptyStr  // AM and LW bands
@@ -2267,6 +2294,14 @@ VanPacketParseResult_t ParseMfdLanguageUnitsPkt(TVanPacketRxDesc& pkt, char* buf
         data[3] == 0x06 ? MFD_LANGUAGE_DUTCH :
         MFD_LANGUAGE_ENGLISH;
 
+    decimalSeparatorChar =
+        mfdLanguage == MFD_LANGUAGE_FRENCH ? ',' :
+        mfdLanguage == MFD_LANGUAGE_GERMAN ? ',' :
+        mfdLanguage == MFD_LANGUAGE_SPANISH ? ',' :
+        mfdLanguage == MFD_LANGUAGE_ITALIAN ? ',' :
+        mfdLanguage == MFD_LANGUAGE_DUTCH ? ',' :
+        '.';
+
     uint8_t prevMfdTemperatureUnit = mfdTemperatureUnit;
     mfdTemperatureUnit = data[4] & 0x02 ? MFD_TEMPERATURE_UNIT_FAHRENHEIT : MFD_TEMPERATURE_UNIT_CELSIUS;
 
@@ -2387,7 +2422,7 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
 
         // Factory head unit has fixed maximum volume value of 30
         #define MAX_AUDIO_VOLUME (30)
-        FloatToStr(floatBuf, (float)volume / MAX_AUDIO_VOLUME, 2),
+        ToFloatStr(floatBuf, (float)volume / MAX_AUDIO_VOLUME, 2),
 
         // Audio menu. Bug: if CD changer is playing, this one is always "OPEN" (even if it isn't).
         data[1] & 0x20 ? openStr : closedStr,
@@ -2698,8 +2733,8 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
                 ToStr(ToFahrenheit((sint16_t)condenserTemp)),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            FloatToStr(floatBuf, evaporatorTempCelsius, 1) :
-            FloatToStr(floatBuf, ToFahrenheit(evaporatorTempCelsius), 0)
+            ToFloatStr(floatBuf, evaporatorTempCelsius, 1) :
+            ToFloatStr(floatBuf, ToFahrenheit(evaporatorTempCelsius), 0)
     );
 
     // JSON buffer overflow?
@@ -3333,25 +3368,25 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
         (360 - currHeading + headingToDestination) % 360,
         headingToDestination,
 
-        FloatToStr(floatBuf[0], roadDistanceToDestination, 0),
+        ToFloatStr(floatBuf[0], roadDistanceToDestination, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             roadDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
             roadDistanceToDestinationInKmsMiles ? PSTR("mi") : PSTR("yd"),
 
-        FloatToStr(floatBuf[1], gpsDistanceToDestination, 0),
+        ToFloatStr(floatBuf[1], gpsDistanceToDestination, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             gpsDistanceToDestinationInKmsMiles ? PSTR("km") : PSTR("m") :
             gpsDistanceToDestinationInKmsMiles ? PSTR("mi") : PSTR("yd"),
 
-        FloatToStr(floatBuf[2], distanceToNextTurn, 0),
+        ToFloatStr(floatBuf[2], distanceToNextTurn, 0),
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             distanceToNextTurnInKmsMiles ? PSTR("km") : PSTR("m") :
             distanceToNextTurnInKmsMiles ? PSTR("mi") : PSTR("yd"),
 
-        headingOnRoundabout == 0x7FFF ? notApplicable3Str : FloatToStr(floatBuf[3], headingOnRoundabout, 0),
+        headingOnRoundabout == 0x7FFF ? notApplicable3Str : ToFloatStr(floatBuf[3], headingOnRoundabout, 0, false),
         minutesToTravel
     );
 
@@ -4523,8 +4558,8 @@ VanPacketParseResult_t ParseWheelSpeedPkt(TVanPacketRxDesc& pkt, char* buf, cons
     char floatBuf[2][MAX_FLOAT_SIZE];
 
     int at = snprintf_P(buf, n, jsonFormatter,
-        FloatToStr(floatBuf[0], ((uint16_t)data[0] << 8 | data[1]) / 100.0, 2),
-        FloatToStr(floatBuf[1], ((uint16_t)data[2] << 8 | data[3]) / 100.0, 2),
+        ToFloatStr(floatBuf[0], ((uint16_t)data[0] << 8 | data[1]) / 100.0, 2),
+        ToFloatStr(floatBuf[1], ((uint16_t)data[2] << 8 | data[3]) / 100.0, 2),
         (uint16_t)data[4] << 8 | data[5],
         (uint16_t)data[6] << 8 | data[7]
     );
@@ -4557,8 +4592,8 @@ VanPacketParseResult_t ParseOdometerPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
     int at = snprintf_P(buf, n, jsonFormatter,
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-            FloatToStr(floatBuf, odometer, 1) :
-            FloatToStr(floatBuf, ToMiles(odometer), 1)
+            ToFloatStr(floatBuf, odometer, 1) :
+            ToFloatStr(floatBuf, ToMiles(odometer), 1)
     );
 
     // JSON buffer overflow?

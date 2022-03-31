@@ -82,28 +82,18 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="trip_1" class="tabContent" style="display:block; left:20px; top:90px; width:330px; height:400px;">
 
-					<div class="icon iconSmall" style="top:30px;">
-						<div class="fas fa-angle-double-right"></div>
-					</div>
-					<div class="icon iconSmall" style="left:50px; top:30px;">
-						<div class="fas fa-fire-alt"></div>
-					</div>
+					<div class="icon iconSmall fas fa-angle-double-right" style="top:30px;"></div>
+					<div class="icon iconSmall fas fa-fire-alt" style="left:50px; top:30px;"></div>
 					<div gid="avg_consumption_1" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
 					<div gid="fuel_consumption_unit" class="tag tripComputerTag" style="top:75px;">l/100 km</div>
 
-					<div class="icon iconSmall" style="top:160px;">
-						<div class="fas fa-angle-double-right"></div>
-					</div>
-					<div class="icon iconSmall" style="left:50px; top:160px;">
-						<div class="fas fa-tachometer-alt"></div>
-					</div>
+					<div class="icon iconSmall fas fa-angle-double-right" style="top:160px;"></div>
+					<div class="icon iconSmall fas fa-tachometer-alt" style="left:50px; top:160px;"></div>
 					<div gid="avg_speed_1" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
 					<div gid="speed_unit" class="tag tripComputerTag" style="top:205px;">km/h</div>
 
 					<div class="icon iconSmall" style="top:280px; width:80px;">...</div>
-					<div class="icon iconSmall" style="left:50px; top:280px;">
-						<div class="fas fa-car-side"></div>
-					</div>
+					<div class="icon iconSmall fas fa-car-side" style="left:50px; top:280px;"></div>
 					<div gid="distance_1" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
 					<div gid="distance_unit" class="tag tripComputerTag" style="top:325px;">km</div>
 
@@ -113,28 +103,18 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="trip_2" class="tabContent" style="display:none; left:20px; top:90px; width:330px; height:400px;">
 
-					<div class="icon iconSmall" style="top:30px;">
-						<div class="fas fa-angle-double-right"></div>
-					</div>
-					<div class="icon iconSmall" style="left:50px; top:30px;">
-						<div class="fas fa-fire-alt"></div>
-					</div>
+					<div class="icon iconSmall fas fa-angle-double-right" style="top:30px;"></div>
+					<div class="icon iconSmall fas fa-fire-alt" style="left:50px; top:30px;"></div>
 					<div gid="avg_consumption_2" class="dots" style="left:100px; top:20px; width:220px; text-align:right;">--.-</div>
 					<div gid="fuel_consumption_unit" class="tag tripComputerTag" style="top:75px;">l/100 km</div>
 
-					<div class="icon iconSmall" style="top:160px;">
-						<div class="fas fa-angle-double-right"></div>
-					</div>
-					<div class="icon iconSmall" style="left:50px; top:160px;">
-						<div class="fas fa-tachometer-alt"></div>
-					</div>
+					<div class="icon iconSmall fas fa-angle-double-right" style="top:160px;"></div>
+					<div class="icon iconSmall fas fa-tachometer-alt" style="left:50px; top:160px;"></div>
 					<div gid="avg_speed_2" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
 					<div gid="speed_unit" class="tag tripComputerTag" style="top:205px;">km/h</div>
 
 					<div class="icon iconSmall" style="top:280px; width:80px;">...</div>
-					<div class="icon iconSmall" style="left:50px; top:280px;">
-						<div class="fas fa-car-side"></div>
-					</div>
+					<div class="icon iconSmall fas fa-car-side" style="left:50px; top:280px;"></div>
 					<div gid="distance_2" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
 					<div gid="distance_unit" class="tag tripComputerTag" style="top:325px;">km</div>
 
@@ -151,8 +131,9 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<!-- Current street and city -->
-				<div id="satnav_curr_street_small" class="icon"
-					style="word-wrap:break-word; top:270px; height:280px;">
+				<div id="satnav_curr_street_small"
+					on_enter="satnavCutoffBottomLines($('#satnav_curr_street_small [gid=\'satnav_curr_street_shown\']'));"
+					class="icon" style="word-wrap:break-word; top:270px; height:280px;">
 					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
 				</div>
 
@@ -172,9 +153,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div class="tag" style="text-align:left; left:280px; top:235px;">rpm</div>
 
 				<!-- Fuel level -->
-				<div class="icon iconSmall" style="left:30px; top:320px; height:104px;">
-					<div class="centerAligned fas fa-gas-pump"></div>
-				</div>
+				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:348px;"></div>
 
 				<div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
 				<div gid="fuel_level_filtered_unit" class="tag" style="text-align:left; left:280px; top:345px;">lt</div>
@@ -470,9 +449,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Fuel level, both as number (in litres) and as linear gauge -->
 
-				<div class="icon iconMedium" style="left:20px; top:25px;">
-					<div class="centerAligned fas fa-gas-pump"></div>
-				</div>
+				<div class="icon iconMedium fas fa-gas-pump" style="left:20px; top:40px;"></div>
 
 				<div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:70px; top:65px; width:240px;">--.-</div>
 				<div gid="fuel_level_filtered_unit" class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
@@ -501,9 +478,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Engine coolant temperature, both as number (in degrees) and as linear gauge -->
 
-				<div class="icon iconMedium" style="left:580px; top:25px;">
-					<div class="centerAligned fas fa-thermometer-half"></div>
-				</div>
+				<div class="icon iconMedium fas fa-thermometer-half" style="left:580px; top:40px;"></div>
 
 				<div id="coolant_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
 				<div id="coolant_temp_unit" class="tag" style="text-align:left; left:880px; top:70px; width:60px;">&deg;C</div>
@@ -536,9 +511,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Oil level, both as number and as linear gauge -->
 
-					<div class="icon iconMedium" style="left:20px; top:190px;">
-						<div class="centerAligned fas fa-oil-can"></div>
-					</div>
+					<div class="icon iconMedium fas fa-oil-can" style="left:20px; top:205px;"></div>
 
 					<div id="oil_level_raw" class="dseg7" style="font-size:50px; left:125px; top:215px; width:240px;">--</div>
 
@@ -558,10 +531,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- Service interval, both as number (in km) and as linear gauge -->
 
 					<div class="icon iconMedium" style="left:440px; top:195px;">...</div>
-
-					<div class="icon iconMedium" style="left:520px; top:180px;">
-						<div class="centerAligned fas fa-tools"></div>
-					</div>
+					<div class="icon iconMedium fas fa-tools" style="left:520px; top:195px;"></div>
 
 					<div id="distance_to_service" class="dseg7" style="font-size:50px; left:620px; top:215px; width:230px;">---</div>
 					<div gid="distance_unit" class="tag" style="text-align:left; left:870px; top:220px; width:80px;">km</div>
@@ -586,19 +556,13 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
 
 					<!-- Contact key position -->
-					<div class="icon iconSmall" style="left:20px; top:366px;">
-						<div class="centerAligned fas fa-key"></div>
-					</div>
+					<div class="icon iconSmall fas fa-key" style="left:20px; top:373px;"></div>
 
 					<div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;"></div>
 
 					<!-- Dashboard illumination level -->
-					<div class="icon iconSmall" style="left:710px; top:366px;">
-						<div class="centerAligned fas fa-tachometer-alt"></div>
-					</div>
-					<div class="icon iconSmall" style="left:770px; top:363px;">
-						<div class="centerAligned fas fa-sun"></div>
-					</div>
+					<div class="icon iconSmall fas fa-tachometer-alt" style="left:710px; top:373px;"></div>
+					<div class="icon iconSmall fas fa-sun" style="left:770px; top:370px;"></div>
 					<div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:365px; width:130px;">--</div>
 
 					<!-- VIN number (very small) -->
@@ -619,10 +583,8 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="left:840px; top:310px;">rpm</div>
 
 					<!-- Odometer -->
-					<div class="icon iconSmall" style="left:10px; top:475px; width:90px;">...</div>
-					<div class="icon iconSmall" style="left:70px; top:475px;">
-						<div class="fas fa-car-side"></div>
-					</div>
+					<div class="icon iconSmall" style="left:10px; top:480px; width:90px;">...</div>
+					<div class="icon iconSmall fas fa-car-side" style="left:70px; top:480px;"></div>
 					<div id="odometer_1" class="dseg7" style="font-size:40px; left:120px; top:480px; width:280px;">--.-</div>
 					<div gid="distance_unit" class="tag" style="font-size:40px; text-align:left; left:415px; top:482px;">km</div>
 
@@ -993,7 +955,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<div id="satnav_gps_fix_lost" class="iconSmall led ledOff" style="display:block; left:650px; top:30px;">
-					<!--<div class="centerAligned fas fa-low-vision"></div>-->
 					<div class="centerAligned fas fa-smog"></div>
 				</div>
 
@@ -1021,7 +982,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Current location -->
 				<div id="satnav_current_location"
-					on_enter="$('#satnav_curr_street_small').hide();"
+					on_enter="$('#satnav_curr_street_small').hide(); satnavCutoffBottomLines($('#satnav_current_location [gid=\'satnav_curr_street_shown\']'));"
 					on_exit="$('#satnav_curr_street_small').show();"
 					style="display:none;">
 
@@ -1698,14 +1659,14 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Sat nav guidance -->
 
-				<div id="satnav_guidance" style="display:none;">
+				<div id="satnav_guidance"
+					on_enter="satnavCutoffBottomLines($('#satnav_guidance_curr_street')); satnavCutoffBottomLines($('#satnav_guidance_next_street'));"
+					style="display:none;">
 
 					<!-- Distance to destination -->
 
-					<div class="icon iconSmall" style="left:610px; top:470px; width:80px;">...</div>
-					<div class="icon iconSmall" style="left:660px; top:470px;">
-						<div class="fas fa-sign-in-alt"></div>
-					</div>
+					<div class="icon iconSmall" style="left:610px; top:467px; width:80px;">...</div>
+					<div class="icon iconSmall fas fa-sign-in-alt" style="left:660px; top:470px;"></div>
 
 					<div id="satnav_distance_to_dest_via_road_visible">
 						<div id="satnav_distance_to_dest_via_road_number"

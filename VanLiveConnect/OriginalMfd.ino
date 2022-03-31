@@ -12,6 +12,7 @@ extern const char yesStr[];
 extern const char noStr[];
 extern const char notApplicable2Str[];
 extern const char notApplicable3Str[];
+extern int contactKeyPosition;  // 0 = OFF, 1 = ACC, 2 = START, 3 = ON
 
 // The following flags drive the behaviour of the MFD regarding the large (right side) screen
 extern bool isSatnavGuidanceActive;
@@ -493,8 +494,11 @@ void UpdateLargeScreenForGuidanceModeOff()
             largeScreen = largeScreenBeforeGoingIntoGuidanceMode;
             if (largeScreen == LARGE_SCREEN_HEAD_UNIT && ! isHeadUnitPowerOn) largeScreen = LARGE_SCREEN_CLOCK;
 
-            // Not sure about following. Only while driving?
-            if (largeScreen == LARGE_SCREEN_CLOCK && isCurrentStreetKnown) largeScreen = LARGE_SCREEN_CURRENT_STREET;
+            // TODO - Not sure about following. Seems only while driving (vehicle_speed), or only if contact key is "ON"
+            if (contactKeyPosition == 0x03 && largeScreen == LARGE_SCREEN_CLOCK && isCurrentStreetKnown)
+            {
+                largeScreen = LARGE_SCREEN_CURRENT_STREET;
+            } // if
 
             // largeScreen = LARGE_SCREEN_HEAD_UNIT;
             // if (! isHeadUnitPowerOn) largeScreen = LARGE_SCREEN_CURRENT_STREET;

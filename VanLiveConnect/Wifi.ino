@@ -19,13 +19,13 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 {
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
-    Serial.print("Station connected: ");
+    Serial.print("Wi-Fi client connected: ");
     Serial.println(macToString(evt.mac));
 } // onStationConnected
 
 void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 {
-    Serial.print("Station disconnected: ");
+    Serial.print("Wi-Fi client disconnected: ");
     Serial.println(macToString(evt.mac));
 } // onStationDisconnected
 

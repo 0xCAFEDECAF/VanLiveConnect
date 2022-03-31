@@ -6,9 +6,11 @@ char mfd_js[] PROGMEM = R"=====(
 // -----
 // General
 
+var thousandsSeparator = ",";
+
 function addThousandsSeparator(x)
 {
-	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
 } // addThousandsSeparator
 
 function clamp(num, min, max)
@@ -657,7 +659,14 @@ function changeBackLargeScreenAfter(msec)
 		function ()
 		{
 			changeBackScreenTimer = null;
-			if (! inMenu()) changeLargeScreenTo(changeBackScreenId);
+			if (inMenu())
+			{
+				if (menuStack.length >= 1) menuStack[0] = changeBackScreenId;
+			}
+			else
+			{
+				changeLargeScreenTo(changeBackScreenId);
+			} // if
 			changeBackScreenId = undefined;
 		},
 		msec
@@ -667,11 +676,19 @@ function changeBackLargeScreenAfter(msec)
 // Temporarily switch to a specific screen on the right hand side of the display
 function temporarilyChangeLargeScreenTo(id, msec)
 {
-	if (inMenu()) return;
 	if (id !== currentLargeScreenId)
 	{
-		changeBackScreenId = currentLargeScreenId;
-		changeLargeScreenTo(id);
+		if (inMenu())
+		{
+			if (menuStack.length <= 0) return;
+			changeBackScreenId = menuStack[0];
+			menuStack[0] = id;
+		}
+		else
+		{
+			changeBackScreenId = currentLargeScreenId;
+			changeLargeScreenTo(id);
+		} // if
 	} // if
 
 	changeBackLargeScreenAfter(msec);
@@ -893,7 +910,7 @@ function gotoSmallScreen(smallScreenName)
 // -----
 // Functions for navigating through button sets and menus
 
-var currentMenu = null;
+var currentMenu = undefined;
 
 function inMenu()
 {
@@ -901,12 +918,12 @@ function inMenu()
 	[
 		"clock",
 		"instruments", "pre_flight",
-		"tuner", "cd_player", "cd_changer",
+		"tuner", "tape", "cd_player", "cd_changer",
 		"satnav_current_location",
 		"satnav_guidance", "satnav_curr_turn_icon"
 	];
 
-	return currentMenu !== null
+	return currentMenu !== undefined
 		&& mainScreenIds.indexOf(currentLargeScreenId) < 0;  // And not in one of the "main" screens?
 } // inMenu
 
@@ -1745,11 +1762,11 @@ function setLanguageSelectTickedButton()
 {
 	$("#set_language").find(".tickBox").removeClass("buttonSelected");
 
-    var lang = localStorage.mfdLanguage;
-    var id = "set_language_english";  // Default
-    if (hasTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
-    setTick(id);
-    $("#" + id).addClass("buttonSelected");
+	var lang = localStorage.mfdLanguage;
+	var id = "set_language_english";  // Default
+	if (hasTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
+	setTick(id);
+	$("#" + id).addClass("buttonSelected");
 
 	$("#set_language_validate_button").removeClass("buttonSelected");
 } // setLanguageSelectTickedButton
@@ -1877,6 +1894,24 @@ function satnavVehicleMoving()
 	return gpsSpeed >= 2;
 } // satnavVehicleMoving
 
+function satnavCutoffBottomLines(selector)
+{
+	// More lines than fit?
+	if (selector.height() > selector.parent().height() + 5)
+	{
+		// Cut off the bottom line(s)
+		selector.css("top", "unset");
+		selector.css("transform", "unset");
+	}
+	else
+	{
+		// Back to original formatting
+		var styleObject = selector.prop('style'); 
+		styleObject.removeProperty('top');
+		styleObject.removeProperty('transform');
+	} // if
+} // satnavCutoffBottomLines
+
 function satnavGotoMainMenu()
 {
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
@@ -1918,7 +1953,7 @@ function satnavGotoListScreen()
 	if (idx >= 0)
 	{
 		menuStack.length = idx;  // Remove trailing elements
-		currentMenu = null;
+		currentMenu = undefined;
 	} // if
 
 	satnavLastEnteredChar = null;
@@ -2936,6 +2971,8 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
+		temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
+
 		// Set timeout on LED, in case the "AUDIO OFF" packet is missed
 		satnavSetAudioLed.showSatnavAudioLed = setTimeout
 		(
@@ -4422,7 +4459,9 @@ function handleItemChange(item, value)
 				if (satnavNextStreet === "" && value !== "") $("#satnav_guidance_next_street").html(value);
 
 				// In the guidance screen, show "Street (City)", otherwise "Street not listed"
-				$("#satnav_guidance_curr_street").html(value.match(/\(.*\)/) ? value : streetNotListedText);
+				var selector = $("#satnav_guidance_curr_street");
+				selector.html(value.match(/\(.*\)/) ? value : streetNotListedText);
+				satnavCutoffBottomLines(selector);
 			} // if
 
 			// In the current location screen, show "City", or "Street (City)", otherwise "Street not listed"
@@ -4430,10 +4469,12 @@ function handleItemChange(item, value)
 			// this is handled by 'case "satnav_on_map"' above.
 			$('[gid="satnav_curr_street_shown"]').html(value !== "" ? value : streetNotListedText);
 
-			// Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
-			if (! $("#clock").is(":visible")) break;
+			satnavCutoffBottomLines($('#satnav_curr_street_small [gid="satnav_curr_street_shown"]'));
 
-			changeLargeScreenTo("satnav_current_location");  // Show the current location
+			// Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
+			if ($("#clock").is(":visible")) changeLargeScreenTo("satnav_current_location");
+
+			satnavCutoffBottomLines($('#satnav_current_location [gid="satnav_curr_street_shown"]'));
 		} // case
 		break;
 
@@ -4441,10 +4482,14 @@ function handleItemChange(item, value)
 		{
 			satnavNextStreet = value;  // Store what was received
 
+			var selector = $("#satnav_guidance_next_street");
+
 			// No data means: stay on current street.
 			// But if current street is empty (""), then just keep the current text.
-			if (value !== "") $("#satnav_guidance_next_street").html(value);
-			else if (satnavCurrentStreet !== "") $("#satnav_guidance_next_street").html(satnavCurrentStreet);
+			if (value !== "") selector.html(value);
+			else if (satnavCurrentStreet !== "") selector.html(satnavCurrentStreet);
+
+			satnavCutoffBottomLines(selector);
 		} // case
 		break;
 
@@ -5395,10 +5440,14 @@ function setLanguage(language)
 		"<span class='languageIcon'>NL</span>" +
 		"<span class='languageIcon'>I</span>";
 
+	thousandsSeparator = ".";  // Default
+
 	switch(language)
 	{
 		case "set_language_english":
 		{
+			thousandsSeparator = ",";
+
 			doorOpenText = "Door open";
 			doorsOpenText = "Doors open";
 			bootOpenText = "Boot open";
@@ -5558,6 +5607,8 @@ function setLanguage(language)
 
 		case "set_language_french":
 		{
+			thousandsSeparator = " ";
+
 			doorOpenText = "Porte ouverte";
 			doorsOpenText = "Portes ouverts";
 			bootOpenText = "Coffre ouvert";
