@@ -185,6 +185,11 @@ void setup()
     Serial.println(F("Initializing EEPROM"));
     EEPROM.begin(64);
 
+  #ifdef SERVE_FROM_SPIFFS
+    // Setup non-volatile storage on SPIFFS
+    SetupStore();
+  #endif // SERVE_FROM_SPIFFS
+
     // Setup "Over The Air" (OTA) update
     SetupOta();
 

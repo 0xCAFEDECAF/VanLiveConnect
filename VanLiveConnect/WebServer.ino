@@ -1,18 +1,15 @@
 
 #include <ESP8266WebServer.h>
 
-// Use the following #defines to serve (part of) the web documents from SPI flash file system (SPIFFS)
-// Note: unfortunately, the more is served from SPIFFS, the more VAN packets have CRC errors :-(
-
-//#define SERVE_FROM_SPIFFS
-
 #ifdef SERVE_FROM_SPIFFS
 
 #include "FS.h"
 
-//#define SERVE_FRONTS_FROM_SPIFFS
-//#define SERVE_JAVASCRIPT_FROM_SPIFFS
-//#define SERVE_CSS_FROM_SPIFFS
+// Use the following #defines to define which type of web documents will be served from the
+// SPI flash file system (SPIFFS)
+#define SERVE_FRONTS_FROM_SPIFFS
+#define SERVE_JAVASCRIPT_FROM_SPIFFS
+#define SERVE_CSS_FROM_SPIFFS
 
 #endif // SERVE_FROM_SPIFFS
 
@@ -406,6 +403,7 @@ const char* getContentType(const String& path)
 void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 {
     String path(urlPath == 0 ? webServer.uri() : urlPath);
+    String fsPath = path;
     String md5 = getMd5(path);
     if (md5.length() == 0)
     {
@@ -421,7 +419,7 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
             return HandleNotFound();
         } // if
 
-        path += ".gz";
+        fsPath += ".gz";
     } // if
 
     printHttpRequest();
@@ -436,7 +434,7 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 
         // Serve the complete document
         VanBusRx.Disable();
-        File file = SPIFFS.open(path, "r");
+        File file = SPIFFS.open(fsPath, "r");
         size_t sent = webServer.streamFile(file, mimeType);
         file.close();
         VanBusRx.Enable();
@@ -512,7 +510,7 @@ void SetupWebServer()
     // Cascading style sheet files
 
   #ifdef SERVE_CSS_FROM_SPIFFS
-    webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile(); });
+    webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile("/all.css"); });
     webServer.on(F("/CarInfo.css"), [](){ ServeDocumentFromFile(); });
   #else
     webServer.on(F("/css/all.css"), [](){ ServeDocument(textCssStr, faAll_css); });

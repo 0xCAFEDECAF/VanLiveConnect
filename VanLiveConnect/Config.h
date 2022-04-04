@@ -80,6 +80,19 @@
 //#define USE_MDNS
 
 // -----
+// Web server
+
+// Define to make the web server to use the SPI Flash File system (SPIFFS) to serve its web documents from.
+// When not defined (commented out), the web server serves the web documents from memory.
+//
+// Note: to upload the web document files to the SPIFFS on the ESP8266, you will need the "Arduino ESP8266
+// filesystem uploader", as found at https://github.com/esp8266/arduino-esp8266fs-plugin/releases .
+// See also https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/ for installation
+// instructions.
+//
+//#define SERVE_FROM_SPIFFS
+
+// -----
 // Infrared receiver
 
 // Choose one of these #defines below (or define your own IR_RECV_PIN, IR_VCC and IR_GND)
