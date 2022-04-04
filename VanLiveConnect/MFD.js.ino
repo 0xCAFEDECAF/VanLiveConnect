@@ -506,7 +506,7 @@ function showAudioPopup(id)
 		};
 
 		var audioSource = $("#audio_source").text();
-		id = audioSource in map ? map[audioSource] : "";
+		id = map[audioSource] || "";
 	} // if
 
 	if (! id) return;
@@ -521,7 +521,7 @@ function showAudioPopup(id)
 function initTripComputerPopup()
 {
 	// Retrieve all tab buttons
-	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
+	var tabButtons = $("#trip_computer_popup .tabLeft");
 
 	// Retrieve current tab button
 	var currActiveButton = $("#trip_computer_popup .tabLeft.tabActive");
@@ -531,12 +531,13 @@ function initTripComputerPopup()
 
 	// No tab selected
 
-	var selectedId =
-			localStorage.smallScreen === "TRIP_INFO_1" ? "trip_computer_popup_trip_1" :
-			localStorage.smallScreen === "TRIP_INFO_2" ? "trip_computer_popup_trip_2" :
-			"trip_computer_popup_fuel_data"; // Tab chosen if the small screen was showing GPS data
+	var mapping =
+	{
+		"TRIP_INFO_1": "trip_computer_popup_trip_1",
+		"TRIP_INFO_2": "trip_computer_popup_trip_2"
+	};
+	var selectedId = mapping[localStorage.smallScreen] || "trip_computer_popup_fuel_data";
 	$("#" + selectedId).show();
-
 	$("#" + selectedId + "_button").addClass("tabActive");
 } // initTripComputerPopup
 
@@ -554,8 +555,8 @@ function selectTabInTripComputerPopup(index)
 	resetTripComputerPopup();
 
 	// Retrieve all tab buttons and content elements
-	var tabs = $("#trip_computer_popup").find(".tabContent");
-	var tabButtons = $("#trip_computer_popup").find(".tabLeft");
+	var tabs = $("#trip_computer_popup .tabContent");
+	var tabButtons = $("#trip_computer_popup .tabLeft");
 
 	// Select the specified tab
 	$(tabs[index]).show();
@@ -719,53 +720,36 @@ function selectDefaultScreen(audioSource)
 	menuStack = [];
 	currentMenu = undefined;
 
+	var mapping =
+	{
+		"TUNER": "tuner",
+		"TAPE": "tape",
+		"CD": "cd_player",
+		"INTERNAL_CD_OR_TAPE": "cd_player",
+		"CD_CHANGER": "cd_changer"
+	};
+
 	var selectedScreenId = "";
 
 	// Explicitly passed a value for 'audioSource'?
-	if (audioSource !== undefined)
-	{
-		selectedScreenId =
-			audioSource === "TUNER" ? "tuner" :
-			audioSource === "TAPE" ? "tape" :
-			audioSource === "CD" || audioSource === "INTERNAL_CD_OR_TAPE" ? "cd_player" :
-			audioSource === "CD_CHANGER" ? "cd_changer" :
-			"";
-	} // if
+	if (audioSource !== undefined) selectedScreenId = mapping[audioSource] || "";
 
-	if (selectedScreenId === "")
-	{
-		if (satnavMode === "IN_GUIDANCE_MODE") selectedScreenId = "satnav_guidance";
-	} // if
+	if (! selectedScreenId && satnavMode === "IN_GUIDANCE_MODE") selectedScreenId = "satnav_guidance";
 
-	if (selectedScreenId === "")
+	if (! selectedScreenId)
 	{
-		if (audioSource === undefined) audioSource = $("#audio_source").text();
-
-		selectedScreenId =
-			audioSource === "TUNER" ? "tuner" :
-			audioSource === "TAPE" ? "tape" :
-			audioSource === "CD" || audioSource === "INTERNAL_CD_OR_TAPE" ? "cd_player" :
-			audioSource === "CD_CHANGER" ? "cd_changer" :
-			"";
+		audioSource = $("#audio_source").text();
+		selectedScreenId = mapping[audioSource] || "";
 	} // if
 
 	// Show instrument screen if engine is running
-	if (selectedScreenId === "" && engineRunning === "YES") selectedScreenId = "instruments";
+	if (! selectedScreenId && engineRunning === "YES") selectedScreenId = "instruments";
 
 	// Show current street, if known
-	if (selectedScreenId === "" && satnavCurrentStreet !== "")
-	{
-		// // But don't switch away from instrument screen, if the engine is running
-		// if (currentLargeScreenId === "instruments")
-		// {
-			// if (engineRunning === "YES" && engineRpm !== 0 && contactKeyPosition === "ON") return;
-		// } // if
-
-		selectedScreenId = "satnav_current_location";
-	} // if
+	if (! selectedScreenId && satnavCurrentStreet !== "") selectedScreenId = "satnav_current_location";
 
 	// Final fallback screen...
-	if (selectedScreenId === "") selectedScreenId = "clock";
+	if (! selectedScreenId) selectedScreenId = "clock";
 
 	changeLargeScreenTo(selectedScreenId);
 } // selectDefaultScreen
@@ -773,9 +757,10 @@ function selectDefaultScreen(audioSource)
 // Cycle through the large screens (right hand side of the display)
 function nextLargeScreen()
 {
-	cancelChangeBackScreenTimer();
 
 	if (inMenu()) return;  // Don't cycle through menu screens
+
+	cancelChangeBackScreenTimer();
 
 	// The IDs of the screens ("divs") that will be cycled through.
 	// Important: list only leaf divs here!
@@ -788,7 +773,7 @@ function nextLargeScreen()
 		"cd_player",
 		"cd_changer",
 		"instruments",
-		"satnav_current_location",
+		"satnav_current_location"
 	];
 
 	var i = screenIds.indexOf(currentLargeScreenId);  // -1 if not found
@@ -866,11 +851,14 @@ function changeToTripCounter(id)
 // Only for debugging
 function tripComputerShortStr(tripComputerStr)
 {
-	return tripComputerStr === "TRIP_INFO_1" ? "TR1" :
-		tripComputerStr === "TRIP_INFO_2" ? "TR2" :
-		tripComputerStr === "GPS_INFO" ? "GPS" :
-		tripComputerStr === "FUEL_CONSUMPTION" ? "FUE" :
-		"??";
+	var mapping =
+	{
+		"TRIP_INFO_1": "TR1",
+		"TRIP_INFO_2": "TR2",
+		"GPS_INFO": "GPS",
+		"FUEL_CONSUMPTION": "FUE"
+	};
+	return mapping[tripComputerStr] || "??";
 } // tripComputerShortStr
 
 // Change to the correct screen and trip counter, given the reported value of "trip_computer_screen_tab"
@@ -910,7 +898,7 @@ function gotoSmallScreen(smallScreenName)
 // -----
 // Functions for navigating through button sets and menus
 
-var currentMenu = undefined;
+var currentMenu;
 
 function inMenu()
 {
@@ -1100,10 +1088,10 @@ function setTick(id)
 	$("#" + id).html("<b>&#10004;</b>");
 } // setTick
 
-function hasTick(groupId, valueId)
+function isListedTick(groupId, valueId)
 {
 	return $("#" + groupId).find(".tickBox").map(function() { return this.id; }).get().indexOf(valueId) >= 0;
-} // hasTick
+} // isListedTick
 
 function getTickedId(groupId)
 {
@@ -1322,7 +1310,7 @@ function highlightLetter(id, index)
 
 	if (index !== undefined)
 	{
-		index = clamp (index, 0, text.length);
+		index = clamp(index, 0, text.length);
 		highlightIndexes[id] = index;
 	} // if
 
@@ -1618,7 +1606,7 @@ function showAudioSettingsPopup(button)
 	{
 		// If the tuner presets popup is visible, hide it
 		// Note: on the original MFD, the tuner presets popup stays in the background, showing up again as soon
-		// as the volume disapears. But that would become ugly here, because the tuner presets popup is not in
+		// as the volume disappears. But that would become ugly here, because the tuner presets popup is not in
 		// the same position as the audio settings popup.
 		hideTunerPresetsPopup();
 
@@ -1673,11 +1661,11 @@ function colorThemeTickSet()
 
 function colorThemeSelectTickedButton()
 {
-	$("#set_screen_brightness").find(".tickBox").removeClass("buttonSelected");
+	$("#set_screen_brightness .tickBox").removeClass("buttonSelected");
 
 	var theme = localStorage.colorTheme;
 	var id = "set_dark_theme";  // Default
-	if (hasTick("set_screen_brightness", theme)) id = theme; else localStorage.colorTheme = id;
+	if (isListedTick("set_screen_brightness", theme)) id = theme; else localStorage.colorTheme = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
 } // colorThemeSelectTickedButton
@@ -1760,11 +1748,11 @@ var streetNotListedText = "Street not listed";
 
 function setLanguageSelectTickedButton()
 {
-	$("#set_language").find(".tickBox").removeClass("buttonSelected");
+	$("#set_language .tickBox").removeClass("buttonSelected");
 
 	var lang = localStorage.mfdLanguage;
 	var id = "set_language_english";  // Default
-	if (hasTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
+	if (isListedTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");
 
@@ -1792,24 +1780,39 @@ function setLanguageValidate()
 // -----
 // Functions for selecting MFD formats and units
 
+function invalidateAllDistanceFields()
+{
+	$('[gid="fuel_level_filtered"]').text("--.-");
+	$('[gid="avg_consumption_1"]').text("--.-");
+	$('[gid="avg_consumption_2"]').text("--.-");
+	$('[gid="inst_consumption"]').text("--.-");
+	$('[gid="avg_speed_1"]').text("--");
+	$('[gid="avg_speed_2"]').text("--");
+	$('[gid="distance_1"]').text("--");
+	$('[gid="distance_2"]').text("--");
+	$("#distance_to_service").text("---");
+	$("#odometer_1").text("--.-");
+	$('[gid="distance_to_empty"]').text("--");
+} // invalidateAllDistanceFields
+
 function unitsSelectTickedButtons()
 {
-	$("#set_units").find(".tickBox").removeClass("buttonSelected");
+	$("#set_units .tickBox").removeClass("buttonSelected");
 
 	var distUnit = localStorage.mfdDistanceUnit;
 	var id = "set_units_km_h";  // Default
-	if (hasTick("set_distance_unit", distUnit)) id = distUnit; else localStorage.mfdDistanceUnit = id;
+	if (isListedTick("set_distance_unit", distUnit)) id = distUnit; else localStorage.mfdDistanceUnit = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
 
 	var tempUnit = localStorage.mfdTemperatureUnit;
 	id = "set_units_deg_celsius";  // Default
-	if (hasTick("set_temperature_unit", tempUnit)) id = tempUnit; else localStorage.mfdTemperatureUnit = id;
+	if (isListedTick("set_temperature_unit", tempUnit)) id = tempUnit; else localStorage.mfdTemperatureUnit = id;
 	setTick(id);
 
 	var timeUnit = localStorage.mfdTimeUnit;
 	id = "set_units_24h";  // Default
-	if (hasTick("set_time_unit", timeUnit)) id = timeUnit; else localStorage.mfdTimeUnit = id;
+	if (isListedTick("set_time_unit", timeUnit)) id = timeUnit; else localStorage.mfdTimeUnit = id;
 	setTick(id);
 
 	$("#set_units_validate_button").removeClass("buttonSelected");
@@ -1820,6 +1823,8 @@ function unitsValidate()
 	var newDistanceUnit = getTickedId("set_distance_unit");
 	var newTemperatureUnit = getTickedId("set_temperature_unit");
 	var newTimeUnit = getTickedId("set_time_unit");
+
+	if (newDistanceUnit !== localStorage.mfdDistanceUnit) invalidateAllDistanceFields();
 
 	setUnits(newDistanceUnit, newTemperatureUnit, newTimeUnit);
 
@@ -2036,7 +2041,7 @@ function satnavGotoListScreenProfessionalAddressList()
 function satnavSelectFirstAvailableCharacter()
 {
 	// None of the buttons is selected
-	$("#satnav_enter_characters").find(".button").removeClass("buttonSelected");
+	$("#satnav_enter_characters .button").removeClass("buttonSelected");
 
 	// Select the first letter in the first row
 	$("#satnav_to_mfd_show_characters_line_1").addClass("buttonSelected");
@@ -2556,8 +2561,8 @@ function satnavArchiveInDirectoryCreateProfessionalEntry()
 
 function satnavSetDirectoryAddressScreenMode(mode)
 {
-	$("#satnav_show_personal_address").find(".button").removeClass("buttonSelected");
-	$("#satnav_show_professional_address").find(".button").removeClass("buttonSelected");
+	$("#satnav_show_personal_address .button").removeClass("buttonSelected");
+	$("#satnav_show_professional_address .button").removeClass("buttonSelected");
 
 	// Make the appropriate set of buttons visible
 	if (mode === "SELECT")
@@ -2609,8 +2614,8 @@ function satnavEnterArchiveInDirectoryScreen()
 	satnavSelectFirstLineOfDirectoryEntryScreen("satnav_archive_in_directory");
 
 	// On entry into this screen, all buttons are disabled
-	$("#satnav_archive_in_directory").find(".button").addClass("buttonDisabled");
-	$("#satnav_archive_in_directory").find(".button").removeClass("buttonSelected");
+	$("#satnav_archive_in_directory .button").addClass("buttonDisabled");
+	$("#satnav_archive_in_directory .button").removeClass("buttonSelected");
 } // satnavEnterArchiveInDirectoryScreen
 
 function satnavEnterRenameDirectoryEntryScreen()
@@ -2623,8 +2628,8 @@ function satnavEnterRenameDirectoryEntryScreen()
 	satnavSelectFirstLineOfDirectoryEntryScreen("satnav_rename_entry_in_directory");
 
 	// On entry into this screen, all buttons are disabled
-	$("#satnav_rename_entry_in_directory").find(".button").addClass("buttonDisabled");
-	$("#satnav_rename_entry_in_directory").find(".button").removeClass("buttonSelected");
+	$("#satnav_rename_entry_in_directory .button").addClass("buttonDisabled");
+	$("#satnav_rename_entry_in_directory .button").removeClass("buttonSelected");
 } // satnavEnterRenameDirectoryEntryScreen
 
 // A new character is entered in the "satnav_rename_entry_in_directory" or "satnav_archive_in_directory" screen
@@ -2824,7 +2829,7 @@ function satnavGuidancePreferenceSelectTickedButton()
 {
 	var foundTick = false;
 
-	$("#satnav_guidance_preference_menu").find(".tickBox").each
+	$("#satnav_guidance_preference_menu .tickBox").each
 	(
 		function()
 		{
@@ -2971,7 +2976,7 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
-		temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
+		if (satnavMode === "IN_GUIDANCE_MODE") temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
 
 		// Set timeout on LED, in case the "AUDIO OFF" packet is missed
 		satnavSetAudioLed.showSatnavAudioLed = setTimeout
@@ -3159,7 +3164,10 @@ function handleItemChange(item, value)
 
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
-			setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
+			if (newUnit !== localStorage.mfdTemperatureUnit)
+			{
+				setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
+			} // if
 		} // case
 		break;
 
@@ -3173,7 +3181,11 @@ function handleItemChange(item, value)
 
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
-			setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+			if (newUnit !== localStorage.mfdDistanceUnit)
+			{
+				setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+				invalidateAllDistanceFields();
+			} // if
 		} // case
 		break;
 
@@ -3187,7 +3199,10 @@ function handleItemChange(item, value)
 
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
-			setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
+			if (newUnit !== localStorage.mfdTimeUnit)
+			{
+				setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
+			} // if
 		} // case
 		break;
 
@@ -3773,7 +3788,7 @@ function handleItemChange(item, value)
 
 			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
 			if (n >= 110 && n <= 150) $("#chosen_gear").text("1");
-			else if (n >= 60 && n <= 68) $("#chosen_gear").text("2");
+			else if (n >= 58 && n <= 69) $("#chosen_gear").text("2");
 			else if (n >= 37 && n <= 42) $("#chosen_gear").text("3");
 			else if (n >= 26 && n <= 29) $("#chosen_gear").text("4");
 			else if (n >= 20 && n <= 22) $("#chosen_gear").text("5");
@@ -5134,8 +5149,8 @@ function handleItemChange(item, value)
 				);
 
 			// Enable elements as soon as a value is received
-			$("#satnav_curr_heading_compass_tag").find("*").removeClass('satNavInstructionDisabledIconText');
-			$("#satnav_curr_heading_compass_needle").find("*").removeClass('satNavInstructionDisabledIcon');
+			$("#satnav_curr_heading_compass_tag *").removeClass('satNavInstructionDisabledIconText');
+			$("#satnav_curr_heading_compass_needle *").removeClass('satNavInstructionDisabledIcon');
 		} // case
 		break;
 
@@ -5150,8 +5165,8 @@ function handleItemChange(item, value)
 				);
 
 			// Enable elements as soon as a value is received
-			$("#satnav_heading_to_dest_tag").find("*").removeClass('satNavInstructionDisabledIconText');
-			$("#satnav_heading_to_dest_pointer").find("*").removeClass('satNavInstructionDisabledIcon');
+			$("#satnav_heading_to_dest_tag *").removeClass('satNavInstructionDisabledIconText');
+			$("#satnav_heading_to_dest_pointer *").removeClass('satNavInstructionDisabledIcon');
 		} // case
 		break;
 
