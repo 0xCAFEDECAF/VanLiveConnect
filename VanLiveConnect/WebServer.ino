@@ -7,9 +7,10 @@
 
 // Use the following #defines to define which type of web documents will be served from the
 // SPI flash file system (SPIFFS)
-#define SERVE_FRONTS_FROM_SPIFFS
-#define SERVE_JAVASCRIPT_FROM_SPIFFS
-#define SERVE_CSS_FROM_SPIFFS
+#define SERVE_MAIN_FILES_FROM_SPIFFS  // MFD.html, MFD.js
+#define SERVE_FONTS_FROM_SPIFFS  // .woff files
+#define SERVE_JAVASCRIPT_FROM_SPIFFS  // jquery-3.5.1.min.js
+#define SERVE_CSS_FROM_SPIFFS  // all.css, CarInfo.css
 
 #endif // SERVE_FROM_SPIFFS
 
@@ -279,7 +280,6 @@ extern char carInfo_css[];  // Defined in CarInfo.css.ino
 // HTML files
 
 extern char mfd_html[];  // Defined in MFD.html.ino
-void ServeMainHtml();
 
 void HandleNotFound()
 {
@@ -453,13 +453,17 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 // Serve the main HTML page
 void ServeMainHtml()
 {
-    // This one should always be served from program memory, so updating is easy and does not need the SPI flash file
-    // system uploader
+  #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
+
+    // Serve from the SPI flash file system
+    ServeDocumentFromFile("/MFD.html");
+
+  #else
+
+    // Serve from program memory, so updating is easy and does not need the SPI flash file system uploader
     ServeDocument(PSTR("text/html"), mfd_html);
 
-    // Alternatives, when serving from the SPI flash file system
-    //ServeDocumentFromFile("/MFD.html.gz", "text/html");
-    //ServeDocumentFromFile("/MFD.html", "text/html");
+  #endif // SERVE_MAIN_FILES_FROM_SPIFFS
 } // ServeMainHtml
 
 void SetupWebServer()
@@ -467,13 +471,16 @@ void SetupWebServer()
     // -----
     // Fonts
 
-  #ifdef SERVE_FRONTS_FROM_SPIFFS
+  #ifdef SERVE_FONTS_FROM_SPIFFS
+
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){ ServeFontFromFile("/ArialRoundedMTbold.woff"); });
     webServer.on(F("/DotsAllForNow.woff"), [](){ ServeFontFromFile("/DotsAllForNow.woff"); });
     webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG7Classic-BoldItalic.woff"); });
     webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG14Classic-BoldItalic.woff"); });
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){ ServeFontFromFile("/fa-solid-900.woff"); });
+
   #else
+
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){
         ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
     });
@@ -489,32 +496,45 @@ void SetupWebServer()
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
         ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });
-  #endif // SERVE_FRONTS_FROM_SPIFFS
+
+  #endif // SERVE_FONTS_FROM_SPIFFS
 
     // -----
     // Javascript files
 
   #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
+
     webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocumentFromFile(); });
+
   #else
+
     webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocument(textJavascriptStr, jQuery_js); });
+
   #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
 
-    webServer.on(F("/MFD.js"), [](){
-        // This one should always be served from program memory, so updating is easy and does not need the SPI flash
-        // file system uploader (which will delete all stored data in 'store.ino')
-        ServeDocument(textJavascriptStr, mfd_js);
-    });
+  #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
+
+    webServer.on(F("/MFD.js"), [](){ ServeDocumentFromFile(); });
+
+  #else
+
+    webServer.on(F("/MFD.js"), [](){ ServeDocument(textJavascriptStr, mfd_js); });
+
+  #endif // SERVE_MAIN_FILES_FROM_SPIFFS
 
     // -----
     // Cascading style sheet files
 
   #ifdef SERVE_CSS_FROM_SPIFFS
+
     webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile("/all.css"); });
     webServer.on(F("/CarInfo.css"), [](){ ServeDocumentFromFile(); });
+
   #else
+
     webServer.on(F("/css/all.css"), [](){ ServeDocument(textCssStr, faAll_css); });
     webServer.on(F("/CarInfo.css"), [](){ ServeDocument(textCssStr, carInfo_css); });
+
   #endif // SERVE_CSS_FROM_SPIFFS
 
     // -----
@@ -530,10 +550,14 @@ void SetupWebServer()
     webServer.on(F("/gen_204"), HandleAndroidConnectivityCheck);
 
   #ifdef SERVE_FROM_SPIFFS
+
     // Try to serve any not further listed document from the SPI flash file system
     webServer.onNotFound([](){ ServeDocumentFromFile(); });
+
   #else
+
     webServer.onNotFound(HandleNotFound);
+
   #endif // SERVE_FROM_SPIFFS
 
     const char* headers[] = { "If-None-Match" };

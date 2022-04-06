@@ -1088,10 +1088,10 @@ function setTick(id)
 	$("#" + id).html("<b>&#10004;</b>");
 } // setTick
 
-function isListedTick(groupId, valueId)
+function isValidTickId(groupId, valueId)
 {
 	return $("#" + groupId).find(".tickBox").map(function() { return this.id; }).get().indexOf(valueId) >= 0;
-} // isListedTick
+} // isValidTickId
 
 function getTickedId(groupId)
 {
@@ -1665,7 +1665,7 @@ function colorThemeSelectTickedButton()
 
 	var theme = localStorage.colorTheme;
 	var id = "set_dark_theme";  // Default
-	if (isListedTick("set_screen_brightness", theme)) id = theme; else localStorage.colorTheme = id;
+	if (isValidTickId("set_screen_brightness", theme)) id = theme; else localStorage.colorTheme = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
 } // colorThemeSelectTickedButton
@@ -1752,7 +1752,7 @@ function setLanguageSelectTickedButton()
 
 	var lang = localStorage.mfdLanguage;
 	var id = "set_language_english";  // Default
-	if (isListedTick("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
+	if (isValidTickId("set_language", lang)) id = lang; else localStorage.mfdLanguage = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");
 
@@ -1801,18 +1801,18 @@ function unitsSelectTickedButtons()
 
 	var distUnit = localStorage.mfdDistanceUnit;
 	var id = "set_units_km_h";  // Default
-	if (isListedTick("set_distance_unit", distUnit)) id = distUnit; else localStorage.mfdDistanceUnit = id;
+	if (isValidTickId("set_distance_unit", distUnit)) id = distUnit; else localStorage.mfdDistanceUnit = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
 
 	var tempUnit = localStorage.mfdTemperatureUnit;
 	id = "set_units_deg_celsius";  // Default
-	if (isListedTick("set_temperature_unit", tempUnit)) id = tempUnit; else localStorage.mfdTemperatureUnit = id;
+	if (isValidTickId("set_temperature_unit", tempUnit)) id = tempUnit; else localStorage.mfdTemperatureUnit = id;
 	setTick(id);
 
 	var timeUnit = localStorage.mfdTimeUnit;
 	id = "set_units_24h";  // Default
-	if (isListedTick("set_time_unit", timeUnit)) id = timeUnit; else localStorage.mfdTimeUnit = id;
+	if (isValidTickId("set_time_unit", timeUnit)) id = timeUnit; else localStorage.mfdTimeUnit = id;
 	setTick(id);
 
 	$("#set_units_validate_button").removeClass("buttonSelected");
@@ -3147,7 +3147,7 @@ function handleItemChange(item, value)
 				"DUTCH": "set_language_dutch"
 			};
 
-			var newLanguage = value in map ? map[value] : "";
+			var newLanguage = map[value] || "";
 			if (! newLanguage) break;
 			setLanguage(newLanguage);
 			localStorage.mfdLanguage = newLanguage;
@@ -3164,10 +3164,8 @@ function handleItemChange(item, value)
 
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
-			if (newUnit !== localStorage.mfdTemperatureUnit)
-			{
-				setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
-			} // if
+			if (newUnit === localStorage.mfdTemperatureUnit) break;
+			setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
 		} // case
 		break;
 
@@ -3181,11 +3179,9 @@ function handleItemChange(item, value)
 
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
-			if (newUnit !== localStorage.mfdDistanceUnit)
-			{
-				setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
-				invalidateAllDistanceFields();
-			} // if
+			if (newUnit === localStorage.mfdDistanceUnit) break;
+			setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
+			invalidateAllDistanceFields();
 		} // case
 		break;
 
@@ -3199,10 +3195,8 @@ function handleItemChange(item, value)
 
 			var newUnit = map[value] || "";
 			if (! newUnit) break;
-			if (newUnit !== localStorage.mfdTimeUnit)
-			{
-				setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
-			} // if
+			if (newUnit === localStorage.mfdTimeUnit) break;
+			setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
 		} // case
 		break;
 
@@ -3220,7 +3214,6 @@ function handleItemChange(item, value)
 				&& audioSource !== "TAPE"
 				&& audioSource !== "CD"
 				&& audioSource !== "CD_CHANGER")
-				//&& audioSource !== "NAVIGATION")
 			{
 				break;
 			} // if
@@ -3307,8 +3300,8 @@ function handleItemChange(item, value)
 				// Cartridge is not present?
 				if (! $("#cd_changer_cartridge_present").hasClass("ledOn"))
 				{
-					// Show "No Cartridge" (original MFD says: "No Mag" (magazine)) popup for a few seconds
-					showStatusPopup("No Cartridge", 3000);
+					// Original MFD says: "No Mag" ("Mag" means: "magazine")
+					showStatusPopup("No CD cartridge present", 3000);
 					break;
 				} // if
 
@@ -3320,7 +3313,8 @@ function handleItemChange(item, value)
 					 && (cdChangerCurrentDisc === null || ! cdChangerCurrentDisc.match(/^[1-6]$/))
 				   )
 				{
-					showStatusPopup("No CD", 3000);  // Show "No CD" popup for a few seconds
+					// Original MFD says: "No CD"
+					showStatusPopup("No CD present", 3000);
 					break;
 				} // if
 
@@ -3816,7 +3810,6 @@ function handleItemChange(item, value)
 
 			if (icyConditions && ! wasRiskOfIceWarningShown && isDriving)
 			{
-				// Show warning popup
 				showNotificationPopup("Risk of ice!", 10000);
 				wasRiskOfIceWarningShown = true;
 			} // if
@@ -3981,7 +3974,7 @@ function handleItemChange(item, value)
 			$("#door_open").toggleClass("glow", value === "YES");
 
 			// Show or hide the "door open" popup. Always hide if in the "pre_flight" screen or
-			// while browsing the menu's
+			// while browsing the menus
 			if (value === "YES" && currentLargeScreenId !== "pre_flight" && ! inMenu())
 			{
 				$("#door_open_popup_text").html(doorOpenText);
@@ -4172,8 +4165,11 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 
-			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
-			//else if (value === "NO") changeBackLargeScreenAfter(5000);
+			if (value === handleItemChange[item]) break;
+			handleItemChange[item] = value;
+
+			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 20000);
+			else if (value === "NO") changeBackLargeScreenAfter(2000);
 		} // case
 		break;
 
@@ -4181,10 +4177,13 @@ function handleItemChange(item, value)
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 
+			if (value === handleItemChange[item]) break;
+			handleItemChange[item] = value;
+
 			satnavDisplayCanBeDimmed = value === "YES";
 
 			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance", 120000);
-			else if (value === "YES") changeBackLargeScreenAfter(5000);
+			else if (value === "YES") changeBackLargeScreenAfter(2000);
 		} // case
 		break;
 

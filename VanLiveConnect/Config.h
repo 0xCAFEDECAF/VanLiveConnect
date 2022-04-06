@@ -83,12 +83,14 @@
 // Web server
 
 // Define to make the web server to use the SPI Flash File system (SPIFFS) to serve its web documents from.
-// When not defined (commented out), the web server serves the web documents from memory.
+// When not defined (commented out), the web server serves the web documents from program space.
 //
-// Note: to upload the web document files to the SPIFFS on the ESP8266, you will need the "Arduino ESP8266
-// filesystem uploader", as found at https://github.com/esp8266/arduino-esp8266fs-plugin/releases .
-// See also https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/ for installation
-// instructions.
+// Notes:
+// - To upload the web document files to the SPIFFS on the ESP8266, you will need the "Arduino ESP8266
+//   filesystem uploader", as found at https://github.com/esp8266/arduino-esp8266fs-plugin/releases .
+//   See also https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/ for installation
+//   instructions.
+// - Unfortunately, the more is served from SPIFFS, the more VAN packets have CRC errors :-(
 //
 //#define SERVE_FROM_SPIFFS
 
