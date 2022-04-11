@@ -157,6 +157,11 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
                 websocketNum = prevWebsocketNum;
                 prevWebsocketNum = 0xFF;
             } // if
+
+            if (num == prevWebsocketNum)
+            {
+                prevWebsocketNum = 0xFF;
+            } // if
         }
         break;
 
@@ -168,8 +173,11 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
                 clientIp[0], clientIp[1], clientIp[2], clientIp[3],
                 payload);
 
-            prevWebsocketNum = websocketNum;
-            websocketNum = num;
+            if (num != websocketNum)
+            {
+                prevWebsocketNum = websocketNum;
+                websocketNum = num;
+            } // if
 
             // Send ESP system data to client
             SendJsonOnWebSocket(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
@@ -187,6 +195,12 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
           #ifdef DEBUG_WEBSOCKET
             Serial.printf("[webSocket %u] received text: '%s'\n", num, payload);
           #endif // DEBUG_WEBSOCKET
+
+            if (num != websocketNum)
+            {
+                prevWebsocketNum = websocketNum;
+                websocketNum = num;
+            } // if
 
             ProcessWebSocketClientMessage((char*)payload);  // Process the message
         }

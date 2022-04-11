@@ -86,11 +86,44 @@
 // When not defined (commented out), the web server serves the web documents from program space.
 //
 // Notes:
+//
 // - To upload the web document files to the SPIFFS on the ESP8266, you will need the "Arduino ESP8266
 //   filesystem uploader", as found at https://github.com/esp8266/arduino-esp8266fs-plugin/releases .
 //   See also https://randomnerdtutorials.com/install-esp8266-filesystem-uploader-arduino-ide/ for installation
 //   instructions.
-// - Unfortunately, the more is served from SPIFFS, the more VAN packets have CRC errors :-(
+//
+// - The web documents to be uploaded to SPIFFS are already present in the expected directory 'data'.
+//
+// - Using SPIFFS as it is shipped by default in the esp8266/Arduino releases (https://github.com/esp8266/Arduino)
+//   causes many VAN packets have CRC errors. The solution is to use SPIFFS in "read-only" mode. For that,
+//   patch the following file (on Windows; in Linux the path will be slightly different but similar):
+//
+//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\cores\esp8266\spiffs\spiffs_config.h
+//
+//   Change the SPIFFS_READ_ONLY define to:
+//
+//     #define SPIFFS_READ_ONLY                      1
+//
+//   That will break compilation, which is solved by patching the file:
+//
+//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\cores\esp8266\spiffs_api.h
+//
+//   Change the 'truncate' function as follows:
+//
+//     bool truncate(uint32_t size) override
+//     {
+//       #ifndef SPIFFS_READ_ONLY
+//         CHECKFD();
+//         spiffs_fd *sfd;
+//         if (spiffs_fd_get(_fs->getFs(), _fd, &sfd) == SPIFFS_OK) {
+//             return SPIFFS_OK == spiffs_object_truncate(sfd, size, 0);
+//         } else {
+//       #endif
+//           return false;
+//       #ifndef SPIFFS_READ_ONLY
+//         }
+//       #endif
+//    }
 //
 //#define SERVE_FROM_SPIFFS
 
@@ -153,13 +186,13 @@
 // Define to see JSON buffers printed on the serial port
 // Note: for some reason, having JSON buffers printed on the serial port seems to reduce the number
 //   of CRC errors in the received VAN bus packets
-//#define PRINT_JSON_BUFFERS_ON_SERIAL
+#define PRINT_JSON_BUFFERS_ON_SERIAL
 
 // If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of VAN-bus packets will be printed on the serial port?
-#define SELECTED_PACKETS VAN_PACKETS_ALL_VAN_PKTS
+//#define SELECTED_PACKETS VAN_PACKETS_ALL_VAN_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_HEAD_UNIT_PKTS
-//#define SELECTED_PACKETS VAN_PACKETS_SAT_NAV_PKTS
+#define SELECTED_PACKETS VAN_PACKETS_SAT_NAV_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_NO_VAN_PKTS
 
 //#define PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL

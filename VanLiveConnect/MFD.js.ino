@@ -479,6 +479,8 @@ function showNotificationPopup(message, msec, isWarning)
 	$("#notification_icon_info").toggle(! isWarning);
 	$("#notification_icon_warning").toggle(isWarning);
 
+	// TODO - if popup is already showing with this message, return here
+
 	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
 	showPopupAndNotifyServer("notification_popup", msec, message);  // Show the notification popup
 } // showNotificationPopup
@@ -648,6 +650,7 @@ function changeLargeScreenTo(id)
 
 var changeBackScreenId;
 var changeBackScreenTimer;
+var changeBackScreenTimerEnd = 0;
 
 // (Re-)arm the timer to change back to the previous screen
 function changeBackLargeScreenAfter(msec)
@@ -659,7 +662,6 @@ function changeBackLargeScreenAfter(msec)
 	(
 		function ()
 		{
-			changeBackScreenTimer = null;
 			if (inMenu())
 			{
 				if (menuStack.length >= 1) menuStack[0] = changeBackScreenId;
@@ -668,10 +670,13 @@ function changeBackLargeScreenAfter(msec)
 			{
 				changeLargeScreenTo(changeBackScreenId);
 			} // if
+			changeBackScreenTimer = null;
 			changeBackScreenId = undefined;
 		},
 		msec
 	);
+
+	changeBackScreenTimerEnd = Date.now() + msec;
 } // changeBackLargeScreenAfter
 
 // Temporarily switch to a specific screen on the right hand side of the display
@@ -690,6 +695,13 @@ function temporarilyChangeLargeScreenTo(id, msec)
 			changeBackScreenId = currentLargeScreenId;
 			changeLargeScreenTo(id);
 		} // if
+	} // if
+
+	// If the timer is already running, do not shorten it
+	if (changeBackScreenTimer !== null)
+	{
+		var msToEnd = changeBackScreenTimerEnd - Date.now();  // ms left to timeout
+		if (msec < msToEnd) return;
 	} // if
 
 	changeBackLargeScreenAfter(msec);
@@ -3126,6 +3138,7 @@ var engineCoolantTemperature;  // In degrees Celsius
 var vehicleSpeed;
 var icyConditions = false;
 var wasRiskOfIceWarningShown = false;
+var riskOfIceText = "Risk of ice!";
 
 // Normally, holding the "VAL" button on the IR remote control will not cause repetition.
 // The only exceptions are the '+' and '-' buttons in specific menu screens.
@@ -3781,8 +3794,8 @@ function handleItemChange(item, value)
 			$("#n_rpm_speed").text("n: " + n.toFixed(2));
 
 			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
-			if (n >= 110 && n <= 150) $("#chosen_gear").text("1");
-			else if (n >= 58 && n <= 69) $("#chosen_gear").text("2");
+			if (n >= 110 && n <= 160) $("#chosen_gear").text("1");
+			else if (n >= 57 && n <= 70) $("#chosen_gear").text("2");
 			else if (n >= 37 && n <= 42) $("#chosen_gear").text("3");
 			else if (n >= 26 && n <= 29) $("#chosen_gear").text("4");
 			else if (n >= 20 && n <= 22) $("#chosen_gear").text("5");
@@ -3810,7 +3823,7 @@ function handleItemChange(item, value)
 
 			if (icyConditions && ! wasRiskOfIceWarningShown && isDriving)
 			{
-				showNotificationPopup("Risk of ice!", 10000);
+				showNotificationPopup(riskOfIceText, 10000);
 				wasRiskOfIceWarningShown = true;
 			} // if
 		} // case
@@ -3874,8 +3887,6 @@ function handleItemChange(item, value)
 
 		case "exterior_temp":
 		{
-			$("#splash_text").hide();
-
 			var temp = parseFloat(value);
 
 			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit") 
@@ -3891,11 +3902,6 @@ function handleItemChange(item, value)
 				else if (icyConditions && (temp <= -4.0 || temp >= 4.0)) icyConditions = false;
 			} // if
 
-			$('[gid="exterior_temp_shown"]').html(
-				localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit" ?
-					value + " &deg;F" : value + " &deg;C"
-				);
-
 			// If icy conditions, add "ice glow" effect
 			$('[gid="exterior_temp_shown"]').toggleClass("glowIce", icyConditions);
 
@@ -3903,7 +3909,7 @@ function handleItemChange(item, value)
 			{
 				if (! wasRiskOfIceWarningShown && vehicleSpeed >= 5)
 				{
-					showNotificationPopup("Risk of ice!", 10000);
+					showNotificationPopup(riskOfIceText, 10000);
 					wasRiskOfIceWarningShown = true;
 				} // if
 			}
@@ -3911,6 +3917,17 @@ function handleItemChange(item, value)
 			{
 				wasRiskOfIceWarningShown = false;
 			} // if
+		} // case
+		break;
+
+		case "exterior_temp_loc":
+		{
+			$("#splash_text").hide();
+
+			$('[gid="exterior_temp_shown"]').html(
+				localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit" ?
+					value + " &deg;F" : value + " &deg;C"
+				);
 		} // case
 		break;
 
@@ -4129,7 +4146,11 @@ function handleItemChange(item, value)
 
 		case "notification_message_on_mfd":
 		{
-			if (value === "") break;
+			if (value === "")
+			{
+				hidePopup("notification_popup");
+				break;
+			} // if
 
 			var isWarning = value.slice(-1) === "!";
 			var message = isWarning ? value.slice(0, -1) : value;
@@ -4168,7 +4189,7 @@ function handleItemChange(item, value)
 			if (value === handleItemChange[item]) break;
 			handleItemChange[item] = value;
 
-			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 20000);
+			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
 			else if (value === "NO") changeBackLargeScreenAfter(2000);
 		} // case
 		break;
@@ -4182,7 +4203,7 @@ function handleItemChange(item, value)
 
 			satnavDisplayCanBeDimmed = value === "YES";
 
-			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance", 120000);
+			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
 			else if (value === "YES") changeBackLargeScreenAfter(2000);
 		} // case
 		break;
@@ -5468,6 +5489,8 @@ function setLanguage(language)
 			bootAndDoorOpenText = "Boot and door open";
 			bootAndDoorsOpenText = "Boot and doors open";
 
+			riskOfIceText = "Risk of ice!";
+
 			$("#main_menu .menuTitleLine").html("Main menu<br />");
 			$("#main_menu_goto_satnav_button").html("Navigation / Guidance");
 			$("#main_menu_goto_screen_configuration_button").html("Configure display");
@@ -5629,6 +5652,8 @@ function setLanguage(language)
 			bootAndDoorOpenText = "Porte et coffre ouverts";
 			bootAndDoorsOpenText = "Portes et coffre ouverts";
 
+			riskOfIceText = "Risque de glace!";  // TODO - check
+
 			$("#main_menu .menuTitleLine").html("Menu g&eacute;n&eacute;ral<br />");
 			$("#main_menu_goto_satnav_button").html("Navigation / Guidage");
 			$("#main_menu_goto_screen_configuration_button").html("Configuration afficheur");
@@ -5789,6 +5814,8 @@ function setLanguage(language)
 			bootAndDoorOpenText = "T&uuml;r und Kofferraum offen";
 			bootAndDoorsOpenText = "T&uuml;ren und Kofferraum offen";
 
+			riskOfIceText = "Rutschgefahr!";  // TODO - check
+
 			$("#main_menu .menuTitleLine").html("Hauptmen&uuml;<br />");
 			$("#main_menu_goto_satnav_button").html("Navigation / F&uuml;hrung");
 			$("#main_menu_goto_screen_configuration_button").html("Display konfigurieren");
@@ -5948,6 +5975,8 @@ function setLanguage(language)
 			bootOpenText = "Maletero abierto";
 			bootAndDoorOpenText = "Puerta y maletero abiertos";
 			bootAndDoorsOpenText = "Puertas y maletero abiertos";
+
+			riskOfIceText = "Riesgo de resbalar!";  // TODO - check
 
 			$("#main_menu .menuTitleLine").html("Men&uacute; general<br />");
 			$("#main_menu_goto_satnav_button").html("Navegaci&oacute;n / Guiado");
@@ -6110,6 +6139,8 @@ function setLanguage(language)
 			bootAndDoorOpenText = "Portiera e cofano aperti";
 			bootAndDoorsOpenText = "Portiere e cofano aperti";
 
+			riskOfIceText = "Rischio di scivolosit&agrave;!";  // TODO - check
+
 			$("#main_menu .menuTitleLine").html("Men&ugrave; generale<br />");
 			$("#main_menu_goto_satnav_button").html("Navigazione/Guida");
 			$("#main_menu_goto_screen_configuration_button").html("Configurazione monitor");
@@ -6269,6 +6300,8 @@ function setLanguage(language)
 			bootOpenText = "Kofferbak open";
 			bootAndDoorOpenText = "Deur en kofferbak open";
 			bootAndDoorsOpenText = "Deuren en kofferbak open";
+
+			riskOfIceText = "Kans op ijzel!";  // Should be: "Kans op gladheid"
 
 			$("#main_menu .menuTitleLine").html("Hoofdmenu<br />");
 			$("#main_menu_goto_satnav_button").html("Navigatie / Begeleiding");

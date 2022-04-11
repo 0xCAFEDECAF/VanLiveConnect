@@ -3,6 +3,10 @@
 
 #include "Config.h"
 
+// Defined in WebSocket.ino
+extern uint8_t prevWebsocketNum;
+extern uint8_t websocketNum;
+
 const char* GetHostname()
 {
     return HOST_NAME;
@@ -21,12 +25,18 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 
     Serial.print("Wi-Fi client connected: ");
     Serial.println(macToString(evt.mac));
+
+    websocketNum = 0xFF;
+    prevWebsocketNum = 0xFF;
 } // onStationConnected
 
 void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 {
     Serial.print("Wi-Fi client disconnected: ");
     Serial.println(macToString(evt.mac));
+
+    websocketNum = 0xFF;
+    prevWebsocketNum = 0xFF;
 } // onStationDisconnected
 
 void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
@@ -54,6 +64,8 @@ void SetupWifi()
   #ifdef WIFI_AP_MODE
 
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), WIFI_SSID);
+
+    WiFi.softAPdisconnect (true);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));

@@ -237,7 +237,7 @@ char* ToHexStr(uint16_t data)
 // Note: passed buffer size must be (at least) MAX_FLOAT_SIZE bytes, e.g. declare like this:
 //   char buffer[MAX_FLOAT_SIZE];
 char decimalSeparatorChar = '.';
-char* ToFloatStr(char* buffer, float f, int prec, bool useGlobalDecimalSeparatorChar = true)
+char* ToFloatStr(char* buffer, float f, int prec, bool useLocalizedDecimalSeparatorChar = true)
 {
     dtostrf(f, MAX_FLOAT_SIZE - 1, prec, buffer);
 
@@ -245,7 +245,7 @@ char* ToFloatStr(char* buffer, float f, int prec, bool useGlobalDecimalSeparator
     char* strippedStr = buffer;
     while (isspace(*strippedStr)) strippedStr++;
 
-    if (prec > 0 && useGlobalDecimalSeparatorChar && decimalSeparatorChar != '.')
+    if (prec > 0 && useLocalizedDecimalSeparatorChar && decimalSeparatorChar != '.')
     {
         char* p  = strchr(buffer, '.');
         if (p) *p = decimalSeparatorChar;
@@ -818,7 +818,8 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
                 "}\n"
             "},\n"
             "\"odometer_1\": \"%s\",\n"
-            "\"exterior_temp\": \"%s\"\n"
+            "\"exterior_temp\": \"%s\",\n"  // Machine format: "3.0"
+            "\"exterior_temp_loc\": \"%s\"\n"  // Localized, e.g. "3,5" or "3.5", depending on language
         "}\n"
     "}\n";
 
@@ -853,6 +854,10 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             ToFloatStr(floatBuf[1], odometer, 1) :
             ToFloatStr(floatBuf[1], ToMiles(odometer), 1),
+
+        mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+            ToFloatStr(floatBuf[2], extTemp, 1, false) :
+            ToFloatStr(floatBuf[2], ToFahrenheit(extTemp), 0, false),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
             ToFloatStr(floatBuf[2], extTemp, 1) :
@@ -1659,13 +1664,16 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
     uint8_t currentMsg = data[9];
 
-    // Relying on short-circuit boolean evaluation
-    if (currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0)
-    {
-        // The message to be shown in the popup on the MFD
-        at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"notification_message_on_mfd\": \"%S\""), msgTable[currentMsg]);
-    } // if
+    // The message to be shown in the popup on the MFD
+    at += at >= n ? 0 :
+        snprintf_P(buf + at, n - at,
+            PSTR(",\n\"notification_message_on_mfd\": \"%S\""),
+
+            // Relying on short-circuit boolean evaluation
+            currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0
+                ? msgTable[currentMsg]
+                : ""
+        );
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
@@ -2893,7 +2901,9 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"satnav_destination_not_accessible\": \"%S\",\n"
             "\"satnav_arrived_at_destination\": \"%S\",\n"
 
+            // Send this before "satnav_new_guidance_instruction", for correct handling by MFD.js
             "\"satnav_guidance_display_can_be_dimmed\": \"%S\",\n"
+
             "\"satnav_new_guidance_instruction\": \"%S\",\n"
             "\"satnav_audio_start\": \"%S\",\n"
             "\"satnav_audio_end\": \"%S\",\n"
