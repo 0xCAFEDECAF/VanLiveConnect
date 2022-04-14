@@ -1093,7 +1093,6 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Sat nav guidance criteria menu -->
 				<div id="satnav_guidance_preference_menu"
 					on_goto="satnavGuidancePreferenceSelectTickedButton();"
-					on_esc="satnavSwitchToGuidanceScreen();"
 					style="position:absolute; display:none; left:20px; top:140px; width:920px; height:410px;">
 
 					<!-- As long we don't know the "satnav_guidance_preference" value, "Fastest route" will be ticked -->
@@ -1483,7 +1482,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- TODO - Might need the full screen width for long city / street names -->
 					<div id="satnav_show_programmed_destination"
 						on_enter="satnavClearLastDestination();"
-						on_esc="satnavSwitchToGuidanceScreen();"
+						on_esc="upMenu(); exitMenu();"
 						style="display:none;">
 
 						<div class="tag satNavShowAddress">Programmed destination</div>
@@ -1499,12 +1498,12 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div button_orientation="horizontal" class="buttonBar">
 							<div id="satnav_show_programmed_destination_validate_button"
-								on_click="satnavSwitchToGuidanceScreen();"
+								on_click="upMenu(); exitMenu();"
 								class="icon button buttonSelected validateButton">
 								Validate
 							</div>
 							<div
-								on_click="menuStack = [ 'satnav_guidance' ]; currentMenu = 'satnav_main_menu'; changeLargeScreenTo('satnav_main_menu'); selectFirstMenuItem('satnav_main_menu');"
+								on_click="satnavChangeProgrammedDestination();"
 								class="icon button correctionButton" style="left:290px;">
 								Change
 							</div>

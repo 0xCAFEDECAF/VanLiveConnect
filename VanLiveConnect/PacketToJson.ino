@@ -823,7 +823,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         "}\n"
     "}\n";
 
-    char floatBuf[3][MAX_FLOAT_SIZE];
+    char floatBuf[4][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
 
         data[0] & 0x80 ? PSTR("FULL") : PSTR("DIMMED (LIGHTS ON)"),
@@ -860,8 +860,8 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
             ToFloatStr(floatBuf[2], ToFahrenheit(extTemp), 0, false),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            ToFloatStr(floatBuf[2], extTemp, 1) :
-            ToFloatStr(floatBuf[2], ToFahrenheit(extTemp), 0)
+            ToFloatStr(floatBuf[3], extTemp, 1) :
+            ToFloatStr(floatBuf[3], ToFahrenheit(extTemp), 0)
     );
 
     // JSON buffer overflow?
@@ -3243,7 +3243,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
             status == 0x0000 ? PSTR("COMPUTING_ROUTE") :
             status == 0x0001 ? PSTR("STOPPING_NAVIGATION") :
-            status == 0x0101 ? ToHexStr(status) :  // Setting vocal synthesis level?
+            status == 0x0101 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING") :  // TODO - Not sure
 
             // This starts when the nag screen is accepted and is seen repeatedly when selecting a destination
             // and during guidance. It stops after a "STOPPING_NAVIGATION" status message.

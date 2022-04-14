@@ -381,6 +381,11 @@ function connectToWebSocket()
 	(
 		'open', function ()
 		{
+			webSocket.send("mfd_language:" + localStorage.mfdLanguage);
+			webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
+			webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
+			webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
+
 			// (Re-)start the "keep alive" timer
 			clearInterval(keepAliveWebSocketTimer);
 			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
@@ -1065,7 +1070,7 @@ function buttonClicked()
 function upMenu()
 {
 	currentMenu = menuStack.pop();
-	if (currentMenu) changeLargeScreenTo(currentMenu); else selectDefaultScreen();
+	if (currentMenu) changeLargeScreenTo(currentMenu);// else selectDefaultScreen();
 } // upMenu
 
 function exitMenu()
@@ -1878,6 +1883,7 @@ var satnavDestinationReachable = false;
 var satnavGpsFix = false;
 var satnavOnMap = false;
 var satnavStatus1 = "";
+var satnavStatus3 = "";
 var satnavDestinationNotAccessible = false;
 var satnavComputingRoute = false;
 var satnavDisplayCanBeDimmed = true;
@@ -1932,31 +1938,21 @@ function satnavCutoffBottomLines(selector)
 function satnavGotoMainMenu()
 {
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
-	if (! satnavInitialized)
-	{
-		showPopupAndNotifyServer("satnav_initializing_popup", 20000);
-		return;
-	} // if
+	if (! satnavInitialized) return showPopupAndNotifyServer("satnav_initializing_popup", 20000);
 
-	if (satnavStatus1.match(/NO_DISC/))
-	{
-		hidePopup("satnav_initializing_popup");
-		showStatusPopup(satnavDiscMissingText, 8000);
-		return;
-	} // if
+	hidePopup("satnav_initializing_popup");
+
+	if (satnavStatus1.match(/NO_DISC/)) return showStatusPopup(satnavDiscMissingText, 8000);
 
 	if (satnavStatus1.match(/DISC_UNREADABLE/) || $("#satnav_disc_recognized").hasClass("ledOff"))
 	{
-		hidePopup("satnav_initializing_popup");
 		showStatusPopup(satnavDiscUnreadbleText, 10000);
 		return;
 	} // if
 
-	// Change to the sat nav main menu with an exit to the general main manu
-	menuStack = [ "main_menu" ];
-	currentMenu = "satnav_main_menu";
-	changeLargeScreenTo(currentMenu);
-	selectFirstMenuItem(currentMenu);  // Select the top button
+	// We can get here from various screens. Rewrite the menu stack for direct exit to main menu.
+	menuStack = [ menuStack[0] ];
+	gotoMenu("satnav_main_menu");
 
 	satnavShowDisclaimer();
 } // satnavGotoMainMenu
@@ -2506,6 +2502,16 @@ function satnavClearLastDestination()
 	$("#satnav_reached_destination_house_number").empty();
 } // satnavClearLastDestination
 
+function satnavChangeProgrammedDestination()
+{
+	// menuStack = [ 'satnav_guidance' ];
+	menuStack.pop();
+
+	currentMenu = satnavVehicleMoving() ? 'satnav_select_from_memory_menu' : 'satnav_main_menu';
+	changeLargeScreenTo(currentMenu);
+	selectFirstMenuItem(currentMenu);
+} // satnavChangeProgrammedDestination
+
 function satnavEnterShowServiceAddress()
 {
 	// Empty all fields except 'satnav_to_mfd_list_size'
@@ -2879,8 +2885,8 @@ function satnavGuidancePreferenceValidate()
 {
 	if (currentMenu === "satnav_guidance")
 	{
-		// Return to the guidance screen (bit clumsy)
-		exitMenu();
+		// Return to the guidance screen
+		satnavSwitchToGuidanceScreen();
 		if (satnavComputingRoute) satnavCalculatingRoute(); else showDestinationNotAccessiblePopupIfApplicable();
 	}
 	else
@@ -2988,7 +2994,10 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
-		if (satnavMode === "IN_GUIDANCE_MODE") temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
+		if (satnavMode === "IN_GUIDANCE_MODE" && ! inMenu() && satnavStatus3 === "SATNAV_IN_OPERATION")
+		{
+			temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
+		} // if
 
 		// Set timeout on LED, in case the "AUDIO OFF" packet is missed
 		satnavSetAudioLed.showSatnavAudioLed = setTimeout
@@ -3020,8 +3029,7 @@ function satnavValidateVocalSynthesisLevel()
 	{
 		// In nav guidance tools (context) menu
 
-		// Go back to guidance screen
-		exitMenu();
+		upMenu();
 		exitMenu();
 	}
 	else
@@ -3030,7 +3038,7 @@ function satnavValidateVocalSynthesisLevel()
 
 		// When the "Validate" button is pressed, all menus are exited up to top level.
 		// IMHO that is a bug in the original MFD.
-		exitMenu();
+		upMenu();
 		exitMenu();
 		exitMenu();
 		exitMenu();
@@ -3048,7 +3056,8 @@ function satnavEscapeVocalSynthesisLevel()
 	} // if
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
-	if (comingFromMenu === "satnav_guidance_tools_menu") satnavSwitchToGuidanceScreen(); else upMenu();
+	upMenu();
+	if (comingFromMenu === "satnav_guidance_tools_menu") exitMenu();
 } // satnavEscapeVocalSynthesisLevel
 
 function satnavStopGuidance()
@@ -4189,8 +4198,14 @@ function handleItemChange(item, value)
 			if (value === handleItemChange[item]) break;
 			handleItemChange[item] = value;
 
-			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
-			else if (value === "NO") changeBackLargeScreenAfter(2000);
+			if (value === "YES" && satnavStatus3 === "SATNAV_IN_OPERATION")
+			{
+				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
+			}
+			else if (value === "NO")
+			{
+				changeBackLargeScreenAfter(2000);
+			} // if
 		} // case
 		break;
 
@@ -4203,8 +4218,16 @@ function handleItemChange(item, value)
 
 			satnavDisplayCanBeDimmed = value === "YES";
 
-			if (value === "NO") temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
-			else if (value === "YES") changeBackLargeScreenAfter(2000);
+			if (value === "NO"
+				&& currentLargeScreenId !== "satnav_vocal_synthesis_level"
+				&& satnavStatus3 === "SATNAV_IN_OPERATION")
+			{
+				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
+			}
+			else if (value === "YES")
+			{
+				changeBackLargeScreenAfter(2000);
+			} // if
 		} // case
 		break;
 
@@ -4286,6 +4309,8 @@ function handleItemChange(item, value)
 
 		case "satnav_status_3":
 		{
+			satnavStatus3 = value;
+
 			if (value === "STOPPING_NAVIGATION")
 			{
 				satnavDestinationNotAccessibleByRoadPopupShown = false;
