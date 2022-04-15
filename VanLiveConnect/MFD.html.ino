@@ -1096,6 +1096,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Sat nav guidance criteria menu -->
 				<div id="satnav_guidance_preference_menu"
 					on_goto="satnavGuidancePreferenceSelectTickedButton();"
+					on_exit="showDestinationNotAccessiblePopupIfApplicable();"
 					on_esc="satnavGuidancePreferenceEscape();"
 					style="position:absolute; display:none; left:20px; top:140px; width:920px; height:410px;">
 
@@ -2418,7 +2419,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_guidance_preference_popup"
 				on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
-				on_exit="showDestinationNotAccessiblePopupIfApplicable();"
+				on_esc="showDestinationNotAccessiblePopupIfApplicable();"
 				class="icon notificationPopup" style="display:none; height:300px;">
 				<div class="centerAligned yesNoPopupArea">
 					<span id="satnav_guidance_preference_popup_title">Keep criteria</span>

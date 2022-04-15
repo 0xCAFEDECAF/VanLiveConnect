@@ -2824,6 +2824,41 @@ function satnavSwitchToGuidanceScreen()
 	changeLargeScreenTo(currentMenu);
 } // satnavSwitchToGuidanceScreen
 
+// Show the "Destination is not accessible by road" popup, if applicable
+function showDestinationNotAccessiblePopupIfApplicable()
+{
+	if (! satnavDestinationNotAccessible) return false;
+
+	// Don't show this popup while still in the guidance preference popup or menu
+	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
+	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
+
+	// Show this popup only once at start of guidance or after recalculation
+	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
+
+	// But only if the current location is known (to emulate behaviour of MFD)
+	//if (satnavCurrentStreet !== "") --> This seems to be the criterion used by the original MFD (which is also incorrect)
+	//if (satnavGpsFix)
+	if (! satnavDestinationReachable && satnavOnMap)
+	{
+		hidePopup();
+
+		var translations =
+		{
+			"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
+			"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
+			"set_language_spanish": "Destino inaccesible<br />por carratera",
+			"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
+			"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
+		};
+		showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
+	} // if
+
+	satnavDestinationNotAccessibleByRoadPopupShown = true;
+
+	return true;
+} // showDestinationNotAccessiblePopupIfApplicable
+
 function satnavGuidanceSetPreference(value)
 {
 	if (value === undefined || value === "---") return;
@@ -2875,6 +2910,9 @@ function satnavGuidancePreferenceSelectTickedButton()
 function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
+
+	if (showDestinationNotAccessiblePopupIfApplicable()) return;
+
 	if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
 } // satnavGuidancePreferencePopupYesButton
 
@@ -2930,41 +2968,6 @@ function satnavCalculatingRoute()
 
 	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 } // satnavCalculatingRoute
-
-// Show the "Destination is not accessible by road" popup, if applicable
-function showDestinationNotAccessiblePopupIfApplicable()
-{
-	if (! satnavDestinationNotAccessible) return false;
-
-	// Don't show this popup while still in the guidance preference popup or menu
-	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
-	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
-
-	// Show this popup only once at start of guidance or after recalculation
-	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
-
-	// But only if the current location is known (to emulate behaviour of MFD)
-	//if (satnavCurrentStreet !== "") --> This seems to be the criterion used by the original MFD (which is also incorrect)
-	//if (satnavGpsFix)
-	if (! satnavDestinationReachable && satnavOnMap)
-	{
-		hidePopup();
-
-		var translations =
-		{
-			"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
-			"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
-			"set_language_spanish": "Destino inaccesible<br />por carratera",
-			"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
-			"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
-		};
-		showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
-	} // if
-
-	satnavDestinationNotAccessibleByRoadPopupShown = true;
-
-	return true;
-} // showDestinationNotAccessiblePopupIfApplicable
 
 function showOrTimeoutDestinationNotAccessiblePopup()
 {
