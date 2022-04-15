@@ -30,7 +30,7 @@
   //#define WIFI_PASSWORD "99999999"
 
   // Set between (1) and (13). Note: some devices cannot connect to channels above 11.
-  #define WIFI_CHANNEL (11)
+  #define WIFI_CHANNEL (6)
 
   #define IP_ADDR "192.168.244.1"
 

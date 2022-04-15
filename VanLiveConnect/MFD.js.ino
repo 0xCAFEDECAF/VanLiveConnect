@@ -1737,8 +1737,11 @@ function adjustDimLevel(headlightStatus, button)
 
 function setBrightnessEscape()
 {
-	initDimLevel();  // Go back to saved setting
+	// Go back to saved settings
+	initDimLevel();
 	setColorTheme(localStorage.colorTheme);
+
+	upMenu();
 } // setBrightnessEscape
 
 function setBrightnessValidate()
@@ -1747,9 +1750,9 @@ function setBrightnessValidate()
 	localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
 	localStorage.dimLevel = $("#display_brightness_level").text();
 
-	exitMenu();
-	exitMenu();
-	exitMenu();
+	upMenu();
+	upMenu();
+	upMenu();
 } // setBrightnessValidate
 
 // -----
@@ -1789,9 +1792,9 @@ function setLanguageValidate()
 
 	// TODO - the original MFD sometimes shows a popup when the language is changed
 
-	exitMenu();
-	exitMenu();
-	exitMenu();
+	upMenu();
+	upMenu();
+	upMenu();
 } // setLanguageValidate
 
 // -----
@@ -1849,9 +1852,9 @@ function unitsValidate()
 	webSocket.send("mfd_temperature_unit:" + newTemperatureUnit);
 	webSocket.send("mfd_time_unit:" + newTimeUnit);
 
-	exitMenu();
-	exitMenu();
-	exitMenu();
+	upMenu();
+	upMenu();
+	upMenu();
 } // unitsValidate
 
 var mfdLargeScreen = "CLOCK";  // Screen currently shown in the "large" (right hand side) area on the original MFD
@@ -2777,8 +2780,10 @@ function satnavDeleteDirectoryEntry()
 	} // if
 
 	hidePopup();
-	exitMenu();
-	exitMenu();
+
+	// Go all the way back to the "Directory management" menu
+	upMenu();
+	upMenu();
 } // satnavDeleteDirectoryEntry
 
 // Handles pressing "UP" on the "Correction" button in the sat nav directory entry screens
@@ -2880,6 +2885,20 @@ function satnavGuidancePreferencePopupNoButton()
 	changeLargeScreenTo('satnav_guidance_preference_menu');
 	satnavGuidancePreferenceSelectTickedButton();
 } // satnavGuidancePreferencePopupNoButton
+
+function satnavGuidancePreferenceEscape()
+{
+	if (menuStack[0])
+	{
+		changeLargeScreenTo(menuStack[0]);
+		menuStack = [];
+		currentMenu = undefined;
+	}
+	else
+	{
+		selectDefaultScreen();
+	} // if
+} // satnavGuidancePreferenceEscape
 
 function satnavGuidancePreferenceValidate()
 {
@@ -3030,18 +3049,17 @@ function satnavValidateVocalSynthesisLevel()
 		// In nav guidance tools (context) menu
 
 		upMenu();
-		exitMenu();
+		upMenu();
 	}
 	else
 	{
 		// In main menu
 
 		// When the "Validate" button is pressed, all menus are exited up to top level.
-		// IMHO that is a bug in the original MFD.
 		upMenu();
-		exitMenu();
-		exitMenu();
-		exitMenu();
+		upMenu();
+		upMenu();
+		upMenu();
 	} // if
 } // satnavValidateVocalSynthesisLevel
 
@@ -3057,7 +3075,7 @@ function satnavEscapeVocalSynthesisLevel()
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
 	upMenu();
-	if (comingFromMenu === "satnav_guidance_tools_menu") exitMenu();
+	if (comingFromMenu === "satnav_guidance_tools_menu") upMenu();
 } // satnavEscapeVocalSynthesisLevel
 
 function satnavStopGuidance()
@@ -4363,34 +4381,21 @@ function handleItemChange(item, value)
 			if (newValue === satnavRouteComputed) break;
 			satnavRouteComputed = newValue;
 
-			if (satnavMode === "IN_GUIDANCE_MODE")
+			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+			if (! $("#satnav_guidance").is(":visible")) break;
+			if (satnavRouteComputed) break;
+
+			// TODO - check translations from English
+			var translations =
 			{
-				if ($("#satnav_guidance").is(":visible"))
-				{
-					if (! satnavRouteComputed)
-					{
-						// TODO - check translations from English
-						var translations =
-						{
-							"set_language_french": "Chercher instruction",
-							"set_language_german": "Anweisung suchen",
-							"set_language_spanish": "Buscar instrucci&oacute;n",
-							"set_language_italian": "Cercare istruzione",
-							"set_language_dutch": "Opzoeken instructie"
-						};
-						var content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
-						$("#satnav_guidance_next_street").html(content);
-					}
-				}
-				else
-				{
-					// Don't change screen while driving or while the guidance preference menu is showing
-					if (inMenu() && ! $("#satnav_guidance_preference_menu").is(":visible"))
-					{
-						satnavSwitchToGuidanceScreen();
-					} // if
-				} // if
-			} // if
+				"set_language_french": "Chercher instruction",
+				"set_language_german": "Anweisung suchen",
+				"set_language_spanish": "Buscar instrucci&oacute;n",
+				"set_language_italian": "Cercare istruzione",
+				"set_language_dutch": "Opzoeken instructie"
+			};
+			var content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
+			$("#satnav_guidance_next_street").html(content);
 		} // case
 		break;
 

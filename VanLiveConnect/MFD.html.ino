@@ -627,8 +627,9 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>	<!-- "screen_configuration_menu" -->
 
 			<div id="set_screen_brightness" class="tag menuScreen" style="top:100px;"
-				on_esc="acceptingHeldValButton = false; setBrightnessEscape(); upMenu();"
-				on_goto="colorThemeSelectTickedButton();">
+				on_goto="colorThemeSelectTickedButton();"
+				on_esc="setBrightnessEscape();"
+				on_exit="acceptingHeldValButton = false;">
 				<div class="menuTitleLine">Set brightness<br /></div>
 
 				<div style="position:absolute; font-size:46px; text-align:left;">
@@ -784,7 +785,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="set_date_time_validate_button"
 					UP_BUTTON="set_date_time_increase_day"
-					on_click="exitMenu(); exitMenu(); exitMenu();"
+					on_click="upMenu(); upMenu(); upMenu();"
 					class="button validateButton"
 					style="top:390px;">Validate</div>
 			</div>	<!-- "set_date_time" -->
@@ -1003,7 +1004,7 @@ char mfd_html[] PROGMEM = R"=====(
 							checked by the user.<br />
 						</div>
 						<div id="satnav_disclaimer_validate_button"
-							on_click="satnavDisclaimerAccepted = true; exitMenu(); satnavGotoMainMenu();"
+							on_click="satnavDisclaimerAccepted = true; upMenu(); satnavGotoMainMenu();"
 							class="button validateButton buttonSelected" style="left:630px; top:300px;">
 							Validate
 						</div>
@@ -1012,7 +1013,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Sat nav main menu -->
 
-				<div id="satnav_main_menu" class="tag menuScreen" on_enter="highlightFirstLine('satnav_choice_list');">
+				<div id="satnav_main_menu" class="tag menuScreen"
+					on_enter="highlightFirstLine('satnav_choice_list');">
+
 					<div class="menuTitleLine">Navigation / Guidance<br /></div>
 
 					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
@@ -1093,6 +1096,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Sat nav guidance criteria menu -->
 				<div id="satnav_guidance_preference_menu"
 					on_goto="satnavGuidancePreferenceSelectTickedButton();"
+					on_esc="satnavGuidancePreferenceEscape();"
 					style="position:absolute; display:none; left:20px; top:140px; width:920px; height:410px;">
 
 					<!-- As long we don't know the "satnav_guidance_preference" value, "Fastest route" will be ticked -->
@@ -1482,7 +1486,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- TODO - Might need the full screen width for long city / street names -->
 					<div id="satnav_show_programmed_destination"
 						on_enter="satnavClearLastDestination();"
-						on_esc="upMenu(); exitMenu();"
+						on_esc="upMenu(); upMenu();"
 						style="display:none;">
 
 						<div class="tag satNavShowAddress">Programmed destination</div>
@@ -1498,7 +1502,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div button_orientation="horizontal" class="buttonBar">
 							<div id="satnav_show_programmed_destination_validate_button"
-								on_click="upMenu(); exitMenu();"
+								on_click="upMenu(); upMenu();"
 								class="icon button buttonSelected validateButton">
 								Validate
 							</div>
@@ -1549,7 +1553,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag satNavEntryNameTag">Name</div>
 					<div id="satnav_archive_in_directory_entry"
 						on_enter="satnavEnterArchiveInDirectoryScreen();"
-						on_esc="satnavLastEnteredChar = null; currentMenu = upMenu();"
+						on_esc="satnavLastEnteredChar = null; upMenu();"
 						class="dots satNavShowAddressCity" style="font-size:60px;">----------------</div>
 
 					<div id="satnav_archive_in_directory_characters_line_1"
@@ -1612,7 +1616,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- on_esc: this goes back to the "List" screen -->
 					<div id="satnav_rename_entry_in_directory_entry"
 						on_enter="satnavEnterRenameDirectoryEntryScreen();"
-						on_esc="satnavLastEnteredChar = null; currentMenu = upMenu();"
+						on_esc="satnavLastEnteredChar = null; upMenu();"
 						class="dots satNavShowAddressCity" style="font-size:60px; left:350px;">----------------</div>
 
 					<div id="satnav_rename_entry_in_directory_characters_line_1"
@@ -2356,7 +2360,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Sat nav popup "Input has been stored in personal directory" -->
 
 			<div id="satnav_input_stored_in_personal_dir_popup"
-				on_exit="exitMenu();"
+				on_exit="upMenu();"
 				class="icon notificationPopup" style="display:none;">
 				<div class="centerAligned messagePopupArea">
 					Input has been stored in<br />the personal<br />directory
@@ -2366,7 +2370,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Sat nav popup "Input has been stored in professional directory" -->
 
 			<div id="satnav_input_stored_in_professional_dir_popup"
-				on_exit="exitMenu();"
+				on_exit="upMenu();"
 				class="icon notificationPopup" style="display:none;">
 				<div class="centerAligned messagePopupArea">
 					Input has been stored in<br />the professional<br />directory
@@ -2384,7 +2388,6 @@ char mfd_html[] PROGMEM = R"=====(
 					<span style="font-size:60px;" id="satnav_delete_directory_entry_in_popup"></span>
 
 					<div button_orientation="horizontal">
-						<!-- on_click: goes all the way back to the "Directory management" menu -->
 						<div id="satnav_delete_item_popup_yes_button"
 							on_click="satnavDeleteDirectoryEntry();"
 							class="icon button yesButton" style="left:150px; top:220px; width:150px; height:40px;">
