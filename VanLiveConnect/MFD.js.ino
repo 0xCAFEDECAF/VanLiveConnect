@@ -90,38 +90,17 @@ function showViewportSizes()
 } // showViewportSizes
 
 // -----
+// IR remote control
+
+var ignoringIrCommands = false;
+
+// -----
 // Functions for parsing and handling VAN bus packet data as received in JSON format
 
 function processJsonObject(item, jsonObject)
 {
-	// A double underscore ('__') is parsed as a "ditto mark". Example:
-	//
-	// {
-	//   "event": "display",
-	//   "data": {
-	//     "satnav_fork_icon__take_right_exit":"OFF",
-	//     "__keep_right":"OFF",
-	//     "__take_left_exit":"OFF",
-	//     "__keep_left":"OFF",
-	//   }
-	// }
-	//
-	// The above will update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
-	//
-	// Note: double underscores ('__') are translated to single ones ('_').
-
-	// Recognize the string before a double underscore ('__') as a prefix for subsequent items
-	var r = /^(.*)__.+/.exec(item);
-	if (! r) processJsonObject.prefix = ""; else if (r[1]) processJsonObject.prefix = r[1];
-
-	// Pre-pend saved prefix to items starting with double underscore ('__', "ditto mark")
-	var domItem = item;
-	if (domItem.match(/^__.+/)) domItem = processJsonObject.prefix + domItem;
-
-	domItem = domItem.replace("__", "_"); 
-
-	var selectorById = '#' + domItem;  // Select by 'id' attribute (must be unique in the DOM)
-	var selectorByAttr = '[gid="' + domItem + '"]';  // Select also by custom attribute 'gid' (need not be unique)
+	var selectorById = '#' + item;  // Select by 'id' attribute (must be unique in the DOM)
+	var selectorByAttr = '[gid="' + item + '"]';  // Select also by custom attribute 'gid' (need not be unique)
 
 	// jQuery-style loop over merged, unique-element array
 	$.each($.unique($.merge($(selectorByAttr), $(selectorById))), function (index, selector)
@@ -130,42 +109,12 @@ function processJsonObject(item, jsonObject)
 
 		if (Array.isArray(jsonObject))
 		{
-			// Handling of multi-line DOM objects to show lists. Example:
-			//
-			// {
-			//   "event": "display",
-			//   "data": {
-			//     "alarm_list": [
-			//       "Tyre pressure low",
-			//       "Door open",
-			//       "Water temperature too high",
-			//       "Oil level too low"
-			//     ]
-			//   }
-			// }
-
+			// Handling of multi-line DOM objects to show lists
 			$(selector).html(jsonObject.join('<br />'));
 		}
 		else if (!!jsonObject && typeof(jsonObject) === "object")
 		{
-			// Handling of "change attribute" events. Examples:
-			//
-			// {
-			//   "event": "display",
-			//   "data": {
-			//     "satnav_curr_heading": { "transform": "rotate(247.5)" }
-			//   }
-			// }
-			//
-			// {
-			//   "event": "display",
-			//   "data": {
-			//     "notification_on_mfd": {
-			//       "style": { "display": "block" }
-			//     }
-			//   }
-			// }
-
+			// Handling of "change attribute" events
 			var attributeObj = jsonObject;
 			for (var attribute in attributeObj)
 			{
@@ -211,7 +160,7 @@ function processJsonObject(item, jsonObject)
 	}); // each
 
 	// Check if a handler must be invoked
-	handleItemChange(domItem, jsonObject);
+	handleItemChange(item, jsonObject);
 } // processJsonObject
 
 function writeToDom(jsonObj)
@@ -2882,9 +2831,12 @@ function satnavGuidanceSetPreference(value)
 	setTick(satnavGuidancePreferenceTickBoxId);
 } // satnavGuidanceSetPreference
 
-// Find the ticked button and select it
 function satnavGuidancePreferenceSelectTickedButton()
 {
+	satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
+
+	// Also select the ticked button
+
 	var foundTick = false;
 
 	$("#satnav_guidance_preference_menu .tickBox").each
@@ -4736,7 +4688,11 @@ function handleItemChange(item, value)
 					clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 					handleItemChange.showCharactersSpinningDiscTimer = setTimeout
 					(
-						function () { $("#satnav_to_mfd_show_characters_spinning_disc").show(); },
+						function ()
+						{
+							$("#satnav_to_mfd_show_characters_spinning_disc").show();
+							ignoringIrCommands = false;
+						},
 						1500
 					);
 				} // case
@@ -4775,6 +4731,7 @@ function handleItemChange(item, value)
 		case "satnav_to_mfd_list_size":
 		{
 			// Hide the spinning disc
+			ignoringIrCommands = false;
 			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 
@@ -4959,7 +4916,7 @@ function handleItemChange(item, value)
 		{
 			if (value === "---") break;
 			satnavGuidanceSetPreference(value);
-			localStorage.satnavGuidancePreference = value;  // Save also in local (persistent) store
+			localStorage.satnavGuidancePreference = value;
 		} // case
 		break;
 
@@ -5049,6 +5006,7 @@ function handleItemChange(item, value)
 		case "satnav_to_mfd_show_characters":
 		{
 			// Hide the spinning disc
+			ignoringIrCommands = false;
 			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 
@@ -5335,6 +5293,8 @@ function handleItemChange(item, value)
 				if (hideAudioSettingsPopup()) break;
 
 				if (hidePopup()) break;
+
+				if (ignoringIrCommands) break;
 
 				// Ignore the "Esc" button when guidance screen is showing
 				if ($("#satnav_guidance").is(":visible")) break;

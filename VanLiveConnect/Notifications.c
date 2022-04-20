@@ -1,5 +1,4 @@
 
-//#include <Arduino.h>
 #include <pgmspace.h> 
 
 // Often used string constants

@@ -2911,7 +2911,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"satnav_guidance_ended\": \"%S\",\n"
             "\"satnav_calculating_route_2\": \"%S\",\n"
 
-            "\"satnav_1_led_2_6\": \"%S\",\n"
+            "\"satnav_last_instruction_given\": \"%S\",\n"
             "\"satnav_entering_new_dest\": \"%S\"\n"
         "}\n"
     "}\n";
@@ -2957,13 +2957,14 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         data[1] & 0x02 ? yesStr : noStr,  // satnav_guidance_display_can_be_dimmed (next instruction is far away)
         data[1] & 0x01 ? yesStr : noStr,  // satnav_new_guidance_instruction
+
         data[1] & 0x04 ? yesStr : noStr,  // satnav_audio_start
         data[1] & 0x08 ? yesStr : noStr,  // satnav_audio_end
         data[1] & 0x10 ? yesStr : noStr,  // satnav_calculating_route
         data[1] & 0x40 ? yesStr : noStr,  // satnav_guidance_ended ?
         data[1] & 0x80 ? yesStr : noStr,  // satnav_calculating_route_2
 
-        data[2] & 0x20 ? yesStr : noStr,  // satnav_1_led_2_6; seen very seldomly, what is it?
+        data[2] & 0x20 ? yesStr : noStr,  // satnav_last_instruction_given
         data[2] & 0x80 ? yesStr : noStr   // satnav_entering_new_dest ?
     );
 
@@ -3412,7 +3413,7 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#64E
 
     int dataLen = pkt.DataLen();
-    if (dataLen != 3 && dataLen != 4 && dataLen != 6 && dataLen != 13 && dataLen != 23)
+    if (dataLen != 3 && dataLen != 4 && dataLen != 6 && dataLen != 13 && dataLen != 16 && dataLen != 23)
     {
         return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
     } // if
@@ -3436,11 +3437,26 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
 
     // Determines which guidance icon(s) will be visible
     int at = snprintf_P(buf, n, jsonFormatter,
+
         (data[1] == 0x01 && (data[2] == 0x00 || data[2] == 0x01)) || data[1] == 0x03 ? onStr : offStr,
-        data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x12 ? onStr : offStr,
-        data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x14 ? onStr : offStr,
-        data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x21 ? onStr : offStr,  // Never seen; just guessing
-        data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x41 ? onStr : offStr,
+
+        (data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x12) ||
+        (data[1] == 0x03 && data[2] == 0x02 && data[6] == 0x12)
+            ? onStr : offStr,
+
+        (data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x14) ||
+        (data[1] == 0x03 && data[2] == 0x02 && data[6] == 0x14)
+            ? onStr : offStr,
+
+        // Never seen; just guessing
+        (data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x21) ||
+        (data[1] == 0x03 && data[2] == 0x02 && data[6] == 0x21)
+            ? onStr : offStr,
+
+        (data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x41) ||
+        (data[1] == 0x03 && data[2] == 0x02 && data[6] == 0x41)
+            ? onStr : offStr,
+
         data[1] == 0x03 ? onStr : offStr,
         data[1] == 0x04 ? onStr : offStr,
         data[1] == 0x05 ? onStr : offStr,
@@ -3466,12 +3482,23 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
     }
     else if (data[1] == 0x03)  // Double turn
     {
-        if (dataLen != 23) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
+        if (dataLen == 16)
+        {
+            // Two instruction icons: current (fork) in data[6], next in data[7...14]
 
-        // Two instruction icons: current in data[6...13], next in data[14...21]
+            GuidanceInstructionIconJson(PSTR("satnav_next_turn_icon"), data + 7, buf, at, n);
+        }
+        else if (dataLen == 23)
+        {
+            // Two instruction icons: current in data[6...13], next in data[14...21]
 
-        GuidanceInstructionIconJson(PSTR("satnav_curr_turn_icon"), data + 6, buf, at, n);
-        GuidanceInstructionIconJson(PSTR("satnav_next_turn_icon"), data + 14, buf, at, n);
+            GuidanceInstructionIconJson(PSTR("satnav_curr_turn_icon"), data + 6, buf, at, n);
+            GuidanceInstructionIconJson(PSTR("satnav_next_turn_icon"), data + 14, buf, at, n);
+        }
+        else
+        {
+            return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
+        } // if
     }
     else if (data[1] == 0x04)  // Turn around if possible
     {
