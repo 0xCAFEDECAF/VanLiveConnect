@@ -1138,7 +1138,10 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         {
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at,
-                    PSTR(",\n\"head_unit_button_pressed\": \"%S%S\""),
+                    PSTR(
+                        ",\n"
+                        "\"head_unit_button_pressed\": \"%S%S\""
+                    ),
 
                     (data[2] & 0x1F) == 0x01 ? PSTR("1") :
                     (data[2] & 0x1F) == 0x02 ? PSTR("2") :
@@ -3438,7 +3441,8 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
     // Determines which guidance icon(s) will be visible
     int at = snprintf_P(buf, n, jsonFormatter,
 
-        (data[1] == 0x01 && (data[2] == 0x00 || data[2] == 0x01)) || data[1] == 0x03 ? onStr : offStr,
+        // TODO - data[2] can be only 0x00, 0x01 or 0x02?
+        (data[1] == 0x01 && (data[2] == 0x00 || data[2] == 0x01)) || (data[1] == 0x03 && data[2] != 0x02) ? onStr : offStr,
 
         (data[1] == 0x01 && data[2] == 0x02 && data[4] == 0x12) ||
         (data[1] == 0x03 && data[2] == 0x02 && data[6] == 0x12)

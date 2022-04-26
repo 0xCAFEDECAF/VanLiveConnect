@@ -11,7 +11,7 @@ const String md5Checksum = ESP.getSketchMD5();
 
 void PrintSystemSpecs()
 {
-    Serial.printf_P(PSTR("CPU Speed: %u MHz\n"), system_get_cpu_freq());
+    Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
     Serial.printf_P(PSTR("SDK: %s\n"), system_get_sdk_version());
 
     uint32_t realSize = ESP.getFlashChipRealSize();

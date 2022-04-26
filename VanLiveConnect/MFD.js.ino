@@ -250,7 +250,15 @@ var fancyWebSocket = function(url)
 	// Dispatch to the right handlers
 	conn.onmessage = function(evt)
 	{
-		var json = JSON.parse(evt.data);
+		try
+		{
+			var json = JSON.parse(evt.data);
+		}
+		catch(e)
+		{
+			console.log("// Error parsing json data '" + evt.data + "'!");
+		}
+
 		dispatch(json.event, json.data);
 	}; // function
 
@@ -3767,7 +3775,6 @@ function handleItemChange(item, value)
 			{
 				$("#chosen_gear").text("-");
 				$("#n_rpm_speed").text("n: -.--");
-				$("#clutch_slip").text("slip: -.-%");
 				break;
 			} // if
 			var speedKmh = vehicleSpeed;
