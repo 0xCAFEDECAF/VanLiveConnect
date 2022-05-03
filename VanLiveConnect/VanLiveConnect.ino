@@ -159,13 +159,6 @@ const char* VanBusStatsToJson(char* buf, const int n)
     // JSON buffer overflow?
     if (at >= n) return "";
 
-  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-
-    Serial.print(F("Parsed to JSON object:\n"));
-    PrintJsonText(buf);
-
-  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
-
     return buf;
 } // VanBusStatsToJson
 

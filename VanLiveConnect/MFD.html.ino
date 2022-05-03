@@ -133,7 +133,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Current street and city -->
 				<div id="satnav_curr_street_small"
 					on_enter="satnavCutoffBottomLines($('#satnav_curr_street_small [gid=\'satnav_curr_street_shown\']'));"
-					class="icon" style="word-wrap:break-word; top:270px; height:280px;">
+					class="icon" style="word-wrap:break-word; top:270px; height:280px; width:390px;">
 					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
 				</div>
 
@@ -1715,11 +1715,11 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Current and next street name -->
 
-					<div style="border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:590px; height:140px;">
+					<div style="border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:570px; height:140px; padding:0px 10px">
 						<div id="satnav_guidance_next_street" class="centerAligned" style="font-size:40px; white-space:normal;">
 						</div>
 					</div>
-					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:590px; height:140px;">
+					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:570px; height:140px; padding:0px 10px">
 						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:40px;">
 						</div>
 					</div>
