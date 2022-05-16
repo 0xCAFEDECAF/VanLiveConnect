@@ -1452,7 +1452,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- TODO - Might need the full screen width for long city / street names -->
 					<div id="satnav_show_current_destination"
 						on_goto="selectFirstMenuItem('satnav_show_current_destination');"
-						on_esc="satnavGotoMainMenu();"
+						on_esc="currentMenu = 'main_menu'; satnavGotoMainMenu();"
 						style="left:25px; top:110px; width:950px; display:none;">
 
 						<div class="tag satNavShowAddress">Programmed destination</div>
@@ -2006,21 +2006,24 @@ char mfd_html[] PROGMEM = R"=====(
 				class="icon notificationPopup" style="display:none;">
 
 				<!-- Status LEDs -->
+				<div id="fan_icon" class="iconSmall led ledOn" style="left:350px; top:45px;">
+					<div class="centerAligned fas fa-fan"></div>
+				</div>
+				<div id="recirc" class="iconSmall led ledOff" style="left:450px; top:45px;">
+					<div class="centerAligned fas fa-sync-alt"></div>
+				</div>
+				<div id="rear_heater_2" class="iconSmall led ledOff" style="left:700px; top:45px;">
+					<div class="centerAligned fas fa-bars"></div>
+				</div>
 				<div id="ac_enabled" class="iconSmall led ledOff" style="left:350px; top:125px;">
 					<div class="centerAligned fas fa-wind"></div>
 				</div>
 				<div id="ac_compressor" class="iconSmall led ledOff" style="left:700px; top:125px;">
 					<div class="centerAligned fas fa-snowflake"></div>
 				</div>
-				<div id="rear_heater_2" class="iconSmall led ledOff" style="left:700px; top:45px;">
-					<div class="centerAligned fas fa-bars"></div>
-				</div>
-				<div id="fan_icon" class="iconSmall led ledOn" style="left:350px; top:45px;">
-					<div class="centerAligned fas fa-fan"></div>
-				</div>
 
 				<!-- Data -->
-				<div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:10px; width:100px;">0</div>
+				<div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:10px; width:100px;">-</div>
 				<div id="condenser_temp" class="tag" style="font-size:60px; left:100px; top:120px; width:160px;">--</div>
 				<div class="tag" style="font-size:60px; left:270px; top:120px; width:90px; text-align:left;">&deg;C</div>
 				<div id="evaporator_temp" class="tag" style="font-size:60px; left:380px; top:120px; width:230px;">-.-</div>

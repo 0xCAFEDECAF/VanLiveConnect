@@ -1791,7 +1791,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
     char floatBuf[3][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
         data[0] & 0x02 ? onStr : offStr,
-        data[2] & 0x40 ? PSTR("LOCKED") : PSTR("UNLOCKED"),
+        data[2] & 0x40 ? onStr : offStr,
         data[2] & 0x0F,
         data[3] & 0x02 ? onStr : offStr,
 
@@ -3247,7 +3247,9 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
             status == 0x0000 ? PSTR("COMPUTING_ROUTE") :
             status == 0x0001 ? PSTR("STOPPING_NAVIGATION") :
+            status == 0x0003 ? PSTR("READING_OUT_LAST_INSTRUCTION") :  // After pressing left stalk during guidance
             status == 0x0101 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING") :  // TODO - Not sure
+            status == 0x0104 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT") :  // TODO - Not sure
 
             // This starts when the nag screen is accepted and is seen repeatedly when selecting a destination
             // and during guidance. It stops after a "STOPPING_NAVIGATION" status message.

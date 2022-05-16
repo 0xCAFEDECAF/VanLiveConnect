@@ -26,10 +26,14 @@
   #define WIFI_SSID_HIDDEN (0)
 
   // Define to set password on access point
-  // Note: many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
+  // Notes:
+  // - Many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
+  // - ESP requires more memory when WIFI_PASSWORD is defined, so it may be necessary to undefine this when
+  //   setting one or more debug #defines.
   //#define WIFI_PASSWORD "99999999"
 
-  // Set between (1) and (13). Note: some devices cannot connect to channels above 11.
+  // Set between (1) and (13). Note: some devices cannot connect to channels above 11. Channel 6 seems best for
+  // avoiding interference with Bluetooth.
   #define WIFI_CHANNEL (6)
 
   #define IP_ADDR "192.168.244.1"

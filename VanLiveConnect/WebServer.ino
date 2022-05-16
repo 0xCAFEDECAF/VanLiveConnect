@@ -413,9 +413,9 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
         md5 = getMd5(path + ".gz");
         if (md5.length() == 0)
         {
-          #ifdef DEBUG_WEBSERVER
-            Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), path.c_str());
-          #endif // DEBUG_WEBSERVER
+          // #ifdef DEBUG_WEBSERVER
+            // Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), path.c_str());
+          // #endif // DEBUG_WEBSERVER
             return HandleNotFound();
         } // if
 

@@ -115,40 +115,40 @@ function processJsonObject(item, jsonObject)
 		else if (!!jsonObject && typeof(jsonObject) === "object")
 		{
 			// Handling of "change attribute" events
-			var attributeObj = jsonObject;
-			for (var attribute in attributeObj)
+			let attributeObj = jsonObject;
+			for (let attribute in attributeObj)
 			{
 				// Deeper nesting?
 				if (typeof(attributeObj) === "object")
 				{
-					var propertyObj = attributeObj[attribute];
-					for (var property in propertyObj)
+					let propertyObj = attributeObj[attribute];
+					for (let property in propertyObj)
 					{
-						var value = propertyObj[property];
+						let value = propertyObj[property];
 						$(selector).get(0)[attribute][property] = value;
 					} // for
 				}
 				else
 				{
-					var attrValue = attributeObj[attribute];
+					let attrValue = attributeObj[attribute];
 					$(selector).attr(attribute, attrValue);
 				} // if
 			} // for
 		}
 		else
 		{
-			var itemText = jsonObject;
+			let itemText = jsonObject;
 			if ($(selector).hasClass("led"))
 			{
 				// Handle "led" class objects: no text copy, just turn ON or OFF
-				var on = itemText === "ON" || itemText === "YES";
+				let on = itemText === "ON" || itemText === "YES";
 				$(selector).toggleClass("ledOn", on);
 				$(selector).toggleClass("ledOff", ! on);
 			}
 			else if ($(selector).hasClass("icon") || $(selector).get(0) instanceof SVGElement)
 			{
 				// Handle SVG elements and "icon" class objects: no text copy, just show or hide
-				var on = itemText === "ON" || itemText === "YES";
+				let on = itemText === "ON" || itemText === "YES";
 				$(selector).toggle(on);
 			}
 			else
@@ -187,7 +187,7 @@ function writeToDom(jsonObj)
 	}
 	else
 	{
-		var elapsed = now - writeToDom.lastInvoked;
+		let elapsed = now - writeToDom.lastInvoked;
 		if (elapsed > 20000) elapsed = 20000;  // During replay, don't wait longer than 20 seconds
 		console.log("await sleep(" + elapsed + "); //");
 	} // if
@@ -195,7 +195,7 @@ function writeToDom(jsonObj)
 
 	writeToDom.lastInvoked = now;
 
-	for (var item in jsonObj)
+	for (let item in jsonObj)
 	{
 		// A nested object with an item name that ends with '_' indicates namespace. For example:
 		//
@@ -215,8 +215,8 @@ function writeToDom(jsonObj)
 		//
 		if (item.slice(-1) === "_" && !!jsonObj[item] && typeof(jsonObj[item]) === "object")
 		{
-			var subObj = jsonObj[item];
-			for (var subItem in subObj) processJsonObject(item + subItem, subObj[subItem]);  // Use 'item' as prefix
+			let subObj = jsonObj[item];
+			for (let subItem in subObj) processJsonObject(item + subItem, subObj[subItem]);  // Use 'item' as prefix
 		}
 		else
 		{
@@ -293,7 +293,7 @@ var fancyWebSocket = function(url)
 	{
 		var chain = callbacks[event_name];
 		if (chain === undefined) return;  // No callbacks for this event
-		for (var i = 0; i < chain.length; i++) chain[i](message);
+		for (let i = 0; i < chain.length; i++) chain[i](message);
 	}; // function
 }; // fancyWebSocket
 
@@ -302,7 +302,7 @@ var webSocketServerHost = window.location.hostname;
 var webSocket;
 
 // Send some data so that a webSocket event triggers when the connection has failed
-var keepAliveWebSocketTimer = null;
+var keepAliveWebSocketTimer;
 function keepAliveWebSocket()
 {
 	webSocket.send("keepalive");
@@ -329,7 +329,7 @@ function connectToWebSocket()
 		{
 			// Re-start the "keep alive" timer
 			clearInterval(keepAliveWebSocketTimer);
-			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
+			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 6000);
 
 			writeToDom(data);
 		}
@@ -345,7 +345,7 @@ function connectToWebSocket()
 
 			// (Re-)start the "keep alive" timer
 			clearInterval(keepAliveWebSocketTimer);
-			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 5000);
+			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 6000);
 		}
 	);
 	webSocket.bind
@@ -393,11 +393,11 @@ function showPopup(id, msec)
 		popup.show();
 
 		// A popup can appear under another. In that case, don't register the time.
-		var topLevelPopup = $(".notificationPopup:visible").slice(-1)[0];
+		let topLevelPopup = $(".notificationPopup:visible").slice(-1)[0];
 		if (id === topLevelPopup.id) lastScreenChangedAt = Date.now();
 
 		// Perform "on_enter" action, if specified
-		var onEnter = popup.attr("on_enter");
+		let onEnter = popup.attr("on_enter");
 		if (onEnter) eval(onEnter);
 	} // if
 
@@ -581,8 +581,7 @@ var lastScreenChangedAt = 0;  // Last time the large screen changed
 // Switch to a specific large screen
 function changeLargeScreenTo(id)
 {
-	if (id === undefined) return;
-	if (id === currentLargeScreenId) return;
+	if (id === undefined || id === currentLargeScreenId) return;
 
 	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
 
@@ -613,17 +612,24 @@ function changeLargeScreenTo(id)
 var changeBackScreenId;
 var changeBackScreenTimer;
 var changeBackScreenTimerEnd = 0;
+var preventTemporaryScreenChangeTimer;
 
 // (Re-)arm the timer to change back to the previous screen
 function changeBackLargeScreenAfter(msec)
 {
-	if (changeBackScreenId === undefined) return;
-
 	clearTimeout(changeBackScreenTimer);
+	changeBackScreenTimer = undefined;
+
+	if (! changeBackScreenId) return;
+
 	changeBackScreenTimer = setTimeout
 	(
 		function ()
 		{
+			changeBackScreenTimer = undefined;
+
+			if (! changeBackScreenId) return;
+
 			if (inMenu())
 			{
 				if (menuStack.length >= 1) menuStack[0] = changeBackScreenId;
@@ -632,7 +638,7 @@ function changeBackLargeScreenAfter(msec)
 			{
 				changeLargeScreenTo(changeBackScreenId);
 			} // if
-			changeBackScreenTimer = null;
+
 			changeBackScreenId = undefined;
 		},
 		msec
@@ -644,25 +650,32 @@ function changeBackLargeScreenAfter(msec)
 // Temporarily switch to a specific screen on the right hand side of the display
 function temporarilyChangeLargeScreenTo(id, msec)
 {
-	if (id !== currentLargeScreenId)
+	if (preventTemporaryScreenChangeTimer) return;
+
+	if (inMenu())
 	{
-		if (inMenu())
+		if (menuStack.length <= 0) return;
+		if (! changeBackScreenId)
 		{
-			if (menuStack.length <= 0) return;
+			if (id === menuStack[0]) return;
 			changeBackScreenId = menuStack[0];
-			menuStack[0] = id;
-		}
-		else
-		{
-			changeBackScreenId = currentLargeScreenId;
-			changeLargeScreenTo(id);
 		} // if
+		menuStack[0] = id;
+	}
+	else
+	{
+		if (! changeBackScreenId)
+		{
+			if (id === currentLargeScreenId) return;
+			changeBackScreenId = currentLargeScreenId;
+		} // if
+		changeLargeScreenTo(id);
 	} // if
 
-	// If the timer is already running, do not shorten it
-	if (changeBackScreenTimer !== null)
+	// If timer is running and requested less than 10 seconds, do not shorten remaining time
+	if (changeBackScreenTimer !== undefined && msec < 10000)
 	{
-		var msToEnd = changeBackScreenTimerEnd - Date.now();  // ms left to timeout
+		let msToEnd = changeBackScreenTimerEnd - Date.now();  // ms left to timeout
 		if (msec < msToEnd) return;
 	} // if
 
@@ -672,9 +685,19 @@ function temporarilyChangeLargeScreenTo(id, msec)
 function cancelChangeBackScreenTimer()
 {
 	clearTimeout(changeBackScreenTimer);
-	changeBackScreenTimer = null;
+	changeBackScreenTimer = undefined;
 	changeBackScreenId = undefined;
 } // cancelChangeBackScreenTimer
+
+function preventTemporaryScreenChange(msec)
+{
+	clearTimeout(preventTemporaryScreenChangeTimer);
+	preventTemporaryScreenChangeTimer = setTimeout
+	(
+		function () { preventTemporaryScreenChangeTimer = null; },
+		msec
+	);
+} // preventTemporaryScreenChange
 
 // Vehicle data
 var contactKeyPosition;
@@ -735,6 +758,8 @@ function nextLargeScreen()
 	if (inMenu()) return;  // Don't cycle through menu screens
 
 	cancelChangeBackScreenTimer();
+
+	preventTemporaryScreenChange(10000);  // No autonomous screen change for the next 10 seconds
 
 	// The IDs of the screens ("divs") that will be cycled through.
 	// Important: list only leaf divs here!
@@ -862,7 +887,8 @@ function gotoSmallScreen(smallScreenName)
 
 		case "FUEL_CONSUMPTION":
 		{
-			// Fuel consumption data is already permanently visible in the status bar. Show this screen instead.
+			// Original MFD shows fuel consumption, but we already show that data permanently in the status bar.
+			// Instead, show this screen:
 			changeSmallScreenTo("instrument_small");
 		} // case
 		break;
@@ -900,7 +926,7 @@ function selectFirstMenuItem(id)
 // Enter a specific menu. Selects the first button, thereby skipping disabled buttons.
 function gotoMenu(menu)
 {
-	cancelChangeBackScreenTimer();
+	//cancelChangeBackScreenTimer();
 
 	// Change screen, but only if not already there
 	if (currentMenu !== menu)
@@ -1124,8 +1150,8 @@ function resizeButton(id)
 		buttonOriginalWidths[id] = button.width();  // Save original width of button
 
 		// Move left a bit if necessary
-		var right = button.position().left + widthAtLeast;
-		var moveLeft = right - 910;
+		let right = button.position().left + widthAtLeast;
+		let moveLeft = right - 910;
 		if (moveLeft > 0) button.css({ 'marginLeft': '-=' + moveLeft + 'px' });
 
 		button.width(widthAtLeast);  // Resize button to fit text
@@ -1145,7 +1171,7 @@ function restoreButtonSize(id)
 
 function restoreButtonSizes()
 {
-	for (var id in buttonOriginalWidths) restoreButtonSize(id);
+	for (let id in buttonOriginalWidths) restoreButtonSize(id);
 } // restoreButtonSizes
 
 // Handle an arrow key press in a screen with buttons
@@ -1166,21 +1192,21 @@ function navigateButtons(key)
 	// Nothing specified for the pressed key?
 	if (! gotoButtonId)
 	{
-		var buttonOrientation = currentButton.parent().attr("button_orientation");
-		var buttonForNext = buttonOrientation === "horizontal" ? "RIGHT_BUTTON" : "DOWN_BUTTON";
-		var buttonForPrevious = buttonOrientation === "horizontal" ? "LEFT_BUTTON" : "UP_BUTTON";
+		let buttonOrientation = currentButton.parent().attr("button_orientation");
+		let buttonForNext = buttonOrientation === "horizontal" ? "RIGHT_BUTTON" : "DOWN_BUTTON";
+		let buttonForPrevious = buttonOrientation === "horizontal" ? "LEFT_BUTTON" : "UP_BUTTON";
 
 		if (key !== buttonForNext && key !== buttonForPrevious) return;
 
 		// Depending on the orientation of the buttons, the "DOWN_BUTTON"/"UP_BUTTON" resp.
 		// "RIGHT_BUTTON"/"LEFT_BUTTON" simply walks the list, i.e. selects the next resp. previous button
 		// in the list.
-		var allButtons = screen.find(".button");
-		var nButtons = allButtons.length;
+		let allButtons = screen.find(".button");
+		let nButtons = allButtons.length;
 		if (nButtons === 0) return;
 
-		var currIdx = allButtons.index(currentButton);
-		var nextIdx = currIdx;
+		let currIdx = allButtons.index(currentButton);
+		let nextIdx = currIdx;
 
 		// Select the next button
 		do
@@ -1189,7 +1215,7 @@ function navigateButtons(key)
 			if (nextIdx === currIdx) break;
 
 			// Skip disabled or invisible buttons
-			var isButtonEnabled =
+			let isButtonEnabled =
 				$(allButtons[nextIdx]).is(":visible")
 				&& ! $(allButtons[nextIdx]).hasClass("buttonDisabled");
 			if (isButtonEnabled) break;
@@ -1204,22 +1230,22 @@ function navigateButtons(key)
 	else
 	{
 		// Keep track of the buttons checked
-		var checkedButtons = {};
+		let checkedButtons = {};
 
 		checkedButtons[currentButtonId] = true;
 
-		var allButtons = screen.find(".button");
-		var nButtons = allButtons.length;
+		let allButtons = screen.find(".button");
+		let nButtons = allButtons.length;
 
-		var gotoNext = key === "DOWN_BUTTON" || key === "RIGHT_BUTTON";
+		let gotoNext = key === "DOWN_BUTTON" || key === "RIGHT_BUTTON";
 
 		// Skip disabled buttons, following the orientation of the buttons
 		while ($("#" + gotoButtonId).hasClass("buttonDisabled"))
 		{
 			checkedButtons[gotoButtonId] = true;
 
-			var buttonForNext = key;
-			var buttonOrientation = $("#" + gotoButtonId).parent().attr("button_orientation");
+			let buttonForNext = key;
+			let buttonOrientation = $("#" + gotoButtonId).parent().attr("button_orientation");
 			if (buttonOrientation === "horizontal")
 			{
 				buttonForNext =
@@ -1228,7 +1254,7 @@ function navigateButtons(key)
 						: "LEFT_BUTTON";
 			} // if
 
-			var nextButtonId = $("#" + gotoButtonId).attr(buttonForNext);
+			let nextButtonId = $("#" + gotoButtonId).attr(buttonForNext);
 
 			if (nextButtonId)
 			{
@@ -1237,8 +1263,8 @@ function navigateButtons(key)
 			else
 			{
 				// Nothing specified? Then select the next resp. previous button in the list.
-				var currIdx = allButtons.index($("#" + gotoButtonId));
-				var nextIdx = (currIdx + (gotoNext ? 1 : nButtons - 1)) % nButtons;
+				let currIdx = allButtons.index($("#" + gotoButtonId));
+				let nextIdx = (currIdx + (gotoNext ? 1 : nButtons - 1)) % nButtons;
 				gotoButtonId = $(allButtons[nextIdx]).attr("id");
 			} // if
 
@@ -1511,8 +1537,8 @@ function describeArc(x, y, radius, startAngle, endAngle)
 
 var updatingAudioVolume = false;
 var isAudioMenuVisible = false;
-var audioSettingsPopupHideTimer = null;
-var audioSettingsPopupShowTimer = null;
+var audioSettingsPopupHideTimer;
+var audioSettingsPopupShowTimer;
 var cdChangerCurrentDisc = "";
 var tunerSearchMode = "";
 
@@ -1523,9 +1549,7 @@ function hideAudioSettingsPopup()
 	updatingAudioVolume = false;
 	isAudioMenuVisible = false;
 
-	if (! $("#audio_settings_popup").is(":visible")) return false;
-	hidePopup("audio_settings_popup");
-	return true;
+	return hidePopup("audio_settings_popup");
 } // hideAudioSettingsPopup
 
 function hideAudioSettingsPopupAfter(msec)
@@ -1572,6 +1596,35 @@ function hideTunerPresetsPopup()
 {
 	return hidePopup("tuner_presets_popup");
 } // hideTunerPresetsPopup
+
+// Show the audio volume popup
+function showAudioVolumePopup()
+{
+	if (isAudioMenuVisible) return;  // Audio popup already visible due to display of audio settings?
+
+	hideTunerPresetsPopup();  // If the tuner presets popup is visible, hide it
+
+	// In the audio settings popup, unhighlight any audio setting
+	$("#" + highlightIds[audioSettingHighlightIndex]).hide();
+
+	if (inMenu()) return;  // Don't pop up when user is browsing the menus
+
+	if ($("#contact_key_position").text() !== "" && $("#contact_key_position").text() !== "OFF")
+	{
+		$("#audio_settings_popup").show();
+	}
+	else
+	{
+		// With no contact key in place, we get a spurious "volume_update" message when turning off the
+		// head unit. To prevent the audio settings popup to flash up and disappear, show it only after
+		// 100 msec in this specific situation.
+		clearTimeout(audioSettingsPopupShowTimer);
+		audioSettingsPopupShowTimer = setTimeout(function () { $("#audio_settings_popup").show(); }, 100);
+	} // if
+	updatingAudioVolume = true;
+
+	hideAudioSettingsPopupAfter(4000);  // Hide popup after 4 seconds
+} // showAudioVolumePopup
 
 // Show the audio settings popup
 function showAudioSettingsPopup(button)
@@ -1873,7 +1926,7 @@ function satnavShowDisclaimer()
 // When vehicle is moving, certain menus are disabled
 function satnavVehicleMoving()
 {
-	var gpsSpeed = parseInt($("#satnav_gps_speed").text() || 0);
+	var gpsSpeed = parseInt($("#satnav_gps_speed").text() || 0);  // Always reported in km/h
 	return gpsSpeed >= 2;
 } // satnavVehicleMoving
 
@@ -2261,7 +2314,7 @@ function satnavRemoveEnteredCharacter(newState)
 	// Just in case we miss the "satnav_to_mfd_show_characters" packet
 	if (newState == 0 && satnavAvailableCharactersStack.length >= 2)
 	{
-		var availableCharacters = satnavAvailableCharactersStack[satnavAvailableCharactersStack.length - 2];
+		let availableCharacters = satnavAvailableCharactersStack[satnavAvailableCharactersStack.length - 2];
 
 		clearTimeout(showAvailableCharactersTimer);
 		showAvailableCharactersTimer = setTimeout
@@ -2307,7 +2360,7 @@ function satnavCheckIfCityCenterMustBeAdded()
 		&& handleItemChange.mfdToSatnavRequest === "enter_street"
 		//&& $("#satnav_entered_string").text() === ""
 		&& ! userHadOpportunityToEnterStreet
-	   )
+		)
 	{
 		$("#satnav_choice_list").html(cityCenterText + "<br />" + $("#satnav_choice_list").html());
 	} // if
@@ -2424,7 +2477,7 @@ function satnavCheckEnteredHouseNumber()
 		if (! ok &&
 			(lowestHouseNumberInRange <= 0 || +enteredNumber >= lowestHouseNumberInRange) &&
 			(highestHouseNumberInRange <= 0 || +enteredNumber <= highestHouseNumberInRange)
-		   )
+			)
 		{
 			ok = true;
 		} // if
@@ -2434,7 +2487,7 @@ function satnavCheckEnteredHouseNumber()
 	{
 		satnavHouseNumberEntryMode();
 
-		var translations =
+		let translations =
 		{
 			"set_language_french": "Ce num&eacute;ro n'est<br />pas r&eacute;pertori&eacute;<br />dans cette voie",
 			"set_language_german": "Die Nummer ist<br />f&uuml;r diese Stra&szlig;e<br />nicht eingetragen",
@@ -2558,11 +2611,11 @@ function satnavSetDirectoryAddressScreenMode(mode)
 		$("#satnav_personal_address_validate_buttons").hide();
 		$("#satnav_personal_address_manage_buttons").show();
 
-		$("#satnav_manage_personal_address_rename_button").addClass("buttonSelected");
-		resizeButton("satnav_manage_personal_address_rename_button");
-
 		$("#satnav_professional_address_validate_buttons").hide();
 		$("#satnav_professional_address_manage_buttons").show();
+
+		$("#satnav_manage_personal_address_rename_button").addClass("buttonSelected");
+		resizeButton("satnav_manage_personal_address_rename_button");
 
 		$("#satnav_manage_professional_address_rename_button").addClass("buttonSelected");
 		resizeButton("satnav_manage_professional_address_rename_button");
@@ -2630,7 +2683,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 	if (satnavLastEnteredChar === "Esc")
 	{
 		// Remove the last character and replace it by "-"
-		var s = $(entrySelector).text();
+		let s = $(entrySelector).text();
 		s = s.replace(/([^-]*)[^-](-*)/, "$1-$2");
 		$(entrySelector).text(s);
 
@@ -2647,7 +2700,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 		if (satnavLastEnteredChar !== null)
 		{
 			// Replace the '-' characters one by one, left to right
-			var s = $(entrySelector).text();
+			let s = $(entrySelector).text();
 			s = s.replace("-", satnavLastEnteredChar);
 			$(entrySelector).text(s);
 		} // if
@@ -2800,7 +2853,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	{
 		hidePopup();
 
-		var translations =
+		let translations =
 		{
 			"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
 			"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
@@ -2976,6 +3029,8 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
+		hideAllPopups("audio_settings_popup");
+
 		if (satnavMode === "IN_GUIDANCE_MODE" && ! inMenu() && satnavStatus3 === "SATNAV_IN_OPERATION")
 		{
 			temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
@@ -3140,7 +3195,7 @@ function handleItemChange(item, value)
 	{
 		case "mfd_language":
 		{
-			var map =
+			let map =
 			{
 				"FRENCH": "set_language_french",
 				"ENGLISH": "set_language_english",
@@ -3150,7 +3205,7 @@ function handleItemChange(item, value)
 				"DUTCH": "set_language_dutch"
 			};
 
-			var newLanguage = map[value] || "";
+			let newLanguage = map[value] || "";
 			if (! newLanguage) break;
 			setLanguage(newLanguage);
 			localStorage.mfdLanguage = newLanguage;
@@ -3159,13 +3214,13 @@ function handleItemChange(item, value)
 
 		case "mfd_temperature_unit":
 		{
-			var map =
+			let map =
 			{
 				"FAHRENHEIT": "set_units_deg_fahrenheit",
 				"CELSIUS": "set_units_deg_celsius"
 			};
 
-			var newUnit = map[value] || "";
+			let newUnit = map[value] || "";
 			if (! newUnit) break;
 			if (newUnit === localStorage.mfdTemperatureUnit) break;
 			setUnits(localStorage.mfdDistanceUnit, newUnit, localStorage.mfdTimeUnit);
@@ -3174,13 +3229,13 @@ function handleItemChange(item, value)
 
 		case "mfd_distance_unit":
 		{
-			var map =
+			let map =
 			{
 				"MILES_YARDS": "set_units_mph",
 				"KILOMETRES_METRES": "set_units_km_h"
 			};
 
-			var newUnit = map[value] || "";
+			let newUnit = map[value] || "";
 			if (! newUnit) break;
 			if (newUnit === localStorage.mfdDistanceUnit) break;
 			setUnits(newUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
@@ -3190,13 +3245,13 @@ function handleItemChange(item, value)
 
 		case "mfd_time_unit":
 		{
-			var map =
+			let map =
 			{
 				"24_H": "set_units_24h",
 				"12_H": "set_units_12h"
 			};
 
-			var newUnit = map[value] || "";
+			let newUnit = map[value] || "";
 			if (! newUnit) break;
 			if (newUnit === localStorage.mfdTimeUnit) break;
 			setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, newUnit);
@@ -3211,44 +3266,21 @@ function handleItemChange(item, value)
 			// time the audio source changes).
 			if (handleItemChange.hideHeadUnitPopupsTimer !== null) break;
 
+			// Keep the popup for at least another 4 seconds, if already showing
+			hideAudioSettingsPopupAfter(4000);
+
 			// Bail out if no audio is playing
-			var audioSource = $("#audio_source").text();
+			let audioSource = $("#audio_source").text();
 			if (audioSource !== "TUNER"
 				&& audioSource !== "TAPE"
 				&& audioSource !== "CD"
-				&& audioSource !== "CD_CHANGER")
+				&& audioSource !== "CD_CHANGER"
+				)
 			{
 				break;
 			} // if
 
-			// Audio popup already visible due to display of audio settings?
-			if (isAudioMenuVisible) break;
-
-			// If the tuner presets popup is visible, hide it
-			hideTunerPresetsPopup();
-
-			// In the audio settings popup, unhighlight any audio setting
-			$("#" + highlightIds[audioSettingHighlightIndex]).hide();
-
-			// Don't pop up when user is browsing the menus
-			if (inMenu()) break;
-
-			if ($("#contact_key_position").text() != "" && $("#contact_key_position").text() !== "OFF")
-			{
-				$("#audio_settings_popup").show();
-			}
-			else
-			{
-				// With no contact key in place, we get a spurious "volume_update" message when turning off the
-				// head unit. To prevent the audio settings popup to flash up and disappear, show it only after
-				// 100 msec in this specific situation.
-				clearTimeout(audioSettingsPopupShowTimer);
-				audioSettingsPopupShowTimer = setTimeout(function () { $("#audio_settings_popup").show(); }, 100);
-			} // if
-			updatingAudioVolume = true;
-
-			// Hide popup after 4 seconds
-			hideAudioSettingsPopupAfter(4000);
+			showAudioVolumePopup();
 		} // case
 		break;
 
@@ -3278,7 +3310,7 @@ function handleItemChange(item, value)
 			// Any other button than "AUDIO" or a variant like "CD_CHANGER (released)"
 			if (updatingAudioVolume) hideAudioSettingsPopup();
 
-			var audioSource = $("#audio_source").text();
+			let audioSource = $("#audio_source").text();
 
 			// If "audio_source" changed to "CD", directly show the "searching CD" icon
 			if (audioSource !== "CD" && value === "CD")
@@ -3348,7 +3380,7 @@ function handleItemChange(item, value)
 			{
 				showAudioPopup();
 
-				var selector = "#cd_changer_disc_" + value + "_present";
+				let selector = "#cd_changer_disc_" + value + "_present";
 				if ($(selector).hasClass("ledOn")) break;
 
 				// Show "NO CD X" text for a few seconds
@@ -3492,7 +3524,7 @@ function handleItemChange(item, value)
 			{
 				// Highlight the corresponding entry in the "tuner_presets_popup", in case that is currently visible
 				// due to a recent preset button press on the head unit
-				var highlightId = "presets_memory_" + value + "_select";
+				let highlightId = "presets_memory_" + value + "_select";
 				$("#" + highlightId).show();
 			} // if
 
@@ -3506,7 +3538,7 @@ function handleItemChange(item, value)
 			if (value === handleItemChange.rdsText) break;
 			handleItemChange.rdsText = value;
 
-			var showRdsText = value !== "" && tunerSearchMode !== "MANUAL_TUNING";
+			let showRdsText = value !== "" && tunerSearchMode !== "MANUAL_TUNING";
 
 			// If RDS text, show tuner frequency small, and RDS text large
 			$('[gid="frequency_data_small"]').toggle(showRdsText);
@@ -3528,8 +3560,8 @@ function handleItemChange(item, value)
 
 			showAudioPopup();
 
-			var rdsText = $("#rds_text").text();
-			var showRdsText = $("#fm_band").hasClass("ledOn") && rdsText !== "" && value !== "MANUAL_TUNING";
+			let rdsText = $("#rds_text").text();
+			let showRdsText = $("#fm_band").hasClass("ledOn") && rdsText !== "" && value !== "MANUAL_TUNING";
 
 			// If there is RDS text, and no manual frequency search is busy, show tuner frequency small,
 			// and RDS text large
@@ -3564,8 +3596,7 @@ function handleItemChange(item, value)
 		{
 			if (handleItemChange.infoTraffic === undefined) handleItemChange.infoTraffic = "NO";
 
-			// Don't pop up when browsing the menus, or in the sat nav guidance screen
-			if (inMenu() || $("#satnav_guidance").is(":visible")) break;
+			if (inMenu()) break;  // Don't pop up when browsing the menus
 
 			// Has anything changed?
 			if (value === handleItemChange.infoTraffic) break;
@@ -3573,7 +3604,7 @@ function handleItemChange(item, value)
 
 			if (value === "YES")
 			{
-				var translations =
+				let translations =
 				{
 					"set_language_french": "Info Traffic!",
 					"set_language_german": "Verkehrsinformationen",
@@ -3581,7 +3612,8 @@ function handleItemChange(item, value)
 					"set_language_italian": "Informazioni sul traffico",
 					"set_language_dutch": "Verkeersinformatie"
 				};
-				showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information", 10000);
+				showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information",
+					$("#satnav_guidance").is(":visible") ? 5000 : 10000);
 			}
 			else
 			{
@@ -3661,7 +3693,7 @@ function handleItemChange(item, value)
 
 			if (cdChangerCurrentDisc !== null && cdChangerCurrentDisc.match(/^[1-6]$/))
 			{
-				var selector = "#cd_changer_disc_" + cdChangerCurrentDisc + "_present";
+				let selector = "#cd_changer_disc_" + cdChangerCurrentDisc + "_present";
 				$(selector).removeClass("ledActive");
 				$(selector).css({marginTop: '+=25px'});
 			} // if
@@ -3670,7 +3702,7 @@ function handleItemChange(item, value)
 			if (value.match(/^[1-6]$/))
 			{
 				// The LED of the current disc is shown a bit larger than the others
-				var selector = "#cd_changer_disc_" + value + "_present";
+				let selector = "#cd_changer_disc_" + value + "_present";
 				$(selector).addClass("ledActive");
 				$(selector).css({marginTop: '-=25px'});
 			} // if
@@ -3681,12 +3713,15 @@ function handleItemChange(item, value)
 
 		case "audio_source":
 		{
+			if (handleItemChange.currentAudioSource !== value) hideAudioSettingsPopup();
+			handleItemChange.currentAudioSource = value;
+
 			// Sat nav audio (e.g. guidance instruction or welcome message) needs no further action
 			if (value === "NAVIGATION") break;
 
-			// Has anything changed?
-			if (value === handleItemChange.currentAudioSource) break;
-			handleItemChange.currentAudioSource = value;
+			// Has main audio source changed?
+			if (value === handleItemChange.mainAudioSource) break;
+			handleItemChange.mainAudioSource = value;
 
 			// When in a menu, a change in the audio source does not imply any further action
 			if (inMenu()) break;
@@ -3694,7 +3729,7 @@ function handleItemChange(item, value)
 			// Suppress timer still running?
 			if (suppressScreenChangeToAudio !== null) break;
 
-			// Hide the audio settings or tuner presets popup (if visible)
+			// Hide the audio settings and tuner presets popup (if visible)
 			hideAudioSettingsPopup();
 			hideTunerPresetsPopup();
 
@@ -3744,7 +3779,7 @@ function handleItemChange(item, value)
 				showAudioPopup();
 			} // if
 
-			if (handleItemChange.currentAudioSource === "CD_CHANGER")
+			if (handleItemChange.mainAudioSource === "CD_CHANGER")
 			{
 				// Show the "pause" icon
 				$("#cd_changer .iconLarge").hide();
@@ -3762,7 +3797,7 @@ function handleItemChange(item, value)
 			// If more than 3500 rpm or less than 500 rpm (but > 0), add glow effect
 
 			// Threshold of 3500 rpm is lowered with engine coolant temperature, but always at least 1700 rpm
-			var thresholdRpm = 3500;
+			let thresholdRpm = 3500;
 			if (engineCoolantTemperature < 80) thresholdRpm = 3500 - (80 - engineCoolantTemperature) * 30;
 			if (thresholdRpm < 1700) thresholdRpm = 1700;
 
@@ -3774,13 +3809,11 @@ function handleItemChange(item, value)
 			if (vehicleSpeed === undefined || vehicleSpeed < 2)
 			{
 				$("#chosen_gear").text("-");
-				$("#n_rpm_speed").text("n: -.--");
 				break;
 			} // if
-			var speedKmh = vehicleSpeed;
+			let speedKmh = vehicleSpeed;
 			if (localStorage.mfdDistanceUnit === "set_units_mph") speedKmh = vehicleSpeed * 1.609;
-			var n = engineRpm / speedKmh;
-			$("#n_rpm_speed").text("n: " + n.toFixed(2));
+			let n = engineRpm / speedKmh;
 
 			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
 			if (n >= 110 && n <= 160) $("#chosen_gear").text("1");
@@ -3798,8 +3831,8 @@ function handleItemChange(item, value)
 
 			vehicleSpeed = parseInt(value);
 
-			var isDriving = vehicleSpeed >= 5;
-			var isDrivingFast = vehicleSpeed >= 130;
+			let isDriving = vehicleSpeed >= 5;
+			let isDrivingFast = vehicleSpeed >= 130;
 
 			if (localStorage.mfdDistanceUnit === "set_units_mph")
 			{
@@ -3820,11 +3853,10 @@ function handleItemChange(item, value)
 
 		case "fuel_level_filtered":
 		{
-			var level = parseFloat(value);
+			let level = parseFloat(value);
 
-			var lowFuelCondition = false;
-			if (localStorage.mfdDistanceUnit === "set_units_mph") lowFuelCondition = level <= 1.5;  // 1.5 gallons left
-			else lowFuelCondition = level <= 5.5;  // 5.5 litres left
+			// 5.5 litres or 1.5 gallons left?
+			let lowFuelCondition = level <= (localStorage.mfdDistanceUnit === "set_units_mph" ? 1.5 : 5.5);
 
 			$('[gid="fuel_level_filtered"]').toggleClass("glow", lowFuelCondition);
 		} // case
@@ -3832,7 +3864,7 @@ function handleItemChange(item, value)
 
 		case "coolant_temp":
 		{
-			var temp = parseFloat(value);
+			let temp = parseFloat(value);
 
 			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit")
 			{
@@ -3859,7 +3891,7 @@ function handleItemChange(item, value)
 
 		case "distance_to_empty":
 		{
-			var dist = parseFloat(value);
+			let dist = parseFloat(value);
 
 			if (localStorage.mfdDistanceUnit === "set_units_mph")
 			{
@@ -3876,7 +3908,7 @@ function handleItemChange(item, value)
 
 		case "exterior_temp":
 		{
-			var temp = parseFloat(value);
+			let temp = parseFloat(value);
 
 			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit") 
 			{
@@ -4002,9 +4034,9 @@ function handleItemChange(item, value)
 			// Show or hide the door SVG element
 			document.getElementById(item).style.display = value === "OPEN" ? "block" : "none";
 
-			var isOpen = value === "OPEN";
+			let isOpen = value === "OPEN";
 
-			var change = false;
+			let change = false;
 			if (item === "door_boot")
 			{
 				if (isBootOpen !== isOpen) change = true;
@@ -4018,8 +4050,8 @@ function handleItemChange(item, value)
 
 			if (! change) break;  // Only continue if anything changed
 
-			var nDoorsOpen = 0;
-			for (var id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
+			let nDoorsOpen = 0;
+			for (let id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
 
 			// If on, add glow effect to "door_open" icon in the "pre_flight" screen
 			$("#door_open").toggleClass("glow", isBootOpen || nDoorsOpen > 0);
@@ -4032,7 +4064,7 @@ function handleItemChange(item, value)
 			} // if
 
 			// Compose gold-plated popup text
-			var popupText =
+			let popupText =
 				isBootOpen && nDoorsOpen > 1 ? bootAndDoorsOpenText :
 				isBootOpen && nDoorsOpen == 1 ? bootAndDoorOpenText :
 				isBootOpen && nDoorsOpen == 0 ? bootOpenText :
@@ -4141,8 +4173,8 @@ function handleItemChange(item, value)
 				break;
 			} // if
 
-			var isWarning = value.slice(-1) === "!";
-			var message = isWarning ? value.slice(0, -1) : value;
+			let isWarning = value.slice(-1) === "!";
+			let message = isWarning ? value.slice(0, -1) : value;
 			showNotificationPopup(message, 8000, isWarning);
 		} // case
 		break;
@@ -4175,12 +4207,13 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 
-			if (value === handleItemChange[item]) break;
-			handleItemChange[item] = value;
+			//if (value === handleItemChange[item]) break;
+			//handleItemChange[item] = value;
 
-			if (value === "YES" && satnavStatus3 === "SATNAV_IN_OPERATION")
+			//if (value === "YES" && satnavStatus3 === "SATNAV_IN_OPERATION")
+			if (value === "YES" && satnavMode === "IN_GUIDANCE_MODE")
 			{
-				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
+				temporarilyChangeLargeScreenTo("satnav_guidance", 30000);
 			}
 			else if (value === "NO")
 			{
@@ -4193,14 +4226,16 @@ function handleItemChange(item, value)
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 
-			if (value === handleItemChange[item]) break;
-			handleItemChange[item] = value;
+			//if (value === handleItemChange[item]) break;
+			//handleItemChange[item] = value;
 
 			satnavDisplayCanBeDimmed = value === "YES";
 
 			if (value === "NO"
 				&& currentLargeScreenId !== "satnav_vocal_synthesis_level"
-				&& satnavStatus3 === "SATNAV_IN_OPERATION")
+				//&& (satnavStatus3 === "SATNAV_IN_OPERATION" || satnavStatus3 === "READING_OUT_LAST_INSTRUCTION")
+				&& satnavMode === "IN_GUIDANCE_MODE"
+				)
 			{
 				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
 			}
@@ -4250,7 +4285,7 @@ function handleItemChange(item, value)
 
 			// Has anything changed?
 			if (value === satnavMode) break;
-			var previousSatnavMode = satnavMode;
+			let previousSatnavMode = satnavMode;
 			satnavMode = value;
 
 			// In case the ESP boots after the moment the sat nav has reported its "satnav_system_id"
@@ -4280,10 +4315,7 @@ function handleItemChange(item, value)
 				if ($("#satnav_guidance").is(":visible")) selectDefaultScreen();
 			} // if
 
-			if (value === "IDLE")
-			{
-				satnavRouteComputed = false;
-			} // if
+			if (value === "IDLE") satnavRouteComputed = false;
 		} // case
 		break;
 
@@ -4291,24 +4323,16 @@ function handleItemChange(item, value)
 		{
 			satnavStatus3 = value;
 
-			if (value === "STOPPING_NAVIGATION")
-			{
-				satnavDestinationNotAccessibleByRoadPopupShown = false;
-			}
-			else if (value === "POWERING_OFF")
-			{
-				satnavPoweringOff();
-			}
-			else if (value === "COMPUTING_ROUTE")
-			{
-				satnavComputingRoute = true;
-			} // if
+			if (value === "STOPPING_NAVIGATION") satnavDestinationNotAccessibleByRoadPopupShown = false;
+			else if (value === "POWERING_OFF") satnavPoweringOff();
+			else if (value === "COMPUTING_ROUTE") satnavComputingRoute = true;
+			else if (value === "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT") showAudioVolumePopup();
 		} // case
 		break;
 
 		case "satnav_gps_speed":
 		{
-			var driving = satnavVehicleMoving();
+			let driving = satnavVehicleMoving();
 
 			// While driving, disable "Navigation / Guidance" button in main menu
 			$("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", driving);
@@ -4337,7 +4361,7 @@ function handleItemChange(item, value)
 
 		case "satnav_route_computed":
 		{
-			var newValue = value === "YES" && satnavMode !== "IDLE";
+			let newValue = value === "YES" && satnavMode !== "IDLE";
 
 			// Has anything changed?
 			if (newValue === satnavRouteComputed) break;
@@ -4348,7 +4372,7 @@ function handleItemChange(item, value)
 			if (satnavRouteComputed) break;
 
 			// TODO - check translations from English
-			var translations =
+			let translations =
 			{
 				"set_language_french": "Chercher instruction",
 				"set_language_german": "Anweisung suchen",
@@ -4356,7 +4380,7 @@ function handleItemChange(item, value)
 				"set_language_italian": "Cercare istruzione",
 				"set_language_dutch": "Opzoeken instructie"
 			};
-			var content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
+			let content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
 			$("#satnav_guidance_next_street").html(content);
 		} // case
 		break;
@@ -4486,7 +4510,7 @@ function handleItemChange(item, value)
 				if (satnavNextStreet === "" && value !== "") $("#satnav_guidance_next_street").html(value);
 
 				// In the guidance screen, show "Street (City)", otherwise "Street not listed"
-				var selector = $("#satnav_guidance_curr_street");
+				let selector = $("#satnav_guidance_curr_street");
 				selector.html(value.match(/\(.*\)/) ? value : streetNotListedText);
 				satnavCutoffBottomLines(selector);
 			} // if
@@ -4509,7 +4533,7 @@ function handleItemChange(item, value)
 		{
 			satnavNextStreet = value;  // Store what was received
 
-			var selector = $("#satnav_guidance_next_street");
+			let selector = $("#satnav_guidance_next_street");
 
 			// No data means: stay on current street.
 			// But if current street is empty (""), then just keep the current text.
@@ -4526,11 +4550,11 @@ function handleItemChange(item, value)
 
 			// The "Rename" resp. "Validate" buttons are disabled if the entry is not on the current disc
 			// (value ends with "&#x24E7;" (X))
-			var entryOnDisc = value.match(/&#x24E7;$/) === null;
+			let entryOnDisc = value.match(/&#x24E7;$/) === null;
 
 			if ($("#satnav_personal_address_manage_buttons").is(":visible"))
 			{
-				var title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
+				let title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value);
 
@@ -4553,7 +4577,7 @@ function handleItemChange(item, value)
 
 			// The "Rename" resp. "Validate" buttons are disabled if the entry is not on the current disc
 			// (value ends with "&#x24E7;" (X))
-			var entryOnDisc = value.match(/&#x24E7;$/) === null;
+			let entryOnDisc = value.match(/&#x24E7;$/) === null;
 
 			if ($("#satnav_professional_address_manage_buttons").is(":visible"))
 			{
@@ -4716,13 +4740,13 @@ function handleItemChange(item, value)
 				// Already copy the selected street into the "satnav_show_current_destination" screen, in case the
 				// "satnav_report" packet is missed
 
-				var lines = splitIntoLines("satnav_choice_list");
+				let lines = splitIntoLines("satnav_choice_list");
 
 				if (lines[value] === undefined) break;
 
-				var selectedLine = lines[value];
-				var selectedStreetAndCity = selectedLine.replace(/<[^>]*>/g, '');  // Remove HTML formatting
-				var selectedStreet = selectedStreetAndCity.replace(/ -.*-/g, '');  // Keep only the street; discard city
+				let selectedLine = lines[value];
+				let selectedStreetAndCity = selectedLine.replace(/<[^>]*>/g, '');  // Remove HTML formatting
+				let selectedStreet = selectedStreetAndCity.replace(/ -.*-/g, '');  // Keep only the street; discard city
 
 				$("#satnav_current_destination_street_shown").text(selectedStreet);
 			} // if
@@ -4758,7 +4782,7 @@ function handleItemChange(item, value)
 					// User selected a service which has no address entries for the specified location
 
 					// TODO - check translations
-					var translations =
+					let translations =
 					{
 						"set_language_french": "Ce service n'est pas<br />disponible pour<br />ce lieu",
 						"set_language_german": "Dieser Dienst ist f&uuml;r<br />diesen Standort<br />nicht verf&uuml;gbar",
@@ -4766,7 +4790,7 @@ function handleItemChange(item, value)
 						"set_language_italian": "Questo servizio non<br />&egrave; disponibile per<br />questa localit&agrave;",
 						"set_language_dutch": "Deze dienst is<br />niet beschikbaar voor<br />deze locatie"
 					};
-					var content = translations[localStorage.mfdLanguage] ||
+					let content = translations[localStorage.mfdLanguage] ||
 						"This service is<br />not available for<br />this location";
 
 					showStatusPopup(content, 8000);
@@ -4776,7 +4800,7 @@ function handleItemChange(item, value)
 					exitMenu();
 
 					// TODO - check translations
-					var translations =
+					let translations =
 					{
 						"set_language_french": "R&eacute;pertoire personnel<br />est vide",
 						"set_language_german": "Pers&ouml;nliches Zielverzeichnis<br />ist leer",
@@ -4784,7 +4808,7 @@ function handleItemChange(item, value)
 						"set_language_italian": "Rub. personale<br />&egrave; vuota",
 						"set_language_dutch": "Lijst van priv&eacute;-<br />adressen is leeg"
 					};
-					var content = translations[localStorage.mfdLanguage] || "Personal directory<br />is empty";
+					let content = translations[localStorage.mfdLanguage] || "Personal directory<br />is empty";
 
 					showStatusPopup(content, 8000);
 				}
@@ -4793,7 +4817,7 @@ function handleItemChange(item, value)
 					exitMenu();
 
 					// TODO - check translations
-					var translations =
+					let translations =
 					{
 						"set_language_french": "R&eacute;pertoire professionnel<br />est vide",
 						"set_language_german": "Berufliches Zielverzeichnis<br />ist leer",
@@ -4801,7 +4825,7 @@ function handleItemChange(item, value)
 						"set_language_italian": "Rub. professionale<br />&egrave; vuota",
 						"set_language_dutch": "Lijst van zaken-<br />adressen is leeg"
 					};
-					var content = translations[localStorage.mfdLanguage] || "Professional directory<br />is empty";
+					let content = translations[localStorage.mfdLanguage] || "Professional directory<br />is empty";
 
 					showStatusPopup(content, 8000);
 				} // if
@@ -4842,7 +4866,7 @@ function handleItemChange(item, value)
 					else
 					{
 						// Follow-up chunk
-						var lines = splitIntoLines("satnav_choice_list");
+						let lines = splitIntoLines("satnav_choice_list");
 						lines = lines.slice(0, handleItemChange.mfdToSatnavOffset);
 						lines = lines.concat(value);
 						$("#satnav_choice_list").html(lines.join('<br />'));
@@ -4959,11 +4983,20 @@ function handleItemChange(item, value)
 		case "satnav_distance_to_dest_via_straight_line":
 		case "satnav_turn_at":
 		{
-			var a = satnavFormatDistance(value);
-			var distance = a[0];
-			var unit = a[1];
+			let a = satnavFormatDistance(value);
+			let distance = a[0];
+			let unit = a[1];
 			$("#" + item + "_number").text(distance);
 			$("#" + item + "_unit").text(unit);
+
+			// Near junction: make sure to show the satnav guidance screen
+			if (item === "satnav_turn_at"
+				&& $("#satnav_turn_at_indication").css("display") === "block"
+				&& (unit === "m" || unit ==="yd")
+				&& +distance <= 300)
+			{
+				temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
+			} // if
 		} // case
 		break;
 
@@ -5059,13 +5092,13 @@ function handleItemChange(item, value)
 			{
 				// On the original MFD, there is only room for 24 characters. If there are more characters, spill
 				// over to the next line.
-				var splitAt = 24;
+				let splitAt = 24;
 
 				// If the first 24 characters contain both 'I' and '1', the first line can contain 25 characters
 				if (value.indexOf("I") > 0 && value.indexOf("1") > 0 && value.indexOf("1") <= 23) splitAt = 25;
 
-				var line_1 = value.substr(0, splitAt);
-				var line_2 = value.substr(splitAt);
+				let line_1 = value.substr(0, splitAt);
+				let line_2 = value.substr(splitAt);
 
 
 				$("#satnav_to_mfd_show_characters_line_1").text(line_1);
@@ -5135,7 +5168,7 @@ function handleItemChange(item, value)
 				// Hide the "Computing route in progress" popup, if showing
 				hidePopup("satnav_computing_route_popup");
 
-				var translations =
+				let translations =
 				{
 					"set_language_french": "Suivez le cap indiqu&eacute;",
 					"set_language_german": "Folgen Sie dem Pfeil",
@@ -5143,7 +5176,7 @@ function handleItemChange(item, value)
 					"set_language_italian": "Sequire la direzione",
 					"set_language_dutch": "Volg deze richting"
 				};
-				var content = translations[localStorage.mfdLanguage] || "Follow the heading";
+				let content = translations[localStorage.mfdLanguage] || "Follow the heading";
 				$("#satnav_guidance_next_street").html(content);
 
 				//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
@@ -5222,7 +5255,7 @@ function handleItemChange(item, value)
 		case "trip_computer_popup_tab":
 		{
 			// Apply mapping from string to index
-			var tabIndex =
+			let tabIndex =
 				value === "TRIP_INFO_1" ? 1 :
 				value === "TRIP_INFO_2" ? 2 : 0;
 			selectTabInTripComputerPopup(tabIndex);
@@ -5279,11 +5312,10 @@ function handleItemChange(item, value)
 
 			if (economyMode === "ON") break;  // Ignore also when in power-save mode
 
-			var parts = value.split(" ");
-			var button = parts[0];
+			let parts = value.split(" ");
+			let button = parts[0];
 
-			// Show the first three letters of the button just pressed
-			$("#ir_button_pressed").text(button.substring(0, 3));
+			$("#ir_button_pressed").text(button.substring(0, 3));  // Debug info
 
 			if (button === "MENU_BUTTON")
 			{
@@ -5361,7 +5393,7 @@ function handleItemChange(item, value)
 					break;
 				} // if
 
-				var held = parts[1];
+				let held = parts[1];
 				if (held && ! acceptingHeldValButton) break;
 
 				// If one of these popups is showing, hide it and break
@@ -5399,7 +5431,7 @@ function handleItemChange(item, value)
 				if (currentMenu === "satnav_enter_city_characters" || currentMenu === "satnav_enter_street_characters")
 				{
 					// In case both the "Val" packet and the "End_of_button_press" packet were missed...
-					var selectedChar = $("#satnav_to_mfd_show_characters_line_1 .invertedText").text();
+					let selectedChar = $("#satnav_to_mfd_show_characters_line_1 .invertedText").text();
 					if (! selectedChar) selectedChar = $("#satnav_to_mfd_show_characters_line_2 .invertedText").text();
 					if (selectedChar) satnavLastEnteredChar = selectedChar;
 				} // if
@@ -5444,7 +5476,7 @@ function handleItemChange(item, value)
 
 			if (item === "set_fan_speed")
 			{
-				var on = value !== "0";
+				let on = value !== "0";
 				$("#fan_icon").toggleClass("ledOn", on);
 				$("#fan_icon").toggleClass("ledOff", ! on);
 			} // if
