@@ -5147,7 +5147,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
                 int n = handler->prevDataLen < dataLen ? handler->prevDataLen : dataLen;
                 for (int i = 0; i < n; i++)
                 {
-                    char diffByte[3] = "  ";
+                    char diffByte[] = "\u00b7\u00b7";  // \u00b7 is center dot character
                     if (data[i] != handler->prevData[i])
                     {
                         snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);

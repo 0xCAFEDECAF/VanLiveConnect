@@ -3029,9 +3029,10 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
-		hideAllPopups("audio_settings_popup");
+		// Don't let traffic info or any other popup may eclipse the guidance screen at this moment
+		hidePopup("notification_popup");  
 
-		if (satnavMode === "IN_GUIDANCE_MODE" && ! inMenu() && satnavStatus3 === "SATNAV_IN_OPERATION")
+		if (satnavMode === "IN_GUIDANCE_MODE" && ! inMenu())
 		{
 			temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
 		} // if
