@@ -92,7 +92,11 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
+  #ifdef VAN_RX_ISR_DEBUGGING || VAN_RX_IFS_DEBUGGING
+    #define VAN_PACKET_QUEUE_SIZE 15
+  #else
     #define VAN_PACKET_QUEUE_SIZE 150
+  #endif // VAN_RX_ISR_DEBUGGING || VAN_RX_IFS_DEBUGGING
 
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2

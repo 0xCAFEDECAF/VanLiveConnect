@@ -775,7 +775,8 @@ function nextLargeScreen()
 		"satnav_current_location"
 	];
 
-	var i = screenIds.indexOf(currentLargeScreenId);  // -1 if not found
+	var currIdx = screenIds.indexOf(currentLargeScreenId);  // -1 if not found
+	var i = currIdx;
 	var n = screenIds.length;
 
 	i = incModulo(i, n);  // ID of the next screen in the sequence
@@ -806,7 +807,9 @@ function nextLargeScreen()
 		if (satnavMode === "IN_GUIDANCE_MODE") i = screenIds.indexOf("satnav_guidance");
 		else if (satnavCurrentStreet === "")
 		{
-			if (engineRunning == "YES") i = screenIds.indexOf("instruments");
+			let instrIdx = screenIds.indexOf("instruments")
+
+			if (engineRunning == "YES" && currIdx !== instrIdx) i = instrIdx;
 			else i = 0;  // Go back to the "clock" screen
 		} // if
 	} // if
@@ -5467,9 +5470,10 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "set_fan_speed":
+		case "recirc":
 		case "rear_heater_2":
 		case "ac_enabled":
+		case "set_fan_speed":
 		{
 			// Has anything changed?
 			if (value === handleItemChange[item]) break;
