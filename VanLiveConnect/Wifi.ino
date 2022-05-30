@@ -70,9 +70,9 @@ void SetupWifi()
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   #ifdef WIFI_PASSWORD
-    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 1);
+    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
   #else
-    WiFi.softAP(WIFI_SSID, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 1);
+    WiFi.softAP(WIFI_SSID, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
   #endif
 
     // Register event handlers

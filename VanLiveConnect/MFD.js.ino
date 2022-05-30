@@ -585,6 +585,9 @@ function changeLargeScreenTo(id)
 
 	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
 
+	// Notify ESP so that it can use a slightly quicker repeat rate for the IR controller buttons
+	webSocket.send("in_list_screen:" + (id === "satnav_choose_from_list" ? "YES" : "NO"));
+
 	hidePopup("audio_popup");
 
 	// Perform current screen's "on_exit" action, if specified
@@ -976,7 +979,7 @@ function gotoTopLevelMenu(menu)
 	menuStack = [];
 	if (menu === undefined) menu = "main_menu";
 
-	// Report back that user is not browsing the menus
+	// Report back to server (ESP) that user is browsing the menus
 	if (webSocket !== undefined) webSocket.send("in_menu:YES");
 
 	// This is the screen we want to go back to when pressing "Esc" on the remote control inside the top level menu
@@ -3895,18 +3898,10 @@ function handleItemChange(item, value)
 
 		case "distance_to_empty":
 		{
+			// If less than 90 kms or 60 miles, add glow effect
 			let dist = parseFloat(value);
-
-			if (localStorage.mfdDistanceUnit === "set_units_mph")
-			{
-				// If less than 60 miles, add glow effect
-				$('[gid="distance_to_empty"]').toggleClass("glow", dist < 60);
-			}
-			else
-			{
-				// If less than 90 kms, add glow effect
-				$('[gid="distance_to_empty"]').toggleClass("glow", dist < 90);
-			} // if
+			let unit = localStorage.mfdDistanceUnit;
+			$('[gid="distance_to_empty"]').toggleClass("glow", dist < (unit === "set_units_mph" ? 60 : 90));
 		} // case
 		break;
 
@@ -4183,6 +4178,12 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "doors_locked":
+		{
+			if (value === "YES") showNotificationPopup("Doors locked", 4000); else hidePopup("notification_popup");
+		} // case
+		break;
+
 		case "satnav_destination_not_accessible":
 		{
 			satnavDestinationNotAccessible = value === "YES";
@@ -4193,8 +4194,7 @@ function handleItemChange(item, value)
 
 			if (satnavDestinationNotAccessible)
 			{
-				// Note: this popup must be shown just after the "Computing route in progress" popup closes, not
-				// during navigation
+				// Note: we do not want this popup while driving
 				showDestinationNotAccessiblePopupIfApplicable();
 			}
 		} // case
@@ -4202,7 +4202,16 @@ function handleItemChange(item, value)
 
 		case "satnav_arrived_at_destination":
 		{
-			if (value === "YES") showPopup("satnav_reached_destination_popup", 10000);
+			if (value !== "YES") break;
+
+			// let id = "#satnav_distance_to_dest_via_straight_line_";
+			// let distance = $(id + "number").text();
+			// let unit = $(id + "unit").text();
+
+			// if ((unit === "m" || unit ==="yd") && +distance <= 300)
+			// {
+				showPopup("satnav_reached_destination_popup", 10000);
+			// } // if
 		} // case
 		break;
 
@@ -4211,15 +4220,11 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 
-			//if (value === handleItemChange[item]) break;
-			//handleItemChange[item] = value;
-
-			//if (value === "YES" && satnavStatus3 === "SATNAV_IN_OPERATION")
-			if (value === "YES" && satnavMode === "IN_GUIDANCE_MODE")
+			if (value === "YES")
 			{
 				temporarilyChangeLargeScreenTo("satnav_guidance", 30000);
 			}
-			else if (value === "NO")
+			else
 			{
 				changeBackLargeScreenAfter(2000);
 			} // if
@@ -4230,16 +4235,9 @@ function handleItemChange(item, value)
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 
-			//if (value === handleItemChange[item]) break;
-			//handleItemChange[item] = value;
-
 			satnavDisplayCanBeDimmed = value === "YES";
 
-			if (value === "NO"
-				&& currentLargeScreenId !== "satnav_vocal_synthesis_level"
-				//&& (satnavStatus3 === "SATNAV_IN_OPERATION" || satnavStatus3 === "READING_OUT_LAST_INSTRUCTION")
-				&& satnavMode === "IN_GUIDANCE_MODE"
-				)
+			if (value === "NO" && currentLargeScreenId !== "satnav_vocal_synthesis_level")
 			{
 				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
 			}
@@ -4266,7 +4264,7 @@ function handleItemChange(item, value)
 		{
 			satnavStatus1 = value;
 
-			if (economyMode === "ON") break;  // No further handling
+			if (economyMode === "ON") break;
 
 			if (satnavStatus1.match(/NO_DISC/))
 			{
@@ -4304,8 +4302,7 @@ function handleItemChange(item, value)
 			// Just entered guidance mode?
 			if (value === "IN_GUIDANCE_MODE")
 			{
-				// Reset the trip computer popup contents
-				resetTripComputerPopup();
+				resetTripComputerPopup();  // Reset the trip computer popup contents
 
 				if ($("#satnav_guidance_preference_menu").is(":visible")) break;
 				satnavSwitchToGuidanceScreen();
@@ -4464,14 +4461,14 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "satnav_last_destination_city":
-		{
-			if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/))
-			{
-				showPopup("satnav_reached_destination_popup", 10000);
-			} // if
-		} // case
-		break;
+		// case "satnav_last_destination_city":
+		// {
+			// if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/))
+			// {
+				// showPopup("satnav_reached_destination_popup", 10000);
+			// } // if
+		// } // case
+		// break;
 
 		case "satnav_personal_address_street":
 		case "satnav_professional_address_street":
@@ -4979,10 +4976,6 @@ function handleItemChange(item, value)
 		break;
 
 		case "satnav_distance_to_dest_via_road":
-		{
-			handleItemChange.satnavDistanceToDestViaRoad = value;
-		}
-		// No 'break': fallthrough intended
 		case "satnav_service_address_distance":
 		case "satnav_distance_to_dest_via_straight_line":
 		case "satnav_turn_at":

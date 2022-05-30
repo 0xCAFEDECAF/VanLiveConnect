@@ -156,7 +156,9 @@ bool checkETag(const String& etag)
             read.replace("\"", ""); // some browsers (i.e. Samsung) discard the double quotes
             if (read == etag)
             {
-                webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
+                // Tells the client that it can cache the asset, but it cannot use the cached asset without
+                // revalidating with the server
+                webServer.sendHeader(F("Cache-Control"), F("no-cache"), true);
 
                 webServer.send(304, "text/plain", F("Not Modified"));
               #ifdef DEBUG_WEBSERVER
@@ -170,8 +172,9 @@ bool checkETag(const String& etag)
 
     webServer.sendHeader(F("ETag"), String("\"") + etag + "\"");
 
-    // Cache so many seconds, then falls back to using the "If-None-Match" mechanism
-    webServer.sendHeader(F("Cache-Control"), F("private, max-age=604800"), true);
+    // Tells the client that it can cache the asset, but it cannot use the cached asset without revalidating with
+    // the server
+    webServer.sendHeader(F("Cache-Control"), F("no-cache"), true);
 
     return false;
 } // checkETag
@@ -296,7 +299,7 @@ void HandleNotFound()
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
     // http://detectportal.firefox.com/success.txt ; Android tries to load https://www.gstatic.com/generate_204 .
     webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
-    webServer.sendHeader(F("Cache-Control"), F("no-store"), true);
+    //webServer.sendHeader(F("Cache-Control"), F("no-store"), true); // TODO - necessary?
     //webServer.send(301, F("text/plain"), F("Redirect"));
     webServer.send(302, F("text/plain"), F("Found"));
     return;

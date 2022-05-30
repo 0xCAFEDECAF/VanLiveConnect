@@ -39,6 +39,7 @@ WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket serve
 uint8_t prevWebsocketNum = 0xFF;
 uint8_t websocketNum = 0xFF;
 bool inMenu = false;  // true if user is browsing the menus
+bool inListScreen = false;  // true if user is browsing a list screen
 
 // Send a (JSON) message to the websocket client
 void SendJsonOnWebSocket(const char* json)
@@ -83,6 +84,10 @@ void ProcessWebSocketClientMessage(const char* payload)
     if (clientMessage.startsWith("in_menu:"))
     {
         inMenu = clientMessage.endsWith(":YES");
+    }
+    else if (clientMessage.startsWith("in_list_screen:"))
+    {
+        inListScreen = clientMessage.endsWith(":YES");
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
@@ -185,7 +190,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             // Send Wi-Fi and IP data to client
             SendJsonOnWebSocket(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
 
-            // Send equipment status data, e.g. presence of sat nav and other devices
+            // Send equipment status data, e.g. presence of sat nav and other peripherals
             SendJsonOnWebSocket(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
         }
         break;

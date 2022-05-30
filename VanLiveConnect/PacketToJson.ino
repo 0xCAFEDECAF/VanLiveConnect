@@ -1678,6 +1678,11 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
                 : ""
         );
 
+    // Separately report "doors locked" status
+    bool doorsLocked = data[8] & 0x01;
+    at += at >= n ? 0 :
+        snprintf_P(buf + at, n - at, PSTR(",\n\"doors_locked\": \"%S\""), doorsLocked ? yesStr : noStr);
+
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
@@ -2821,7 +2826,7 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     int at = snprintf_P(buf, n, jsonFormatter,
 
-        data[2] & 0x40 ? yesStr : noStr,  // CD changer device present
+        data[2] & 0x40 ? yesStr : noStr,  // CD changer unit present
         loading ? yesStr : noStr,  // Loading disc
         ejecting ? yesStr : noStr,  // Ejecting cartridge
 
@@ -4247,7 +4252,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         //   - type = 2 (SRT_SELECT) (dataLen = 11): select entry from list
         //     -- data[5] << 8 | data[6]: selected entry (0-based)
 
-        request == SR_SERVICE_LIST && param == 0x0D && type == SRT_REQ_N_ITEMS ? PSTR("satnav_choose_from_list") :
+        request == SR_SERVICE_LIST && param == 0x0D && type == SRT_REQ_N_ITEMS ? emptyStr :
         request == SR_SERVICE_LIST && param == 0x0D && type == SRT_SELECT ? emptyStr :
 
         // * request == 0x08 (SR_SERVICE_LIST),
@@ -5031,7 +5036,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToHeadUnitPkt
 
-// Equipment status data, e.g. presence of sat nav and other devices.
+// Equipment status data, e.g. presence of sat nav and other peripherals.
 // Some data is not regularly sent over the VAN bus. If a websocket client connects, we want to give a direct
 // update of this data as received thus far, instead of having to wait for this data to appear on the bus.
 const char* EquipmentStatusDataToJson(char* buf, const int n)
@@ -5144,11 +5149,13 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             Serial.printf_P(PSTR("DIFF: %03X %1X (%s) "), iden, pkt.CommandFlags(), pkt.CommandFlagsStr());
             if (dataLen > 0)
             {
-                int n = handler->prevDataLen < dataLen ? handler->prevDataLen : dataLen;
+                int n = handler->prevDataLen;
                 for (int i = 0; i < n; i++)
                 {
                     char diffByte[] = "\u00b7\u00b7";  // \u00b7 is center dot character
-                    if (data[i] != handler->prevData[i])
+
+                    // Relying on short-circuit boolean evaluation
+                    if (i >= dataLen || data[i] != handler->prevData[i])
                     {
                         snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);
                     } // if

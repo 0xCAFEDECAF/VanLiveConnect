@@ -574,6 +574,10 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="instruments" style="display:none;">
 
+					<div id="doors_locked" class="iconSmall led ledOff" style="left:70px; top:400px;">
+						<div class="centerAligned fas fa-lock"></div>
+					</div>
+
 					<!-- Vehicle speed -->
 					<div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:235px; width:300px;">0</div>
 					<div gid="speed_unit" class="tag" style="left:310px; top:310px;">km/h</div>
