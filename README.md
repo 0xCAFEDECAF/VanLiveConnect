@@ -22,7 +22,7 @@ the VAN bus.</p>
 
 ## 📟 Screen Shots<a name = "screenshots"></a>
 
-Don't bore us, give us the screen shots!
+Don't bore us, give us the screenshots!
 
 **Main entry screen:**
 
@@ -102,7 +102,7 @@ file.
 
 ## 🕹️ MFD functions supported
 
-See also the [screen shots](#screenshots) above.
+See also the [screenshots](#screenshots) above.
 
 * Clock with exterior temperature
 * Instruments (speed, RPM, fuel level, engine temperature)
@@ -258,13 +258,35 @@ crash the very first time, but after that it works (uploads) fine.
 
 ## 💡 Hints, tips<a name = "hints_tips"></a>
 
-### Preventing Screen Timeout / Screen Saver
+### Automating your smart phone or tablet
 
-While driving, you don't want the screen timeout to kick in all the time. If you have an Android smart phone or
-tablet, you can use the
-[Caffeine - Keep Screen On](https://play.google.com/store/apps/details?id=moe.zhs.caffeine&hl=en&gl=US)
-app. An excellent explanation how to install and use is found on
-[hotogeek.com](https://www.howtogeek.com/685034/how-to-stop-your-android-phones-screen-from-turning-off/).
+It is possible (and very convenient!) to automate all actions that are needed to start displaying your
+vehicle information on your smart phone or tablet as soon as you enter the vehicle. An excellent app that offers all
+necessary functions is [MacroDroid - Device Automation]
+
+Below are screenshots that show two macros which perform all the necessary actions:
+
+<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20overview.png" width="300"> <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20connect.png" width="300"> <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20disconnect.png" width="300">
+
+#### "VanLiveConnect" macro
+
+Upon connection to the Wi-Fi SSID "PSA display AP", performs the following actions:
+* Set the screen timeout value to 500 minutes, to prevent the screen from going black while driving
+* Force the screen rotation to "landscape"
+* Browse to the main screen
+* Go "full-screen"
+* Set the screen brightness to 100%
+
+#### "VanLiveDisconnect" macro
+
+Upon disconnection from "PSA display AP", performs the following actions:
+
+* Set the screen brightness back to 80%
+* Set the screen timeout value back to 2 minutes
+* Remove the forced screen rotation
+* Go back to the system home (launcher) screen
+
+Of course, the above actions are just a suggestion. Customize as you like!
 
 ## 📚 Used Libraries<a name = "libraries"></a>
 
@@ -365,3 +387,4 @@ Do whatever you like with it, but contributions are appreciated!
 [level converter]: https://www.tinytronics.nl/shop/en/dc-dc-converters/level-converters/i2c-uart-bi-directional-logic-level-converter-5v-3.3v-2-channel-with-supply
 [SN65HVD230]: https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf?ts=1592992149874
 [voltage divider]: https://www.quora.com/How-many-pins-on-Arduino-Uno-give-a3-3v-pin-output
+[MacroDroid - Device Automation]: https://play.google.com/store/apps/details?id=com.arlosoft.macrodroid&hl=en&gl=US
