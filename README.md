@@ -269,7 +269,6 @@ Below are screenshots that show two macros which perform all the necessary actio
 |<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20overview.png" width="250">|  |
 |---|---|
 |<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20connect.png" width="250">|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20disconnect.png" width="250">|
-|---|---|
 
 #### "VanLiveConnect" macro
 
