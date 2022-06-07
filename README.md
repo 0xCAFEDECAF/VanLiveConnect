@@ -296,7 +296,7 @@ Of course, the above actions are just a suggestion. Customize as you like!
 
 In the Arduino IDE, the following libraries are used:
 
-* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.2 .
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.5 .
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3, 2.3.4 and 2.3.5 .
 
