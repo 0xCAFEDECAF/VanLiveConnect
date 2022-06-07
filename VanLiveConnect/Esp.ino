@@ -32,6 +32,9 @@ void PrintSystemSpecs()
 
     Serial.print(F("Software image MD5 checksum: "));
     Serial.println(md5Checksum);
+
+    Serial.print(F("Wi-Fi MAC address: "));
+    Serial.println(WiFi.macAddress());
 } // PrintSystemSpecs
 
 const char* EspSystemDataToJson(char* buf, const int n)

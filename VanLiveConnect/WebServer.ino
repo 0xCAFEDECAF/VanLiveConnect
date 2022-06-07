@@ -549,6 +549,8 @@ void SetupWebServer()
     // Miscellaneous
 
     webServer.on(F("/dumpOnly"), HandleDumpFilter);
+
+    // Doing this will prevent the "login" popup on Android.
     webServer.on(F("/generate_204"), HandleAndroidConnectivityCheck);
     webServer.on(F("/gen_204"), HandleAndroidConnectivityCheck);
 

@@ -36,16 +36,18 @@ void NotificationPopupShowing(unsigned long since, long duration);
 const char* EspSystemDataToJson(char* buf, const int n);
 
 WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket server on port 81
-uint8_t prevWebsocketNum = 0xFF;
-uint8_t websocketNum = 0xFF;
+
+#define WEBSOCKET_INVALID_NUM (0xFF)
+uint8_t prevWebsocketNum = WEBSOCKET_INVALID_NUM;
+uint8_t websocketNum = WEBSOCKET_INVALID_NUM;
 bool inMenu = false;  // true if user is browsing the menus
-bool inListScreen = false;  // true if user is browsing a list screen
+bool irButtonFasterRepeat = false;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
 // Send a (JSON) message to the websocket client
 void SendJsonOnWebSocket(const char* json)
 {
     if (strlen(json) <= 0) return;
-    if (websocketNum == 0xFF) return;
+    if (websocketNum == WEBSOCKET_INVALID_NUM) return;
 
     delay(1); // Give some time to system to process other things?
 
@@ -85,9 +87,9 @@ void ProcessWebSocketClientMessage(const char* payload)
     {
         inMenu = clientMessage.endsWith(":YES");
     }
-    else if (clientMessage.startsWith("in_list_screen:"))
+    else if (clientMessage.startsWith("ir_button_faster_repeat:"))
     {
-        inListScreen = clientMessage.endsWith(":YES");
+        irButtonFasterRepeat = clientMessage.endsWith(":YES");
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
@@ -160,12 +162,12 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             if (num == websocketNum)
             {
                 websocketNum = prevWebsocketNum;
-                prevWebsocketNum = 0xFF;
+                prevWebsocketNum = WEBSOCKET_INVALID_NUM;
             } // if
 
             if (num == prevWebsocketNum)
             {
-                prevWebsocketNum = 0xFF;
+                prevWebsocketNum = WEBSOCKET_INVALID_NUM;
             } // if
         }
         break;
@@ -180,6 +182,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
             if (num != websocketNum)
             {
+                // Serve only the last one connected
                 prevWebsocketNum = websocketNum;
                 websocketNum = num;
             } // if
@@ -198,14 +201,32 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_TEXT:
         {
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf("[webSocket %u] received text: '%s'\n", num, payload);
+            Serial.printf_P(PSTR("[webSocket %u] received text: '%s'"), num, payload);
           #endif // DEBUG_WEBSOCKET
 
             if (num != websocketNum)
             {
-                prevWebsocketNum = websocketNum;
-                websocketNum = num;
+                // If we were not serving any, switch to this one
+                if (websocketNum == WEBSOCKET_INVALID_NUM)
+                {
+                    prevWebsocketNum = websocketNum;
+                    websocketNum = num;
+                }
+                else
+                {
+                    // Just keep on serving the last one that connected
+
+                  #ifdef DEBUG_WEBSOCKET
+                    Serial.printf_P(PSTR(" --> ignoring (listening only to webSocket %u)\n"), websocketNum);
+                  #endif // DEBUG_WEBSOCKET
+
+                    break;
+                } // if
             } // if
+
+          #ifdef DEBUG_WEBSOCKET
+            Serial.println();
+          #endif // DEBUG_WEBSOCKET
 
             ProcessWebSocketClientMessage((char*)payload);  // Process the message
         }

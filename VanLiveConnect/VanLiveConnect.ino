@@ -92,7 +92,7 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
-  #ifdef VAN_RX_ISR_DEBUGGING || VAN_RX_IFS_DEBUGGING
+  #if defined (VAN_RX_ISR_DEBUGGING) || defined (VAN_RX_IFS_DEBUGGING)
     #define VAN_PACKET_QUEUE_SIZE 15
   #else
     #define VAN_PACKET_QUEUE_SIZE 150
@@ -133,11 +133,7 @@ const char* VanBusStatsToStr()
     GString str(buffer);
     PrintAdapter streamer(str);
 
-#if defined VAN_BUX_RX_VERSION && VAN_BUX_RX_VERSION >= 000002004
     VanBusRx.DumpStats(streamer, false);
-#else
-    VanBusRx.DumpStats(streamer);
-#endif
 
     // Replace '\n' by string terminator '\0'
     buffer[BUFFER_SIZE - 1] = '\0';

@@ -460,7 +460,6 @@ void UpdateLargeScreenForGuidanceModeOn()
 void UpdateLargeScreenForGuidanceModeOff()
 {
     // If currently visible, the trip computer tab index on the large screen is copied to the small screen.
-    // Bug in original MFD: if the large screen is *not* currently visible, the small screen tab index is *not* updated.
     if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
     {
         if (tripComputerLargeScreenTab >= 0) smallScreen = tripComputerLargeScreenTab;
@@ -476,6 +475,9 @@ void UpdateLargeScreenForGuidanceModeOff()
     }
     else
     {
+        // Replicate a bug in the original MFD: if the large screen trip computer is *not* currently visible, the
+        // small screen tab index is *not* updated.
+
         SetAllTabIndexes();
 
       #ifdef DEBUG_ORIGINAL_MFD

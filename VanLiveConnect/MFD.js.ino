@@ -586,7 +586,14 @@ function changeLargeScreenTo(id)
 	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
 
 	// Notify ESP so that it can use a slightly quicker repeat rate for the IR controller buttons
-	webSocket.send("in_list_screen:" + (id === "satnav_choose_from_list" ? "YES" : "NO"));
+	var irFastRepeat =
+		id === "satnav_choose_from_list" &&
+		(
+			handleItemChange.mfdToSatnavRequest === "service"
+			|| handleItemChange.mfdToSatnavRequest === "personal_address_list"
+			|| handleItemChange.mfdToSatnavRequest === "professional_address_list"
+		);
+	webSocket.send("ir_button_faster_repeat:" + (irFastRepeat ? "YES" : "NO"));
 
 	hidePopup("audio_popup");
 
@@ -3123,7 +3130,7 @@ function satnavStopOrResumeGuidance()
 	} // if
 } // satnavStopOrResumeGuidance
 
-function satnavPoweringOff()
+function satnavPoweringOff(satnavMode)
 {
 	// If in guidance mode while turning off contact key, remember to show popup
 	// "Continue guidance to destination?" the next time the contact key is turned "ON"
@@ -3813,7 +3820,7 @@ function handleItemChange(item, value)
 			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
 
 			// Deduce the chosen gear
-			if (vehicleSpeed === undefined || vehicleSpeed < 2)
+			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 890)
 			{
 				$("#chosen_gear").text("-");
 				break;
@@ -4148,12 +4155,13 @@ function handleItemChange(item, value)
 				{
 					// "OFF" position can be very short between any of the other positions, so first wait a bit
 					clearTimeout(handleItemChange.contactKeyOffTimer);
+					let savedSatnavMode = satnavMode;
 					handleItemChange.contactKeyOffTimer = setTimeout
 					(
 						function ()
 						{
 							handleItemChange.contactKeyOffTimer = null;
-							satnavPoweringOff();
+							satnavPoweringOff(savedSatnavMode);
 							selectDefaultScreen();  // Even when in a menu: the original MFD switches off
 						},
 						500
@@ -4180,7 +4188,21 @@ function handleItemChange(item, value)
 
 		case "doors_locked":
 		{
-			if (value === "YES") showNotificationPopup("Doors locked", 4000); else hidePopup("notification_popup");
+			// Has anything changed?
+			if (value === handleItemChange.doorsLocked) break;
+			handleItemChange.doorsLocked = value;
+
+			let translations =
+			{
+				"set_language_french": "Portes verrouill&eacutees;",
+				"set_language_german": "T&uuml;ren verschlossen",
+				"set_language_spanish": "Puertas cerradas",
+				"set_language_italian": "Porte chiuse",
+				"set_language_dutch": "Deuren op slot"
+			};
+			let content = translations[localStorage.mfdLanguage] || "Doors locked";
+
+			if (value === "YES") showNotificationPopup(content, 4000);
 		} // case
 		break;
 
@@ -4325,7 +4347,7 @@ function handleItemChange(item, value)
 			satnavStatus3 = value;
 
 			if (value === "STOPPING_NAVIGATION") satnavDestinationNotAccessibleByRoadPopupShown = false;
-			else if (value === "POWERING_OFF") satnavPoweringOff();
+			else if (value === "POWERING_OFF") satnavPoweringOff(satnavMode);
 			else if (value === "COMPUTING_ROUTE") satnavComputingRoute = true;
 			else if (value === "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT") showAudioVolumePopup();
 		} // case

@@ -1391,11 +1391,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         // Try to follow the original MFD in what it is currently showing, so that long-press (trip counter reset)
         // happens on the correct trip counter
 
-    #if defined VAN_BUX_RX_VERSION && VAN_BUX_RX_VERSION >= 000002004
         unsigned long now = pkt.Millis();  // Retrieve packet reception time stamp from ISR
-    #else
-        unsigned long now = millis();  // May be delayed a bit
-    #endif
 
         // Just pressed?
         if (! stalkWasPressed && stalkIsPressed)
@@ -2521,6 +2517,9 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     if (mfdStatus == MFD_SCREEN_OFF)
     {
+        // TODO - is the following necessary? So that 'tripComputerLargeScreenTab' is copied into 'smallScreen' ?
+        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff();
+
         // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
         // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
         // don't work well together.
@@ -2985,7 +2984,16 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 // Sat nav equipment detection
 bool satnavEquipmentDetected = true;
 
+// Index of user-selected time unit
+enum SATNAV_status_2_t
+{
+    SATNAV_STATUS_2_INITIALIZING = 0x00,
+    SATNAV_STATUS_2_IDLE = 0x01,
+    SATNAV_STATUS_2_IN_GUIDANCE_MODE = 0x05
+}; // enum SATNAV_status_2_t
+
 // Saved equipment status (volatile)
+uint8_t satnavStatus2;
 PGM_P satnavStatus2Str = emptyStr;
 bool satnavDiscRecognized = false;
 bool satnavInitialized = false;
@@ -3008,11 +3016,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         static unsigned long lastPacketReceived = 0;
 
-    #if defined VAN_BUX_RX_VERSION && VAN_BUX_RX_VERSION >= 000002004
         unsigned long now = pkt.Millis();  // Retrieve packet reception time stamp from ISR
-    #else
-        unsigned long now = millis();  // May be delayed a bit
-    #endif
         unsigned long packetInterval = now - lastPacketReceived;  // Arithmetic has safe roll-over
         lastPacketReceived = now;
 
@@ -3067,16 +3071,16 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     if (memcmp(data, packetData, dataLen) == 0) return VAN_PACKET_DUPLICATE;
     memcpy(packetData, data, dataLen);
 
-    uint8_t satnavStatus2 = data[1] & 0x0F;
+    satnavStatus2 = data[1] & 0x0F;
 
     satnavStatus2Str =
-        satnavStatus2 == 0x00 ? PSTR("INITIALIZING") :
-        satnavStatus2 == 0x01 ? PSTR("IDLE") :
-        satnavStatus2 == 0x05 ? PSTR("IN_GUIDANCE_MODE") :
+        satnavStatus2 == SATNAV_STATUS_2_INITIALIZING ? PSTR("INITIALIZING") :
+        satnavStatus2 == SATNAV_STATUS_2_IDLE ? PSTR("IDLE") :
+        satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE ? PSTR("IN_GUIDANCE_MODE") :
         emptyStr;
 
     static bool wasSatnavGuidanceActive = false;
-    isSatnavGuidanceActive = satnavStatus2 == 0x05;
+    isSatnavGuidanceActive = satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE;
     satnavDiscRecognized = (data[2] & 0x70) == 0x30;
 
     const static char jsonFormatter[] PROGMEM =
@@ -3822,7 +3826,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     // Bug in original MFD: it seems to not "know" the current street as long as we're
                     // "IN_GUIDANCE_MODE" ?
                     // TODO - not sure
-                    if (strlen_P(satnavStatus2Str) != 16) isCurrentStreetKnown = true;
+                    if (satnavStatus2 != SATNAV_STATUS_2_IN_GUIDANCE_MODE) isCurrentStreetKnown = true;
                 } // if
 
                 const static char jsonFormatter[] PROGMEM =
@@ -3846,7 +3850,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 // Bug in original MFD: it seems to not "know" the current street as long as we're
                 // "IN_GUIDANCE_MODE" ?
                 // TODO - not sure
-                if (strlen_P(satnavStatus2Str) != 16) isCurrentStreetKnown = true;
+                if (satnavStatus2 != SATNAV_STATUS_2_IN_GUIDANCE_MODE) isCurrentStreetKnown = true;
             } // if
 
             const static char jsonFormatter[] PROGMEM =

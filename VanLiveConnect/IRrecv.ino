@@ -37,7 +37,7 @@ typedef struct
 
 // Defined in WebSocket.ino
 extern bool inMenu;
-extern bool inListScreen;
+extern bool irButtonFasterRepeat;
 
 // Defined in PacketToJson.ino
 extern const char emptyStr[];
@@ -377,7 +377,13 @@ bool IrReceive(TIrPacket& irPacket)
     {
         irButtonRepeatState = IBHS_DELAYING;
         countDown = IR_DELAY_N_INTERVALS;
-        if (inListScreen) countDown--;  // The sat nav "list" screen has a slightly quicker IR repeat timing
+        static bool firstTime = true;
+        if (firstTime)
+        {
+            countDown += 2;
+            firstTime = false;
+        } // if
+        if (irButtonFasterRepeat) countDown--;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
         nFirings = 1;
 
@@ -426,15 +432,15 @@ bool IrReceive(TIrPacket& irPacket)
         } // if
 
         countDown += IR_REPEAT_N_INTERVALS;
-        if (inListScreen) countDown--;  // The sat nav "list" screen has a slightly quicker IR repeat timing
+        if (irButtonFasterRepeat) countDown--;  // Some sat nav "list" screen have a slightly quicker IR repeat timing
 
         nFirings++;
 
         // Some magic to keep pace with the original MFD: speed things up a bit every now and then
-        if (nFirings % (inListScreen ? 4 : 2) == 0) countDown--;
+        if (nFirings % (irButtonFasterRepeat ? 4 : 2) == 0) countDown--;
 
         // Subtle extra speed adjustments (found by trial and error)
-        if (inListScreen)
+        if (irButtonFasterRepeat)
         {
             if (nFirings == 8) countDown++;
         }
