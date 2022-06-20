@@ -2656,7 +2656,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- System -->
 
-		<div id="system" style="position:absolute; font-size:30px; background-color:var(--selected-element-color); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
+		<div id="system" style="position:absolute; font-size:25px; background-color:var(--selected-element-color); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
 			on_enter="$('#web_socket_server_host').text(webSocketServerHost);">
 
 			<div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
@@ -2681,38 +2681,42 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:80px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
 			<div class="iconBorder" style="display:block; position:absolute; left:420px; top:130px; width:910px; height:330px;">
-				<div style="font-size:25px;">
+				<div style="font-size:20px;">
 					<div class="tag" style="top:10px; width:230px;">Boot Version</div>
-					<div class="tag" style="top:45px; width:230px;">Flash ID</div>
-					<div class="tag" style="top:80px; width:230px;">Flash size (real)</div>
-					<div class="tag" style="top:115px; width:230px;">Flash size (IDE)</div>
-					<div class="tag" style="top:150px; width:230px;">Flash speed (IDE)</div>
-					<div class="tag" style="top:185px; width:230px;">Flash mode (IDE)</div>
-					<div class="tag" style="top:255px; width:230px;">SDK</div>
+					<div class="tag" style="top:40px; width:230px;">Flash ID</div>
+					<div class="tag" style="top:70px; width:230px;">Flash size (real)</div>
+					<div class="tag" style="top:100px; width:230px;">Flash size (IDE)</div>
+					<div class="tag" style="top:130px; width:230px;">Flash speed (IDE)</div>
+					<div class="tag" style="top:160px; width:230px;">Flash mode (IDE)</div>
+					<div class="tag" style="top:190px; width:230px;">Reset Reason</div>
+					<div class="tag" style="top:220px; width:230px;">Reset Info</div>
+					<div class="tag" style="top:260px; width:230px;">SDK</div>
 					<div class="tag" style="top:290px; width:230px;">MD5 checksum</div>
 					<div style="position:absolute; left:360px;">
 						<div class="tag" style="top:10px; width:260px;">CPU Speed</div>
-						<div class="tag" style="top:45px; width:260px;">Chip ID</div>
-						<div class="tag" style="top:80px; width:260px;">MAC address</div>
-						<div class="tag" style="top:115px; width:260px;">IP address</div>
-						<div class="tag" style="top:150px; width:260px;">Wi-Fi RSSI</div>
-						<div class="tag" style="top:185px; width:260px;">Free RAM</div>
+						<div class="tag" style="top:40px; width:260px;">Chip ID</div>
+						<div class="tag" style="top:70px; width:260px;">MAC address</div>
+						<div class="tag" style="top:100px; width:260px;">IP address</div>
+						<div class="tag" style="top:130px; width:260px;">Wi-Fi RSSI</div>
+						<div class="tag" style="top:160px; width:260px;">Free RAM</div>
 					</div>
 				</div>
-				<div id="esp_boot_version" class="tag" style="left:240px; top:5px; text-align:left;">---</div>
-				<div id="esp_flash_id" class="tag" style="left:240px; top:40px; text-align:left;">---</div>
-				<div id="esp_flash_size_real" class="tag" style="left:240px; top:75px; text-align:left;">---</div>
-				<div id="esp_flash_size_ide" class="tag" style="left:240px; top:110px; text-align:left;">---</div>
-				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:145px; text-align:left;">---</div>
-				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:180px; text-align:left;">---</div>
-				<div id="esp_sdk_version" class="tag" style="left:240px; top:250px; text-align:left;">---</div>
-				<div id="img_md5_checksum" class="tag" style="left:240px; top:285px; text-align:left;">---</div>
-				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px; text-align:left;">---</div>
-				<div id="esp_chip_id" class="tag" style="left:630px; top:40px; text-align:left;">---</div>
-				<div id="esp_mac_address" class="tag" style="left:630px; top:75px; text-align:left;">---</div>
-				<div id="esp_ip_address" class="tag" style="left:630px; top:110px; text-align:left;">---</div>
-				<div id="esp_wifi_rssi" class="tag" style="left:630px; top:145px; text-align:left;">---</div>
-				<div id="esp_free_ram" class="tag" style="left:630px; top:180px; text-align:left;">---</div>
+				<div id="esp_boot_version" class="tag" style="left:240px; top:5px;">---</div>
+				<div id="esp_flash_id" class="tag" style="left:240px; top:35px;">---</div>
+				<div id="esp_flash_size_real" class="tag" style="left:240px; top:65px;">---</div>
+				<div id="esp_flash_size_ide" class="tag" style="left:240px; top:95px;">---</div>
+				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:125px;">---</div>
+				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:155px;">---</div>
+				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:185px;">---</div>
+				<div id="esp_last_reset_info" class="tag" style="left:240px; top:215px; width:660px;">---</div>
+				<div id="esp_sdk_version" class="tag" style="left:240px; top:255px;">---</div>
+				<div id="img_md5_checksum" class="tag" style="left:240px; top:285px;">---</div>
+				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px;">---</div>
+				<div id="esp_chip_id" class="tag" style="left:630px; top:35px;">---</div>
+				<div id="esp_mac_address" class="tag" style="left:630px; top:65px;">---</div>
+				<div id="esp_ip_address" class="tag" style="left:630px; top:950px;">---</div>
+				<div id="esp_wifi_rssi" class="tag" style="left:630px; top:125px;">---</div>
+				<div id="esp_free_ram" class="tag" style="left:630px; top:155px;">---</div>
 			</div>
 
 			<div id="van_bus_stats" class="tag"
