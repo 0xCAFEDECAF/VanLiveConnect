@@ -190,13 +190,13 @@
 // Define to see JSON buffers printed on the serial port
 // Note: for some reason, having JSON buffers printed on the serial port seems to reduce the number
 //   of CRC errors in the received VAN bus packets
-#define PRINT_JSON_BUFFERS_ON_SERIAL
+//#define PRINT_JSON_BUFFERS_ON_SERIAL
 
 // If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of VAN-bus packets will be printed on the serial port?
-//#define SELECTED_PACKETS VAN_PACKETS_ALL_VAN_PKTS
+#define SELECTED_PACKETS VAN_PACKETS_ALL_VAN_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_HEAD_UNIT_PKTS
-#define SELECTED_PACKETS VAN_PACKETS_SAT_NAV_PKTS
+//#define SELECTED_PACKETS VAN_PACKETS_SAT_NAV_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_NO_VAN_PKTS
 
 //#define PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
