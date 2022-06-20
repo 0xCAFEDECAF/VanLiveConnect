@@ -669,7 +669,7 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
             );
     } // for
 
-    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(""));
+    //at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(""));
 
     // Show all the "no-entry" legs in the junction
 
@@ -1669,9 +1669,7 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             PSTR(",\n\"notification_message_on_mfd\": \"%S\""),
 
             // Relying on short-circuit boolean evaluation
-            currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0
-                ? msgTable[currentMsg]
-                : ""
+            currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0 ? msgTable[currentMsg] : emptyStr
         );
 
     // Separately report "doors locked" status
