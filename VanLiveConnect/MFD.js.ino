@@ -165,10 +165,6 @@ function processJsonObject(item, jsonObject)
 
 function writeToDom(jsonObj)
 {
-	// Toggle the "comms_led" to indicate communication activity
-	$("#comms_led").toggleClass("ledOn");
-	$("#comms_led").toggleClass("ledOff");
-
 	// The following log entries can be used to literally re-play a session; simply copy-paste these lines into the
 	// console area of the web-browser. Also it can be really useful to copy and save these lines into a text file
 	// for later re-playing at your desk.
@@ -376,6 +372,7 @@ function hidePopup(id)
 	$("#original_mfd_popup").empty();  // Debug info
 
 	clearTimeout(popupTimer[id]);
+	popupTimer[id] = undefined;
 
 	// Perform "on_exit" action, if specified
 	var onExit = popup.attr("on_exit");
@@ -406,18 +403,20 @@ function showPopup(id, msec)
 	// Hide popup after specified milliseconds
 	clearTimeout(popupTimer[id]);
 	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
+	return popupTimer[id];
 } // showPopup
 
 // Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
 // e.g. to know when to ignore a "MOD" button press from the IR remote control.
 function showPopupAndNotifyServer(id, msec, message)
 {
-	showPopup(id, msec);
+	var timerId = showPopup(id, msec);
 
 	var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
 	webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
 
 	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
+	return timerId;
 } // showPopupAndNotifyServer
 
 // Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
@@ -430,6 +429,15 @@ function hideAllPopups(except)
 		if ($(selector).attr("id") !== except) hidePopup($(selector).attr("id"));
 	});
 } // hideAllPopups
+
+// Hide the notification popup, but only if it is the specified one
+function hideNotificationPopup(timerId)
+{
+	if (timerId === undefined) return;
+	var popupTimerId = popupTimer["notification_popup"];
+	if (popupTimerId === undefined) return;
+	if (timerId === popupTimerId) hidePopup("notification_popup");
+} // hideNotificationPopup
 
 // Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
 // (isWarning == false, default) or "warning" (isWarning == true).
@@ -444,7 +452,7 @@ function showNotificationPopup(message, msec, isWarning)
 	// TODO - if popup is already showing with this message, return here
 
 	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
-	showPopupAndNotifyServer("notification_popup", msec, message);  // Show the notification popup
+	return showPopupAndNotifyServer("notification_popup", msec, message);
 } // showNotificationPopup
 
 // Show a simple status popup (no icon) with a message and an optional timeout
@@ -3042,8 +3050,8 @@ function satnavSetAudioLed(playingAudio)
 	clearTimeout(satnavSetAudioLed.showSatnavAudioLed);
 	if (playingAudio)
 	{
-		// Don't let traffic info or any other popup may eclipse the guidance screen at this moment
-		hidePopup("notification_popup");  
+		// Don't let traffic info or any other popup eclipse the guidance screen at this moment
+		hidePopup("notification_popup");
 
 		if (satnavMode === "IN_GUIDANCE_MODE" && ! inMenu())
 		{
@@ -3521,7 +3529,7 @@ function handleItemChange(item, value)
 			if ($("#clock").is(":visible")) selectDefaultScreen();
 
 			// Has anything changed?
-			if (value === handleItemChange.currentTunerPresetMemoryValue) break;
+			//if (value === handleItemChange.currentTunerPresetMemoryValue) break;
 
 			// Un-highlight any previous entry in the "tuner_presets_popup"
 			$('div[id^=presets_memory_][id$=_select]').hide();
@@ -3610,7 +3618,7 @@ function handleItemChange(item, value)
 		{
 			if (handleItemChange.infoTraffic === undefined) handleItemChange.infoTraffic = "NO";
 
-			if (inMenu()) break;  // Don't pop up when browsing the menus
+			if (inMenu() || $("#audio_settings_popup").is(":visible")) break;
 
 			// Has anything changed?
 			if (value === handleItemChange.infoTraffic) break;
@@ -3626,12 +3634,13 @@ function handleItemChange(item, value)
 					"set_language_italian": "Informazioni sul traffico",
 					"set_language_dutch": "Verkeersinformatie"
 				};
-				showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information",
-					$("#satnav_guidance").is(":visible") ? 5000 : 10000);
+				handleItemChange.infoTrafficPopupTimer =
+					showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information",
+						$("#satnav_guidance").is(":visible") ? 5000 : 10000);
 			}
 			else
 			{
-				hidePopup("notification_popup");
+				hideNotificationPopup(handleItemChange.infoTrafficPopupTimer);
 			} // if
 		} // case
 		break;
@@ -3820,7 +3829,7 @@ function handleItemChange(item, value)
 			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
 
 			// Deduce the chosen gear
-			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 890)
+			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 900)
 			{
 				$("#chosen_gear").text("-");
 				break;
@@ -4174,15 +4183,21 @@ function handleItemChange(item, value)
 
 		case "notification_message_on_mfd":
 		{
+			if (handleItemChange.mfdNotificationMsg === undefined) handleItemChange.mfdNotificationMsg = "";
+
+			// Has anything changed?
+			if (value === handleItemChange.mfdNotificationMsg) break;
+			handleItemChange.mfdNotificationMsg = value;
+
 			if (value === "")
 			{
-				hidePopup("notification_popup");
+				hideNotificationPopup(handleItemChange.notificationMessagePopupTimer);
 				break;
 			} // if
 
 			let isWarning = value.slice(-1) === "!";
 			let message = isWarning ? value.slice(0, -1) : value;
-			showNotificationPopup(message, 8000, isWarning);
+			handleItemChange.notificationMessagePopupTimer = showNotificationPopup(message, 8000, isWarning);
 		} // case
 		break;
 
@@ -5306,21 +5321,6 @@ function handleItemChange(item, value)
 				// Show the first few letters of the screen name
 				$("#original_mfd_large_screen").text(mfdLargeScreen.substring(0, 6));
 			} // if
-		} // case
-		break;
-
-		case "van_bus_overrun":
-		{
-			// Indicate bus overrun by changing color of comms_led icon to red
-			$("#comms_led").css('background-color', 'red');
-
-			// After 10 seconds, return to original color
-			clearTimeout(handleItemChange.revertCommsLedColorTimer);
-			handleItemChange.revertCommsLedColorTimer = setTimeout
-			(
-				function () { $("#comms_led").css('background-color', ''); },
-				10000
-			);
 		} // case
 		break;
 
