@@ -46,12 +46,12 @@ body
   background-image: url('background.jpg');
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: 1350px 650px;
+  background-size: inherit;
 
   /* TODO - background-blend-mode not supported by IE11 */
-  /* background-blend-mode: luminosity; */
+  /*background-blend-mode: luminosity; */
   /*background-blend-mode: multiply; */
-  background-blend-mode: lighten;
+  /*background-blend-mode: lighten;*/
 }
 .languageIcon
 {
