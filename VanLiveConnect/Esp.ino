@@ -9,6 +9,12 @@ const char PROGMEM unknownStr[] = "UNKNOWN";
 
 const String md5Checksum = ESP.getSketchMD5();
 
+const uint32_t flashChipId = ESP.getFlashChipId();
+const uint32_t flashSizeReal = ESP.getFlashChipRealSize();
+const uint32_t flashSizeIde = ESP.getFlashChipSize();
+const FlashMode_t flashModeIde = ESP.getFlashChipMode();
+const uint32_t flashChipSpeed = ESP.getFlashChipSpeed();
+
 void PrintSystemSpecs()
 {
     Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
@@ -39,15 +45,13 @@ void PrintSystemSpecs()
 
 const char* EspSystemDataToJson(char* buf, const int n)
 {
-    uint32_t flashSizeReal = ESP.getFlashChipRealSize();
-    uint32_t flashSizeIde = ESP.getFlashChipSize();
-    FlashMode_t flashModeIde = ESP.getFlashChipMode();
-
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"esp_last_reset_reason\": \"%s\",\n"
+            "\"esp_last_reset_info\": \"%s\",\n"
             "\"esp_boot_version\": \"%u\",\n"
             "\"esp_cpu_speed\": \"%u MHz\",\n"
             "\"esp_sdk_version\": \"%s\",\n"
@@ -73,15 +77,18 @@ const char* EspSystemDataToJson(char* buf, const int n)
     char floatBuf[3][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
 
+        ESP.getResetReason().c_str(),
+        ESP.getResetInfo().c_str(),
+
         ESP.getBootVersion(),
         ESP.getCpuFreqMHz(), // system_get_cpu_freq(),
         ESP.getSdkVersion(),
         ESP.getChipId(),
 
-        ESP.getFlashChipId(),
+        flashChipId,
         FloatToStr(floatBuf[0], flashSizeReal/1024.0/1024.0, 2),
         FloatToStr(floatBuf[1], flashSizeIde/1024.0/1024.0, 2),
-        FloatToStr(floatBuf[2], ESP.getFlashChipSpeed()/1000000.0, 2),
+        FloatToStr(floatBuf[2], flashChipSpeed/1000000.0, 2),
 
         flashModeIde == FM_QIO ? qioStr :
         flashModeIde == FM_QOUT ? qoutStr :
