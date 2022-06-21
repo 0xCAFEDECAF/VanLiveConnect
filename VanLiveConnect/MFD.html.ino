@@ -2714,7 +2714,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px;">---</div>
 				<div id="esp_chip_id" class="tag" style="left:630px; top:35px;">---</div>
 				<div id="esp_mac_address" class="tag" style="left:630px; top:65px;">---</div>
-				<div id="esp_ip_address" class="tag" style="left:630px; top:950px;">---</div>
+				<div id="esp_ip_address" class="tag" style="left:630px; top:95px;">---</div>
 				<div id="esp_wifi_rssi" class="tag" style="left:630px; top:125px;">---</div>
 				<div id="esp_free_ram" class="tag" style="left:630px; top:155px;">---</div>
 			</div>
