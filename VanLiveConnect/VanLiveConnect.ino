@@ -93,9 +93,9 @@ void SetupVanReceiver()
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
   #if defined (VAN_RX_ISR_DEBUGGING) || defined (VAN_RX_IFS_DEBUGGING)
-    #define VAN_PACKET_QUEUE_SIZE 15
+    #define VAN_PACKET_QUEUE_SIZE 50
   #else
-    #define VAN_PACKET_QUEUE_SIZE 150
+    #define VAN_PACKET_QUEUE_SIZE 250
   #endif // VAN_RX_ISR_DEBUGGING || VAN_RX_IFS_DEBUGGING
 
     // GPIO pin connected to VAN bus transceiver output
