@@ -220,7 +220,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 In the Arduino IDE, go to the "Tools" menu, and choose:
 
 * CPU frequency: 160 MHz, and
-* lwIP variant: "v2 Higher Bandwidth (no features)".
+* lwIP variant: "v2 Lower Memory (no features)".
 
 Here is a picture of board settings that have been tested to work:
 
