@@ -238,6 +238,7 @@ void SetupWebSocket()
 {
     webSocket.begin();
     webSocket.onEvent(WebSocketEvent);
+    webSocket.enableHeartbeat(1000, 500, 2);
 } // SetupWebSocket
 
 void LoopWebSocket()
