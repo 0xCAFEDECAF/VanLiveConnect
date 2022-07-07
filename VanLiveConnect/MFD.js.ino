@@ -1611,6 +1611,9 @@ function highlightAudioSetting(goToFirst)
 	} // if
 
 	$("#" + highlightIds[audioSettingHighlightIndex]).show();  // Show the next highlight box
+
+	updatingAudioVolume = false;
+	isAudioMenuVisible = true;
 } // highlightAudioSetting
 
 function hideTunerPresetsPopup()
@@ -1621,7 +1624,8 @@ function hideTunerPresetsPopup()
 // Show the audio volume popup
 function showAudioVolumePopup()
 {
-	if (isAudioMenuVisible) return;  // Audio popup already visible due to display of audio settings?
+	// Audio popup already visible due to display of audio settings?
+	if (isAudioMenuVisible) return hideAudioSettingsPopupAfter(11500);
 
 	hideTunerPresetsPopup();  // If the tuner presets popup is visible, hide it
 
@@ -1663,14 +1667,11 @@ function showAudioSettingsPopup(button)
 
 		// Highlight the first audio setting ("bass") if just popped up, else highlight next audio setting
 		highlightAudioSetting(! isAudioMenuVisible);
-
-		updatingAudioVolume = false;
-		isAudioMenuVisible = true;
 	} // if
 
 	// (Re-)start the popup visibility timer.
 	// Note: set to at least 12 seconds, otherwise the popup will appear again just before it is being force-closed.
-	hideAudioSettingsPopupAfter(12000);
+	if (isAudioMenuVisible) hideAudioSettingsPopupAfter(7500);
 } // showAudioSettingsPopup
 
 // Show the tuner presets popup
@@ -3303,18 +3304,6 @@ function handleItemChange(item, value)
 			} // if
 
 			showAudioVolumePopup();
-		} // case
-		break;
-
-		case "audio_menu":
-		{
-			if (value !== "CLOSED") break;
-
-			// Bug in original MFD: if source is cd-changer, audio_menu is always "OPEN"... So ignore for now.
-
-			if (updatingAudioVolume) break;  // Ignore when audio volume is being set
-
-			hideAudioSettingsPopup();  // Hide the audio popup now
 		} // case
 		break;
 
