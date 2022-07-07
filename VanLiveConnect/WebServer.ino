@@ -298,11 +298,15 @@ void HandleNotFound()
     // Redirect to the main HTML page ('/MFD.html').
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
     // http://detectportal.firefox.com/success.txt ; Android tries to load https://www.gstatic.com/generate_204 .
+
+    // TODO - commented out because this occasionally crashes the ESP due to out-of-memory condition
+  #if 0
     webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
     //webServer.sendHeader(F("Cache-Control"), F("no-store"), true); // TODO - necessary?
     //webServer.send(301, F("text/plain"), F("Redirect"));
     webServer.send(302, F("text/plain"), F("Found"));
     return;
+  #endif // 0
   #endif // WIFI_AP_MODE
 
     // Gold-plated response
