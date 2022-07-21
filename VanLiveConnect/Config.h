@@ -86,8 +86,9 @@
 // -----
 // Web server
 
-// Define to make the web server to use the SPI Flash File system (SPIFFS) to serve its web documents from.
-// When not defined (commented out), the web server serves the web documents from program space.
+// Define SERVE_FROM_SPIFFS to make the web server to use the SPI Flash File system (SPIFFS) to serve its web
+// documents from. When SERVE_FROM_SPIFFS is not defined (commented out), the web server serves the web documents
+// from program space.
 //
 // Notes:
 //

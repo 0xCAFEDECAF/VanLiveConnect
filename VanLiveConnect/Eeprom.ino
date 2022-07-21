@@ -20,7 +20,7 @@ void CommitEeprom()
 
     Serial.println("=====> Committing EEPROM");  // TODO - remove
     VanBusRx.Disable();
-    EEPROM.commit();
+    EEPROM.commit();  // Will only write to flash if any data was actually changed
     VanBusRx.Enable();
 
     _eepromDirty = false;

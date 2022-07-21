@@ -11,12 +11,12 @@
 // the line:
 //   #define WEBSOCKETS_TCP_TIMEOUT (5000)
 // must be changed to:
-//   #define WEBSOCKETS_TCP_TIMEOUT (200)
+//   #define WEBSOCKETS_TCP_TIMEOUT (500)
 // to prevent the VAN bus receiver from overrunning when the web socket disconnects
-#if WEBSOCKETS_TCP_TIMEOUT > 500
-#error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
-#error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; set between 200 and 500!"
-#endif
+// #if WEBSOCKETS_TCP_TIMEOUT > 1000
+// #error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
+// #error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set to 500!"
+// #endif
 
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;
@@ -238,7 +238,7 @@ void SetupWebSocket()
 {
     webSocket.begin();
     webSocket.onEvent(WebSocketEvent);
-    webSocket.enableHeartbeat(1000, 500, 2);
+    webSocket.enableHeartbeat(200, 5000, 0);
 } // SetupWebSocket
 
 void LoopWebSocket()

@@ -76,7 +76,12 @@ function updateDateTime()
 } // updateDateTime
 
 // -----
-// System settings
+// System
+
+document.addEventListener("visibilitychange", function()
+{
+	if (document.visibilityState === 'visible') connectToWebSocket(); else webSocket.close();
+});
 
 function showViewportSizes()
 {
@@ -238,6 +243,12 @@ var fancyWebSocket = function(url)
 		return this;  // chainable
 	}; // function
 
+	this.close = function()
+	{
+		console.log("// Closing websocket'" + url + "'");
+		conn.close();
+	}; // function
+
 	this.send = function(data)
 	{
 		if (conn.readyState === 1) conn.send(data);
@@ -310,7 +321,7 @@ window.onbeforeunload = function() { websocketPreventConnect = true; };
 
 function connectToWebSocket()
 {
-	if (websocketPreventConnect) return;
+	if (websocketPreventConnect || document.hidden) return;
 
 	var wsUrl = "ws://" + webSocketServerHost + ":81/";
 	console.log("// Connecting to WebSocket '" + wsUrl + "'");
@@ -1758,6 +1769,8 @@ function setDimLevel(headlightStatus, theme)
 
 function adjustDimLevel(headlightStatus, button)
 {
+	// IMHO, it is better to trigger on the beam lights. Field "dash_light" triggers on any lights, including
+	// parking lights, which is not really used when dark.
 	var id = headlightStatus.match(/BEAM/) ? "display_reduced_brightness_level" : "display_brightness_level";
 
 	// Luminosity is adjustable in 15 levels from 63 ... 91
@@ -4409,6 +4422,7 @@ function handleItemChange(item, value)
 			};
 			let content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
 			$("#satnav_guidance_next_street").html(content);
+			satnavCutoffBottomLines($("#satnav_guidance_next_street"));
 		} // case
 		break;
 
@@ -4534,7 +4548,11 @@ function handleItemChange(item, value)
 			if (satnavMode === "IN_GUIDANCE_MODE")
 			{
 				// Last received value empty ("")? Then copy current street into next street (if not empty)
-				if (satnavNextStreet === "" && value !== "") $("#satnav_guidance_next_street").html(value);
+				if (satnavNextStreet === "" && value !== "")
+				{
+					$("#satnav_guidance_next_street").html(value);
+					satnavCutoffBottomLines($("#satnav_guidance_next_street"));
+				} // if
 
 				// In the guidance screen, show "Street (City)", otherwise "Street not listed"
 				let selector = $("#satnav_guidance_curr_street");
@@ -5201,11 +5219,13 @@ function handleItemChange(item, value)
 				};
 				let content = translations[localStorage.mfdLanguage] || "Follow the heading";
 				$("#satnav_guidance_next_street").html(content);
+				satnavCutoffBottomLines($("#satnav_guidance_next_street"));
 
 				//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
 
 				// To replicate a bug in the original MFD; in fact the current street is usually known
 				$("#satnav_guidance_curr_street").html(notDigitizedAreaText);
+				satnavCutoffBottomLines($("#satnav_guidance_curr_street"));
 			} // if
 
 			$("#satnav_turn_at_indication").toggle(value !== "ON");

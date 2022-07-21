@@ -1926,8 +1926,9 @@ char mfd_html[] PROGMEM = R"=====(
 							<div id="satnav_curr_turn_roundabout"
 								style="display:none; position:absolute; top:0px; width:300px; height:300px;">
 								<svg width="300" height="300">
-									<circle class="satNavRoundabout" cx="150" cy="150" r="40"></circle>
-									<circle class="satNavRoundabout" style="fill:var(--background-color);" cx="150" cy="150" r="20"></circle>
+									<!-- <circle class="satNavRoundabout" cx="150" cy="150" r="40"></circle> -->
+									<circle class="satNavRoundabout" style="fill:var(--disabled-element-color);" cx="150" cy="150" r="20"></circle>
+									<path id="p" class="satNavRoundabout" d="M150 150m-40,0a40,40,0 1,0 80,0a 40,40 0 1,0 -80,0zM150 150m-20,0a20,20,0 0,1 40,0a 20,20 0 0,1 -40,0z"></path>
 								</svg>
 								<div style="position:absolute; top:0px; width:300px; height:300px;">
 									<!-- Indicate the "to" direction also in the roundabout -->

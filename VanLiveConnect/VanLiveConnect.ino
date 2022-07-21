@@ -92,7 +92,7 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
-  #if defined (VAN_RX_ISR_DEBUGGING) || defined (VAN_RX_IFS_DEBUGGING)
+  #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
     #define VAN_PACKET_QUEUE_SIZE 50
   #else
     #define VAN_PACKET_QUEUE_SIZE 250
@@ -223,28 +223,45 @@ void loop()
     dnsServer.processNextRequest();
   #endif // WIFI_AP_MODE
 
+    LoopWebSocket(); // TODO - necessary?
+
     WifiCheckStatus();
 
+    LoopWebSocket(); // TODO - necessary?
+
     LoopOta();
+
+    LoopWebSocket(); // TODO - necessary?
 
     LoopWebSocket();
     LoopWebServer();
 
+    LoopWebSocket(); // TODO - necessary?
+
     // IR receiver
     TIrPacket irPacket;
     if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket));
+
+    LoopWebSocket(); // TODO - necessary?
 
     // VAN bus receiver
     TVanPacketRxDesc pkt;
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
+        LoopWebSocket(); // TODO - necessary?
+
       #ifdef VAN_RX_IFS_DEBUGGING
         if (pkt.getIfsDebugPacket().IsAbnormal()) pkt.getIfsDebugPacket().Dump(Serial);
       #endif // VAN_RX_IFS_DEBUGGING
 
+        LoopWebSocket(); // TODO - necessary?
+
         SendJsonOnWebSocket(ParseVanPacketToJson(pkt));
     }
+
+    LoopWebSocket(); // TODO - necessary?
+
     if (isQueueOverrun)
     {
         Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
@@ -264,6 +281,8 @@ void loop()
       #endif // DEBUG_WEBSOCKET
     } // if
 
+    LoopWebSocket(); // TODO - necessary?
+
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
     {
@@ -275,11 +294,19 @@ void loop()
       #endif // SHOW_ESP_RUNTIME_STATS
 
       #ifdef SHOW_VAN_RX_STATS
-        // Print statistics
-        VanBusRx.DumpStats(Serial);
-
         // Send VAN bus receiver status string to client
         SendJsonOnWebSocket(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
       #endif // SHOW_VAN_RX_STATS
     } // if
+
+  #ifdef SHOW_VAN_RX_STATS
+    static unsigned long lastUpdate2 = 0;
+    if (millis() - lastUpdate2 >= 15000UL)  // Arithmetic has safe roll-over
+    {
+        lastUpdate2 = millis();
+
+        // Print statistics
+        VanBusRx.DumpStats(Serial);
+    } // if
+  #endif // SHOW_VAN_RX_STATS
 } // loop

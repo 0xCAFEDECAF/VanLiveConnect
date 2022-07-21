@@ -309,6 +309,15 @@ void HandleNotFound()
   #endif // 0
   #endif // WIFI_AP_MODE
 
+    if (webServer.uri() == "/")
+    {
+        webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
+        //webServer.sendHeader(F("Cache-Control"), F("no-store"), true); // TODO - necessary?
+        //webServer.send(301, F("text/plain"), F("Redirect"));
+        webServer.send(302, F("text/plain"), F("Found"));
+        return;
+    } // if
+
     // Gold-plated response
     String message = F("File Not Found\n\n");
     message += F("URI: ");
