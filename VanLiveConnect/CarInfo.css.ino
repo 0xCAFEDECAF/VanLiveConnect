@@ -110,6 +110,18 @@ body
 {
   background-color:var(--led-off-color);
 }
+.ledOnRed
+{
+  background-color:red;
+}
+.ledOnGreen
+{
+  background-color:rgb(119,217,64);
+}
+.ledOnBlue
+{
+  background-color:rgb(87,89,247);
+}
 .ledActive
 {
   border-top:25px solid var(--main-color);
