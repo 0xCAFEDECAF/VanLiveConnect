@@ -52,7 +52,7 @@ function updateDateTime()
 	var locale = locales[localStorage.mfdLanguage] || "en-GB";
 
 	var date = new Date().toLocaleDateString(locale, {weekday: 'short', day: 'numeric', month: 'short'});
-	date = date.replace(/0(\d)/, "$1");  // IE11 incorrectly shows leading "0"
+	date = date.replace(/0(\d)/, "$1");  // No leading "0"
 	date = date.replace(/,/, "");
 	$("#date_small").text(CapFirstLetter(date));
 
@@ -60,7 +60,7 @@ function updateDateTime()
 	$("#date_weekday").text(CapFirstLetter(date) + ",");
 
 	date = new Date().toLocaleDateString(locale, {day: 'numeric', month: 'long', year: 'numeric'});
-	date = date.replace(/0(\d )/, "$1");  // IE11 incorrectly shows leading "0"
+	date = date.replace(/0(\d )/, "$1");  // No leading "0"
 	$("#date").text(date);
 
 	var time = new Date().toLocaleTimeString(
@@ -71,8 +71,9 @@ function updateDateTime()
 			hour12: localStorage.mfdTimeUnit === "set_units_12h"
 		}
 	);
+	if (locale === "nl" || locale === "es-ES") time = time.replace(/0(\d:)/, "$1");  // No leading "0"
 	$("#time").text(time);
-	$("#time_small").text(time.replace(/.m.$/, ""));  // Remove trailing '.m.' if present
+	$("#time_small").text(time.replace(/.m.$/, ""));  // No trailing '.m.'
 } // updateDateTime
 
 // -----
@@ -198,22 +199,7 @@ function writeToDom(jsonObj)
 
 	for (let item in jsonObj)
 	{
-		// A nested object with an item name that ends with '_' indicates namespace. For example:
-		//
-		// {
-		//   "event": "display",
-		//   "data": {
-		//     "satnav_fork_icon_": {
-		//       "take_right_exit":"OFF",
-		//       "keep_right":"OFF",
-		//       "take_left_exit":"OFF",
-		//       "keep_left":"OFF"
-		//     }
-		//   }
-		// }
-		//
-		// The above update DOM items with id "satnav_fork_icon_take_right_exit", "satnav_fork_icon_keep_right", etc.
-		//
+		// A nested object with an item name that ends with '_' indicates namespace
 		if (item.slice(-1) === "_" && !!jsonObj[item] && typeof(jsonObj[item]) === "object")
 		{
 			let subObj = jsonObj[item];
@@ -282,7 +268,6 @@ var fancyWebSocket = function(url)
 		if (event.code == 3001)
 		{
 			console.log("// WebSocket '" + url + "' closed");
-			//connectToWebSocket(); // TODO - check
 		}
 		else
 		{
@@ -550,16 +535,6 @@ function selectTabInTripComputerPopup(index)
 // Functions for navigating through the screens and their subscreens/elements
 
 // Toggle full-screen mode
-//
-// Note: when going full-screen, Android Chrome no longer respects the view port, i.e zooms in. This seems
-// to be a known issue; see also:
-// - https://stackoverflow.com/questions/39236875/fullscreen-api-on-androind-chrome-moble-disregards-meta-viewport-scale-setting?rq=1
-//   ("the scale is hard fixed to 1 when you enter fullscreen.")
-// - https://stackoverflow.com/questions/47954761/the-values-of-meta-viewport-attribute-are-not-reflected-when-in-full-screen-mode
-//   ("When in fullscreen, the meta viewport values are ignored by mobile browsers.")
-// - https://github.com/whatwg/fullscreen/issues/111
-//
-// Note that Firefox for Android (version >= 68.11.0) *does* work fine when going full-screen.
 function toggleFullScreen()
 {
 	if (! document.fullscreenElement && ! document.mozFullScreenElement && ! document.webkitFullscreenElement && ! document.msFullscreenElement)
@@ -769,7 +744,10 @@ function selectDefaultScreen(audioSource)
 	} // if
 
 	// Show instrument screen if engine is running
-	if (! selectedScreenId && engineRunning === "YES") selectedScreenId = "instruments";
+	if (! selectedScreenId && engineRunning === "YES" && contactKeyPosition !== "OFF" && engineRpm > 0)
+	{
+		selectedScreenId = "instruments";
+	} // if
 
 	// Show current street, if known
 	if (! selectedScreenId && satnavCurrentStreet !== "") selectedScreenId = "satnav_current_location";
@@ -3140,16 +3118,7 @@ function satnavStopGuidance()
 
 function satnavStopOrResumeGuidance()
 {
-	// TODO - check
-	//if ($("#satnav_navigation_options_menu_stop_guidance_button").html() === stopGuidanceText) 
-	if (satnavMode === "IN_GUIDANCE_MODE")
-	{
-		satnavStopGuidance();
-	}
-	else
-	{
-		satnavSwitchToGuidanceScreen();
-	} // if
+	if (satnavMode === "IN_GUIDANCE_MODE") satnavStopGuidance(); else satnavSwitchToGuidanceScreen();
 } // satnavStopOrResumeGuidance
 
 function satnavPoweringOff(satnavMode)
@@ -3817,6 +3786,7 @@ function handleItemChange(item, value)
 		case "engine_rpm":
 		{
 			engineRpm = parseInt(value) || 0;
+			if (engineRpm === 0 && currentLargeScreenId === "instruments") selectDefaultScreen();
 			if (value === "---") break;
 
 			// If more than 3500 rpm or less than 500 rpm (but > 0), add glow effect
@@ -3831,7 +3801,7 @@ function handleItemChange(item, value)
 			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
 
 			// Deduce the chosen gear
-			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 900)
+			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 915)
 			{
 				$("#chosen_gear").text("-");
 				break;
@@ -3895,21 +3865,15 @@ function handleItemChange(item, value)
 			{
 				engineCoolantTemperature = (temp - 32) * 5 / 9;  // convert deg F to deg C
 
-				// If more than 230 degrees, add glow effect
-				$("#coolant_temp").toggleClass("glow", temp > 230);
-
-				// If less than 160 degrees, add "ice glow" effect
-				$("#coolant_temp").toggleClass("glowIce", temp < 160);
+				$("#coolant_temp").toggleClass("glow", temp > 240);  // If high, add glow effect
+				$("#coolant_temp").toggleClass("glowIce", temp < 160);  // If low, add "ice glow" effect
 			}
 			else
 			{
 				engineCoolantTemperature = temp;
 
-				// If more than 110 degrees, add glow effect
-				$("#coolant_temp").toggleClass("glow", temp > 110);
-
-				// If less than 70, add "ice glow" effect
-				$("#coolant_temp").toggleClass("glowIce", temp < 70);
+				$("#coolant_temp").toggleClass("glow", temp > 115);  // If high, add glow effect
+				$("#coolant_temp").toggleClass("glowIce", temp < 70); // If low, add "ice glow" effect
 			} // if
 		} // case
 		break;
@@ -4015,6 +3979,26 @@ function handleItemChange(item, value)
 		{
 			headlightStatus = value;
 			setDimLevel(value);
+
+			let indicatorLeft = value.match(/INDICATOR_LEFT/) !== null;
+			$("#left_indicator").toggleClass("ledOnGreen", indicatorLeft).toggleClass("ledOff", ! indicatorLeft);
+
+			let indicatorRight = value.match(/INDICATOR_RIGHT/) !== null;
+			$("#right_indicator").toggleClass("ledOnGreen", indicatorRight).toggleClass("ledOff", ! indicatorRight);
+
+			// Set timeout on indicator LEDs, in case the "OFF" packet is missed
+			clearTimeout(handleItemChange.indicatorOffTimer);
+			handleItemChange.indicatorOffTimer = setTimeout
+			(
+				function () { $("#left_indicator,#right_indicator").removeClass("ledOnGreen").addClass("ledOff"); },
+				1000
+			);
+
+			let dippedBeam = value.match(/DIPPED_BEAM/) !== null;
+			$("#dipped_beam").toggleClass("ledOnGreen", dippedBeam).toggleClass("ledOff", ! dippedBeam);
+
+			let highBeam = value.match(/HIGH_BEAM/) !== null;
+			$("#high_beam").toggleClass("ledOnBlue", highBeam).toggleClass("ledOff", ! highBeam);
 		} // case
 		break;
 
@@ -4023,22 +4007,12 @@ function handleItemChange(item, value)
 			// Note: If the system is in power save mode, "door_open" always reports "NO", even if a door is open.
 			// That situation is handled in the next case clause, below.
 
-			// If on, add glow effect
 			$("#door_open").removeClass("ledOn");
 			$("#door_open").removeClass("ledOff");
-			$("#door_open").toggleClass("glow", value === "YES");
+			$("#door_open").toggleClass("glow", value === "YES");  // If on, add glow effect
 
-			// Show or hide the "door open" popup. Always hide if in the "pre_flight" screen or
-			// while browsing the menus
-			if (value === "YES" && currentLargeScreenId !== "pre_flight" && ! inMenu())
-			{
-				$("#door_open_popup_text").html(doorOpenText);
-				showPopupAndNotifyServer("door_open_popup", 8000);
-			}
-			else
-			{
-				hidePopup("door_open_popup");
-			} // if
+			// Always hide the "door open" popup if in the "pre_flight" screen or while browsing the menus.
+			if (value !== "YES" || currentLargeScreenId === "pre_flight" || inMenu()) hidePopup("door_open_popup");
 		} // case
 		break;
 
@@ -4104,7 +4078,7 @@ function handleItemChange(item, value)
 			if (engineRunning === "YES") changeToInstrumentsScreen();
 
 			// Engine just stopped, and currently in "instruments" screen?
-			else if ($("#instruments").is(":visible")) selectDefaultScreen();
+			else if (currentLargeScreenId === "instruments") selectDefaultScreen();
 		} // case
 		break;
 
@@ -5510,11 +5484,18 @@ function handleItemChange(item, value)
 				$("#fan_icon").toggleClass("ledOff", ! on);
 			} // if
 
-			if (inMenu() || currentLargeScreenId === "pre_flight") break;  // Not in menu or "pre_flight" screen
-			if (engineRunning !== "YES") break;  // Only when engine running
 			if (suppressClimateControlPopup !== null) break;  // Not when suppress timer is running
 
-			showPopup("climate_control_popup", 5000);
+			// Not in menu or "pre_flight" screen, or if engine off
+			if (inMenu() || currentLargeScreenId === "pre_flight"
+				|| engineRunning !== "YES" || contactKeyPosition !== "ON")
+			{
+				hidePopup("climate_control_popup");
+			}
+			else
+			{
+				showPopup("climate_control_popup", 5000);
+			} // if
 		} // case
 		break;
 

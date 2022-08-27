@@ -487,8 +487,8 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="gaugeInnerBoxDiv">
 						<svg style="width:334px;">
 							<line style="stroke:#00588c; stroke-width:24;" x1="0" y1="20" x2="176" y2="20"></line>
-							<line style="stroke:#066a0c; stroke-width:24;" x1="177" y1="20" x2="251" y2="20"></line>
-							<line style="stroke:#c40000; stroke-width:24;" x1="252" y1="20" x2="333" y2="20"></line>
+							<line style="stroke:#066a0c; stroke-width:24;" x1="177" y1="20" x2="277" y2="20"></line>
+							<line style="stroke:#c40000; stroke-width:24;" x1="278" y1="20" x2="333" y2="20"></line>
 						</svg>
 					</div>
 					<div id="coolant_temp_perc" class="gauge">
@@ -500,7 +500,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<svg style="width:348px;">
 							<rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
 							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
-							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="259" y1="8" x2="259" y2="32"></line> <!-- 100 degrees -->
+							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="285" y1="8" x2="285" y2="32"></line> <!-- 110 degrees -->
 						</svg>
 					</div>
 				</div>
@@ -574,8 +574,24 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="instruments" style="display:none;">
 
-					<div id="doors_locked" class="iconSmall led ledOff" style="left:70px; top:400px;">
+					<div id="left_indicator" class="iconSmall led ledOff" style="left:70px; top:400px;">
+						<div class="centerAligned fas fa-angle-double-left"></div>
+					</div>
+
+					<div id="doors_locked" class="iconSmall led ledOff" style="left:200px; top:400px;">
 						<div class="centerAligned fas fa-lock"></div>
+					</div>
+
+					<div id="dipped_beam" class="iconSmall led ledOff" style="left:330px; top:400px;">
+						<div class="centerAligned fas fa-volume-down"></div>
+					</div>
+
+					<div id="high_beam" class="iconSmall led ledOff" style="left:410px; top:400px;">
+						<div class="centerAligned fas fa-volume-up"></div>
+					</div>
+
+					<div id="right_indicator" class="iconSmall led ledOff" style="left:540px; top:400px;">
+						<div class="centerAligned fas fa-angle-double-right"></div>
 					</div>
 
 					<!-- Vehicle speed -->
@@ -593,8 +609,8 @@ char mfd_html[] PROGMEM = R"=====(
 					<div gid="distance_unit" class="tag" style="font-size:40px; text-align:left; left:415px; top:482px;">km</div>
 
 					<!-- Chosen gear -->
-					<div id="chosen_gear" class="dseg7" style="font-size:40px; left:370px; top:415px; width:200px;">-</div>
-					<div class="tag" style="font-size:40px; left:580px; top:417px;">Gear</div>
+					<div id="chosen_gear" class="dseg7" style="font-size:40px; left:370px; top:480px; width:200px;">-</div>
+					<div class="tag" style="font-size:40px; left:580px; top:482px;">Gear</div>
 
 					<!-- Delivered power (estimation) -->
 					<div id="delivered_power" class="dseg7" style="font-size:40px; left:630px; top:415px; width:200px;">--.-</div>
@@ -1173,7 +1189,7 @@ char mfd_html[] PROGMEM = R"=====(
 							on_enter="highlightLetter();"
 							on_exit="unhighlightLetter();"
 							class="dots buttonSelected satNavShowCharacters"
-							style="top:290px;">ABCDEFGHIJKLMNOPQRSTUVWX</div>
+							style="top:290px;"></div>
 
 						<div id="satnav_to_mfd_show_characters_line_2"
 							UP_BUTTON="satnav_to_mfd_show_characters_line_1"
@@ -1184,7 +1200,7 @@ char mfd_html[] PROGMEM = R"=====(
 							on_enter="highlightLetter();"
 							on_exit="unhighlightLetter();"
 							class="dots satNavShowCharacters"
-							style="top:360px;">YZ'</div>
+							style="top:360px;"></div>
 
 						<div button_orientation="horizontal" class="buttonBar">
 

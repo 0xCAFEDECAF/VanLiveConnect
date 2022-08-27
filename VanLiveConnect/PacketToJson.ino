@@ -4493,12 +4493,12 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     const uint8_t* data = pkt.Data();
     uint8_t request = data[1];
-    sint16_t listSize = (sint16_t)(data[4] << 8 | data[5]);
+    uint16_t listSize = data[4] << 8 | data[5];
 
     // Sometimes there is a second list size. The first list size (bytes 4 and 5) is the number of items *containing*
     // the selected characters, the second list size (bytes 11 and 12) is the number of items *starting* with the
     // selected characters.
-    sint16_t list2Size = (sint16_t)(data[11] << 8 | data[12]);
+    uint16_t list2Size = data[11] << 8 | data[12];
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -4509,7 +4509,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request));
 
-    if (listSize >= 0)
+    if (listSize != 0xFFFF)
     {
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_size\": \"%d\""), listSize);
     } // if
@@ -4529,7 +4529,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     // Store number of services; it must be reported to the websocket client upon connection, so that it can
     // enable the "Select a service" menu item
-    if (request == SR_SERVICE_LIST && listSize > 0) satnavServiceListSize = listSize;
+    if (request == SR_SERVICE_LIST && listSize != 0 && listSize != 0xFFFF) satnavServiceListSize = listSize;
 
     // TODO - handle SR_ARCHIVE_IN_DIRECTORY
 

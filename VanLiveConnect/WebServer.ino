@@ -8,7 +8,13 @@
 // Use the following #defines to define which type of web documents will be served from the
 // SPI flash file system (SPIFFS)
 #define SERVE_MAIN_FILES_FROM_SPIFFS  // MFD.html, MFD.js
-#define SERVE_FONTS_FROM_SPIFFS  // .woff files
+
+// Note: it seems to be better to not serve font files from the SPIFFS. The browser requests these files very
+// late, at seemingly random times after the initial page requests. I've seen ESP often running out of stack
+// space while serving a font file.
+
+//#define SERVE_FONTS_FROM_SPIFFS  // .woff files
+
 #define SERVE_JAVASCRIPT_FROM_SPIFFS  // jquery-3.5.1.min.js
 #define SERVE_CSS_FROM_SPIFFS  // all.css, CarInfo.css
 
