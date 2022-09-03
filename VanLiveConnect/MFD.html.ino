@@ -551,7 +551,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Status LEDs -->
 					<div id="hazard_lights" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; top:390px; width:170px; height:160px;"></div>
-					<div id="door_open" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
+					<div id="door_open_led" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
 					<div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
 					<div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
 

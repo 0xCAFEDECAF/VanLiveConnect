@@ -81,7 +81,7 @@ function updateDateTime()
 
 document.addEventListener("visibilitychange", function()
 {
-	if (document.visibilityState === 'visible') connectToWebSocket(); else webSocket.close();
+	if (document.visibilityState === 'visible') connectToWebSocket(); else webSocket.close("browser tab no longer active");
 });
 
 function showViewportSizes()
@@ -229,9 +229,9 @@ var fancyWebSocket = function(url)
 		return this;  // chainable
 	}; // function
 
-	this.close = function()
+	this.close = function(msg)
 	{
-		console.log("// Closing websocket'" + url + "'");
+		console.log("// Closing websocket'" + url + (msg ? "', reason: " + msg : ""));
 		conn.close();
 	}; // function
 
@@ -705,7 +705,7 @@ function preventTemporaryScreenChange(msec)
 
 // Vehicle data
 var contactKeyPosition;
-var engineRpm = 0;
+var engineRpm = -1;
 var engineRunning;
 
 var menuStack = [];
@@ -744,7 +744,7 @@ function selectDefaultScreen(audioSource)
 	} // if
 
 	// Show instrument screen if engine is running
-	if (! selectedScreenId && engineRunning === "YES" && contactKeyPosition !== "OFF" && engineRpm > 0)
+	if (! selectedScreenId && engineRunning === "YES" && contactKeyPosition !== "OFF" && engineRpm >= 0)
 	{
 		selectedScreenId = "instruments";
 	} // if
@@ -1896,6 +1896,7 @@ function changeToInstrumentsScreen()
 // -----
 // Functions for satellite navigation menu and screen handling
 
+var satnavEquipmentPresent = false;
 var satnavInitialized = false;
 
 // Current sat nav mode, saved as last reported in item "satnav_status_2"
@@ -1937,6 +1938,10 @@ function satnavShowDisclaimer()
 } // satnavShowDisclaimer
 
 // When vehicle is moving, certain menus are disabled
+
+// Override to true by defining MFD_DISABLE_NAVIGATION_MENU_WHILE_DRIVING in Config.h
+var mfdDisableNavigationMenuWhileDriving = false;
+
 function satnavVehicleMoving()
 {
 	var gpsSpeed = parseInt($("#satnav_gps_speed").text() || 0);  // Always reported in km/h
@@ -2309,7 +2314,7 @@ function satnavEnterCharacter()
 	$("#satnav_entered_string").append(satnavLastEnteredChar);  // Append the entered character
 	$("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");  // Enable the "Correction" button
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");  // Disable the "Validate" button
-	highlightFirstLine("satnav_choice_list");  // Go to the first line in the "satnav_choice_list" screen
+	highlightFirstLine("satnav_choice_list");
 } // satnavEnterCharacter
 
 var showAvailableCharactersTimer = null;
@@ -2530,10 +2535,11 @@ function satnavClearLastDestination()
 
 function satnavChangeProgrammedDestination()
 {
-	// menuStack = [ 'satnav_guidance' ];
 	menuStack.pop();
 
-	currentMenu = satnavVehicleMoving() ? 'satnav_select_from_memory_menu' : 'satnav_main_menu';
+	currentMenu = satnavVehicleMoving()
+		&& mfdDisableNavigationMenuWhileDriving ?  // TODO - not sure
+		'satnav_select_from_memory_menu' : 'satnav_main_menu';
 	changeLargeScreenTo(currentMenu);
 	selectFirstMenuItem(currentMenu);
 } // satnavChangeProgrammedDestination
@@ -3785,9 +3791,13 @@ function handleItemChange(item, value)
 
 		case "engine_rpm":
 		{
-			engineRpm = parseInt(value) || 0;
-			if (engineRpm === 0 && currentLargeScreenId === "instruments") selectDefaultScreen();
-			if (value === "---") break;
+			engineRpm = parseInt(value);
+			if (isNaN(engineRpm))
+			{
+				engineRpm = -1;
+				if (currentLargeScreenId === "instruments") selectDefaultScreen();
+				break;
+			} // if
 
 			// If more than 3500 rpm or less than 500 rpm (but > 0), add glow effect
 
@@ -3796,7 +3806,7 @@ function handleItemChange(item, value)
 			if (engineCoolantTemperature < 80) thresholdRpm = 3500 - (80 - engineCoolantTemperature) * 30;
 			if (thresholdRpm < 1700) thresholdRpm = 1700;
 
-			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm > 0) || engineRpm > thresholdRpm);
+			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm >= 0) || engineRpm > thresholdRpm);
 
 			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
 
@@ -3835,8 +3845,8 @@ function handleItemChange(item, value)
 				isDrivingFast = vehicleSpeed >= 85;
 			} // if
 
-			// If 130 km/h (85 mph) or more, add glow effect
-			$("#oil_level_raw").toggleClass("glow", isDrivingFast);
+			// If driving fast, add glow effect
+			$('[gid="vehicle_speed"]').toggleClass("glow", isDrivingFast);
 
 			if (icyConditions && ! wasRiskOfIceWarningShown && isDriving)
 			{
@@ -4007,9 +4017,7 @@ function handleItemChange(item, value)
 			// Note: If the system is in power save mode, "door_open" always reports "NO", even if a door is open.
 			// That situation is handled in the next case clause, below.
 
-			$("#door_open").removeClass("ledOn");
-			$("#door_open").removeClass("ledOff");
-			$("#door_open").toggleClass("glow", value === "YES");  // If on, add glow effect
+			$("#door_open_led").toggleClass("glow", value === "YES");  // If on, add glow effect
 
 			// Always hide the "door open" popup if in the "pre_flight" screen or while browsing the menus.
 			if (value !== "YES" || currentLargeScreenId === "pre_flight" || inMenu()) hidePopup("door_open_popup");
@@ -4039,13 +4047,13 @@ function handleItemChange(item, value)
 				isDoorOpen[item] = isOpen;
 			} // if
 
-			if (! change) break;  // Only continue if anything changed
+			if (! change) break;
 
 			let nDoorsOpen = 0;
 			for (let id in isDoorOpen) { if (isDoorOpen[id]) nDoorsOpen++; }
 
-			// If on, add glow effect to "door_open" icon in the "pre_flight" screen
-			$("#door_open").toggleClass("glow", isBootOpen || nDoorsOpen > 0);
+			// If on, add glow effect to "door_open" LED in the "pre_flight" screen
+			$("#door_open_led").toggleClass("glow", isBootOpen || nDoorsOpen > 0);
 
 			// All closed, or in the "pre_flight" or a menu screen?
 			if ((! isBootOpen && nDoorsOpen == 0) || currentLargeScreenId === "pre_flight" || inMenu())
@@ -4113,7 +4121,7 @@ function handleItemChange(item, value)
 					if (inMenu()) break;
 
 					// Show "Pre-flight checks" screen if contact key is in "ON" position, without engine running
-					if (engineRunning !== "YES" && engineRpm === 0)
+					if (engineRunning !== "YES" && engineRpm <= 0)
 					{
 						changeLargeScreenTo("pre_flight");
 
@@ -4217,14 +4225,7 @@ function handleItemChange(item, value)
 		{
 			if (value !== "YES") break;
 
-			// let id = "#satnav_distance_to_dest_via_straight_line_";
-			// let distance = $(id + "number").text();
-			// let unit = $(id + "unit").text();
-
-			// if ((unit === "m" || unit ==="yd") && +distance <= 300)
-			// {
-				showPopup("satnav_reached_destination_popup", 10000);
-			// } // if
+			showPopup("satnav_reached_destination_popup", 10000);
 		} // case
 		break;
 
@@ -4346,6 +4347,8 @@ function handleItemChange(item, value)
 
 		case "satnav_gps_speed":
 		{
+			if (! mfdDisableNavigationMenuWhileDriving) break;
+
 			let driving = satnavVehicleMoving();
 
 			// While driving, disable "Navigation / Guidance" button in main menu
@@ -4431,8 +4434,8 @@ function handleItemChange(item, value)
 			// No further handling when in power-save mode
 			if (economyMode === "ON") break;
 
-			if (value === "YES") handleItemChange.nSatNavDiscUnreadable = 0;
-			else handleItemChange.nSatNavDiscUnreadable++;
+			if (value === "NO" && satnavEquipmentPresent) handleItemChange.nSatNavDiscUnreadable++;
+			else handleItemChange.nSatNavDiscUnreadable = 0;
 
 			// At the 6-th and 14-th time of consequently reporting "NO", shortly show a status popup
 			if (handleItemChange.nSatNavDiscUnreadable == 6 || handleItemChange.nSatNavDiscUnreadable == 14)
@@ -4445,6 +4448,10 @@ function handleItemChange(item, value)
 
 		case "satnav_equipment_present":
 		{
+			satnavEquipmentPresent = value === "YES";
+
+			if (! satnavEquipmentPresent) handleItemChange.nSatNavDiscUnreadable = 0;
+
 			// Enable or disable the "Navigation/Guidance" button in the main menu
 			$("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", value === "NO");
 
@@ -4600,7 +4607,7 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_professional_address_manage_buttons").is(":visible"))
 			{
-				var title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
+				let title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value);
 
@@ -4954,10 +4961,7 @@ function handleItemChange(item, value)
 		case "mfd_to_satnav_offset":
 		{
 			if (value === "") break;
-
 			handleItemChange.mfdToSatnavOffset = value;
-
-			//if (! $("#satnav_show_service_address").is(":visible")) break;
 			satnavServiceAddressSetButtons(parseInt(value) + 1);
 		} // case
 		break;
@@ -5307,6 +5311,12 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "mfd_disable_navigation_menu_while_driving":
+		{
+			mfdDisableNavigationMenuWhileDriving = value === "YES";
+		} // case
+		break;
+
 		case "mfd_remote_control":
 		{
 			// Ignore remote control buttons if contact key is off
@@ -5372,7 +5382,7 @@ function handleItemChange(item, value)
 				// (but "satnav_guidance_tools_menu" can be navigated)
 				if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
 				{
-					if (satnavVehicleMoving()) break;
+					if (mfdDisableNavigationMenuWhileDriving && satnavVehicleMoving()) break;
 				} // if
 
 				// Entering a character in the "satnav_enter_street_characters" screen?
@@ -5424,7 +5434,7 @@ function handleItemChange(item, value)
 				// (but "satnav_guidance_tools_menu" can be navigated)
 				if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
 				{
-					if (satnavVehicleMoving()) break;
+					if (mfdDisableNavigationMenuWhileDriving && satnavVehicleMoving()) break;
 				} // if
 
 				// Entering a character in the "satnav_enter_street_characters" screen?
@@ -5453,7 +5463,7 @@ function handleItemChange(item, value)
 		{
 			if (value === "MFD_SCREEN_ON")
 			{
-				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm === 0) showPowerSavePopup();
+				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
 			}
 			else if (value === "MFD_SCREEN_OFF")
 			{
@@ -5537,11 +5547,12 @@ function setLanguage(language)
 			$("#main_menu_goto_satnav_button").html("Navigation / Guidance");
 			$("#main_menu_goto_screen_configuration_button").html("Configure display");
 
-			$("#screen_configuration_menu .menuTitleLine").html("Configure display<br />");
-			$("#screen_configuration_menu .button:eq(0)").html("Set brightness");
-			$("#screen_configuration_menu .button:eq(1)").html("Set date and time");
-			$("#screen_configuration_menu .button:eq(2)").html("Select a language " + languageSelections);
-			$("#screen_configuration_menu .button:eq(3)").html("Set format and units");
+			let id = "#screen_configuration_menu";
+			$(id + " .menuTitleLine").html("Configure display<br />");
+			$(id + " .button:eq(0)").html("Set brightness");
+			$(id + " .button:eq(1)").html("Set date and time");
+			$(id + " .button:eq(2)").html("Select a language " + languageSelections);
+			$(id + " .button:eq(3)").html("Set format and units");
 
 			$("#set_screen_brightness .menuTitleLine").html("Set brightness<br />");
 			$("#set_date_time .menuTitleLine").html("Set date and time<br />");
@@ -5571,47 +5582,54 @@ function setLanguage(language)
 			satnavDiscUnreadbleText = "Navigation CD-ROM<br />is unreadable";
 			satnavDiscMissingText = "Navigation CD-ROM is<br />missing";
 
-			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
-			$("#satnav_main_menu .button:eq(0)").html("Enter new destination");
-			$("#satnav_main_menu .button:eq(1)").html("Select a service");
-			$("#satnav_main_menu .button:eq(2)").html("Select destination from memory");
-			$("#satnav_main_menu .button:eq(3)").html("Navigation options");
+			id = "#satnav_main_menu";
+			$(id + " .menuTitleLine").html("Navigation / Guidance<br />");
+			$(id + " .button:eq(0)").html("Enter new destination");
+			$(id + " .button:eq(1)").html("Select a service");
+			$(id + " .button:eq(2)").html("Select destination from memory");
+			$(id + " .button:eq(3)").html("Navigation options");
 
-			$("#satnav_select_from_memory_menu .menuTitleLine").html("Select from memory<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Personal directory");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("Professional directory");
+			id = "#satnav_select_from_memory_menu";
+			$(id + " .menuTitleLine").html("Select from memory<br />");
+			$(id + " .button:eq(0)").html("Personal directory");
+			$(id + " .button:eq(1)").html("Professional directory");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Navigation options<br />");
-			$("#satnav_navigation_options_menu .button:eq(0)").html("Directory management");
-			$("#satnav_navigation_options_menu .button:eq(1)").html("Vocal synthesis volume");
-			$("#satnav_navigation_options_menu .button:eq(2)").html("Delete directories");
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			id = "#satnav_navigation_options_menu";
+			$(id + " .menuTitleLine").html("Navigation options<br />");
+			$(id + " .button:eq(0)").html("Directory management");
+			$(id + " .button:eq(1)").html("Vocal synthesis volume");
+			$(id + " .button:eq(2)").html("Delete directories");
+			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
-			$("#satnav_directory_management_menu .menuTitleLine").html("Directory management<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Personal directory");
-			$("#satnav_directory_management_menu .button:eq(1)").html("Professional directory");
+			id = "#satnav_directory_management_menu";
+			$(id + " .menuTitleLine").html("Directory management<br />");
+			$(id + " .button:eq(0)").html("Personal directory");
+			$(id + " .button:eq(1)").html("Professional directory");
 
-			$("#satnav_guidance_tools_menu .menuTitleLine").html("Guidance tools<br />");
-			$("#satnav_guidance_tools_menu .button:eq(0)").html("Guidance criteria");
-			$("#satnav_guidance_tools_menu .button:eq(1)").html("Programmed destination");
-			$("#satnav_guidance_tools_menu .button:eq(2)").html("Vocal synthesis volume");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
+			id = "#satnav_guidance_tools_menu";
+			$(id + " .menuTitleLine").html("Guidance tools<br />");
+			$(id + " .button:eq(0)").html("Guidance criteria");
+			$(id + " .button:eq(1)").html("Programmed destination");
+			$(id + " .button:eq(2)").html("Vocal synthesis volume");
+			$(id + " .button:eq(3)").html(stopGuidanceText);
 
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Fastest route<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Shortest route<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Avoid highway route<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Fast/short compromise route<br />");
+			id = "#satnav_guidance_preference_menu";
+			$(id + " .tickBoxLabel:eq(0)").html("Fastest route<br />");
+			$(id + " .tickBoxLabel:eq(1)").html("Shortest route<br />");
+			$(id + " .tickBoxLabel:eq(2)").html("Avoid highway route<br />");
+			$(id + " .tickBoxLabel:eq(3)").html("Fast/short compromise route<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Vocal synthesis level<br />");
-			$("#satnav_vocal_synthesis_level .tag").html("Level");
+			id = "#satnav_vocal_synthesis_level";
+			$(id + " .menuTitleLine").html("Vocal synthesis level<br />");
+			$(id + " .tag").html("Level");
 
 			$("#satnav_enter_city_characters .tag").html("Enter city");
 			$("#satnav_enter_street_characters .tag").html("Enter street");
 
-			$("#satnav_enter_characters .tag:eq(0)").html("Choose next letter");
-			$("#satnav_enter_characters .tag:eq(1)").html("Enter city");
-			$("#satnav_enter_characters .tag:eq(2)").html("Enter street");
+			id = "#satnav_enter_characters";
+			$(id + " .tag:eq(0)").html("Choose next letter");
+			$(id + " .tag:eq(1)").html("Enter city");
+			$(id + " .tag:eq(2)").html("Enter street");
 
 			$("#satnav_tag_city_list").html("Choose city");
 			$("#satnav_tag_street_list").html("Choose street");
@@ -5621,41 +5639,49 @@ function setLanguage(language)
 
 			$("#satnav_enter_house_number .tag").html("Enter number");
 
-			$("#satnav_show_personal_address .tag:eq(0)").html("City");
-			$("#satnav_show_personal_address .tag:eq(1)").html("Street");
-			$("#satnav_show_personal_address .tag:eq(2)").html("Number");
+			id = "#satnav_show_personal_address";
+			$(id + " .tag:eq(0)").html("City");
+			$(id + " .tag:eq(1)").html("Street");
+			$(id + " .tag:eq(2)").html("Number");
 
-			$("#satnav_show_professional_address .tag:eq(0)").html("City");
-			$("#satnav_show_professional_address .tag:eq(1)").html("Street");
-			$("#satnav_show_professional_address .tag:eq(3)").html("Number");
+			id = "#satnav_show_professional_address";
+			$(id + " .tag:eq(0)").html("City");
+			$(id + " .tag:eq(1)").html("Street");
+			$(id + " .tag:eq(3)").html("Number");
 
-			$("#satnav_show_service_address .tag:eq(0)").html("City");
-			$("#satnav_show_service_address .tag:eq(1)").html("Street");
+			id = "#satnav_show_service_address";
+			$(id + " .tag:eq(0)").html("City");
+			$(id + " .tag:eq(1)").html("Street");
 
-			$("#satnav_show_current_destination .tag:eq(0)").html("Programmed destination");
-			$("#satnav_show_current_destination .tag:eq(1)").html("City");
-			$("#satnav_show_current_destination .tag:eq(2)").html("Street");
-			$("#satnav_show_current_destination .tag:eq(3)").html("Number");
+			id = "#satnav_show_current_destination";
+			$(id + " .tag:eq(0)").html("Programmed destination");
+			$(id + " .tag:eq(1)").html("City");
+			$(id + " .tag:eq(2)").html("Street");
+			$(id + " .tag:eq(3)").html("Number");
 
-			$("#satnav_show_programmed_destination .tag:eq(0)").html("Programmed destination");
-			$("#satnav_show_programmed_destination .tag:eq(1)").html("City");
-			$("#satnav_show_programmed_destination .tag:eq(2)").html("Street");
-			$("#satnav_show_programmed_destination .tag:eq(3)").html("Number");
+			id = "#satnav_show_programmed_destination";
+			$(id + " .tag:eq(0)").html("Programmed destination");
+			$(id + " .tag:eq(1)").html("City");
+			$(id + " .tag:eq(2)").html("Street");
+			$(id + " .tag:eq(3)").html("Number");
 
-			$("#satnav_show_last_destination .tag:eq(0)").html("Select a service");
-			$("#satnav_show_last_destination .tag:eq(1)").html("City");
-			$("#satnav_show_last_destination .tag:eq(2)").html("Street");
-			$("#satnav_show_last_destination .button:eq(2)").html("Current location");
+			id = "#satnav_show_last_destination";
+			$(id + " .tag:eq(0)").html("Select a service");
+			$(id + " .tag:eq(1)").html("City");
+			$(id + " .tag:eq(2)").html("Street");
+			$(id + " .button:eq(2)").html("Current location");
 
-			$("#satnav_archive_in_directory_title").html("Archive in directory");
-			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Name");
-			$("#satnav_archive_in_directory .button:eq(0)").html("Correction");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Personal dir");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Professional dir");
+			id = "#satnav_archive_in_directory";
+			$(id + "_title").html("Archive in directory");
+			$(id + " .satNavEntryNameTag").html("Name");
+			$(id + " .button:eq(0)").html("Correction");
+			$(id + " .button:eq(1)").html("Personal dir");
+			$(id + " .button:eq(2)").html("Professional dir");
 
-			$("#satnav_rename_entry_in_directory_title").html("Rename entry");
-			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Name");
-			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Correction");
+			id = "#satnav_rename_entry_in_directory";
+			$(id + "_title").html("Rename entry");
+			$(id + " .satNavEntryNameTag").html("Name");
+			$(id + " .button:eq(1)").html("Correction");
 
 			$("#satnav_reached_destination_popup_title").html("Destination reached");
 			$("#satnav_delete_item_popup_title").html("Delete item ?<br />");
@@ -5700,11 +5726,12 @@ function setLanguage(language)
 			$("#main_menu_goto_satnav_button").html("Navigation / Guidage");
 			$("#main_menu_goto_screen_configuration_button").html("Configuration afficheur");
 
-			$("#screen_configuration_menu .menuTitleLine").html("Configuration afficheur<br />");
-			$("#screen_configuration_menu .button:eq(0)").html("R&eacute;glage luminosit&eacute;");
-			$("#screen_configuration_menu .button:eq(1)").html("R&eacute;glage de date et heure");
-			$("#screen_configuration_menu .button:eq(2)").html("Choix de la langue " + languageSelections);
-			$("#screen_configuration_menu .button:eq(3)").html("R&eacute;glage des formats et unit&eacute;s");
+			let id = "#screen_configuration_menu";
+			$(id + " .menuTitleLine").html("Configuration afficheur<br />");
+			$(id + " .button:eq(0)").html("R&eacute;glage luminosit&eacute;");
+			$(id + " .button:eq(1)").html("R&eacute;glage de date et heure");
+			$(id + " .button:eq(2)").html("Choix de la langue " + languageSelections);
+			$(id + " .button:eq(3)").html("R&eacute;glage des formats et unit&eacute;s");
 
 			$("#set_screen_brightness .menuTitleLine").html("R&eacute;glage luminosit&eacute;<br />");
 			$("#set_date_time .menuTitleLine").html("R&eacute;glage de date et heure<br />");
@@ -5735,47 +5762,54 @@ function setLanguage(language)
 			satnavDiscUnreadbleText = "Le CD-ROM de navigation<br />est illisible";
 			satnavDiscMissingText = "Le CD-ROM de navigation<br />est absent";
 
-			$("#satnav_main_menu .menuTitleLine").html("Navigation / Guidance<br />");
-			$("#satnav_main_menu .button:eq(0)").html("Saisie d'une nouvelle destination");
-			$("#satnav_main_menu .button:eq(1)").html("Choix d'un service");
-			$("#satnav_main_menu .button:eq(2)").html("Choix d'une destination archiv&eacute;e");
-			$("#satnav_main_menu .button:eq(3)").html("Options de navigation");
+			id = "#satnav_main_menu";
+			$(id + " .menuTitleLine").html("Navigation / Guidance<br />");
+			$(id + " .button:eq(0)").html("Saisie d'une nouvelle destination");
+			$(id + " .button:eq(1)").html("Choix d'un service");
+			$(id + " .button:eq(2)").html("Choix d'une destination archiv&eacute;e");
+			$(id + " .button:eq(3)").html("Options de navigation");
 
-			$("#satnav_select_from_memory_menu .menuTitleLine").html("Choix destination archiv&eacute;e<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("R&eacute;pertoire personnel");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("R&eacute;pertoire professionnel");
+			id = "#satnav_select_from_memory_menu";
+			$(id + " .menuTitleLine").html("Choix destination archiv&eacute;e<br />");
+			$(id + " .button:eq(0)").html("R&eacute;pertoire personnel");
+			$(id + " .button:eq(1)").html("R&eacute;pertoire professionnel");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Options de navigation<br />");
-			$("#satnav_navigation_options_menu .button:eq(0)").html("Gestion des r&eacute;pertoires");
-			$("#satnav_navigation_options_menu .button:eq(1)").html("Volume synth&egrave;se vocale");
-			$("#satnav_navigation_options_menu .button:eq(2)").html("Effacement des r&eacute;pertoires");
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			id = "#satnav_navigation_options_menu";
+			$(id + " .menuTitleLine").html("Options de navigation<br />");
+			$(id + " .button:eq(0)").html("Gestion des r&eacute;pertoires");
+			$(id + " .button:eq(1)").html("Volume synth&egrave;se vocale");
+			$(id + " .button:eq(2)").html("Effacement des r&eacute;pertoires");
+			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
-			$("#satnav_directory_management_menu .menuTitleLine").html("Gestion des r&eacute;pertoires<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("R&eacute;pertoire personnel");
-			$("#satnav_directory_management_menu .button:eq(1)").html("R&eacute;pertoire professionnel");
+			id = "#satnav_directory_management_menu";
+			$(id + " .menuTitleLine").html("Gestion des r&eacute;pertoires<br />");
+			$(id + " .button:eq(0)").html("R&eacute;pertoire personnel");
+			$(id + " .button:eq(1)").html("R&eacute;pertoire professionnel");
 
-			$("#satnav_guidance_tools_menu .menuTitleLine").html("Outils de guidage<br />");
-			$("#satnav_guidance_tools_menu .button:eq(0)").html("Crit&egrave;res de guidage");
-			$("#satnav_guidance_tools_menu .button:eq(1)").html("Destination programm&eacute;e");
-			$("#satnav_guidance_tools_menu .button:eq(2)").html("Volume synth&egrave;se vocale");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
+			id = "#satnav_guidance_tools_menu";
+			$(id + " .menuTitleLine").html("Outils de guidage<br />");
+			$(id + " .button:eq(0)").html("Crit&egrave;res de guidage");
+			$(id + " .button:eq(1)").html("Destination programm&eacute;e");
+			$(id + " .button:eq(2)").html("Volume synth&egrave;se vocale");
+			$(id + " .button:eq(3)").html(stopGuidanceText);
 
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Trajet le plus rapide<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Trajet le plus court<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Itin&eacute;raire sans voie rapide<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Compromis rapidit&eacute;/distance<br />");
+			id = "#satnav_guidance_preference_menu";
+			$(id + " .tickBoxLabel:eq(0)").html("Trajet le plus rapide<br />");
+			$(id + " .tickBoxLabel:eq(1)").html("Trajet le plus court<br />");
+			$(id + " .tickBoxLabel:eq(2)").html("Itin&eacute;raire sans voie rapide<br />");
+			$(id + " .tickBoxLabel:eq(3)").html("Compromis rapidit&eacute;/distance<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Volume synth&egrave;se vocale<br />");
-			$("#satnav_vocal_synthesis_level .tag").html("Volume");
+			id = "#satnav_vocal_synthesis_level";
+			$(id + " .menuTitleLine").html("Volume synth&egrave;se vocale<br />");
+			$(id + " .tag").html("Volume");
 
 			$("#satnav_enter_city_characters .tag").html("Saisie de la ville");
 			$("#satnav_enter_street_characters .tag").html("Saisie de la voie");
 
-			$("#satnav_enter_characters .tag:eq(0)").html("Choisis une lettre");  // TODO - check
-			$("#satnav_enter_characters .tag:eq(1)").html("Saisie de la ville");
-			$("#satnav_enter_characters .tag:eq(2)").html("Saisie de la voie");
+			id = "#satnav_enter_characters";
+			$(id + " .tag:eq(0)").html("Choisis une lettre");  // TODO - check
+			$(id + " .tag:eq(1)").html("Saisie de la ville");
+			$(id + " .tag:eq(2)").html("Saisie de la voie");
 
 			$("#satnav_tag_city_list").html("Saisie de la ville");
 			$("#satnav_tag_street_list").html("Saisie de la voie");
@@ -5785,41 +5819,49 @@ function setLanguage(language)
 
 			$("#satnav_enter_house_number .tag").html("Saisie du num&eacute;ro");
 
-			$("#satnav_show_personal_address .tag:eq(0)").html("Ville");
-			$("#satnav_show_personal_address .tag:eq(1)").html("Voie");
-			$("#satnav_show_personal_address .tag:eq(2)").html("Num&eacute;ro");
+			id = "#satnav_show_personal_address";
+			$(id + " .tag:eq(0)").html("Ville");
+			$(id + " .tag:eq(1)").html("Voie");
+			$(id + " .tag:eq(2)").html("Num&eacute;ro");
 
-			$("#satnav_show_professional_address .tag:eq(0)").html("Ville");
-			$("#satnav_show_professional_address .tag:eq(1)").html("Voie");
-			$("#satnav_show_professional_address .tag:eq(3)").html("Num&eacute;ro");
+			id = "#satnav_show_professional_address";
+			$(id + " .tag:eq(0)").html("Ville");
+			$(id + " .tag:eq(1)").html("Voie");
+			$(id + " .tag:eq(3)").html("Num&eacute;ro");
 
-			$("#satnav_show_service_address .tag:eq(0)").html("Ville");
-			$("#satnav_show_service_address .tag:eq(1)").html("Voie");
+			id = "#satnav_show_service_address";
+			$(id + " .tag:eq(0)").html("Ville");
+			$(id + " .tag:eq(1)").html("Voie");
 
-			$("#satnav_show_current_destination .tag:eq(0)").html("Destination programm&eacute;e");
-			$("#satnav_show_current_destination .tag:eq(1)").html("Ville");
-			$("#satnav_show_current_destination .tag:eq(2)").html("Voie");
-			$("#satnav_show_current_destination .tag:eq(3)").html("Num&eacute;ro");
+			id = "#satnav_show_current_destination";
+			$(id + " .tag:eq(0)").html("Destination programm&eacute;e");
+			$(id + " .tag:eq(1)").html("Ville");
+			$(id + " .tag:eq(2)").html("Voie");
+			$(id + " .tag:eq(3)").html("Num&eacute;ro");
 
-			$("#satnav_show_programmed_destination .tag:eq(0)").html("Destination programm&eacute;e");
-			$("#satnav_show_programmed_destination .tag:eq(1)").html("Ville");
-			$("#satnav_show_programmed_destination .tag:eq(2)").html("Voie");
-			$("#satnav_show_programmed_destination .tag:eq(3)").html("Num&eacute;ro");
+			id = "#satnav_show_programmed_destination";
+			$(id + " .tag:eq(0)").html("Destination programm&eacute;e");
+			$(id + " .tag:eq(1)").html("Ville");
+			$(id + " .tag:eq(2)").html("Voie");
+			$(id + " .tag:eq(3)").html("Num&eacute;ro");
 
-			$("#satnav_show_last_destination .tag:eq(0)").html("Choix d'un service");
-			$("#satnav_show_last_destination .tag:eq(1)").html("Ville");
-			$("#satnav_show_last_destination .tag:eq(2)").html("Voie");
-			$("#satnav_show_last_destination .button:eq(2)").html("Position actuelle");  // TODO - check
+			id = "#satnav_show_last_destination";
+			$(id + " .tag:eq(0)").html("Choix d'un service");
+			$(id + " .tag:eq(1)").html("Ville");
+			$(id + " .tag:eq(2)").html("Voie");
+			$(id + " .button:eq(2)").html("Position actuelle");  // TODO - check
 
-			$("#satnav_archive_in_directory_title").html("Archiver dans r&eacute;pertoire");
-			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Libell&eacute;");
-			$("#satnav_archive_in_directory .button:eq(0)").html("Corriger");
-			$("#satnav_archive_in_directory .button:eq(1)").html("R&eacute;p. personnel");
-			$("#satnav_archive_in_directory .button:eq(2)").html("R&eacute;p. professionel");
+			id = "#satnav_archive_in_directory";
+			$(id + "_title").html("Archiver dans r&eacute;pertoire");
+			$(id + " .satNavEntryNameTag").html("Libell&eacute;");
+			$(id + " .button:eq(0)").html("Corriger");
+			$(id + " .button:eq(1)").html("R&eacute;p. personnel");
+			$(id + " .button:eq(2)").html("R&eacute;p. professionel");
 
-			$("#satnav_rename_entry_in_directory_title").html("Renommer libell&eacute;");  // TODO - check
-			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Libell&eacute;");
-			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corriger");
+			id = "#satnav_rename_entry_in_directory";
+			$(id + "_title").html("Renommer libell&eacute;");  // TODO - check
+			$(id + " .satNavEntryNameTag").html("Libell&eacute;");
+			$(id + " .button:eq(1)").html("Corriger");
 
 			$("#satnav_reached_destination_popup_title").html("Destination atteinte");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Voulez-vous supprimer<br />la fiche ?<br />");
@@ -5862,11 +5904,12 @@ function setLanguage(language)
 			$("#main_menu_goto_satnav_button").html("Navigation / F&uuml;hrung");
 			$("#main_menu_goto_screen_configuration_button").html("Display konfigurieren");
 
-			$("#screen_configuration_menu .menuTitleLine").html("Display konfigurieren<br />");
-			$("#screen_configuration_menu .button:eq(0)").html("Helligkeit einstellen");
-			$("#screen_configuration_menu .button:eq(1)").html("Datum und Uhrzeit einstellen");
-			$("#screen_configuration_menu .button:eq(2)").html("Sprache w&auml;hlen " + languageSelections);
-			$("#screen_configuration_menu .button:eq(3)").html("Einstellen der Einheiten");
+			let id = "#screen_configuration_menu";
+			$(id + " .menuTitleLine").html("Display konfigurieren<br />");
+			$(id + " .button:eq(0)").html("Helligkeit einstellen");
+			$(id + " .button:eq(1)").html("Datum und Uhrzeit einstellen");
+			$(id + " .button:eq(2)").html("Sprache w&auml;hlen " + languageSelections);
+			$(id + " .button:eq(3)").html("Einstellen der Einheiten");
 
 			$("#set_screen_brightness .menuTitleLine").html("Helligkeit einstellen<br />");
 			$("#set_date_time .menuTitleLine").html("Datum und Uhrzeit einstellen<br />");
@@ -5897,47 +5940,54 @@ function setLanguage(language)
 			satnavDiscUnreadbleText = "Die Navigations CD-ROM<br />is unleserlich";
 			satnavDiscMissingText = "Die Navigations CD-ROM<br />fehlt";
 
-			$("#satnav_main_menu .menuTitleLine").html("Navigation / F&uuml;hrung<br />");
-			$("#satnav_main_menu .button:eq(0)").html("Neues Ziel eingeben");
-			$("#satnav_main_menu .button:eq(1)").html("Einen Dienst w&auml;hlen");
-			$("#satnav_main_menu .button:eq(2)").html("Gespeichertes Ziel W&auml;hlen");
-			$("#satnav_main_menu .button:eq(3)").html("Navigationsoptionen");
+			id = "#satnav_main_menu";
+			$(id + " .menuTitleLine").html("Navigation / F&uuml;hrung<br />");
+			$(id + " .button:eq(0)").html("Neues Ziel eingeben");
+			$(id + " .button:eq(1)").html("Einen Dienst w&auml;hlen");
+			$(id + " .button:eq(2)").html("Gespeichertes Ziel W&auml;hlen");
+			$(id + " .button:eq(3)").html("Navigationsoptionen");
 
-			$("#satnav_select_from_memory_menu .menuTitleLine").html("Gespeichertes Ziel w&auml;hlen<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Pers&ouml;nliches Zielverzeichnis");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("Berufliches Zielverzeichnis");
+			id = "#satnav_select_from_memory_menu";
+			$(id + " .menuTitleLine").html("Gespeichertes Ziel w&auml;hlen<br />");
+			$(id + " .button:eq(0)").html("Pers&ouml;nliches Zielverzeichnis");
+			$(id + " .button:eq(1)").html("Berufliches Zielverzeichnis");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Navigationsoptionen<br />");
-			$("#satnav_navigation_options_menu .button:eq(0)").html("Verwalben der Verzeichnisse");
-			$("#satnav_navigation_options_menu .button:eq(1)").html("Lautst. der Synthesestimme");
-			$("#satnav_navigation_options_menu .button:eq(2)").html("L&ouml;schen der Verzeichnisse");
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			id = "#satnav_navigation_options_menu";
+			$(id + " .menuTitleLine").html("Navigationsoptionen<br />");
+			$(id + " .button:eq(0)").html("Verwalben der Verzeichnisse");
+			$(id + " .button:eq(1)").html("Lautst. der Synthesestimme");
+			$(id + " .button:eq(2)").html("L&ouml;schen der Verzeichnisse");
+			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
-			$("#satnav_directory_management_menu .menuTitleLine").html("Verwalben der Verzeichnisse<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Pers&ouml;nliches Zielverzeichnis");
-			$("#satnav_directory_management_menu .button:eq(1)").html("Berufliches Zielverzeichnis");
+			id = "#satnav_directory_management_menu";
+			$(id + " .menuTitleLine").html("Verwalben der Verzeichnisse<br />");
+			$(id + " .button:eq(0)").html("Pers&ouml;nliches Zielverzeichnis");
+			$(id + " .button:eq(1)").html("Berufliches Zielverzeichnis");
 
-			$("#satnav_guidance_tools_menu .menuTitleLine").html("F&uuml;hrungshilfen<br />");
-			$("#satnav_guidance_tools_menu .button:eq(0)").html("F&uuml;hrungskriterien");
-			$("#satnav_guidance_tools_menu .button:eq(1)").html("Programmiertes Ziel");
-			$("#satnav_guidance_tools_menu .button:eq(2)").html("Lautst. der Synthesestimme");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
+			id = "#satnav_guidance_tools_menu";
+			$(id + " .menuTitleLine").html("F&uuml;hrungshilfen<br />");
+			$(id + " .button:eq(0)").html("F&uuml;hrungskriterien");
+			$(id + " .button:eq(1)").html("Programmiertes Ziel");
+			$(id + " .button:eq(2)").html("Lautst. der Synthesestimme");
+			$(id + " .button:eq(3)").html(stopGuidanceText);
 
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Die schnellste Route<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Die k&uuml;rzeste Route<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Autobahn meiden<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Vergleich Fahrzeit/Routenl&auml;nge<br />");
+			id = "#satnav_guidance_preference_menu";
+			$(id + " .tickBoxLabel:eq(0)").html("Die schnellste Route<br />");
+			$(id + " .tickBoxLabel:eq(1)").html("Die k&uuml;rzeste Route<br />");
+			$(id + " .tickBoxLabel:eq(2)").html("Autobahn meiden<br />");
+			$(id + " .tickBoxLabel:eq(3)").html("Vergleich Fahrzeit/Routenl&auml;nge<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Lautst. der Synthesestimme<br />");
-			$("#satnav_vocal_synthesis_level .tag").html("Lautst.");
+			id = "#satnav_vocal_synthesis_level";
+			$(id + " .menuTitleLine").html("Lautst. der Synthesestimme<br />");
+			$(id + " .tag").html("Lautst.");
 
 			$("#satnav_enter_city_characters .tag").html("Stadt eingeben");
 			$("#satnav_enter_street_characters .tag").html("Stra&szlig;e eingeben");
 
-			$("#satnav_enter_characters .tag:eq(0)").html("Buchstabe w&auml;hlen");  // TODO - check
-			$("#satnav_enter_characters .tag:eq(1)").html("Stadt eingeben");
-			$("#satnav_enter_characters .tag:eq(2)").html("Stra&szlig;e eingeben");
+			id = "#satnav_enter_characters";
+			$(id + " .tag:eq(0)").html("Buchstabe w&auml;hlen");  // TODO - check
+			$(id + " .tag:eq(1)").html("Stadt eingeben");
+			$(id + " .tag:eq(2)").html("Stra&szlig;e eingeben");
 
 			$("#satnav_tag_city_list").html("Stadt eingeben");
 			$("#satnav_tag_street_list").html("Stra&szlig;e eingeben");
@@ -5947,41 +5997,49 @@ function setLanguage(language)
 
 			$("#satnav_enter_house_number .tag").html("Hausnummer eingeben");
 
-			$("#satnav_show_personal_address .tag:eq(0)").html("Stadt");
-			$("#satnav_show_personal_address .tag:eq(1)").html("Stra&szlig;e");
-			$("#satnav_show_personal_address .tag:eq(2)").html("Nummer");
+			id = "#satnav_show_personal_address";
+			$(id + " .tag:eq(0)").html("Stadt");
+			$(id + " .tag:eq(1)").html("Stra&szlig;e");
+			$(id + " .tag:eq(2)").html("Nummer");
 
-			$("#satnav_show_professional_address .tag:eq(0)").html("Stadt");
-			$("#satnav_show_professional_address .tag:eq(1)").html("Stra&szlig;e");
-			$("#satnav_show_professional_address .tag:eq(3)").html("Nummer");
+			id = "#satnav_show_professional_address";
+			$(id + " .tag:eq(0)").html("Stadt");
+			$(id + " .tag:eq(1)").html("Stra&szlig;e");
+			$(id + " .tag:eq(3)").html("Nummer");
 
-			$("#satnav_show_service_address .tag:eq(0)").html("Stadt");
-			$("#satnav_show_service_address .tag:eq(1)").html("Stra&szlig;e");
+			id = "#satnav_show_service_address";
+			$(id + " .tag:eq(0)").html("Stadt");
+			$(id + " .tag:eq(1)").html("Stra&szlig;e");
 
-			$("#satnav_show_current_destination .tag:eq(0)").html("Programmiertes Ziel");
-			$("#satnav_show_current_destination .tag:eq(1)").html("Stadt");
-			$("#satnav_show_current_destination .tag:eq(2)").html("Stra&szlig;e");
-			$("#satnav_show_current_destination .tag:eq(3)").html("Nummer");
+			id = "#satnav_show_current_destination";
+			$(id + " .tag:eq(0)").html("Programmiertes Ziel");
+			$(id + " .tag:eq(1)").html("Stadt");
+			$(id + " .tag:eq(2)").html("Stra&szlig;e");
+			$(id + " .tag:eq(3)").html("Nummer");
 
-			$("#satnav_show_programmed_destination .tag:eq(0)").html("Programmiertes Ziel");
-			$("#satnav_show_programmed_destination .tag:eq(1)").html("Stadt");
-			$("#satnav_show_programmed_destination .tag:eq(2)").html("Stra&szlig;e");
-			$("#satnav_show_programmed_destination .tag:eq(3)").html("Nummer");
+			id = "#satnav_show_programmed_destination";
+			$(id + " .tag:eq(0)").html("Programmiertes Ziel");
+			$(id + " .tag:eq(1)").html("Stadt");
+			$(id + " .tag:eq(2)").html("Stra&szlig;e");
+			$(id + " .tag:eq(3)").html("Nummer");
 
-			$("#satnav_show_last_destination .tag:eq(0)").html("Einen Dienst w&auml;hlen");
-			$("#satnav_show_last_destination .tag:eq(1)").html("Stadt");
-			$("#satnav_show_last_destination .tag:eq(2)").html("Stra&szlig;e");
-			$("#satnav_show_last_destination .button:eq(2)").html("Aktueller Standort");  // TODO - check
+			id = "#satnav_show_last_destination";
+			$(id + " .tag:eq(0)").html("Einen Dienst w&auml;hlen");
+			$(id + " .tag:eq(1)").html("Stadt");
+			$(id + " .tag:eq(2)").html("Stra&szlig;e");
+			$(id + " .button:eq(2)").html("Aktueller Standort");  // TODO - check
 
-			$("#satnav_archive_in_directory_title").html("Im Verzeichnis speichern");
-			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Name");
-			$("#satnav_archive_in_directory .button:eq(0)").html("Korrigieren");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Pers&ouml;nl. Speic");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Berufl. Speich");
+			id = "#satnav_archive_in_directory";
+			$(id + "_title").html("Im Verzeichnis speichern");
+			$(id + " .satNavEntryNameTag").html("Name");
+			$(id + " .button:eq(0)").html("Korrigieren");
+			$(id + " .button:eq(1)").html("Pers&ouml;nl. Speic");
+			$(id + " .button:eq(2)").html("Berufl. Speich");
 
-			$("#satnav_rename_entry_in_directory_title").html("Umbenennen");
-			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Name");
-			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Korrigieren");
+			id = "#satnav_rename_entry_in_directory";
+			$(id + "_title").html("Umbenennen");
+			$(id + " .satNavEntryNameTag").html("Name");
+			$(id + " .button:eq(1)").html("Korrigieren");
 
 			$("#satnav_reached_destination_popup_title").html("Ziel erreicht");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("M&ouml;chten Sie Diese<br />Position l&ouml;schen ?<br />");
@@ -6024,11 +6082,12 @@ function setLanguage(language)
 			$("#main_menu_goto_satnav_button").html("Navegaci&oacute;n / Guiado");
 			$("#main_menu_goto_screen_configuration_button").html("Configuraci&oacute;n de pantalla");
 
-			$("#screen_configuration_menu .menuTitleLine").html("Configuraci&oacute;n de pantalla<br />");
-			$("#screen_configuration_menu .button:eq(0)").html("Ajustar luminosidad");
-			$("#screen_configuration_menu .button:eq(1)").html("Ajustar hora y fecha");
-			$("#screen_configuration_menu .button:eq(2)").html("Seleccionar idioma " + languageSelections);
-			$("#screen_configuration_menu .button:eq(3)").html("Ajustar formatos y unidades");
+			let id = "#screen_configuration_menu";
+			$(id + " .menuTitleLine").html("Configuraci&oacute;n de pantalla<br />");
+			$(id + " .button:eq(0)").html("Ajustar luminosidad");
+			$(id + " .button:eq(1)").html("Ajustar hora y fecha");
+			$(id + " .button:eq(2)").html("Seleccionar idioma " + languageSelections);
+			$(id + " .button:eq(3)").html("Ajustar formatos y unidades");
 
 			$("#set_screen_brightness .menuTitleLine").html("Ajustar luminosidad<br />");
 			$("#set_date_time .menuTitleLine").html("Ajustar hora y fecha<br />");
@@ -6060,47 +6119,54 @@ function setLanguage(language)
 			satnavDiscUnreadbleText = "No se puede leer<br />CD-ROM de navegaci&oacute;n";
 			satnavDiscMissingText = "No hay CD-ROM de<br />navegaci&oacute;n";
 
-			$("#satnav_main_menu .menuTitleLine").html("Navegaci&oacute;n / Guiado<br />");
-			$("#satnav_main_menu .button:eq(0)").html("Introducir nuevo destino");
-			$("#satnav_main_menu .button:eq(1)").html("Seleccionar servicio");
-			$("#satnav_main_menu .button:eq(2)").html("Seleccionar destino archivado");
-			$("#satnav_main_menu .button:eq(3)").html("Opciones de navegaci&oacute;n");
+			id = "#satnav_main_menu";
+			$(id + " .menuTitleLine").html("Navegaci&oacute;n / Guiado<br />");
+			$(id + " .button:eq(0)").html("Introducir nuevo destino");
+			$(id + " .button:eq(1)").html("Seleccionar servicio");
+			$(id + " .button:eq(2)").html("Seleccionar destino archivado");
+			$(id + " .button:eq(3)").html("Opciones de navegaci&oacute;n");
 
-			$("#satnav_select_from_memory_menu .menuTitleLine").html("Seleccionar destino archivado<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Directorio personal");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("Directorio profesional");
+			id = "#satnav_select_from_memory_menu";
+			$(id + " .menuTitleLine").html("Seleccionar destino archivado<br />");
+			$(id + " .button:eq(0)").html("Directorio personal");
+			$(id + " .button:eq(1)").html("Directorio profesional");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Opciones de navegaci&oacute;n<br />");
-			$("#satnav_navigation_options_menu .button:eq(0)").html("Gesti&oacute;n de directorios");
-			$("#satnav_navigation_options_menu .button:eq(1)").html("Volumen de s&iacute;ntesis vocal");
-			$("#satnav_navigation_options_menu .button:eq(2)").html("Borrado de directorios");
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			id = "#satnav_navigation_options_menu";
+			$(id + " .menuTitleLine").html("Opciones de navegaci&oacute;n<br />");
+			$(id + " .button:eq(0)").html("Gesti&oacute;n de directorios");
+			$(id + " .button:eq(1)").html("Volumen de s&iacute;ntesis vocal");
+			$(id + " .button:eq(2)").html("Borrado de directorios");
+			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
-			$("#satnav_directory_management_menu .menuTitleLine").html("Gesti&oacute;n de directorios<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Directorio personal");
-			$("#satnav_directory_management_menu .button:eq(1)").html("Directorio profesional");
+			id = "#satnav_directory_management_menu";
+			$(id + " .menuTitleLine").html("Gesti&oacute;n de directorios<br />");
+			$(id + " .button:eq(0)").html("Directorio personal");
+			$(id + " .button:eq(1)").html("Directorio profesional");
 
-			$("#satnav_guidance_tools_menu .menuTitleLine").html("Herramientas de guiado<br />");
-			$("#satnav_guidance_tools_menu .button:eq(0)").html("Criterios de guiado");
-			$("#satnav_guidance_tools_menu .button:eq(1)").html("Destino programado");
-			$("#satnav_guidance_tools_menu .button:eq(2)").html("Volumen de s&iacute;ntesis vocal");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
+			id = "#satnav_guidance_tools_menu";
+			$(id + " .menuTitleLine").html("Herramientas de guiado<br />");
+			$(id + " .button:eq(0)").html("Criterios de guiado");
+			$(id + " .button:eq(1)").html("Destino programado");
+			$(id + " .button:eq(2)").html("Volumen de s&iacute;ntesis vocal");
+			$(id + " .button:eq(3)").html(stopGuidanceText);
 
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("M&aacute;s r&aacute;pido<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("M&aacute;s corto<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Sin autopistas<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Compromiso r&aacute;pido/corto<br />");
+			id = "#satnav_guidance_preference_menu";
+			$(id + " .tickBoxLabel:eq(0)").html("M&aacute;s r&aacute;pido<br />");
+			$(id + " .tickBoxLabel:eq(1)").html("M&aacute;s corto<br />");
+			$(id + " .tickBoxLabel:eq(2)").html("Sin autopistas<br />");
+			$(id + " .tickBoxLabel:eq(3)").html("Compromiso r&aacute;pido/corto<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Volumen de s&iacute;ntesis vocal<br />");
-			$("#satnav_vocal_synthesis_level .tag").html("Volumen");
+			id = "#satnav_vocal_synthesis_level";
+			$(id + " .menuTitleLine").html("Volumen de s&iacute;ntesis vocal<br />");
+			$(id + " .tag").html("Volumen");
 
 			$("#satnav_enter_city_characters .tag").html("Introducir la ciudad");
 			$("#satnav_enter_street_characters .tag").html("Introducir la calle");
 
-			$("#satnav_enter_characters .tag:eq(0)").html("Elegir letra");  // TODO - check
-			$("#satnav_enter_characters .tag:eq(1)").html("Introducir la ciudad");
-			$("#satnav_enter_characters .tag:eq(2)").html("Introducir la calle");
+			id = "#satnav_enter_characters";
+			$(id + " .tag:eq(0)").html("Elegir letra");  // TODO - check
+			$(id + " .tag:eq(1)").html("Introducir la ciudad");
+			$(id + " .tag:eq(2)").html("Introducir la calle");
 
 			$("#satnav_tag_city_list").html("Introducir la ciudad");
 			$("#satnav_tag_street_list").html("Introducir la calle");
@@ -6110,41 +6176,49 @@ function setLanguage(language)
 
 			$("#satnav_enter_house_number .tag").html("Introducir el n&uacute;mero");
 
-			$("#satnav_show_personal_address .tag:eq(0)").html("Ciudad");
-			$("#satnav_show_personal_address .tag:eq(1)").html("Calle");
-			$("#satnav_show_personal_address .tag:eq(2)").html("N&uacute;mero");
+			id = "#satnav_show_personal_address";
+			$(id + " .tag:eq(0)").html("Ciudad");
+			$(id + " .tag:eq(1)").html("Calle");
+			$(id + " .tag:eq(2)").html("N&uacute;mero");
 
-			$("#satnav_show_professional_address .tag:eq(0)").html("Ciudad");
-			$("#satnav_show_professional_address .tag:eq(1)").html("Calle");
-			$("#satnav_show_professional_address .tag:eq(3)").html("N&uacute;mero");
+			id = "#satnav_show_professional_address";
+			$(id + " .tag:eq(0)").html("Ciudad");
+			$(id + " .tag:eq(1)").html("Calle");
+			$(id + " .tag:eq(3)").html("N&uacute;mero");
 
-			$("#satnav_show_service_address .tag:eq(0)").html("Ciudad");
-			$("#satnav_show_service_address .tag:eq(1)").html("Calle");
+			id = "#satnav_show_service_address";
+			$(id + " .tag:eq(0)").html("Ciudad");
+			$(id + " .tag:eq(1)").html("Calle");
 
-			$("#satnav_show_current_destination .tag:eq(0)").html("Destino programado");
-			$("#satnav_show_current_destination .tag:eq(1)").html("Ciudad");
-			$("#satnav_show_current_destination .tag:eq(2)").html("Calle");
-			$("#satnav_show_current_destination .tag:eq(3)").html("N&uacute;mero");
+			id = "#satnav_show_current_destination";
+			$(id + " .tag:eq(0)").html("Destino programado");
+			$(id + " .tag:eq(1)").html("Ciudad");
+			$(id + " .tag:eq(2)").html("Calle");
+			$(id + " .tag:eq(3)").html("N&uacute;mero");
 
-			$("#satnav_show_programmed_destination .tag:eq(0)").html("Destino programado");
-			$("#satnav_show_programmed_destination .tag:eq(1)").html("Ciudad");
-			$("#satnav_show_programmed_destination .tag:eq(2)").html("Calle");
-			$("#satnav_show_programmed_destination .tag:eq(3)").html("N&uacute;mero");
+			id = "#satnav_show_programmed_destination";
+			$(id + " .tag:eq(0)").html("Destino programado");
+			$(id + " .tag:eq(1)").html("Ciudad");
+			$(id + " .tag:eq(2)").html("Calle");
+			$(id + " .tag:eq(3)").html("N&uacute;mero");
 
-			$("#satnav_show_last_destination .tag:eq(0)").html("Seleccionar servicio");
-			$("#satnav_show_last_destination .tag:eq(1)").html("Ciudad");
-			$("#satnav_show_last_destination .tag:eq(2)").html("Calle");
-			$("#satnav_show_last_destination .button:eq(2)").html("Ubicaci&oacute;n actual");  // TODO - check
+			id = "#satnav_show_last_destination";
+			$(id + " .tag:eq(0)").html("Seleccionar servicio");
+			$(id + " .tag:eq(1)").html("Ciudad");
+			$(id + " .tag:eq(2)").html("Calle");
+			$(id + " .button:eq(2)").html("Ubicaci&oacute;n actual");  // TODO - check
 
-			$("#satnav_archive_in_directory_title").html("Archivar en directorio");
-			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Denominaci&oacute;n");
-			$("#satnav_archive_in_directory .button:eq(0)").html("Corregir");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Directorio personal");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Directorio profesional");
+			id = "#satnav_archive_in_directory";
+			$(id + "_title").html("Archivar en directorio");
+			$(id + " .satNavEntryNameTag").html("Denominaci&oacute;n");
+			$(id + " .button:eq(0)").html("Corregir");
+			$(id + " .button:eq(1)").html("Directorio personal");
+			$(id + " .button:eq(2)").html("Directorio profesional");
 
-			$("#satnav_rename_entry_in_directory_title").html("Cambiar");
-			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominaci&oacute;n");
-			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Corregir");
+			id = "#satnav_rename_entry_in_directory";
+			$(id + "_title").html("Cambiar");
+			$(id + " .satNavEntryNameTag").html("Denominaci&oacute;n");
+			$(id + " .button:eq(1)").html("Corregir");
 
 			$("#satnav_reached_destination_popup_title").html("Destino alcanzado");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?");
@@ -6187,11 +6261,12 @@ function setLanguage(language)
 			$("#main_menu_goto_satnav_button").html("Navigazione/Guida");
 			$("#main_menu_goto_screen_configuration_button").html("Configurazione monitor");
 
-			$("#screen_configuration_menu .menuTitleLine").html("Configurazione monitor<br />");
-			$("#screen_configuration_menu .button:eq(0)").html("Regolazione luminosita");
-			$("#screen_configuration_menu .button:eq(1)").html("Regolazione date e ora");
-			$("#screen_configuration_menu .button:eq(2)").html("Scelta della lingua " + languageSelections);
-			$("#screen_configuration_menu .button:eq(3)").html("Regolazione formato e unita");
+			let id = "#screen_configuration_menu";
+			$(id + " .menuTitleLine").html("Configurazione monitor<br />");
+			$(id + " .button:eq(0)").html("Regolazione luminosita");
+			$(id + " .button:eq(1)").html("Regolazione date e ora");
+			$(id + " .button:eq(2)").html("Scelta della lingua " + languageSelections);
+			$(id + " .button:eq(3)").html("Regolazione formato e unita");
 
 			$("#set_screen_brightness .menuTitleLine").html("Regolazione luminosita<br />");
 			$("#set_date_time .menuTitleLine").html("Regolazione hora y fecha<br />");
@@ -6222,47 +6297,54 @@ function setLanguage(language)
 			satnavDiscUnreadbleText = "Il CD-ROM di navigazione<br />&egrave; illeggibile";
 			satnavDiscMissingText = "Il CD-ROM di navigazione<br />&egrave; assente";
 
-			$("#satnav_main_menu .menuTitleLine").html("Navigazione/Guida<br />");
-			$("#satnav_main_menu .button:eq(0)").html("Inserire una nuova destinazione");
-			$("#satnav_main_menu .button:eq(1)").html("Scelta un servizio");
-			$("#satnav_main_menu .button:eq(2)").html("Scelta una destinazione salvata");
-			$("#satnav_main_menu .button:eq(3)").html("Opzioni di navigazione");
+			id = "#satnav_main_menu";
+			$(id + " .menuTitleLine").html("Navigazione/Guida<br />");
+			$(id + " .button:eq(0)").html("Inserire una nuova destinazione");
+			$(id + " .button:eq(1)").html("Scelta un servizio");
+			$(id + " .button:eq(2)").html("Scelta una destinazione salvata");
+			$(id + " .button:eq(3)").html("Opzioni di navigazione");
 
-			$("#satnav_select_from_memory_menu .menuTitleLine").html("Scelta una destinazione salvata<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Rub. personale");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("Rub. professionale");
+			id = "#satnav_select_from_memory_menu";
+			$(id + " .menuTitleLine").html("Scelta una destinazione salvata<br />");
+			$(id + " .button:eq(0)").html("Rub. personale");
+			$(id + " .button:eq(1)").html("Rub. professionale");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Opzioni di navigazione<br />");
-			$("#satnav_navigation_options_menu .button:eq(0)").html("Gestione rubrica");
-			$("#satnav_navigation_options_menu .button:eq(1)").html("Volume navigazione");
-			$("#satnav_navigation_options_menu .button:eq(2)").html("Cancella rubrica");
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			id = "#satnav_navigation_options_menu";
+			$(id + " .menuTitleLine").html("Opzioni di navigazione<br />");
+			$(id + " .button:eq(0)").html("Gestione rubrica");
+			$(id + " .button:eq(1)").html("Volume navigazione");
+			$(id + " .button:eq(2)").html("Cancella rubrica");
+			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
-			$("#satnav_directory_management_menu .menuTitleLine").html("Gestione rubrica<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Rub. personale");
-			$("#satnav_directory_management_menu .button:eq(1)").html("Rub. professionale");
+			id = "#satnav_directory_management_menu";
+			$(id + " .menuTitleLine").html("Gestione rubrica<br />");
+			$(id + " .button:eq(0)").html("Rub. personale");
+			$(id + " .button:eq(1)").html("Rub. professionale");
 
-			$("#satnav_guidance_tools_menu .menuTitleLine").html("Strumenti de guida<br />");
-			$("#satnav_guidance_tools_menu .button:eq(0)").html("Criteri di guida");
-			$("#satnav_guidance_tools_menu .button:eq(1)").html("Destinazione programmata");
-			$("#satnav_guidance_tools_menu .button:eq(2)").html("Volume navigazione");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
+			id = "#satnav_guidance_tools_menu";
+			$(id + " .menuTitleLine").html("Strumenti de guida<br />");
+			$(id + " .button:eq(0)").html("Criteri di guida");
+			$(id + " .button:eq(1)").html("Destinazione programmata");
+			$(id + " .button:eq(2)").html("Volume navigazione");
+			$(id + " .button:eq(3)").html(stopGuidanceText);
 
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Percorso pi&ugrave; rapido<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Percorso pi&ugrave; corto<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Esclusione autostrada<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Compromesso rapidit&agrave;/distanza<br />");
+			id = "#satnav_guidance_preference_menu";
+			$(id + " .tickBoxLabel:eq(0)").html("Percorso pi&ugrave; rapido<br />");
+			$(id + " .tickBoxLabel:eq(1)").html("Percorso pi&ugrave; corto<br />");
+			$(id + " .tickBoxLabel:eq(2)").html("Esclusione autostrada<br />");
+			$(id + " .tickBoxLabel:eq(3)").html("Compromesso rapidit&agrave;/distanza<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Volume navigazione<br />");
-			$("#satnav_vocal_synthesis_level .tag").html("Volume");
+			id = "#satnav_vocal_synthesis_level";
+			$(id + " .menuTitleLine").html("Volume navigazione<br />");
+			$(id + " .tag").html("Volume");
 
 			$("#satnav_enter_city_characters .tag").html("Selezionare citt&agrave;");
 			$("#satnav_enter_street_characters .tag").html("Selezionare via");
 
-			$("#satnav_enter_characters .tag:eq(0)").html("Scegli lettera");  // TODO - check
-			$("#satnav_enter_characters .tag:eq(1)").html("Selezionare citt&agrave;");
-			$("#satnav_enter_characters .tag:eq(2)").html("Selezionare via");
+			id = "#satnav_enter_characters";
+			$(id + " .tag:eq(0)").html("Scegli lettera");  // TODO - check
+			$(id + " .tag:eq(1)").html("Selezionare citt&agrave;");
+			$(id + " .tag:eq(2)").html("Selezionare via");
 
 			$("#satnav_tag_city_list").html("Selezionare citt&agrave;");
 			$("#satnav_tag_street_list").html("Selezionare via");
@@ -6272,41 +6354,49 @@ function setLanguage(language)
 
 			$("#satnav_enter_house_number .tag").html("Selezionare numero civico");
 
-			$("#satnav_show_personal_address .tag:eq(0)").html("Citt&agrave;");
-			$("#satnav_show_personal_address .tag:eq(1)").html("Via");
-			$("#satnav_show_personal_address .tag:eq(2)").html("Numero");
+			id = "#satnav_show_personal_address";
+			$(id + " .tag:eq(0)").html("Citt&agrave;");
+			$(id + " .tag:eq(1)").html("Via");
+			$(id + " .tag:eq(2)").html("Numero");
 
-			$("#satnav_show_professional_address .tag:eq(0)").html("Citt&agrave;");
-			$("#satnav_show_professional_address .tag:eq(1)").html("Via");
-			$("#satnav_show_professional_address .tag:eq(3)").html("Numero");
+			id = "#satnav_show_professional_address";
+			$(id + " .tag:eq(0)").html("Citt&agrave;");
+			$(id + " .tag:eq(1)").html("Via");
+			$(id + " .tag:eq(3)").html("Numero");
 
-			$("#satnav_show_service_address .tag:eq(0)").html("Citt&agrave;");
-			$("#satnav_show_service_address .tag:eq(1)").html("Via");
+			id = "#satnav_show_service_address";
+			$(id + " .tag:eq(0)").html("Citt&agrave;");
+			$(id + " .tag:eq(1)").html("Via");
 
-			$("#satnav_show_current_destination .tag:eq(0)").html("Destinazione programmata");
-			$("#satnav_show_current_destination .tag:eq(1)").html("Citt&agrave;");
-			$("#satnav_show_current_destination .tag:eq(2)").html("Via");
-			$("#satnav_show_current_destination .tag:eq(3)").html("Numero");
+			id = "#satnav_show_current_destination";
+			$(id + " .tag:eq(0)").html("Destinazione programmata");
+			$(id + " .tag:eq(1)").html("Citt&agrave;");
+			$(id + " .tag:eq(2)").html("Via");
+			$(id + " .tag:eq(3)").html("Numero");
 
-			$("#satnav_show_programmed_destination .tag:eq(0)").html("Destinazione programmata");
-			$("#satnav_show_programmed_destination .tag:eq(1)").html("Citt&agrave;");
-			$("#satnav_show_programmed_destination .tag:eq(2)").html("Via");
-			$("#satnav_show_programmed_destination .tag:eq(3)").html("Numero");
+			id = "#satnav_show_programmed_destination";
+			$(id + " .tag:eq(0)").html("Destinazione programmata");
+			$(id + " .tag:eq(1)").html("Citt&agrave;");
+			$(id + " .tag:eq(2)").html("Via");
+			$(id + " .tag:eq(3)").html("Numero");
 
-			$("#satnav_show_last_destination .tag:eq(0)").html("Scelta un servizio");
-			$("#satnav_show_last_destination .tag:eq(1)").html("Citt&agrave;");
-			$("#satnav_show_last_destination .tag:eq(2)").html("Via");
-			$("#satnav_show_last_destination .button:eq(2)").html("Posizione attuale");  // TODO - check
+			id = "#satnav_show_last_destination";
+			$(id + " .tag:eq(0)").html("Scelta un servizio");
+			$(id + " .tag:eq(1)").html("Citt&agrave;");
+			$(id + " .tag:eq(2)").html("Via");
+			$(id + " .button:eq(2)").html("Posizione attuale");  // TODO - check
 
-			$("#satnav_archive_in_directory_title").html("Salvare nella rubrica");
-			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Denominazione");
-			$("#satnav_archive_in_directory .button:eq(0)").html("Correggere");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Rub. personale");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Rub. professionale");
+			id = "#satnav_archive_in_directory";
+			$(id + "_title").html("Salvare nella rubrica");
+			$(id + " .satNavEntryNameTag").html("Denominazione");
+			$(id + " .button:eq(0)").html("Correggere");
+			$(id + " .button:eq(1)").html("Rub. personale");
+			$(id + " .button:eq(2)").html("Rub. professionale");
 
-			$("#satnav_rename_entry_in_directory_title").html("Rinominare");
-			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Denominazione");
-			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Correggere");
+			id = "#satnav_rename_entry_in_directory";
+			$(id + "_title").html("Rinominare");
+			$(id + " .satNavEntryNameTag").html("Denominazione");
+			$(id + " .button:eq(1)").html("Correggere");
 
 			$("#satnav_reached_destination_popup_title").html("Destinazione raggiunta");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Cancellare la scheda?<br />");
@@ -6349,11 +6439,12 @@ function setLanguage(language)
 			$("#main_menu_goto_satnav_button").html("Navigatie / Begeleiding");
 			$("#main_menu_goto_screen_configuration_button").html("Beeldschermconfiguratie");
 
-			$("#screen_configuration_menu .menuTitleLine").html("Beeldschermconfiguratie<br />");
-			$("#screen_configuration_menu .button:eq(0)").html("Instelling helderheid");
-			$("#screen_configuration_menu .button:eq(1)").html("Instelling datum en tijd");
-			$("#screen_configuration_menu .button:eq(2)").html("Taalkeuze " + languageSelections);
-			$("#screen_configuration_menu .button:eq(3)").html("Instelling van eenheden");
+			let id = "#screen_configuration_menu";
+			$(id + " .menuTitleLine").html("Beeldschermconfiguratie<br />");
+			$(id + " .button:eq(0)").html("Instelling helderheid");
+			$(id + " .button:eq(1)").html("Instelling datum en tijd");
+			$(id + " .button:eq(2)").html("Taalkeuze " + languageSelections);
+			$(id + " .button:eq(3)").html("Instelling van eenheden");
 
 			$("#set_screen_brightness .menuTitleLine").html("Instelling helderheid<br />");
 			$("#set_date_time .menuTitleLine").html("Instelling datum en tijd<br />");
@@ -6384,47 +6475,54 @@ function setLanguage(language)
 			satnavDiscUnreadbleText = "De navigatie CD-rom is<br />onleesbaar";
 			satnavDiscMissingText = "De navigatie CD-rom is<br />niet aanwezig";
 
-			$("#satnav_main_menu .menuTitleLine").html("Navigatie/ Begeleiding<br />");
-			$("#satnav_main_menu .button:eq(0)").html("Nieuwe bestemming invoeren");
-			$("#satnav_main_menu .button:eq(1)").html("Informatie-dienstverlening");
-			$("#satnav_main_menu .button:eq(2)").html("Bestemming uit archief kiezen");
-			$("#satnav_main_menu .button:eq(3)").html("Navigatiekeuze");
+			id = "#satnav_main_menu";
+			$(id + " .menuTitleLine").html("Navigatie/ Begeleiding<br />");
+			$(id + " .button:eq(0)").html("Nieuwe bestemming invoeren");
+			$(id + " .button:eq(1)").html("Informatie-dienstverlening");
+			$(id + " .button:eq(2)").html("Bestemming uit archief kiezen");
+			$(id + " .button:eq(3)").html("Navigatiekeuze");
 
-			$("#satnav_select_from_memory_menu .menuTitleLine").html("Bestemming uit archief kiezen<br />");
-			$("#satnav_select_from_memory_menu .button:eq(0)").html("Priv&eacute;-adressen");
-			$("#satnav_select_from_memory_menu .button:eq(1)").html("Zaken-adressen");
+			id = "#satnav_select_from_memory_menu";
+			$(id + " .menuTitleLine").html("Bestemming uit archief kiezen<br />");
+			$(id + " .button:eq(0)").html("Priv&eacute;-adressen");
+			$(id + " .button:eq(1)").html("Zaken-adressen");
 
-			$("#satnav_navigation_options_menu .menuTitleLine").html("Navigatiekeuze<br />");
-			$("#satnav_navigation_options_menu .button:eq(0)").html("Adressenbestand");
-			$("#satnav_navigation_options_menu .button:eq(1)").html("Geluidsvolume");
-			$("#satnav_navigation_options_menu .button:eq(2)").html("Bestanden wissen");
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			id = "#satnav_navigation_options_menu";
+			$(id + " .menuTitleLine").html("Navigatiekeuze<br />");
+			$(id + " .button:eq(0)").html("Adressenbestand");
+			$(id + " .button:eq(1)").html("Geluidsvolume");
+			$(id + " .button:eq(2)").html("Bestanden wissen");
+			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
-			$("#satnav_directory_management_menu .menuTitleLine").html("Adressenbestand<br />");
-			$("#satnav_directory_management_menu .button:eq(0)").html("Priv&eacute;-adressen");
-			$("#satnav_directory_management_menu .button:eq(1)").html("Zaken-adressen");
+			id = "#satnav_directory_management_menu";
+			$(id + " .menuTitleLine").html("Adressenbestand<br />");
+			$(id + " .button:eq(0)").html("Priv&eacute;-adressen");
+			$(id + " .button:eq(1)").html("Zaken-adressen");
 
-			$("#satnav_guidance_tools_menu .menuTitleLine").html("Navigatiehulp<br />");
-			$("#satnav_guidance_tools_menu .button:eq(0)").html("Navigatiecriteria");
-			$("#satnav_guidance_tools_menu .button:eq(1)").html("Geprogrammeerde bestemming");
-			$("#satnav_guidance_tools_menu .button:eq(2)").html("Geluidsvolume");
-			$("#satnav_guidance_tools_menu .button:eq(3)").html(stopGuidanceText);
+			id = "#satnav_guidance_tools_menu";
+			$(id + " .menuTitleLine").html("Navigatiehulp<br />");
+			$(id + " .button:eq(0)").html("Navigatiecriteria");
+			$(id + " .button:eq(1)").html("Geprogrammeerde bestemming");
+			$(id + " .button:eq(2)").html("Geluidsvolume");
+			$(id + " .button:eq(3)").html(stopGuidanceText);
 
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").html("Snelste weg<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").html("Kortste afstand<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").html("Traject zonder snelweg<br />");
-			$("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").html("Compromis snelheid/afstand<br />");
+			id = "#satnav_guidance_preference_menu";
+			$(id + " .tickBoxLabel:eq(0)").html("Snelste weg<br />");
+			$(id + " .tickBoxLabel:eq(1)").html("Kortste afstand<br />");
+			$(id + " .tickBoxLabel:eq(2)").html("Traject zonder snelweg<br />");
+			$(id + " .tickBoxLabel:eq(3)").html("Compromis snelheid/afstand<br />");
 
-			$("#satnav_vocal_synthesis_level .menuTitleLine").html("Geluidsvolume<br />");
-			$("#satnav_vocal_synthesis_level .tag").html("Volume");
+			id = "#satnav_vocal_synthesis_level";
+			$(id + " .menuTitleLine").html("Geluidsvolume<br />");
+			$(id + " .tag").html("Volume");
 
 			$("#satnav_enter_city_characters .tag").html("Stad invoeren");
 			$("#satnav_enter_street_characters .tag").html("Straat invoeren");
 
-			$("#satnav_enter_characters .tag:eq(0)").html("Kies letter");
-			$("#satnav_enter_characters .tag:eq(1)").html("Stad invoeren");
-			$("#satnav_enter_characters .tag:eq(2)").html("Straat invoeren");
+			id = "#satnav_enter_characters";
+			$(id + " .tag:eq(0)").html("Kies letter");
+			$(id + " .tag:eq(1)").html("Stad invoeren");
+			$(id + " .tag:eq(2)").html("Straat invoeren");
 
 			$("#satnav_tag_city_list").html("Kies stad");
 			$("#satnav_tag_street_list").html("Kies straat");
@@ -6434,41 +6532,49 @@ function setLanguage(language)
 
 			$("#satnav_enter_house_number .tag").html("Nummer invoeren");
 
-			$("#satnav_show_personal_address .tag:eq(0)").html("Stad");
-			$("#satnav_show_personal_address .tag:eq(1)").html("Straat");
-			$("#satnav_show_personal_address .tag:eq(2)").html("Nummer");
+			id = "#satnav_show_personal_address";
+			$(id + " .tag:eq(0)").html("Stad");
+			$(id + " .tag:eq(1)").html("Straat");
+			$(id + " .tag:eq(2)").html("Nummer");
 
-			$("#satnav_show_professional_address .tag:eq(0)").html("Stad");
-			$("#satnav_show_professional_address .tag:eq(1)").html("Straat");
-			$("#satnav_show_professional_address .tag:eq(3)").html("Nummer");
+			id = "#satnav_show_professional_address";
+			$(id + " .tag:eq(0)").html("Stad");
+			$(id + " .tag:eq(1)").html("Straat");
+			$(id + " .tag:eq(3)").html("Nummer");
 
-			$("#satnav_show_service_address .tag:eq(0)").html("Stad");
-			$("#satnav_show_service_address .tag:eq(1)").html("Straat");
+			id = "#satnav_show_service_address";
+			$(id + " .tag:eq(0)").html("Stad");
+			$(id + " .tag:eq(1)").html("Straat");
 
-			$("#satnav_show_current_destination .tag:eq(0)").html("Geprogrammeerde bestemming");
-			$("#satnav_show_current_destination .tag:eq(1)").html("Stad");
-			$("#satnav_show_current_destination .tag:eq(2)").html("Straat");
-			$("#satnav_show_current_destination .tag:eq(3)").html("Nummer");
+			id = "#satnav_show_current_destination";
+			$(id + " .tag:eq(0)").html("Geprogrammeerde bestemming");
+			$(id + " .tag:eq(1)").html("Stad");
+			$(id + " .tag:eq(2)").html("Straat");
+			$(id + " .tag:eq(3)").html("Nummer");
 
-			$("#satnav_show_programmed_destination .tag:eq(0)").html("Geprogrammeerde bestemming");
-			$("#satnav_show_programmed_destination .tag:eq(1)").html("Stad");
-			$("#satnav_show_programmed_destination .tag:eq(2)").html("Straat");
-			$("#satnav_show_programmed_destination .tag:eq(3)").html("Nummer");
+			id = "#satnav_show_programmed_destination";
+			$(id + " .tag:eq(0)").html("Geprogrammeerde bestemming");
+			$(id + " .tag:eq(1)").html("Stad");
+			$(id + " .tag:eq(2)").html("Straat");
+			$(id + " .tag:eq(3)").html("Nummer");
 
-			$("#satnav_show_last_destination .tag:eq(0)").html("Informatie-dienstverlening");
-			$("#satnav_show_last_destination .tag:eq(1)").html("Stad");
-			$("#satnav_show_last_destination .tag:eq(2)").html("Straat");
-			$("#satnav_show_last_destination .button:eq(2)").html("Huidige locatie");
+			id = "#satnav_show_last_destination";
+			$(id + " .tag:eq(0)").html("Informatie-dienstverlening");
+			$(id + " .tag:eq(1)").html("Stad");
+			$(id + " .tag:eq(2)").html("Straat");
+			$(id + " .button:eq(2)").html("Huidige locatie");
 
-			$("#satnav_archive_in_directory_title").html("Opslaan in adressenbestand");  // TODO - check
-			$("#satnav_archive_in_directory .satNavEntryNameTag").html("Naam");
-			$("#satnav_archive_in_directory .button:eq(0)").html("Verbeteren");
-			$("#satnav_archive_in_directory .button:eq(1)").html("Priv&eacute;-adressen");
-			$("#satnav_archive_in_directory .button:eq(2)").html("Zaken-adressen");
+			id = "#satnav_archive_in_directory";
+			$(id + "_title").html("Opslaan in adressenbestand");  // TODO - check
+			$(id + " .satNavEntryNameTag").html("Naam");
+			$(id + " .button:eq(0)").html("Verbeteren");
+			$(id + " .button:eq(1)").html("Priv&eacute;-adressen");
+			$(id + " .button:eq(2)").html("Zaken-adressen");
 
-			$("#satnav_rename_entry_in_directory_title").html("Nieuwe naam");
-			$("#satnav_rename_entry_in_directory .satNavEntryNameTag").html("Naam");
-			$("#satnav_rename_entry_in_directory .button:eq(1)").html("Verbeteren");
+			id = "#satnav_rename_entry_in_directory";
+			$(id + "_title").html("Nieuwe naam");
+			$(id + " .satNavEntryNameTag").html("Naam");
+			$(id + " .button:eq(1)").html("Verbeteren");
 
 			$("#satnav_reached_destination_popup_title").html("Bestemming bereikt");  // TODO - check
 			$("#satnav_delete_item_popup_title").html("Wilt u dit gegeven<br />wissen?<br />");

@@ -910,6 +910,8 @@ VanPacketParseResult_t ParseHeadUnitStalkPkt(TVanPacketRxDesc& pkt, char* buf, c
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitStalkPkt
 
+bool doorOpen = false;
+
 VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4FC
@@ -920,6 +922,8 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     if (dataLen != 11 && dataLen != 14) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
     const uint8_t* data = pkt.Data();
+
+    doorOpen = data[1] & 0x01;
 
     uint16_t remainingKmToService20 = (uint16_t)(data[2] & 0x7F) << 8 | data[3];
     bool remainingKmToServiceOverdue = data[2] & 0x80;
@@ -955,7 +959,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         data[0] & 0x40 ? onStr : offStr,
         data[0] & 0x20 ? onStr : offStr,
         data[0] & 0x04 ? onStr : offStr,
-        data[1] & 0x01 ? yesStr : noStr,
+        doorOpen ? yesStr : noStr,
 
         mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
             remainingKmToService :
@@ -5051,6 +5055,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"door_open\": \"%S\",\n"
             "\"small_screen\": \"%S\",\n"
             "\"trip_computer_screen_tab\": \"%S\",\n"
             "\"cd_changer_cartridge_present\": \"%S\",\n"
@@ -5060,6 +5065,8 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             "\"satnav_guidance_preference\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
+
+        doorOpen ? yesStr : noStr,
 
         // Small screen (left hand side of the display) to start with
         SmallScreenStr(),
@@ -5074,15 +5081,8 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 
     if (strlen_P(satnavStatus2Str) != 0)
     {
-        at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR
-                (
-                    ",\n"
-                    "\"satnav_status_2\": \"%S\""
-                ),
-                satnavStatus2Str
-            );
-    }
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_status_2\": \"%S\""), satnavStatus2Str);
+    } // if
 
     if (satnavServiceListSize > 0)
     {
@@ -5098,6 +5098,18 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
                 satnavServiceListSize
             );
     } // if
+
+    at += at >= n ? 0 :
+        snprintf_P
+        (
+            buf + at, n - at,
+            PSTR(",\n\"mfd_disable_navigation_menu_while_driving\": \"%S\""),
+          #ifdef MFD_DISABLE_NAVIGATION_MENU_WHILE_DRIVING
+            yesStr
+          #else
+            noStr
+          #endif
+        );
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 

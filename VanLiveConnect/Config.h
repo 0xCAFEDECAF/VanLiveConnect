@@ -130,7 +130,14 @@
 //       #endif
 //    }
 //
-//#define SERVE_FROM_SPIFFS
+#define SERVE_FROM_SPIFFS
+
+// -----
+// Define to disable (gray-out) the navigation menu while driving.
+// Some versions of the multi-functional displays (MFD) have this feature, whereas other versions
+// allow for entering the navigation menu while driving. Choose this define to match the behaviour
+// of your MFD.
+//#define MFD_DISABLE_NAVIGATION_MENU_WHILE_DRIVING
 
 // -----
 // Infrared receiver
@@ -179,7 +186,7 @@
 //#define DEBUG_ORIGINAL_MFD
 
 // Define to show the VAN bus statistics on the "system" screen
-//#define SHOW_VAN_RX_STATS
+#define SHOW_VAN_RX_STATS
 
 // Define to show the ESP RAM and Wi-Fi statistics on the "system" screen
 //#define SHOW_ESP_RUNTIME_STATS
