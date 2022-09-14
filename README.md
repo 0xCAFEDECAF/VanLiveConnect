@@ -126,9 +126,11 @@ Will not support:
 
 ## ⚙️ Technical Details<a name = "details"></a>
 
-In the beginning of 2000's the PSA group (Peugeot and Citroën) used VAN bus as a communication protocol
+In the beginning of 2000's the PSA group (Peugeot and Citroën) used ["VAN" bus] as a communication protocol
 between the various comfort-related equipment. Later, around 2005, they started to replace this protocol
 in their newer cars with the CAN bus protocol, however some models had VAN bus inside them until 2009.
+[This overview](https://github.com/morcibacsi/PSAVanCanBridge#compatibility) lists vehicles that are
+supposedly fitted with a VAN (comfort) bus.
 
 The application will tap in on the vehicle's VAN bus and visualize the captured data in a browser on your
 smart phone, tablet, laptop or any other device that runs a web browser. The application will run on any
@@ -200,7 +202,8 @@ We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-
 * [Arduino IDE](https://www.arduino.cc/en/software), with
 * [ESP8266 Board Manager](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed.
   I am currently using [version 2.6.3](https://github.com/esp8266/Arduino/releases/tag/2.6.3) but other versions
-  may also be working fine.
+  may also be working fine (tested on versions 2.6.3 ... 3.0.2; lowest VAN packet CRC error rate was achieved
+  using version 2.6.3).
 
 Follow the next tutorial to install the IDE and the ESP8266 Board Manager:
 
@@ -385,6 +388,7 @@ This application is open-source and licensed under the [MIT license](http://open
 
 Do whatever you like with it, but contributions are appreciated!
 
+["VAN" bus]: https://en.wikipedia.org/wiki/Vehicle_Area_Network
 [MCP2551]: http://ww1.microchip.com/downloads/en/devicedoc/21667d.pdf
 [level converter]: https://www.tinytronics.nl/shop/en/dc-dc-converters/level-converters/i2c-uart-bi-directional-logic-level-converter-5v-3.3v-2-channel-with-supply
 [SN65HVD230]: https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf?ts=1592992149874
