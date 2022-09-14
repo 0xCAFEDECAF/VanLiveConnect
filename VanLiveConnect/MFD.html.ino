@@ -2725,7 +2725,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:125px;">---</div>
 				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:155px;">---</div>
 				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:185px;">---</div>
-				<div id="esp_last_reset_info" class="tag" style="left:240px; top:215px; width:660px;">---</div>
+				<div id="esp_last_reset_info" class="tag" style="left:240px; top:215px; width:660px; text-align:left;">---</div>
 				<div id="esp_sdk_version" class="tag" style="left:240px; top:255px;">---</div>
 				<div id="img_md5_checksum" class="tag" style="left:240px; top:285px;">---</div>
 				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px;">---</div>
