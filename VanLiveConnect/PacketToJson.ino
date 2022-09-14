@@ -10,8 +10,8 @@
 
 enum VanPacketParseResult_t
 {
-    VAN_PACKET_NO_CONTENT  = 2, // Packet is OK but contains no useful (new) content
-    VAN_PACKET_DUPLICATE  = 1, // Packet was the same as the last with this IDEN field
+    VAN_PACKET_NO_CONTENT = 2,  // Packet is OK but contains no useful (new) content
+    VAN_PACKET_DUPLICATE = 1,  // Packet was the same as the last with this IDEN field
     VAN_PACKET_PARSE_OK = 0,  // Packet was parsed OK
     VAN_PACKET_PARSE_CRC_ERROR = -1,  // Packet had a CRC error
     VAN_PACKET_PARSE_UNEXPECTED_LENGTH = -2,  // Packet had unexpected length
@@ -20,6 +20,22 @@ enum VanPacketParseResult_t
     VAN_PACKET_PARSE_JSON_TOO_LONG = -5,  // IDEN recognized but the parsing into JSON overflows 'jsonBuffer'
     VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least one fragment of a multi-fragment message
 }; // enum VanPacketParseResult_t
+
+// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+PGM_P VanPacketParseResultStr(int result)
+{
+    return
+        result == VAN_PACKET_NO_CONTENT ? PSTR("NO NEW DATA CONTENT") :
+        result == VAN_PACKET_DUPLICATE ? PSTR("DUPLICATE") :
+        result == VAN_PACKET_PARSE_OK ? PSTR("OK") :
+        result == VAN_PACKET_PARSE_CRC_ERROR ? PSTR("CRC ERROR") :
+        result == VAN_PACKET_PARSE_UNEXPECTED_LENGTH ? PSTR("UNEXPECTED LENGTH") :
+        result == VAN_PACKET_PARSE_UNRECOGNIZED_IDEN ? PSTR("UNRECOGNIZED IDEN VALUE") :
+        result == VAN_PACKET_PARSE_TO_BE_DECODED ? PSTR("FORMAT YET TO BE DECODED") :
+        result == VAN_PACKET_PARSE_JSON_TOO_LONG ? PSTR("JSON BUFFER OVERFLOW") :
+        result == VAN_PACKET_PARSE_FRAGMENT_MISSED ? PSTR("MULTI-FRAGMENT DATA: FRAGMENT MISSED") :
+        "ERROR_??";
+} // ResultStr
 
 typedef VanPacketParseResult_t (*TPacketParser)(TVanPacketRxDesc&, char*, const int);
 
@@ -5152,9 +5168,6 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     {
         Serial.printf_P(PSTR("---> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
 
-        // The first time, handler->prevData will be NULL, so only the "FULL: " line will be printed
-        //if (handler->prevData != NULL)
-
         // The first time, or after an call to ResetPacketPrevData, handler->prevDataLen will be -1, so only
         // the "FULL: " line will be printed
         if (handler->prevData != NULL && handler->prevDataLen >= 0)
@@ -5298,15 +5311,20 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 
     int result = handler->parser(pkt, jsonBuffer, JSON_BUFFER_SIZE);
 
-    if (result == VAN_PACKET_PARSE_JSON_TOO_LONG)
+    // Errors we would like to see printed on the serial port
+    if (result == VAN_PACKET_PARSE_UNEXPECTED_LENGTH
+        || result == VAN_PACKET_PARSE_UNRECOGNIZED_IDEN
+        || result == VAN_PACKET_PARSE_JSON_TOO_LONG
+       )
     {
-        Serial.print(F("--> WARNING: JSON BUFFER OVERFLOW!\n"));
+        Serial.printf_P(PSTR("--> WARNING: %S!\n"), VanPacketParseResultStr(result));
 
         // No use to return the JSON buffer; it is invalid
         return "";
     } // if
 
-    if (result != VAN_PACKET_PARSE_OK) return ""; // Parsing result not OK
+    // Any other errors: silently ignore
+    if (result != VAN_PACKET_PARSE_OK) return "";
 
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
