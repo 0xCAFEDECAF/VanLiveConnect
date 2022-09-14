@@ -936,8 +936,6 @@ function selectFirstMenuItem(id)
 // Enter a specific menu. Selects the first button, thereby skipping disabled buttons.
 function gotoMenu(menu)
 {
-	//cancelChangeBackScreenTimer();
-
 	// Change screen, but only if not already there
 	if (currentMenu !== menu)
 	{
