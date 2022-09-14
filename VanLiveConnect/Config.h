@@ -186,7 +186,12 @@
 //#define DEBUG_ORIGINAL_MFD
 
 // Define to show the VAN bus statistics on the "system" screen
-#define SHOW_VAN_RX_STATS
+// Requires installation of the 'PrintEx' library; see: https://github.com/Chris--A/PrintEx (tested with version 1.2.0)
+// Note that the 'PrintEx' library only compiles under ESP8266 Arduino release 2.7.4 or lower.
+// To use the 'PrintEx' library with ESP8266 Arduino release 3.0.0 or higher, a patch is needed in the file
+// c:\Users\<user_id>\Documents\Arduino\libraries\PrintEx\src\lib\TypeTraits.h . Edit that file; replace
+// "struct select" by "struct select_P".
+//#define SHOW_VAN_RX_STATS
 
 // Define to show the ESP RAM and Wi-Fi statistics on the "system" screen
 //#define SHOW_ESP_RUNTIME_STATS
