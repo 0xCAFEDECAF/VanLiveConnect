@@ -130,7 +130,7 @@
 //       #endif
 //    }
 //
-#define SERVE_FROM_SPIFFS
+//#define SERVE_FROM_SPIFFS
 
 // -----
 // Define to disable (gray-out) the navigation menu while driving.
