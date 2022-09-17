@@ -155,8 +155,8 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Fuel level -->
 				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:348px;"></div>
 
-				<div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
-				<div gid="fuel_level_filtered_unit" class="tag" style="text-align:left; left:280px; top:345px;">lt</div>
+				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
+				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:345px;">lt</div>
 
 			</div>
 
@@ -451,8 +451,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div class="icon iconMedium fas fa-gas-pump" style="left:20px; top:40px;"></div>
 
-				<div gid="fuel_level_filtered" class="dseg7" style="font-size:50px; left:70px; top:65px; width:240px;">--.-</div>
-				<div gid="fuel_level_filtered_unit" class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
+				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:70px; top:65px; width:240px;">--.-</div>
+				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
 
 				<div style="position:absolute; left:20px; top:130px; width:350px; height:60px;">
 					<div style="position:absolute; left:8px; width:332px; height:60px;">
@@ -461,7 +461,7 @@ char mfd_html[] PROGMEM = R"=====(
 							<line style="stroke:#066a0c; stroke-width:24;" x1="45" y1="20" x2="333" y2="20"></line>
 						</svg>
 					</div>
-					<div gid="fuel_level_filtered_perc" class="gauge">
+					<div gid="fuel_level_perc" class="gauge">
 						<svg style="width:324px;">
 							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
 						</svg>
@@ -1700,7 +1700,7 @@ char mfd_html[] PROGMEM = R"=====(
 							class="dots" style="font-size:30px; left:560px; top:480px;"></div>
 					</div>
 
-					<!-- This one is shown instead of the above, in case "Destination is not accessible by road" -->
+					<!-- This one is shown instead of the above, in case that is reported "0" -->
 					<div id="satnav_distance_to_dest_via_straight_line_visible" style="display:none">
 						<div id="satnav_distance_to_dest_via_straight_line_number"
 							class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>

@@ -1823,7 +1823,7 @@ function setLanguageValidate()
 
 function invalidateAllDistanceFields()
 {
-	$('[gid="fuel_level_filtered"]').text("--.-");
+	$('[gid="fuel_level"]').text("--.-");
 	$('[gid="avg_consumption_1"]').text("--.-");
 	$('[gid="avg_consumption_2"]').text("--.-");
 	$('[gid="inst_consumption"]').text("--.-");
@@ -3018,7 +3018,7 @@ function satnavFormatDistance(distanceStr)
 	// We want compatibility with IE11 so cannot assign result array directly to variables
 	var parts = distanceStr.split(" ");
 	var distance = parts[0];
-	var unit = parts [1];
+	var unit = parts[1];
 
 	if (unit === "m" && +distance >= 1000)
 	{
@@ -3854,14 +3854,17 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "fuel_level_filtered":
+		case "fuel_level":
 		{
 			let level = parseFloat(value);
 
 			// 5.5 litres or 1.5 gallons left?
 			let lowFuelCondition = level <= (localStorage.mfdDistanceUnit === "set_units_mph" ? 1.5 : 5.5);
 
-			$('[gid="fuel_level_filtered"]').toggleClass("glow", lowFuelCondition);
+			// 10 percent fuel left?
+			if ($('[gid="fuel_level_unit"]').first().text() === "%") lowFuelCondition === level <= 10;
+
+			$('[gid="fuel_level"]').toggleClass("glow", lowFuelCondition);
 		} // case
 		break;
 
@@ -4206,10 +4209,6 @@ function handleItemChange(item, value)
 		case "satnav_destination_not_accessible":
 		{
 			satnavDestinationNotAccessible = value === "YES";
-
-			// Show one or the other
-			$("#satnav_distance_to_dest_via_road_visible").toggle(! satnavDestinationNotAccessible);
-			$("#satnav_distance_to_dest_via_straight_line_visible").toggle(satnavDestinationNotAccessible);
 
 			if (satnavDestinationNotAccessible)
 			{
@@ -5006,13 +5005,31 @@ function handleItemChange(item, value)
 			$("#" + item + "_number").text(distance);
 			$("#" + item + "_unit").text(unit);
 
-			// Near junction: make sure to show the satnav guidance screen
-			if (item === "satnav_turn_at"
-				&& $("#satnav_turn_at_indication").css("display") === "block"
-				&& (unit === "m" || unit ==="yd")
-				&& +distance <= 300)
+			if (item === "satnav_distance_to_dest_via_road")
 			{
-				temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
+				// Show straight line distance if distance via road is reported "0"
+				let id = "#satnav_distance_to_dest_via_";
+				$(id + "road_visible").toggle(distance > 0);
+				$(id + "straight_line_visible").toggle(distance == 0);
+			} // if
+
+			// Near junction: make sure to show the satnav guidance screen
+			if (item === "satnav_turn_at" && $("#satnav_turn_at_indication").css("display") === "block")
+			{
+				let parts = value.split(" ");
+				let reportedUnits = parts[1];
+				if (reportedUnits === "m" || reportedUnits ==="yd")
+				{
+					let reportedDistance = parts[0];
+					if (
+						reportedDistance <= 300
+						|| (vehicleSpeed > 50 && reportedDistance <= 800)
+						|| (localStorage.mfdDistanceUnit === "set_units_mph" && vehicleSpeed > 30 && reportedDistance <= 800)
+						)
+					{
+						temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
+					} // if
+				} // if
 			} // if
 		} // case
 		break;
@@ -6614,7 +6631,7 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 
 	if (distanceUnit === "set_units_mph")
 	{
-		$('[gid="fuel_level_filtered_unit"]').text("gl");
+		if ($('[gid="fuel_level_unit"]').first().text() !== "%") $('[gid="fuel_level_unit"]').text("gl");
 		$('[gid="fuel_consumption_unit"]').text("mpg");
 		$("#fuel_consumption_unit_sm").text("mpg");
 		$('[gid="speed_unit"]').text("mph");
@@ -6622,7 +6639,7 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 	}
 	else
 	{
-		$('[gid="fuel_level_filtered_unit"]').text("lt");
+		if ($('[gid="fuel_level_unit"]').first().text() !== "%") $('[gid="fuel_level_unit"]').text("lt");
 		$('[gid="fuel_consumption_unit"]').text("l/100 km");
 		$("#fuel_consumption_unit_sm").text("/100");
 		$('[gid="speed_unit"]').text("km/h");

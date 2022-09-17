@@ -1030,8 +1030,26 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
 
     if (data[7] != 0xFF)
     {
+        // Never seen this on my 406 HDI, only reported on 206 / petrol ?
+
+        int percentage = data[7] <= 100 ? data[7] : 100;
+
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"fuel_level\": \"%u\""), data[7]);  // Never seen this
+            snprintf_P(buf + at, n - at, PSTR(
+                    ",\n"
+                    "\"fuel_level\": \"%u\",\n"
+                    "\"fuel_level_unit\": \"%%\",\n"
+                    "\"fuel_level_perc\":\n"
+                    "{\n"
+                        "\"style\":\n"
+                        "{\n"
+                            "\"transform\": \"scaleX(%u)\"\n"
+                        "}\n"
+                    "}"
+                ),
+                percentage,
+                percentage
+            );
     } // if
 
     at += at >= n ? 0 :
@@ -1781,8 +1799,6 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
     if (dataLen != 11 && dataLen != 12) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
     const uint8_t* data = pkt.Data();
-    float fuelLevelFiltered = data[4] / 2.0;
-    float fuelLevelRaw = data[5] / 2.0;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -1792,18 +1808,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
             "\"hazard_lights_button\": \"%S\",\n"  // Not sure
             "\"door_lock\": \"%S\",\n"
             "\"dashboard_programmed_brightness\": \"%u\",\n"
-            "\"esp\": \"%S\",\n"
-            "\"fuel_level_filtered\": \"%S\",\n"
-            "\"fuel_level_filtered_perc\":\n"
-            "{\n"
-                "\"style\":\n"
-                "{\n"
-                    "\"transform\": \"scaleX(%S)\"\n"
-                "}\n"
-            "},\n"
-            "\"fuel_level_raw\": \"%S\"\n"
-        "}\n"
-    "}\n";
+            "\"esp\": \"%S\"";
 
     // data[6..10] - always 00-FF-00-FF-00
 
@@ -1812,24 +1817,52 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         data[0] & 0x02 ? onStr : offStr,
         data[2] & 0x40 ? onStr : offStr,
         data[2] & 0x0F,
-        data[3] & 0x02 ? onStr : offStr,
+        data[3] & 0x02 ? onStr : offStr);
 
+    if (data[4] != 0xFF && data[4] != 0x00)
+    {
         // Surely fuel level. Test with tank full shows definitely level is in litres.
-        data[4] == 0xFF || data[4] == 0x00 ? notApplicable3Str :
-            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                ToFloatStr(floatBuf[0], fuelLevelFiltered, 1) :
-                ToFloatStr(floatBuf[0], ToGallons(fuelLevelFiltered), 1),
+        float fuelLevelFiltered = data[4] / 2.0;  // Averaged over time
 
-        #define FULL_TANK_LITRES (73.0)
-        data[4] == 0xFF ? PSTR("0") :
-            fuelLevelFiltered >= FULL_TANK_LITRES ? PSTR("1") :
-                ToFloatStr(floatBuf[1], fuelLevelFiltered / FULL_TANK_LITRES, 2, false),
+        const static char jsonFormatterFuel[] PROGMEM = ",\n"
+            "\"fuel_level\": \"%S\",\n"
+            "\"fuel_level_unit\": \"%S\",\n"
+            "\"fuel_level_perc\":\n"
+            "{\n"
+                "\"style\":\n"
+                "{\n"
+                    "\"transform\": \"scaleX(%S)\"\n"
+                "}\n"
+            "}";
 
-        data[5] == 0xFF || data[5] == 0x00 ? notApplicable3Str :
-            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                ToFloatStr(floatBuf[2], fuelLevelRaw, 1) :
-                ToFloatStr(floatBuf[2], ToGallons(fuelLevelRaw), 1)
-    );
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, jsonFormatterFuel,
+
+                mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                    ToFloatStr(floatBuf[0], fuelLevelFiltered, 1) :
+                    ToFloatStr(floatBuf[0], ToGallons(fuelLevelFiltered), 1),
+
+                mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? PSTR("lt") : PSTR("gl"),
+
+              #define FULL_TANK_LITRES (73.0)
+                fuelLevelFiltered >= FULL_TANK_LITRES ? PSTR("1") :
+                    ToFloatStr(floatBuf[1], fuelLevelFiltered / FULL_TANK_LITRES, 2, false)
+            );
+    } // if
+
+    if (data[5] != 0xFF && data[5] != 0x00)
+    {
+        float fuelLevelRaw = data[5] / 2.0;  // Instantaneous value; can vary wildly
+
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, ",\n\"fuel_level_raw\": \"%S\"",
+                mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                    ToFloatStr(floatBuf[2], fuelLevelRaw, 1) :
+                    ToFloatStr(floatBuf[2], ToGallons(fuelLevelRaw), 1)
+            );
+    } // if
+
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
@@ -3445,7 +3478,7 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#64E
 
     int dataLen = pkt.DataLen();
-    if (dataLen != 3 && dataLen != 4 && dataLen != 6 && dataLen != 13 && dataLen != 16 && dataLen != 23)
+    if (dataLen != 3 && dataLen != 4 && dataLen != 6 && dataLen != 9 && dataLen != 13 && dataLen != 16 && dataLen != 23)
     {
         return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
     } // if
@@ -3515,7 +3548,13 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
     }
     else if (data[1] == 0x03)  // Double turn
     {
-        if (dataLen == 16)
+        if (dataLen == 9)
+        {
+            // Two instruction icons: current (fork) in data[6], next (fork) in data[7]
+
+            // TODO - parse data[7] into appropriate icon
+        }
+        else if (dataLen == 16)
         {
             // Two instruction icons: current (fork) in data[6], next in data[7...14]
 
