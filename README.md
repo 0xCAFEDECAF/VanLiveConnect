@@ -353,6 +353,9 @@ As mentioned, VAN bus was used in the beginning of 2000's by the PSA group (Peug
 communication protocol between the various comfort-related equipment. Later, around 2005, they started to
 replace this protocol in their newer cars with the CAN bus protocol.
 
+[This overview](https://github.com/morcibacsi/PSAVanCanBridge#compatibility) lists vehicles that are
+supposedly fitted with a VAN (comfort) bus.
+
 ---
 
 <b>Question:</b> Do I still need the original multi-functional display (MFD)?
