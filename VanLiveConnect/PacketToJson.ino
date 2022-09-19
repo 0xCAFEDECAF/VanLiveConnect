@@ -1034,6 +1034,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
 
         int percentage = data[7] <= 100 ? data[7] : 100;
 
+        char floatBuf[MAX_FLOAT_SIZE];
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(
                     ",\n"
@@ -1043,12 +1044,12 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                     "{\n"
                         "\"style\":\n"
                         "{\n"
-                            "\"transform\": \"scaleX(%u)\"\n"
+                            "\"transform\": \"scaleX(%S)\"\n"
                         "}\n"
                     "}"
                 ),
                 percentage,
-                percentage
+                percentage >= 100 ? PSTR("1") : ToFloatStr(floatBuf, percentage / 100.0, 2, false)
             );
     } // if
 
@@ -5205,7 +5206,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
     {
-        Serial.printf_P(PSTR("---> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
+        Serial.printf_P(PSTR("--> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
 
         // The first time, or after an call to ResetPacketPrevData, handler->prevDataLen will be -1, so only
         // the "FULL: " line will be printed
@@ -5356,7 +5357,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
         || result == VAN_PACKET_PARSE_JSON_TOO_LONG
        )
     {
-        Serial.printf_P(PSTR("--> WARNING: %S!\n"), VanPacketParseResultStr(result));
+        Serial.printf_P(PSTR("--> WARNING: VAN packet parsing result = '%S'!\n"), VanPacketParseResultStr(result));
 
         // No use to return the JSON buffer; it is invalid
         return "";
