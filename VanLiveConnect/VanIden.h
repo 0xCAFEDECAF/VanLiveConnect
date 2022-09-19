@@ -1,4 +1,9 @@
 
+#ifndef VanIden_h
+#define VanIden_h
+
+#include <VanBusRx.h>
+
 // VAN IDENtifiers
 #define VIN_IDEN 0xE24
 #define ENGINE_IDEN 0x8A4
@@ -35,3 +40,15 @@
 #define AIR_CONDITIONER_DIAG_IDEN 0xADC
 #define AIR_CONDITIONER_DIAG_COMMAND_IDEN 0xA5C
 #define ECU_IDEN 0xB0E
+
+inline bool IsSatnavPacket(const TVanPacketRxDesc& pkt)
+{
+    return
+        pkt.DataLen() >= 3 && 
+        (
+            pkt.Iden() == SATNAV_REPORT_IDEN
+            || pkt.Iden() == SATNAV_GUIDANCE_IDEN
+        );
+} // IsSatnavPacket
+
+#endif // VanIden_h
