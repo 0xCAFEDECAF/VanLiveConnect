@@ -1049,7 +1049,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                     "}"
                 ),
                 percentage,
-                percentage >= 100 ? PSTR("1") : ToFloatStr(floatBuf, percentage / 100.0, 2, false)
+                ToFloatStr(floatBuf, percentage / 100.0, 2, false)
             );
     } // if
 
