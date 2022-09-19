@@ -10,12 +10,12 @@
 //    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
 // the line:
 //   #define WEBSOCKETS_TCP_TIMEOUT (5000)
-// must be changed to:
-//   #define WEBSOCKETS_TCP_TIMEOUT (500)
+// should be changed to:
+//   #define WEBSOCKETS_TCP_TIMEOUT (1000)
 // to prevent the VAN bus receiver from overrunning when the web socket disconnects
 // #if WEBSOCKETS_TCP_TIMEOUT > 1000
 // #error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
-// #error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set to 500!"
+// #error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set to 1000!"
 // #endif
 
 // Defined in PacketToJson.ino
@@ -43,11 +43,58 @@ uint8_t websocketNum = WEBSOCKET_INVALID_NUM;
 bool inMenu = false;  // true if user is browsing the menus
 bool irButtonFasterRepeat = false;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
+#define N_SAVED_JSON 3
+int savedJsonIdx = 0;
+char* savedJson[N_SAVED_JSON];
+
+// Save JSON data for later sending
+void SaveJsonForLater(const char* json)
+{
+    // Free a slot if necessary
+    if (savedJson[savedJsonIdx] != NULL) free(savedJson[savedJsonIdx]);
+
+    // Allocate memory
+    savedJson[savedJsonIdx] = (char*) malloc(strlen(json) + 1);
+    if (savedJson[savedJsonIdx] == NULL) return;
+
+    // Copy content, for sending later
+    memcpy(savedJson[savedJsonIdx], json, strlen(json) + 1);
+
+    Serial.printf_P(PSTR("--> WebSocket: saved JSON data for later sending in slot '%d'\n"), savedJsonIdx);
+    Serial.print(F("JSON object:\n"));
+    PrintJsonText(json);
+
+    savedJsonIdx = (savedJsonIdx + 1) % N_SAVED_JSON;
+} // SaveJsonForLater
+
+// Send any JSON data that was saved for later sending
+void SendSavedJson()
+{
+    int i = savedJsonIdx;
+    do
+    {
+        if (savedJson[i] != NULL)
+        {
+            Serial.printf_P(PSTR("--> WebSocket: sending saved JSON data packet no. '%d'\n"), i);
+            SendJsonOnWebSocket(savedJson[i]);
+            free(savedJson[i]);
+            savedJson[i] = NULL;
+        } // if
+        i = (i + 1) % N_SAVED_JSON;
+    } while (i != savedJsonIdx);
+} // SendSavedJson
+
 // Send a (JSON) message to the websocket client
-void SendJsonOnWebSocket(const char* json)
+void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 {
     if (strlen(json) <= 0) return;
-    if (websocketNum == WEBSOCKET_INVALID_NUM) return;
+    if (websocketNum == WEBSOCKET_INVALID_NUM)
+    {
+        if (! savePacketForLater) return;
+
+        SaveJsonForLater(json);
+        return;
+    } // if
 
     delay(1); // Give some time to system to process other things?
 
@@ -77,6 +124,7 @@ void SendJsonOnWebSocket(const char* json)
     } // if
 } // SendJsonOnWebSocket
 
+// The client (javascript) is sending data to the ESP
 void ProcessWebSocketClientMessage(const char* payload)
 {
     String clientMessage(payload);
@@ -195,6 +243,9 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
             // Send equipment status data, e.g. presence of sat nav and other peripherals
             SendJsonOnWebSocket(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+
+            // Send any JSON data that was saved for later sending
+            SendSavedJson();
         }
         break;
 

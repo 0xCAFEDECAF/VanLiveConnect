@@ -11,6 +11,7 @@
  */
 
 #include "Config.h"
+#include "VanIden.h"
 
 #include <EEPROM.h>
 #include <VanBusRx.h>
@@ -44,7 +45,7 @@ void SetupWebServer();
 void LoopWebServer();
 
 // Defined in WebSocket.ino
-void SendJsonOnWebSocket(const char* json);
+void SendJsonOnWebSocket(const char* json, bool savePacketForLater = false);
 void SetupWebSocket();
 void LoopWebSocket();
 
@@ -169,6 +170,11 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
+    // Does this prevent the following crash?
+    // "Fatal exception:29 flag:2 (EXCEPTION) epc1:0x4000e1c3 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000018 depc:0x00000000"
+    // (see also: https://github.com/espressif/esp-azure/issues/17 )
+    Serial.setDebugOutput(false);
+
     delay(1000);
     Serial.begin(115200);
     Serial.println(F("Starting VAN bus \"Live Connect\" server"));
@@ -240,7 +246,7 @@ void loop()
 
     // IR receiver
     TIrPacket irPacket;
-    if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket));
+    if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket), true);
 
     LoopWebSocket(); // TODO - necessary?
 
@@ -257,7 +263,7 @@ void loop()
 
         LoopWebSocket(); // TODO - necessary?
 
-        SendJsonOnWebSocket(ParseVanPacketToJson(pkt));
+        SendJsonOnWebSocket(ParseVanPacketToJson(pkt), IsSatnavPacket(pkt));
     }
 
     LoopWebSocket(); // TODO - necessary?
