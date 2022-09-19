@@ -654,7 +654,7 @@ function changeBackLargeScreenAfter(msec)
 // Temporarily switch to a specific screen on the right hand side of the display
 function temporarilyChangeLargeScreenTo(id, msec)
 {
-	if (preventTemporaryScreenChangeTimer) return;
+	if (preventTemporaryScreenChangeTimer || currentLargeScreenId === "pre_flight") return;
 
 	if (inMenu())
 	{
@@ -4231,14 +4231,8 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 
-			if (value === "YES")
-			{
-				temporarilyChangeLargeScreenTo("satnav_guidance", 30000);
-			}
-			else
-			{
-				changeBackLargeScreenAfter(2000);
-			} // if
+			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
+			else changeBackLargeScreenAfter(2000);
 		} // case
 		break;
 
@@ -5882,7 +5876,7 @@ function setLanguage(language)
 			$("#satnav_delete_item_popup_title").html("Voulez-vous supprimer<br />la fiche ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conserver le crit&egrave;re");
 			$("#satnav_delete_directory_data_popup_title").html("Cela supprimera toutes les donn&eacute;es des r&eacute;pertoires");  // TODO - check
-			$("#satnav_continue_guidance_popup_title").html("Continuer la navigation?");  // TODO - check
+			$("#satnav_continue_guidance_popup_title").html("Souhaitez-vous poursuivre le guidage vers votre destination ?");
 
 			$(".yesButton").html("Oui");
 			$(".noButton").html("Non");
@@ -6060,7 +6054,7 @@ function setLanguage(language)
 			$("#satnav_delete_item_popup_title").html("M&ouml;chten Sie Diese<br />Position l&ouml;schen ?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Beibehalten Routenart");
 			$("#satnav_delete_directory_data_popup_title").html("Hiermit werden alle Daten der Verzeichnisse gel&ouml;scht");
-			$("#satnav_continue_guidance_popup_title").html("Navigation fortsetzen?");  // TODO - check
+			$("#satnav_continue_guidance_popup_title").html("M&ouml;chten Sie weiter zu Ihrem Ziel gef&uuml;hrt werden ?");
 
 			$(".yesButton").html("Ja");
 			$(".noButton").html("Nein");
@@ -6239,7 +6233,7 @@ function setLanguage(language)
 			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?");
 			$("#satnav_guidance_preference_popup_title").html("&iquest;Mantener criterios");  // TODO - check
 			$("#satnav_delete_directory_data_popup_title").html("Se borrar&aacute;n todos los<br />catos de los directorios");
-			$("#satnav_continue_guidance_popup_title").html("&iquest;Continuar la navegaci&oacute;n?");  // TODO - check
+			$("#satnav_continue_guidance_popup_title").html("&iquest; Desea proseguire el guiado para el destino ?");
 
 			$(".yesButton").html("S&iacute;");
 			$(".noButton").html("No");
@@ -6417,7 +6411,7 @@ function setLanguage(language)
 			$("#satnav_delete_item_popup_title").html("Cancellare la scheda?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Conservare il criterio");
 			$("#satnav_delete_directory_data_popup_title").html("I dati delle rubrica<br />verranno cancellati");
-			$("#satnav_continue_guidance_popup_title").html("Continuare la navigazione?");  // TODO - check
+			$("#satnav_continue_guidance_popup_title").html("Continuare la guida verso la meta prescelta?");
 
 			$(".yesButton").html("S&igrave;");
 			$(".noButton").html("No");
@@ -6595,7 +6589,7 @@ function setLanguage(language)
 			$("#satnav_delete_item_popup_title").html("Wilt u dit gegeven<br />wissen?<br />");
 			$("#satnav_guidance_preference_popup_title").html("Bewaar de gegevens");
 			$("#satnav_delete_directory_data_popup_title").html("Pas op : alle gegevens<br />worden gewist");
-			$("#satnav_continue_guidance_popup_title").html("Navigatie voortzetten?");  // TODO - check
+			$("#satnav_continue_guidance_popup_title").html("Wilt u met de navigatie doorgaan?");
 
 			$(".yesButton").html("Ja");
 			$(".noButton").html("Nee");
