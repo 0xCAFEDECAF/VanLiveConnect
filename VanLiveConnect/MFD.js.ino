@@ -654,7 +654,12 @@ function changeBackLargeScreenAfter(msec)
 // Temporarily switch to a specific screen on the right hand side of the display
 function temporarilyChangeLargeScreenTo(id, msec)
 {
-	if (preventTemporaryScreenChangeTimer || currentLargeScreenId === "pre_flight") return;
+	if (preventTemporaryScreenChangeTimer
+		|| currentLargeScreenId === "pre_flight"
+		|| currentLargeScreenId === "system")
+	{
+		return;
+	} // if
 
 	if (inMenu())
 	{

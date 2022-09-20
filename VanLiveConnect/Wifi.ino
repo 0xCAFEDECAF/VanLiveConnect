@@ -96,7 +96,7 @@ void SetupWifi()
     WiFi.setAutoConnect(true);
 
     WiFi.setPhyMode(WIFI_PHY_MODE_11N);
-    WiFi.setOutputPower(20.5);
+    //WiFi.setOutputPower(20.5);  // TODO - default value is any different? Better?
 
     // TODO - using Wi-Fi, unfortunately, has a detrimental effect on the packet CRC error rate. It will rise from
     // around 0.006% up to 0.1% or more. Underlying cause is timing failures due to Wi-Fi causing varying interrupt

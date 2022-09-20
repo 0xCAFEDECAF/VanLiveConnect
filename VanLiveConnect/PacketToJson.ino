@@ -1486,7 +1486,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         //   * Petrol: 20%
         //   ==> Of course, these "efficiency" percentages are highly debatable: could be more, could be less,
         //       depending on circumstances such as engine, air and fuel temperature, etc. Maybe the turbocharger
-        //       in the HDI and XUD engives results in a higher efficiency? Let's just stick to these values for
+        //       in the HDI and XUD engines results in a higher efficiency? Let's just stick to these values for
         //       now; we can improve later.
         //
         if (fuelType == FUEL_DIESEL)
@@ -1740,7 +1740,7 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     static uint32_t prevSeq = 0;
 
     // With engine running, there are about 20 or so of these packets per second. Limit the rate somewhat.
-    // Send only if any of the reported values changes with more than 10 rpm (engine_rpm), 1 km/h (vehicle_speed),
+    // Send only if any of the reported values changes with more than 20 rpm (engine_rpm), 1 km/h (vehicle_speed),
     // or after 1 second.
 
     static unsigned long lastUpdated = 0;
@@ -1750,7 +1750,7 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
     long diffVehicleSpeed_x100 = vehicleSpeed_x100 - prevVehicleSpeed_x100;
 
     // Arithmetic has safe roll-over
-    if (abs(diffEngineRpm_x8) < 10 * 8 && abs(diffVehicleSpeed_x100) < 100 * 1 && now - lastUpdated < 1000)
+    if (abs(diffEngineRpm_x8) < 20 * 8 && abs(diffVehicleSpeed_x100) < 100 * 1 && now - lastUpdated < 1000)
     {
         return VAN_PACKET_NO_CONTENT;
     } // if

@@ -289,7 +289,11 @@ void SetupWebSocket()
 {
     webSocket.begin();
     webSocket.onEvent(WebSocketEvent);
+
+    // TODO - keep this? if WEBSOCKETS_TCP_TIMEOUT is set to 500, seems to disconnect a lot
     webSocket.enableHeartbeat(200, 5000, 0);
+
+    Serial.printf_P(PSTR("WebSocket server running; timeout value = %d msec\n"), WEBSOCKETS_TCP_TIMEOUT);
 } // SetupWebSocket
 
 void LoopWebSocket()
