@@ -84,6 +84,20 @@ void SendSavedJson()
     } while (i != savedJsonIdx);
 } // SendSavedJson
 
+void FreeSavedJson()
+{
+    int i = savedJsonIdx;
+    do
+    {
+        if (savedJson[i] != NULL)
+        {
+            free(savedJson[i]);
+            savedJson[i] = NULL;
+        } // if
+        i = (i + 1) % N_SAVED_JSON;
+    } while (i != savedJsonIdx);
+} // FreeSavedJson
+
 // Send a (JSON) message to the websocket client
 void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 {
@@ -98,13 +112,27 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
     delay(1); // Give some time to system to process other things?
 
+    bool result = false;
     unsigned long start = millis();
 
     digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
 
-    //webSocket.broadcastTXT(json);
-    // No, serve only the last one connected (the others are probably already dead)
-    webSocket.sendTXT(websocketNum, json);
+    for (int attempt = 0; attempt < 3; attempt++)
+    {
+        if (attempt != 0)
+        {
+            Serial.printf_P(
+                PSTR("Sending %zu JSON bytes via 'webSocket.sendTXT' attempt no.: %d\n"),
+                strlen(json),
+                attempt + 1
+            );
+        } // if
+
+        // Don't broadcast (webSocket.broadcastTXT(json)); serve only the last one connected
+        // (the others are probably already dead)
+        result = webSocket.sendTXT(websocketNum, json);
+        if (result) break;
+    } // for
 
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
@@ -112,12 +140,24 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
     // a single-thread system).
     unsigned long duration = millis() - start;
+
+    if (! result || duration > 100)
+    {
+        // High possibility that this packet did in fact not come through
+        if (savePacketForLater) SaveJsonForLater(json);
+    }
+    else
+    {
+        FreeSavedJson();
+    } // if
+
     if (duration > 100)
     {
         Serial.printf_P(
-            PSTR("Sending %zu JSON bytes via 'webSocket.sendTXT' took: %lu msec\n"),
+            PSTR("Sending %zu JSON bytes via 'webSocket.sendTXT' took: %lu msec; result = %S\n"),
             strlen(json),
-            duration);
+            duration,
+            result ? PSTR("OK") : PSTR("FAIL"));
 
         Serial.print(F("JSON object:\n"));
         PrintJsonText(json);

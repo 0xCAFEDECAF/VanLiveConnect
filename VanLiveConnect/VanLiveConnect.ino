@@ -93,11 +93,13 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
-  #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
+  #if defined VAN_RX_IFS_DEBUGGING
     #define VAN_PACKET_QUEUE_SIZE 50
+  #elif defined VAN_RX_ISR_DEBUGGING
+    #define VAN_PACKET_QUEUE_SIZE 100
   #else
     #define VAN_PACKET_QUEUE_SIZE 250
-  #endif // VAN_RX_ISR_DEBUGGING || VAN_RX_IFS_DEBUGGING
+  #endif
 
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
@@ -250,11 +252,15 @@ void loop()
 
     LoopWebSocket(); // TODO - necessary?
 
+    static unsigned long lastPacketAt = 0;
+
     // VAN bus receiver
     TVanPacketRxDesc pkt;
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
+        //lastPacketAt = pkt.Millis();  // Retrieve packet reception time stamp from ISR
+
         LoopWebSocket(); // TODO - necessary?
 
       #ifdef VAN_RX_IFS_DEBUGGING

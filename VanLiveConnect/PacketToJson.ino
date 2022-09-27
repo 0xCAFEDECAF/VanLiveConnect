@@ -738,6 +738,8 @@ enum Fuel_t
     FUEL_DIESEL
 }; // Fuel_t
 
+#define VIN_NUMBER_LENGTH 17
+char vinNumber[VIN_NUMBER_LENGTH + 1];
 int fuelType = FUEL_PETROL;
 
 VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -754,6 +756,9 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
     //
     // See also: http://www.peugeotlogic.com/workshop/wshtml/specs/vincode.htm
     char engineType = data[6];
+
+    strncpy(vinNumber, (const char*) data, VIN_NUMBER_LENGTH);
+    vinNumber[VIN_NUMBER_LENGTH] = 0;
 
     switch (engineType)
     {
@@ -3492,11 +3497,19 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
         "\"data\":\n"
         "{\n"
             "\"satnav_curr_turn_icon\": \"%S\",\n"
+
             "\"satnav_fork_icon_take_right_exit\": \"%S\",\n"
             "\"satnav_fork_icon_keep_right\": \"%S\",\n"
             "\"satnav_fork_icon_take_left_exit\": \"%S\",\n"
             "\"satnav_fork_icon_keep_left\": \"%S\",\n"
+
             "\"satnav_next_turn_icon\": \"%S\",\n"
+
+            "\"satnav_next_fork_icon_take_right_exit\": \"%S\",\n"
+            "\"satnav_next_fork_icon_keep_right\": \"%S\",\n"
+            "\"satnav_next_fork_icon_take_left_exit\": \"%S\",\n"
+            "\"satnav_next_fork_icon_keep_left\": \"%S\",\n"
+
             "\"satnav_turn_around_if_possible_icon\": \"%S\",\n"
             "\"satnav_follow_road_icon\": \"%S\",\n"
             "\"satnav_not_on_map_icon\": \"%S\"";
@@ -3524,7 +3537,13 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
         (data[1] == 0x03 && data[2] == 0x02 && data[6] == 0x41)
             ? onStr : offStr,
 
-        data[1] == 0x03 ? onStr : offStr,
+        data[1] == 0x03 && dataLen != 9 ? onStr : offStr,
+
+        data[1] == 0x03 && dataLen == 9 && data[7] == 0x12 ? onStr : offStr,
+        data[1] == 0x03 && dataLen == 9 && data[7] == 0x14 ? onStr : offStr,
+        data[1] == 0x03 && dataLen == 9 && data[7] == 0x21 ? onStr : offStr,  // Never seen; just guessing
+        data[1] == 0x03 && dataLen == 9 && data[7] == 0x41 ? onStr : offStr,
+
         data[1] == 0x04 ? onStr : offStr,
         data[1] == 0x05 ? onStr : offStr,
         data[1] == 0x06 ? onStr : offStr
@@ -3552,8 +3571,7 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
         if (dataLen == 9)
         {
             // Two instruction icons: current (fork) in data[6], next (fork) in data[7]
-
-            // TODO - parse data[7] into appropriate icon
+            // Example: 64E E (RA0) 82-03-02-20-02-54-14-14-82
         }
         else if (dataLen == 16)
         {
@@ -5121,19 +5139,20 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             "\"satnav_guidance_preference\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
-
         doorOpen ? yesStr : noStr,
-
-        // Small screen (left hand side of the display) to start with
-        SmallScreenStr(),
+        SmallScreenStr(),  // Small screen (left hand side of the display) to start with
         TripComputerStr(),
-
         cdChangerCartridgePresent ? yesStr : noStr,
         satnavEquipmentDetected ? yesStr : noStr,
         satnavDiscRecognized ? yesStr : noStr,
         satnavInitialized ? yesStr : noStr,
         SatNavGuidancePreferenceStr(satnavGuidancePreference)
     );
+
+    if (strlen(vinNumber) != 0)
+    {
+        at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"vin\": \"%-17.17s\""), vinNumber);
+    } // if
 
     if (strlen_P(satnavStatus2Str) != 0)
     {

@@ -214,7 +214,7 @@ PGM_P PopupStr()
         emptyStr;
 } // PopupStr
 
-// Copy the tab index from the small screen into the trip computer popup and the trip computer on the large screen
+// Copy the tab index from the small screen into the trip computer popup, and into the trip computer on the large screen
 void SetAllTabIndexes()
 {
     tripComputerPopupTab = smallScreen == SMALL_SCREEN_GPS_INFO ? SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen;
@@ -253,12 +253,31 @@ void InitSmallScreen()
 // Called when an MFD status is received indicating a reset of one of the trip computers
 void ResetTripInfo(uint16_t mfdStatus)
 {
-    // Force change to the appropriate small screen (left hand side of the display)
+    bool mustWrite = false;
 
-    uint8_t newSmallScreenIndex = mfdStatus == TRIP_COUTER_1_RESET ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
-    bool mustWrite = smallScreen != newSmallScreenIndex;
-    smallScreen = newSmallScreenIndex;  // Set tab index for trip computer on small screen
-    SetAllTabIndexes();  // Copy tab index to trip computer popup and large screen
+    if (! IsTripComputerPopupShowing())
+    {
+        // Force change to the appropriate trip computer
+
+        uint8_t newSmallScreenIndex = mfdStatus == TRIP_COUTER_1_RESET ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
+        mustWrite = smallScreen != newSmallScreenIndex;
+
+        // Set tab index for trip computer on small screen (left hand side of the display)
+        smallScreen = newSmallScreenIndex;
+
+        // Copy tab index to trip computer popup and large screen
+        SetAllTabIndexes();
+    }
+    else
+    {
+        // The trip computer popup is visible
+
+        // Set tab index for trip computer popup
+        tripComputerPopupTab = mfdStatus == TRIP_COUTER_1_RESET ? SMALL_SCREEN_TRIP_INFO_1 : SMALL_SCREEN_TRIP_INFO_2;
+
+        // Copy tab index to large screen
+        tripComputerLargeScreenTab = tripComputerPopupTab;  // TODO - check
+    } // if
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(

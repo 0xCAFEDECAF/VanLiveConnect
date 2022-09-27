@@ -1066,7 +1066,7 @@ function buttonClicked()
 function upMenu()
 {
 	currentMenu = menuStack.pop();
-	if (currentMenu) changeLargeScreenTo(currentMenu);// else selectDefaultScreen();
+	if (currentMenu) changeLargeScreenTo(currentMenu);
 } // upMenu
 
 function exitMenu()
@@ -1889,11 +1889,13 @@ var suppressClimateControlPopup = null;
 
 function changeToInstrumentsScreen()
 {
-	changeLargeScreenTo("instruments");
-
 	// Suppress climate control popup during the next 2 seconds
 	clearTimeout(suppressClimateControlPopup);
 	suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
+
+	if (inMenu()) return;  // No screen change while browsing the menus
+
+	changeLargeScreenTo("instruments");
 } // changeToInstrumentsScreen
 
 // -----
@@ -3761,6 +3763,9 @@ function handleItemChange(item, value)
 				$('[gid="cd_changer_status_loading"]').show();
 			} // if
 
+			// If head unit is turned off, only change screen if currently showing head unit
+			if (value === "NONE" && ! $("#audio").is(":visible")) break;
+
 			selectDefaultScreen(value);
 		} // case
 		break;
@@ -3809,7 +3814,7 @@ function handleItemChange(item, value)
 			if (engineCoolantTemperature < 80) thresholdRpm = 3500 - (80 - engineCoolantTemperature) * 30;
 			if (thresholdRpm < 1700) thresholdRpm = 1700;
 
-			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm >= 0) || engineRpm > thresholdRpm);
+			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm > 0) || engineRpm > thresholdRpm);
 
 			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
 
@@ -5022,8 +5027,8 @@ function handleItemChange(item, value)
 					let reportedDistance = parts[0];
 					if (
 						reportedDistance <= 300
-						|| (vehicleSpeed > 50 && reportedDistance <= 800)
-						|| (localStorage.mfdDistanceUnit === "set_units_mph" && vehicleSpeed > 30 && reportedDistance <= 800)
+						|| (vehicleSpeed > 60 && reportedDistance <= 800)
+						|| (localStorage.mfdDistanceUnit === "set_units_mph" && vehicleSpeed > 35 && reportedDistance <= 800)
 						)
 					{
 						temporarilyChangeLargeScreenTo("satnav_guidance", 60000);

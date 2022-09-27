@@ -1817,52 +1817,74 @@ char mfd_html[] PROGMEM = R"=====(
 						<!-- Fork icons -->
 
 						<div id="satnav_fork_icon_keep_right" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
-							<svg style="width:200px; height:200px;">
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
-								<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="60" y2="80"></line>
-								<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="60" y1="80" x2="60" y2="20"></line>
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="140" y2="80"></line>
-								<line class="satNavInstructionIcon" x1="140" y1="80" x2="140" y2="10"></line>
-								<line class="satNavInstructionIcon" x1="140" y1="10" x2="120" y2="30"></line>
-								<line class="satNavInstructionIcon" x1="140" y1="10" x2="160" y2="30"></line>
+							<svg style="width:200px;height:200px">
+								<g id="fork_icon_keep_right">
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 140 80 M140 80 140 10 M140 10 120 30 M140 10 160 30"/>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 60 80 M60 80 60 20"/>
+								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_keep_right" -->
 
+						<div id="satnav_next_fork_icon_keep_right" class="icon" style="display:none; position:absolute; left:160px;">
+							<div style="transform:scale(0.6); transform-origin:center;">
+								<svg style="width:200px; height:200px;">
+									<use xlink:href="#fork_icon_keep_right"></use>
+								</svg>
+							</div>
+						</div>	<!-- "satnav_next_fork_icon_keep_right" -->
+
 						<div id="satnav_fork_icon_keep_left" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
-							<svg style="width:200px; height:200px;">
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="60" y2="80"></line>
-								<line class="satNavInstructionIcon" x1="60" y1="80" x2="60" y2="20"></line>
-								<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="140" y2="80"></line>
-								<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="140" y1="80" x2="140" y2="10"></line>
-								<line class="satNavInstructionIcon" x1="60" y1="10" x2="40" y2="30"></line>
-								<line class="satNavInstructionIcon" x1="60" y1="10" x2="80" y2="30"></line>
+							<svg style="width:200px;height:200px">
+								<g id="fork_icon_keep_left">
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 60 80 M60 80 60 20 M60 10 40 30 M60 10 80 30"/>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 140 80 M140 80 140 10"/>
+								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_keep_left" -->
+
+						<div id="satnav_next_fork_icon_keep_left" class="icon" style="display:none; position:absolute; left:160px;">
+							<div style="transform:scale(0.6); transform-origin:center;">
+								<svg style="width:200px; height:200px;">
+									<use xlink:href="#fork_icon_keep_left"></use>
+								</svg>
+							</div>
+						</div>	<!-- "satnav_next_fork_icon_keep_left" -->
 
 						<!-- Take exit icons -->
 
 						<div id="satnav_fork_icon_take_right_exit" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
-							<svg style="width:200px; height:200px;">
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
-								<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="100" y2="20"></line>
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="140" y2="80"></line>
-								<line class="satNavInstructionIcon" x1="140" y1="80" x2="140" y2="10"></line>
-								<line class="satNavInstructionIcon" x1="140" y1="10" x2="120" y2="30"></line>
-								<line class="satNavInstructionIcon" x1="140" y1="10" x2="160" y2="30"></line>
+							<svg style="width:200px;height:200px">
+								<g id="fork_icon_take_right_exit">
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 140 80 M140 80 140 10 M140 10 120 30 M140 10 160 30"/>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 100 20"/>
+								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_take_right_exit" -->
 
+						<div id="satnav_next_fork_icon_take_right_exit" class="icon" style="display:none; position:absolute; left:160px;">
+							<div style="transform:scale(0.6); transform-origin:center;">
+								<svg style="width:200px; height:200px;">
+									<use xlink:href="#fork_icon_take_right_exit"></use>
+								</svg>
+							</div>
+						</div>	<!-- "satnav_next_fork_icon_take_right_exit" -->
+
 						<div id="satnav_fork_icon_take_left_exit" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
-							<svg style="width:200px; height:200px;">
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="100" y2="190"></line>
-								<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="100" y1="120" x2="100" y2="20"></line>
-								<line class="satNavInstructionIcon" x1="100" y1="120" x2="60" y2="80"></line>
-								<line class="satNavInstructionIcon" x1="60" y1="80" x2="60" y2="10"></line>
-								<line class="satNavInstructionIcon" x1="60" y1="10" x2="40" y2="30"></line>
-								<line class="satNavInstructionIcon" x1="60" y1="10" x2="80" y2="30"></line>
+							<svg style="width:200px;height:200px">
+								<g id="fork_icon_take_left_exit">
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 60 80 M60 80 60 10 M60 10 40 30 M60 10 80 30"/>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 100 20"/>
+								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_take_left_exit" -->
+
+						<div id="satnav_next_fork_icon_take_left_exit" class="icon" style="display:none; position:absolute; left:160px;">
+							<div style="transform:scale(0.6); transform-origin:center;">
+								<svg style="width:200px; height:200px;">
+									<use xlink:href="#fork_icon_take_left_exit"></use>
+								</svg>
+							</div>
+						</div>	<!-- "satnav_next_fork_icon_take_left_exit" -->
 
 						<!-- Current turn icon -->
 						<div id="satnav_curr_turn_icon" class="icon" style="display:none; position:absolute; width:300px; height:300px;">
@@ -1883,59 +1905,56 @@ char mfd_html[] PROGMEM = R"=====(
 							</div>
 
 							<svg width="300" height="300">
-								<g id="satnav_curr_turn_icon_legs_svg">
+								<!-- Show always the "from" direction -->
+								<line class="satNavInstructionIcon" x1="150" y1="150" x2="150" y2="240"></line>
 
-									<!-- Show always the "from" direction -->
-									<line class="satNavInstructionIcon" x1="150" y1="150" x2="150" y2="240"></line>
+								<!-- Leg shape definition -->
+								<defs>
+									<g id="leg">
+										<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="150" y1="150" x2="150" y2="240"></line>
+									</g>
+								</defs>
 
-									<!-- Leg shape definition -->
-									<defs>
-										<g id="leg">
-											<line class="satNavInstructionIcon satNavInstructionIconLeg" x1="150" y1="150" x2="150" y2="240"></line>
-										</g>
-									</defs>
+								<!-- All the legs to the junction or roundabout -->
+								<use id="satnav_curr_turn_icon_leg_22_5" xlink:href="#leg" transform="rotate(22.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_45_0" xlink:href="#leg" transform="rotate(45.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_67_5" xlink:href="#leg" transform="rotate(67.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_90_0" xlink:href="#leg" transform="rotate(90.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_112_5" xlink:href="#leg" transform="rotate(112.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_135_0" xlink:href="#leg" transform="rotate(135.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_157_5" xlink:href="#leg" transform="rotate(157.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_180_0" xlink:href="#leg" transform="rotate(180.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_202_5" xlink:href="#leg" transform="rotate(202.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_225_0" xlink:href="#leg" transform="rotate(225.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_247_5" xlink:href="#leg" transform="rotate(247.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_270_0" xlink:href="#leg" transform="rotate(270.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_292_5" xlink:href="#leg" transform="rotate(292.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_315_0" xlink:href="#leg" transform="rotate(315.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_leg_337_5" xlink:href="#leg" transform="rotate(337.5 150,150)" style="display:none;"></use>
 
-									<!-- All the legs to the junction or roundabout -->
-									<use id="satnav_curr_turn_icon_leg_22_5" xlink:href="#leg" transform="rotate(22.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_45_0" xlink:href="#leg" transform="rotate(45.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_67_5" xlink:href="#leg" transform="rotate(67.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_90_0" xlink:href="#leg" transform="rotate(90.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_112_5" xlink:href="#leg" transform="rotate(112.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_135_0" xlink:href="#leg" transform="rotate(135.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_157_5" xlink:href="#leg" transform="rotate(157.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_180_0" xlink:href="#leg" transform="rotate(180.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_202_5" xlink:href="#leg" transform="rotate(202.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_225_0" xlink:href="#leg" transform="rotate(225.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_247_5" xlink:href="#leg" transform="rotate(247.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_270_0" xlink:href="#leg" transform="rotate(270.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_292_5" xlink:href="#leg" transform="rotate(292.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_315_0" xlink:href="#leg" transform="rotate(315.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_leg_337_5" xlink:href="#leg" transform="rotate(337.5 150,150)" style="display:none;"></use>
+								<!-- "No entry" icon definition -->
+								<defs>
+									<g id="no_entry">
+										<path style="fill:var(--main-color)" transform="translate(130 250) scale(0.08)" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zM124 296c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h264c6.6 0 12 5.4 12 12v56c0 6.6-5.4 12-12 12H124z"></path>
+									</g>
+								</defs>
 
-									<!-- "No entry" icon definition -->
-									<defs>
-										<g id="no_entry">
-											<path style="fill:var(--main-color)" transform="translate(130 250) scale(0.08)" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zM124 296c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h264c6.6 0 12 5.4 12 12v56c0 6.6-5.4 12-12 12H124z"></path>
-										</g>
-									</defs>
-
-									<!-- "No entry" sign for each of the legs -->
-									<use id="satnav_curr_turn_icon_no_entry_22_5" xlink:href="#no_entry" transform="rotate(22.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_45_0" xlink:href="#no_entry" transform="rotate(45.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_67_5" xlink:href="#no_entry" transform="rotate(67.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_90_0" xlink:href="#no_entry" transform="rotate(90.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_112_5" xlink:href="#no_entry" transform="rotate(112.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_135_0" xlink:href="#no_entry" transform="rotate(135.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_157_5" xlink:href="#no_entry" transform="rotate(157.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_180_0" xlink:href="#no_entry" transform="rotate(180.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_202_5" xlink:href="#no_entry" transform="rotate(202.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_225_0" xlink:href="#no_entry" transform="rotate(225.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_247_5" xlink:href="#no_entry" transform="rotate(247.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_270_0" xlink:href="#no_entry" transform="rotate(270.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_292_5" xlink:href="#no_entry" transform="rotate(292.5 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_315_0" xlink:href="#no_entry" transform="rotate(315.0 150,150)" style="display:none;"></use>
-									<use id="satnav_curr_turn_icon_no_entry_337_5" xlink:href="#no_entry" transform="rotate(337.5 150,150)" style="display:none;"></use>
-								</g>
+								<!-- "No entry" sign for each of the legs -->
+								<use id="satnav_curr_turn_icon_no_entry_22_5" xlink:href="#no_entry" transform="rotate(22.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_45_0" xlink:href="#no_entry" transform="rotate(45.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_67_5" xlink:href="#no_entry" transform="rotate(67.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_90_0" xlink:href="#no_entry" transform="rotate(90.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_112_5" xlink:href="#no_entry" transform="rotate(112.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_135_0" xlink:href="#no_entry" transform="rotate(135.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_157_5" xlink:href="#no_entry" transform="rotate(157.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_180_0" xlink:href="#no_entry" transform="rotate(180.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_202_5" xlink:href="#no_entry" transform="rotate(202.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_225_0" xlink:href="#no_entry" transform="rotate(225.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_247_5" xlink:href="#no_entry" transform="rotate(247.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_270_0" xlink:href="#no_entry" transform="rotate(270.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_292_5" xlink:href="#no_entry" transform="rotate(292.5 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_315_0" xlink:href="#no_entry" transform="rotate(315.0 150,150)" style="display:none;"></use>
+								<use id="satnav_curr_turn_icon_no_entry_337_5" xlink:href="#no_entry" transform="rotate(337.5 150,150)" style="display:none;"></use>
 							</svg>
 
 							<!-- Roundabout -->
