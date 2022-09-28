@@ -98,7 +98,7 @@ void FreeSavedJson()
     } while (i != savedJsonIdx);
 } // FreeSavedJson
 
-// Send a (JSON) message to the websocket client
+// Send a (JSON) message to the WebSocket client
 void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 {
     if (strlen(json) <= 0) return;
@@ -109,8 +109,6 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
         SaveJsonForLater(json);
         return;
     } // if
-
-    delay(1); // Give some time to system to process other things?
 
     bool result = false;
     unsigned long start = millis();
@@ -136,7 +134,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
-    // Print a message if the websocket transmission took outrageously long (normally it takes around 1-2 msec).
+    // Print a message if the WebSocket transmission took outrageously long (normally it takes around 1-2 msec).
     // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
     // a single-thread system).
     unsigned long duration = millis() - start;
