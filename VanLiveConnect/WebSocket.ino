@@ -1,12 +1,8 @@
 
-// Either this for "WebSockets" (https://github.com/Links2004/arduinoWebSockets):
-//
+// Using "WebSockets" library (https://github.com/Links2004/arduinoWebSockets):
 #include <WebSocketsServer.h>
 
-// Or this for "WebSockets_Generic" (https://github.com/khoih-prog/WebSockets_Generic):
-//#include <WebSocketsServer_Generic.h>
-
-// In the file:
+// Note: in the file:
 //    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
 // the line:
 //   #define WEBSOCKETS_TCP_TIMEOUT (5000)
@@ -331,7 +327,14 @@ void SetupWebSocket()
     // TODO - keep this? if WEBSOCKETS_TCP_TIMEOUT is set to 500, seems to disconnect a lot
     webSocket.enableHeartbeat(200, 5000, 0);
 
-    Serial.printf_P(PSTR("WebSocket server running; timeout value = %d msec\n"), WEBSOCKETS_TCP_TIMEOUT);
+    Serial.printf_P(PSTR("WebSocket server running in \"%S\" mode; timeout value = %d msec\n"),
+      #if WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
+        PSTR("Async TCP"),
+      #else
+        PSTR("normal (synchronous) TCP"),
+      #endif
+        WEBSOCKETS_TCP_TIMEOUT
+    );
 } // SetupWebSocket
 
 void LoopWebSocket()
