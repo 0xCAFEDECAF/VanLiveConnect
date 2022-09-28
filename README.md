@@ -137,8 +137,8 @@ smart phone, tablet, laptop or any other device that runs a web browser. The app
 ESP8266 / ESP8285 based board, e.g. [Wemos/Lolin D1 mini](https://www.wemos.cc/en/latest/d1/d1_mini.html)
 is supported.
 
-The application will host a HTML web page on standard port 80. It will also host a websocket server on
-standard port 81. The served web page comes with some JavaScript that connects to this websocket server
+The application will host a HTML web page on standard port 80. It will also host a WebSocket server on
+standard port 81. The served web page comes with some JavaScript that connects to this WebSocket server
 in order to stream the live data to be visualised.
 
 The web page itself, as served by this sketch, uses and self-hosts the following open-source bundles:
@@ -216,7 +216,21 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.5 .
   Should that not work, you can always try [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
-  version 2.2.0, 2.3.3 ... 2.3.6 .
+  version 2.2.0, 2.3.3 ... 2.3.6 . I strongly advise to use the "A-synchronous mode". This is done by setting the
+  following #define in the file [`...\Arduino\libraries\WebSockets\src\WebSockets.h`, around line 115](https://github.com/Links2004/arduinoWebSockets/blob/323592f622e0ec8f9ce1f995c5777d9bbaaae1ec/src/WebSockets.h#L115):
+
+  `#define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP8266_ASYNC`
+
+  For this to compile, you will also need the _ESPAsyncTCP_ library:
+* (Optional, when using the above WebSockets Library in "A-synchronous mode")
+  [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) - Tested with version 1.2.2 . This library seems to
+  require manual downloading of the [Zip file](https://github.com/me-no-dev/ESPAsyncTCP/archive/refs/heads/master.zip)
+  and unpacking it into your `...\Arduino\libraries\` folder. More explanation about installing libraries manually can
+  be [found on this page](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/how-to-install-a-library).
+
+For more explanation on using the Arduino library manager, you can browse to:
+* this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
+* this [explanation from Adafruit](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager)
 
 #### 3. Board settings
 
@@ -277,18 +291,16 @@ Below are screenshots that show two macros which perform all the necessary actio
 
 Upon connection to the Wi-Fi SSID "PSA display AP", performs the following actions:
 * Set the screen timeout value to 500 minutes, to prevent the screen from going black while driving
-* Force the screen rotation to "landscape"
 * Browse to the main screen
-* Go "full-screen"
 * Set the screen brightness to 100%
+* Go "full-screen"
 
 #### "VanLiveDisconnect" macro
 
 Upon disconnection from "PSA display AP", performs the following actions:
 
-* Set the screen brightness back to 80%
+* Set the screen brightness back to 88%
 * Set the screen timeout value back to 2 minutes
-* Remove the forced screen rotation
 * Go back to the system home (launcher) screen
 
 Of course, the above actions are just a suggestion. Customize as you like!
@@ -302,6 +314,8 @@ In the Arduino IDE, the following libraries are used:
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.5 .
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.2.0, 2.3.3 ... 2.3.6 .
+* (Optional, when using the above WebSockets Library in "A-synchronous mode")
+  [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) - Tested with version 1.2.2 .
 
 ### Attributions
 
