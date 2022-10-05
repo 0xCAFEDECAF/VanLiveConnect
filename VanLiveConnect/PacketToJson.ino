@@ -931,6 +931,9 @@ VanPacketParseResult_t ParseHeadUnitStalkPkt(TVanPacketRxDesc& pkt, char* buf, c
     return VAN_PACKET_PARSE_OK;
 } // ParseHeadUnitStalkPkt
 
+#define FUEL_LEVEL_PERCENTAGE_INVALID (-1)
+int fuelLevelPercentage = FUEL_LEVEL_PERCENTAGE_INVALID;
+
 bool doorOpen = false;
 
 VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -1037,7 +1040,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     {
         // Never seen this on my 406 HDI, only reported on 206 / petrol ?
 
-        int percentage = data[7] <= 100 ? data[7] : 100;
+        fuelLevelPercentage = data[7] <= 100 ? data[7] : 100;
 
         char floatBuf[MAX_FLOAT_SIZE];
         at += at >= n ? 0 :
@@ -1053,8 +1056,8 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                         "}\n"
                     "}"
                 ),
-                percentage,
-                ToFloatStr(floatBuf, percentage / 100.0, 2, false)
+                fuelLevelPercentage,
+                ToFloatStr(floatBuf, fuelLevelPercentage / 100.0, 2, false)
             );
     } // if
 
@@ -1825,7 +1828,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         data[2] & 0x0F,
         data[3] & 0x02 ? onStr : offStr);
 
-    if (data[4] != 0xFF && data[4] != 0x00)
+    if (fuelLevelPercentage == FUEL_LEVEL_PERCENTAGE_INVALID && data[4] != 0xFF && data[4] != 0x00)
     {
         // Surely fuel level. Test with tank full shows definitely level is in litres.
         float fuelLevelFiltered = data[4] / 2.0;  // Averaged over time
