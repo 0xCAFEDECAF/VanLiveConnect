@@ -3829,8 +3829,8 @@ function handleItemChange(item, value)
 			let n = engineRpm / speedKmh;
 
 			// Note: ratio numbers are for 5-speed manual, 2.0 HDI. Ratio numbers may vary per vehicle configuration.
-			if (n >= 110 && n <= 160) $("#chosen_gear").text("1");
-			else if (n >= 57 && n <= 70) $("#chosen_gear").text("2");
+			if (n >= 110 && n <= 170) $("#chosen_gear").text("1");
+			else if (n >= 57 && n <= 75) $("#chosen_gear").text("2");
 			else if (n >= 37 && n <= 42) $("#chosen_gear").text("3");
 			else if (n >= 26 && n <= 29) $("#chosen_gear").text("4");
 			else if (n >= 20 && n <= 22) $("#chosen_gear").text("5");
