@@ -325,6 +325,8 @@ void SetupWebSocket()
     webSocket.onEvent(WebSocketEvent);
 
     // TODO - keep this? if WEBSOCKETS_TCP_TIMEOUT is set to 500, seems to disconnect a lot
+    // Note: no heartbeat packets are sent when using WEBSOCKETS_NETWORK_TYPE NETWORK_ESP8266_ASYNC
+    // (as '#define'd in WebSockets.h)
     webSocket.enableHeartbeat(200, 5000, 0);
 
     Serial.printf_P(PSTR("WebSocket server running in \"%S\" mode; timeout value = %d msec\n"),
