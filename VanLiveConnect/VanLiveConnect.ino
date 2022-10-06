@@ -96,9 +96,9 @@ void SetupVanReceiver()
   #if defined VAN_RX_IFS_DEBUGGING
     #define VAN_PACKET_QUEUE_SIZE 50
   #elif defined VAN_RX_ISR_DEBUGGING
-    #define VAN_PACKET_QUEUE_SIZE 100
+    #define VAN_PACKET_QUEUE_SIZE 60
   #else
-    #define VAN_PACKET_QUEUE_SIZE 250
+    #define VAN_PACKET_QUEUE_SIZE 150
   #endif
 
     // GPIO pin connected to VAN bus transceiver output
@@ -258,11 +258,32 @@ void loop()
     static unsigned long lastPacketAt = 0;
 
     // VAN bus receiver
+
     TVanPacketRxDesc pkt;
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
         //lastPacketAt = pkt.Millis();  // Retrieve packet reception time stamp from ISR
+
+      #if VAN_BUS_VERSION_INT >= 000003001
+
+        // If RX queue is starting to overrun, keep only important (sat nav) packets
+      #define PANIC_AT_PERCENTAGE (60)
+        int nDiscarded = 0;
+        while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsSatnavPacket(pkt))
+        {
+            bool isQueueOverrun2 = false;
+            VanBusRx.Receive(pkt, &isQueueOverrun2);
+            isQueueOverrun = isQueueOverrun || isQueueOverrun2;
+            nDiscarded++;
+        } // while
+
+        if (nDiscarded > 0)
+        {
+            Serial.printf_P(PSTR("==> Discarded %u VAN bus packets to prevent RX queue overflow\n"), nDiscarded);
+        } // if
+
+      #endif
 
         LoopWebSocket(); // TODO - necessary?
 
