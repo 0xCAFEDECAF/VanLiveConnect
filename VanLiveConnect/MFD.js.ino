@@ -1759,6 +1759,8 @@ function adjustDimLevel(headlightStatus, button)
 	luminosity = setLuminosity(luminosity, getTickedId("set_screen_brightness"));
 
 	$("#" + id).text((+luminosity - 63) / 2);
+
+	return id;
 } // adjustDimLevel
 
 function setBrightnessEscape()
@@ -4550,7 +4552,10 @@ function handleItemChange(item, value)
 			satnavCutoffBottomLines($('#satnav_curr_street_small [gid="satnav_curr_street_shown"]'));
 
 			// Only if the clock is currently showing, i.e. don't move away from the Tuner or CD player screen
-			if ($("#clock").is(":visible")) changeLargeScreenTo("satnav_current_location");
+			if ($("#clock").is(":visible") && satnavMode !== "IN_GUIDANCE_MODE")
+			{
+				changeLargeScreenTo("satnav_current_location");
+			} // if
 
 			satnavCutoffBottomLines($('#satnav_current_location [gid="satnav_curr_street_shown"]'));
 		} // case
@@ -5390,7 +5395,15 @@ function handleItemChange(item, value)
 				// In non-menu screens, MFD dim level is adjusted with the IR remote control "UP" and "DOWN" buttons
 				if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
 				{
-					adjustDimLevel(headlightStatus, button)
+					let id = adjustDimLevel(headlightStatus, button)
+					let dimLevel = $("#" + id).text();
+
+					// Show very short popup
+					$("#screen_brightness_popup_value").text(dimLevel);
+					$("#screen_brightness_perc").css("transform", "scaleX(" + dimLevel/14 + ")");
+					showPopup("screen_brightness_popup", 3000);
+
+					// Store
 					localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
 					localStorage.dimLevel = $("#display_brightness_level").text();
 

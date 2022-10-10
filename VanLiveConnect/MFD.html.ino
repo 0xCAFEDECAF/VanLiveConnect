@@ -2573,6 +2573,26 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:515px; top:348px; width:257px; height:37px;"></div>
 			</div>	<!-- "audio_settings_popup" -->
 
+			<!-- Screen brightness popup -->
+
+			<div id="screen_brightness_popup" class="icon notificationPopup" style="display:none;">
+				<div class="icon iconLarge fas fa-sun" style="left:70px; top:50px;"></div>
+				<div id="screen_brightness_popup_value" class="dseg7" style="left:580px; top:60px; width:150px; text-align:right; font-size:90px">14</div>
+
+				<div style="position:absolute; left:240px; top:60px; width:350px; height:80px;">
+					<div id="screen_brightness_perc" class="gauge" style="transform: scaleX(1.0);">
+						<svg style="width:324px;">
+							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:54; stroke-opacity:0.8;" x1="0" y1="40" x2="324" y2="40"></line>
+						</svg>
+					</div>
+					<div class="gaugeBoxDiv">
+						<svg style="width:348px;">
+							<rect x="5" y="5" width="340" height="70" class="gaugeBox"></rect>
+						</svg>
+					</div>
+				</div>
+			</div>	<!-- "screen_brightness_popup" -->
+
 			<!-- A tap anywhere on the screen triggers a change to the next screen -->
 			<div style="display:block; position:absolute; width:960px; height:550px;" onclick="nextLargeScreen();"></div>
 
