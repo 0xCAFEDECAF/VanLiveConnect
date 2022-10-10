@@ -11,14 +11,14 @@ void WriteEeprom(int const address, uint8_t const val)
     EEPROM.write(address, val);
     _eepromDirty = true;
 
-    Serial.printf_P(PSTR("==> Written value %u to EEPROM position %d\n"), val, address);
+    Serial.printf_P(PSTR("==> Written value %u to EEPROM position %d (but not yet committed)\n"), val, address);
 } // WriteEeprom
 
 void CommitEeprom()
 {
     if (! _eepromDirty) return;
 
-    Serial.println("==> Committing EEPROM");
+    Serial.println("==> Committing all values written to EEPROM");
     VanBusRx.Disable();
     EEPROM.commit();  // Will only write to flash if any data was actually changed
     VanBusRx.Enable();
