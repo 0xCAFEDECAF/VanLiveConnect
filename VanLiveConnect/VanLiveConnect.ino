@@ -273,7 +273,7 @@ void loop()
         while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsSatnavPacket(pkt))
         {
             bool isQueueOverrun2 = false;
-            VanBusRx.Receive(pkt, &isQueueOverrun2);
+            if (! VanBusRx.Receive(pkt, &isQueueOverrun2)) break;
             isQueueOverrun = isQueueOverrun || isQueueOverrun2;
             nDiscarded++;
         } // while
