@@ -123,6 +123,10 @@ const char* EquipmentStatusDataToJson(char* buf, const int n);
 const char* SatnavEquipmentDetection(char* buf, const int n);
 void PrintJsonText(const char* jsonBuffer);
 
+// Defined in Sleep.ino
+void SetupSleep();
+void GoToSleep();
+
 // TODO - reduce size of large JSON packets like the ones containing guidance instruction icons
 #define JSON_BUFFER_SIZE 4096
 char jsonBuffer[JSON_BUFFER_SIZE];
@@ -174,6 +178,8 @@ void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+
+    SetupSleep();
 
     // Does this prevent the following crash?
     // "Fatal exception:29 flag:2 (EXCEPTION) epc1:0x4000e1c3 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000018 depc:0x00000000"
@@ -255,7 +261,17 @@ void loop()
 
     LoopWebSocket(); // TODO - necessary?
 
+    // After 1 minute of VAN bus inactivity, go to sleep to save power
     static unsigned long lastPacketAt = 0;
+  #if 0
+    //if (millis() - lastPacketAt >= 60000UL) GoToSleep();
+    if (millis() - lastPacketAt >= 5000UL)
+    {
+        //GoToSleep();
+        lastPacketAt = millis();
+        return;
+    } // if
+  #endif
 
     // VAN bus receiver
 
@@ -263,7 +279,7 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
-        //lastPacketAt = pkt.Millis();  // Retrieve packet reception time stamp from ISR
+        lastPacketAt = pkt.Millis();  // Retrieve packet reception time stamp from ISR
 
       #if VAN_BUS_VERSION_INT >= 000003001
 
