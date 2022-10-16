@@ -3684,6 +3684,8 @@ String ComposeStreetString(const String& records5, const String& records6)
     return result;
 } // ComposeStreetString
 
+String satnavCurrentStreet;
+
 // Compose a string for a city name plus optional district
 String ComposeCityString(const String& records3, const String& records4)
 {
@@ -3890,12 +3892,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         case SR_CURRENT_STREET:
         case SR_NEXT_STREET:
         {
+            String city = ComposeCityString(records[3], records[4]);  // City (if any) + optional district
+
             if (records[6].length() == 0)
             {
                 // In this case, the original MFD says: "Street not listed". We just show the city.
-
-                // City (if any) + optional district
-                String city = ComposeCityString(records[3], records[4]);
 
                 if (report == SR_CURRENT_STREET && city.length() > 0)
                 {
@@ -3906,6 +3907,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     // "IN_GUIDANCE_MODE" ?
                     // TODO - not sure
                     if (satnavStatus2 != SATNAV_STATUS_2_IN_GUIDANCE_MODE) isCurrentStreetKnown = true;
+
+                    satnavCurrentStreet = city;
                 } // if
 
                 const static char jsonFormatter[] PROGMEM =
@@ -3921,6 +3924,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 break;
             } // if
 
+            String street = ComposeStreetString(records[5], records[6]).c_str();
+
             if (report == SR_CURRENT_STREET)
             {
                 // Bug in original MFD: it seems to not "know" the current street as long as we're not driving
@@ -3930,6 +3935,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 // "IN_GUIDANCE_MODE" ?
                 // TODO - not sure
                 if (satnavStatus2 != SATNAV_STATUS_2_IN_GUIDANCE_MODE) isCurrentStreetKnown = true;
+
+                satnavCurrentStreet = street + " (" + city + ")";
             } // if
 
             const static char jsonFormatter[] PROGMEM =
@@ -3941,8 +3948,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at, jsonFormatter,
                     report == SR_CURRENT_STREET ? PSTR("satnav_curr_street") : PSTR("satnav_next_street"),
-                    ComposeStreetString(records[5], records[6]).c_str(),  // Street
-                    ComposeCityString(records[3], records[4]).c_str()  // City + optional district
+                    street.c_str(),
+                    city.c_str()
                 );
         } // case
         break;
@@ -4608,7 +4615,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_show_characters\": \""));
 
-    // Store number of services; it must be reported to the websocket client upon connection, so that it can
+    // Store number of services; it must be reported to the WebSocket client upon connection, so that it can
     // enable the "Select a service" menu item
     if (request == SR_SERVICE_LIST && listSize != 0 && listSize != 0xFFFF) satnavServiceListSize = listSize;
 
@@ -5120,7 +5127,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
 } // ParseMfdToHeadUnitPkt
 
 // Equipment status data, e.g. presence of sat nav and other peripherals.
-// Some data is not regularly sent over the VAN bus. If a websocket client connects, we want to give a direct
+// Some data is not regularly sent over the VAN bus. If a WebSocket client connects, we want to give a direct
 // update of this data as received thus far, instead of having to wait for this data to appear on the bus.
 const char* EquipmentStatusDataToJson(char* buf, const int n)
 {
@@ -5162,9 +5169,15 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_status_2\": \"%S\""), satnavStatus2Str);
     } // if
 
+    if (! satnavCurrentStreet.isEmpty())
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_curr_street\": \"%S\""), satnavCurrentStreet.c_str());
+    } // if
+
     if (satnavServiceListSize > 0)
     {
-        // Report also the number of services, so that the websocket client can enable the "Select a service" menu item
+        // Report also the number of services, so that the WebSocket client can enable the "Select a service" menu item
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR
                 (
