@@ -3766,7 +3766,11 @@ function handleItemChange(item, value)
 			} // if
 
 			// If head unit is turned off, only change screen if currently showing head unit
-			if (value === "NONE" && ! $("#audio").is(":visible")) break;
+			if (value === "NONE" && ! $("#audio").is(":visible"))
+			{
+				cancelChangeBackScreenTimer();
+				break;
+			} // if
 
 			selectDefaultScreen(value);
 		} // case
@@ -3806,6 +3810,7 @@ function handleItemChange(item, value)
 			{
 				engineRpm = -1;
 				if (currentLargeScreenId === "instruments") selectDefaultScreen();
+				cancelChangeBackScreenTimer();
 				break;
 			} // if
 
