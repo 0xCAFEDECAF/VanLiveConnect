@@ -885,6 +885,9 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
             ToFloatStr(floatBuf[3], ToFahrenheit(extTemp), 0)
     );
 
+    // TODO? - if contactKeyPosition changed to 0x00 ("OFF"), and satnavStatus2 == 0x05 ("IN_GUIDANCE_MODE"), then
+    // store a boolean indicating to ask for continuation of guidance.
+
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
 
@@ -2578,7 +2581,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
     if (mfdStatus == MFD_SCREEN_OFF)
     {
         // TODO - is the following necessary? So that 'tripComputerLargeScreenTab' is copied into 'smallScreen' ?
-        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff();
+        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff(false);
 
         // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
         // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
@@ -3057,6 +3060,7 @@ uint8_t satnavStatus2;
 PGM_P satnavStatus2Str = emptyStr;
 bool satnavDiscRecognized = false;
 bool satnavInitialized = false;
+bool reachedDestination = false;
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -3200,6 +3204,8 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     if (data[17] != 0x00)
     {
+        reachedDestination = data[17] & 0x80;
+
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_guidance_status\": \"%S%S%S%S%S%S%S\""),
 
@@ -3209,7 +3215,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
                 data[17] & 0x08 ? PSTR("READING_DISC ") : emptyStr,
                 data[17] & 0x10 ? PSTR("COMPUTING_ROUTE ") : emptyStr,
                 data[17] & 0x20 ? PSTR("DISC_PRESENT ") : emptyStr,
-                data[17] & 0x80 ? PSTR("REACHED_DESTINATION ") : emptyStr
+                reachedDestination ? PSTR("REACHED_DESTINATION ") : emptyStr
             );
     } // if
 
@@ -3228,10 +3234,10 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         UpdateLargeScreenForGuidanceModeOn();
         updateScreen = true;
     }
-    else if (wasSatnavGuidanceActive && ! isSatnavGuidanceActive)
+    else if ((wasSatnavGuidanceActive && ! isSatnavGuidanceActive) || reachedDestination)
     {
         // Going out of guidance mode
-        UpdateLargeScreenForGuidanceModeOff();
+        UpdateLargeScreenForGuidanceModeOff(reachedDestination);
         updateScreen = true;
     } // if
 

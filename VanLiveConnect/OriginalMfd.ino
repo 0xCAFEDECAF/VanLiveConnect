@@ -476,10 +476,14 @@ void UpdateLargeScreenForGuidanceModeOn()
 } // UpdateLargeScreenForGuidanceModeOn
 
 // Called when going out of sat nav guidance mode
-void UpdateLargeScreenForGuidanceModeOff()
+void UpdateLargeScreenForGuidanceModeOff(bool reachedDestination)
 {
-    // If currently visible, the trip computer tab index on the large screen is copied to the small screen.
-    if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
+    // If the large screen is currently showing the trip computer, or if the destination is reached, the
+    // trip computer tab index on the large screen is copied into the small screen.
+    // Note: upon stalk button press, the trip computer tab index on the large screen is updated:
+    // - when the large screen is showing the trip computer
+    // - when it is not showing, but the trip computer popup is shown
+    if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER || reachedDestination)
     {
         if (tripComputerLargeScreenTab >= 0) smallScreen = tripComputerLargeScreenTab;
 

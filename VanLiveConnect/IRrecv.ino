@@ -258,7 +258,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
                 TripComputerStr(),
                 PopupStr()
             );
-    } // while
+    } // if
 
     // "Esc" and "Val" buttons will hide any visible popup
     if ((pkt.value == IB_ESC || pkt.value == IB_VALIDATE) && ! economyMode) NoPopup();

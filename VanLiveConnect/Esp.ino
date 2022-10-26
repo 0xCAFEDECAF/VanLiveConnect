@@ -1,6 +1,11 @@
 
 // ESP system data
 
+#ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+// Defined in PacketToJson.ino
+void PrintJsonText(const char* jsonBuffer);
+#endif // PRINT_JSON_BUFFERS_ON_SERIAL
+
 const char PROGMEM qioStr[] = "QIO";
 const char PROGMEM qoutStr[] = "QOUT";
 const char PROGMEM dioStr[] = "DIO";

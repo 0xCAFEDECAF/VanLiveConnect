@@ -12,7 +12,7 @@ extern "C"
 
 // Connect to "CANL" pin of the MCP2551 board for waking up at VAN bus activity
 // Notes:
-// - Use pinMode(..., INPUT_PULLUP) and gpio_pin_wakeup_enable(..., GPIO_PIN_INTR_LOLEVEL)
+// - Call "pinMode(..., INPUT_PULLUP);" and "gpio_pin_wakeup_enable(..., GPIO_PIN_INTR_LOLEVEL);"
 // - ESP8266 board seems to cope well with +5V voltage levels on input pins; see also:
 //   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
 #define LIGHT_WAKE_PIN D1

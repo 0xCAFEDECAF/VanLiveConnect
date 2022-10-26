@@ -3,7 +3,7 @@
  *
  * Written by Erik Tromp
  *
- * Version 0.0.1 - September, 2021
+ * Version 1.0.0 - October, 2022
  *
  * MIT license, all text above must be included in any redistribution.
  *
@@ -119,9 +119,6 @@ void SetupVanReceiver()
 
 // Defined in PacketToJson.ino
 const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
-const char* EquipmentStatusDataToJson(char* buf, const int n);
-const char* SatnavEquipmentDetection(char* buf, const int n);
-void PrintJsonText(const char* jsonBuffer);
 
 // Defined in Sleep.ino
 void SetupSleep();
