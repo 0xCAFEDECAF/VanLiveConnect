@@ -54,7 +54,7 @@ void PrintSystemSpecs();
 const char* EspRuntimeDataToJson(char* buf, const int n);
 
 // Defined in Wifi.ino
-void SetupWifi();
+const char* SetupWifi();
 const char* WifiDataToJson(const IPAddress& client, char* buf, const int n);
 const char* GetHostname();
 void WifiCheckStatus();
@@ -204,7 +204,7 @@ void setup()
     apIP.fromString(IP_ADDR);
   #endif // WIFI_AP_MODE
 
-    SetupWifi();
+    const char* wifiSsid = SetupWifi();
 
   #ifdef WIFI_AP_MODE
     // If DNSServer is started with "*" for domain name, it will reply with provided IP to all DNS request
@@ -221,7 +221,7 @@ void setup()
     SetupWebSocket();
 
   #ifdef WIFI_AP_MODE
-    Serial.printf_P(PSTR("Please connect to Wi-Fi network '%s', then surf to: http://"), WIFI_SSID);
+    Serial.printf_P(PSTR("Please connect to Wi-Fi network '%s', then surf to: http://"), wifiSsid);
     Serial.print(apIP);
     Serial.println(F("/MFD.html"));
   #endif // WIFI_AP_MODE
@@ -260,15 +260,12 @@ void loop()
 
     // After 1 minute of VAN bus inactivity, go to sleep to save power
     static unsigned long lastPacketAt = 0;
-  #if 0
-    //if (millis() - lastPacketAt >= 60000UL) GoToSleep();
-    if (millis() - lastPacketAt >= 5000UL)
+    if (millis() - lastPacketAt >= SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY)
     {
-        //GoToSleep();
+        GoToSleep();
         lastPacketAt = millis();
         return;
     } // if
-  #endif
 
     // VAN bus receiver
 

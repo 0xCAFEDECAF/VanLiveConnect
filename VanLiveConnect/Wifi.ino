@@ -57,22 +57,25 @@ WiFiEventHandler stationConnectedHandler;
 WiFiEventHandler stationDisconnectedHandler;
 WiFiEventHandler probeRequestHandler;
 
-void SetupWifi()
+const char* SetupWifi()
 {
     WiFi.hostname(GetHostname());
 
   #ifdef WIFI_AP_MODE
 
-    Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), WIFI_SSID);
+    static const char* wifiSsid = WIFI_SSID;
+
+    Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), wifiSsid);
 
     WiFi.softAPdisconnect (true);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+
   #ifdef WIFI_PASSWORD
-    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
+    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
   #else
-    WiFi.softAP(WIFI_SSID, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
+    WiFi.softAP(wifiSsid, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
   #endif
 
     // Register event handlers
@@ -110,6 +113,8 @@ void SetupWifi()
   #endif // WIFI_AP_MODE
 
     delay(1);
+
+    return wifiSsid;
 } // SetupWifi
 
 void WifiCheckStatus()

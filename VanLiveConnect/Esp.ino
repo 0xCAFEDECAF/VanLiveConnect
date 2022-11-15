@@ -20,6 +20,8 @@ const uint32_t flashSizeIde = ESP.getFlashChipSize();
 const FlashMode_t flashModeIde = ESP.getFlashChipMode();
 const uint32_t flashChipSpeed = ESP.getFlashChipSpeed();
 
+const char PROGMEM compileDate[] = __DATE__ " " __TIME__;
+
 void PrintSystemSpecs()
 {
     Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
@@ -42,7 +44,8 @@ void PrintSystemSpecs()
     Serial.printf_P(PSTR("Flash chip configuration %S\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
 
     Serial.print(F("Software image MD5 checksum: "));
-    Serial.println(md5Checksum);
+    Serial.print(md5Checksum);
+    Serial.printf_P(PSTR(" (%S)\n"), compileDate);
 
     Serial.print(F("Wi-Fi MAC address: "));
     Serial.println(WiFi.macAddress());
@@ -75,7 +78,8 @@ const char* EspSystemDataToJson(char* buf, const int n)
 
             "\"esp_free_ram\": \"%u bytes\",\n"
 
-            "\"img_md5_checksum\": \"%s\"\n"
+            "\"img_md5_checksum\": \"%s\",\n"
+            "\"img_compile_date\": \"%S\"\n"
         "}\n"
     "}\n";
 
@@ -111,7 +115,8 @@ const char* EspSystemDataToJson(char* buf, const int n)
 
         system_get_free_heap_size(),
 
-        md5Checksum.c_str()
+        md5Checksum.c_str(),
+        compileDate
     );
 
     // JSON buffer overflow?

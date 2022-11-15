@@ -84,6 +84,25 @@
 //#define USE_MDNS
 
 // -----
+// Sleep and wake up
+
+// After 1 minute (60,000 milliseconds) of VAN bus inactivity, go to sleep to save power
+#define SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY (60000UL)
+
+// Connect the following pin to "VAN DATA" (in the given schematics that is "CANL") of the MCP2551 board, for waking
+// up at VAN bus activity.
+// Notes:
+// - ESP8266 board seems to cope well with +5V voltage levels on input pins; see also:
+//   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
+// - The following protection diodes may be required to prevent (negative) surge at power-off event:
+//   1.) GND ---|>|--- CANL
+//   2.) GND ---|>|--- +5V
+// - In the test setup on the desk, best not to power off using the main power switch; this sometimes causes
+//   the ESP to become completely unresponsive (caused by ground loop??). Instead, just disconnect the +12V line
+//   to simulate a power-off event.
+#define LIGHT_SLEEP_WAKE_PIN D1
+
+// -----
 // Web server
 
 // Define SERVE_FROM_SPIFFS to make the web server to use the SPI Flash File system (SPIFFS) to serve its web
@@ -134,9 +153,10 @@
 
 // -----
 // Define to disable (gray-out) the navigation menu while driving.
-// Some versions of the multi-functional displays (MFD) have this feature, whereas other versions
-// allow for entering the navigation menu while driving. Choose this define to match the behaviour
-// of your MFD.
+// Using the "Peugeot Planet 2000" software, the multi-functional display (MFD) parameter
+// "setting the parameters of the navigation function while driving" can be set to either "Active"
+// (allow for entering the navigation menu while driving) or "Inactive" (navigation menu grayed out
+// while driving). Choose the following define to match the parameter as provisioned in your MFD.
 //#define MFD_DISABLE_NAVIGATION_MENU_WHILE_DRIVING
 
 // -----

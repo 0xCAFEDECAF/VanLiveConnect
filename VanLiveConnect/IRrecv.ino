@@ -293,6 +293,16 @@ void IrSetup()
     irrecv->enableIRIn(); // Start the receiver
 } // IrSetup
 
+void IrEnable()
+{
+    irrecv->enableIRIn(); // Start the receiver
+} // IrEnable
+
+void IrDisable()
+{
+    irrecv->disableIRIn(); // Disable the receiver
+} // IrDisable
+
 bool IrReceive(TIrPacket& irPacket)
 {
     if (! irrecv->decode(&irPacket)) return false;

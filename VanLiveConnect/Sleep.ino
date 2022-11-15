@@ -10,37 +10,43 @@ extern "C"
     #include "user_interface.h"
 }
 
-// Connect to "CANL" pin of the MCP2551 board for waking up at VAN bus activity
-// Notes:
-// - Call "pinMode(..., INPUT_PULLUP);" and "gpio_pin_wakeup_enable(..., GPIO_PIN_INTR_LOLEVEL);"
-// - ESP8266 board seems to cope well with +5V voltage levels on input pins; see also:
-//   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
-#define LIGHT_WAKE_PIN D1
+// Defined in IRrecv.ino
+void IrDisable();
 
 void SetupSleep()
 {
     gpio_pin_wakeup_disable();
-
-    // Pass 'GPIO_PIN_INTR_LOLEVEL' to 'gpio_pin_wakeup_enable'
-    pinMode(LIGHT_WAKE_PIN, INPUT_PULLUP);
-
-    VanBusRx.Enable();
+    pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
 } // SetupSleep
 
 void WakeupCallback()
 {
-    Serial.println(F("=====> Wakeup callback"));
-    Serial.flush();
+    gpio_pin_wakeup_disable();
+    pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
+
+    wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
 
 void GoToSleep()
 {
-    Serial.printf_P(PSTR("=====> Entering light sleep mode; monitoring VAN bus activity on pin %d\n"), LIGHT_WAKE_PIN);
+    Serial.printf_P
+    (
+        PSTR("=====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %d\n"),
+        LIGHT_SLEEP_WAKE_PIN
+    );
 
+    IrDisable();
     VanBusRx.Disable();
- 
+
+    WiFi.softAPdisconnect(true);
+
+    wdt_reset();
+    ESP.wdtFeed();
+
     // Wake up by pulling pin low (GND)
-    gpio_pin_wakeup_enable(GPIO_ID_PIN(LIGHT_WAKE_PIN), GPIO_PIN_INTR_LOLEVEL);
+    gpio_pin_wakeup_enable(GPIO_ID_PIN(LIGHT_SLEEP_WAKE_PIN), GPIO_PIN_INTR_LOLEVEL);
+
+    delay(500);
 
     wifi_set_opmode(NULL_MODE);
     wifi_fpm_set_sleep_type(LIGHT_SLEEP_T);
@@ -50,7 +56,12 @@ void GoToSleep()
   #define FPM_SLEEP_MAX_TIME (0xFFFFFFF)
     wifi_fpm_do_sleep(FPM_SLEEP_MAX_TIME);
 
-    SetupSleep();
+    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (D1) is pulled low
+
+    // Execution resumes here after wakeup
+
     delay(1000);
-    Serial.println(F("=====> VAN bus activity detected; exiting light sleep mode"));
+
+    // Let's go for a fresh 'n fruity start
+    ESP.restart();
 } // GoToSleep

@@ -2717,8 +2717,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
 
-			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:30px; top:80px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
-			<div class="iconBorder" style="display:block; position:absolute; left:20px; top:130px; width:380px; height:270px;">
+			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:30px; top:60px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
+			<div class="iconBorder" style="display:block; position:absolute; left:20px; top:110px; width:380px; height:270px;">
 				<div class="tag" style="left:130px; top:10px; width:120px;">Width</div>
 				<div class="tag" style="left:240px; top:10px; width:120px;">Height</div>
 				<div class="tag" style="top:60px; width:150px;">Screen</div>
@@ -2735,8 +2735,8 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="web_socket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
 			</div>
 
-			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:80px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
-			<div class="iconBorder" style="display:block; position:absolute; left:420px; top:130px; width:910px; height:330px;">
+			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:60px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
+			<div class="iconBorder" style="display:block; position:absolute; left:420px; top:110px; width:910px; height:360px;">
 				<div style="font-size:20px;">
 					<div class="tag" style="top:10px; width:230px;">Boot Version</div>
 					<div class="tag" style="top:40px; width:230px;">Flash ID</div>
@@ -2748,6 +2748,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="top:220px; width:230px;">Reset Info</div>
 					<div class="tag" style="top:260px; width:230px;">SDK</div>
 					<div class="tag" style="top:290px; width:230px;">MD5 checksum</div>
+					<div class="tag" style="top:320px; width:230px;">Compiled @</div>
 					<div style="position:absolute; left:360px;">
 						<div class="tag" style="top:10px; width:260px;">CPU Speed</div>
 						<div class="tag" style="top:40px; width:260px;">Chip ID</div>
@@ -2767,6 +2768,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="esp_last_reset_info" class="tag" style="left:240px; top:215px; width:660px; text-align:left;">---</div>
 				<div id="esp_sdk_version" class="tag" style="left:240px; top:255px;">---</div>
 				<div id="img_md5_checksum" class="tag" style="left:240px; top:285px;">---</div>
+				<div id="img_compile_date" class="tag" style="left:240px; top:315px;">---</div>
 				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px;">---</div>
 				<div id="esp_chip_id" class="tag" style="left:630px; top:35px;">---</div>
 				<div id="esp_mac_address" class="tag" style="left:630px; top:65px;">---</div>
@@ -2776,8 +2778,8 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>
 
 			<div id="van_bus_stats" class="tag"
-				style="left:420px; top:480px; width:830px; text-align:left; font-size:25px; white-space:normal;">
-				VAN Rx Stats: received pkts: ---, corrupt: -- (-.---%), repaired: -- (--%) [SB_err: --, DCB_err: -], overall: - (-.---%)
+				style="left:420px; top:490px; width:830px; text-align:left; font-size:25px; white-space:normal;">
+				VAN Rx Stats: received pkts: ---, corrupt: -- (-.---%)
 			</div>
 
 			<!-- "Back" icon in the bottom right corner -->
