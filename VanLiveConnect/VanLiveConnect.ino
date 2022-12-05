@@ -334,6 +334,14 @@ void loop()
     {
         lastUpdate = millis();
 
+      #if VAN_BUS_VERSION_INT >= 000003002
+        if (! VanBusRx.IsEnabled())
+        {
+            Serial.print(F("VAN BUS DISABLED!\n"));
+            VanBusRx.Enable();
+        } // if
+      #endif
+
       #ifdef SHOW_ESP_RUNTIME_STATS
         // Send ESP runtime data to client
         SendJsonOnWebSocket(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));

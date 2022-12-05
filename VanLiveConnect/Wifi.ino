@@ -65,6 +65,11 @@ const char* SetupWifi()
 
     static const char* wifiSsid = WIFI_SSID;
 
+  #ifdef ON_DESK_MFD_ESP_MAC
+    // The test setup on the desk has a slightly different SSID
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
+  #endif // ON_DESK_MFD_ESP_MAC
+
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), wifiSsid);
 
     WiFi.softAPdisconnect (true);

@@ -26,10 +26,14 @@
   #define WIFI_SSID_HIDDEN (0)
 
   // Define to set password on access point
+  //
   // Notes:
+  //
   // - Many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
+  //
   // - ESP requires more memory when WIFI_PASSWORD is defined, so it may be necessary to undefine this when
   //   setting one or more debug #defines.
+  //
   //#define WIFI_PASSWORD "99999999"
 
   // Set between (1) and (13). Note: some devices cannot connect to channels above 11. Channel 6 seems best for
@@ -91,15 +95,28 @@
 
 // Connect the following pin to "VAN DATA" (in the given schematics that is "CANL") of the MCP2551 board, for waking
 // up at VAN bus activity.
+//
 // Notes:
-// - ESP8266 board seems to cope well with +5V voltage levels on input pins; see also:
+//
+// - CANL is pulled low (~ 0 Volt) when dominant, and is typically biased between 2.0 - 3.0 Volt when recessive.
+//   See e.g.:
+//   * http://ww1.microchip.com/downloads/en/devicedoc/21667d.pdf
+//     --> Page 9, parameter D7 ("V-CANH", "V-CANL"): Min = 2 V, Max = 3 V.
+//   * https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf?ts=1592992149874
+//     --> Page 7, parameter V-OL: typ 2.3 V.
+//   * https://www.ti.com/lit/an/slla337/slla337.pdf?HQS=slla337-aaj&ts=1668604399231&ref_url=https%253A%252F%252Fwww.google.se%252F
+//     --> Page 3, Figure 2.
+//   But just in case, ESP8266 board *does* seem to cope well with +5V voltage levels on input pins; see also:
 //   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
+//
 // - The following protection diodes may be required to prevent (negative) surge at power-off event:
 //   1.) GND ---|>|--- CANL
 //   2.) GND ---|>|--- +5V
+//
 // - In the test setup on the desk, best not to power off using the main power switch; this sometimes causes
 //   the ESP to become completely unresponsive (caused by ground loop??). Instead, just disconnect the +12V line
 //   to simulate a power-off event.
+//
 #define LIGHT_SLEEP_WAKE_PIN D1
 
 // -----
@@ -153,11 +170,18 @@
 
 // -----
 // Define to disable (gray-out) the navigation menu while driving.
+//
 // Using the "Peugeot Planet 2000" software, the multi-functional display (MFD) parameter
 // "setting the parameters of the navigation function while driving" can be set to either "Active"
 // (allow for entering the navigation menu while driving) or "Inactive" (navigation menu grayed out
 // while driving). Choose the following define to match the parameter as provisioned in your MFD.
+//
 //#define MFD_DISABLE_NAVIGATION_MENU_WHILE_DRIVING
+
+// -----
+// Test setup on desk
+// If this is defined, run-time behavior will be a bit different if the ESP has this MAC address
+#define ON_DESK_MFD_ESP_MAC "48:3F:DA:01:DB:85"
 
 // -----
 // Infrared receiver
@@ -193,6 +217,15 @@
   #define IR_GND D0
 
 #endif // IR_TSOP312XX
+
+#ifdef ON_DESK_MFD_ESP_MAC
+
+  // Used only by test setup on desk
+  #define TEST_IR_RECV_PIN D7
+  #define TEST_IR_VCC_TEST D5
+  #define TEST_IR_GND D0
+
+#endif // ON_DESK_MFD_ESP_MAC
 
 // -----
 // Debugging

@@ -282,6 +282,21 @@ void IrSetup()
 {
     Serial.println(F("Setting up IR receiver"));
 
+  #ifdef ON_DESK_MFD_ESP_MAC
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
+    {
+        pinMode(TEST_IR_VCC_TEST, OUTPUT);
+        digitalWrite(TEST_IR_VCC_TEST, HIGH);
+        pinMode(TEST_IR_GND, OUTPUT);
+        digitalWrite(TEST_IR_GND, LOW);
+
+        irrecv = new IRrecv(TEST_IR_RECV_PIN);
+        irrecv->enableIRIn(); // Start the receiver
+
+        return;
+    } // if
+  #endif // ON_DESK_MFD_ESP_MAC
+
     // Using GPIO pins to feed the IR receiver. Should be possible with e.g. the TSOP4838 IR receiver as
     // it typically uses only 0.7 mA.
     pinMode(IR_VCC, OUTPUT);
