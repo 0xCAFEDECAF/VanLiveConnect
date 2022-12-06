@@ -181,7 +181,7 @@
 // -----
 // Test setup on desk
 // If this is defined, run-time behavior will be a bit different if the ESP has this MAC address
-#define ON_DESK_MFD_ESP_MAC "48:3F:DA:01:DB:85"
+//#define ON_DESK_MFD_ESP_MAC "48:3F:DA:01:DB:85"
 
 // -----
 // Infrared receiver

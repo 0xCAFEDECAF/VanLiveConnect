@@ -935,6 +935,18 @@ VanPacketParseResult_t ParseHeadUnitStalkPkt(TVanPacketRxDesc& pkt, char* buf, c
 #define FUEL_LEVEL_PERCENTAGE_INVALID (-1)
 int fuelLevelPercentage = FUEL_LEVEL_PERCENTAGE_INVALID;
 
+const char PROGMEM fuelLevelPercentageFormatter[] =
+    ",\n"
+    "\"fuel_level\": \"%u\",\n"
+    "\"fuel_level_unit\": \"%%\",\n"
+    "\"fuel_level_perc\":\n"
+    "{\n"
+        "\"style\":\n"
+        "{\n"
+            "\"transform\": \"scaleX(%S)\"\n"
+        "}\n"
+    "}";
+
 bool doorOpen = false;
 
 VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -1045,18 +1057,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
 
         char floatBuf[MAX_FLOAT_SIZE];
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(
-                    ",\n"
-                    "\"fuel_level\": \"%u\",\n"
-                    "\"fuel_level_unit\": \"%%\",\n"
-                    "\"fuel_level_perc\":\n"
-                    "{\n"
-                        "\"style\":\n"
-                        "{\n"
-                            "\"transform\": \"scaleX(%S)\"\n"
-                        "}\n"
-                    "}"
-                ),
+            snprintf_P(buf + at, n - at, fuelLevelPercentageFormatter,
                 fuelLevelPercentage,
                 ToFloatStr(floatBuf, fuelLevelPercentage / 100.0, 2, false)
             );
@@ -5161,6 +5162,18 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         satnavInitialized ? yesStr : noStr,
         SatNavGuidancePreferenceStr(satnavGuidancePreference)
     );
+
+    // The fuel level as percentage (byte 7 of IDEN 4FC) does not seem to be regularly sent over the VAN bus,
+    // so if we have it, report it here.
+    if (fuelLevelPercentage != FUEL_LEVEL_PERCENTAGE_INVALID)
+    {
+        char floatBuf[MAX_FLOAT_SIZE];
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, fuelLevelPercentageFormatter,
+                fuelLevelPercentage,
+                ToFloatStr(floatBuf, fuelLevelPercentage / 100.0, 2, false)
+            );
+    } // if
 
     if (strlen(vinNumber) != 0)
     {
