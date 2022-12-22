@@ -359,7 +359,8 @@ I am investigating how to improve on the error-free reception of VAN bus frames.
 
 <b>Answer:</b> I have only tested with one vehicle: a 406 from year 2003
 [DAM number / Build Code: 9586](http://www.406coupeclub.org/Apps_BuildCodeTranslator.php); see also
-[this page](http://www.kleinopslag.nl/damnr/) (in Dutch).
+[this page](http://www.kleinopslag.nl/damnr/) (in Dutch). My vehicle has a so-called ["type C" Multi-Functional
+Display (MFD)](https://github.com/0xCAFEDECAF/Peugeot406MfdTypecIrSendArduino#-description).
 
 It will work (at least to some extent) if you have a Peugeot of around 1996-2004, fitted with a VAN comfort bus.
 
