@@ -106,10 +106,16 @@ void SetupVanReceiver()
 
     if (VanBusRx.Setup(RX_PIN, VAN_PACKET_QUEUE_SIZE))
     {
+      #ifdef VAN_BUS_VERSION
         Serial.printf_P(PSTR("VanBus version %S initialized; VanBusRx queue of size %d is set up\n"),
             PSTR(VAN_BUS_VERSION),
             VanBusRx.QueueSize()
         );
+      #else
+        Serial.printf_P(PSTR("VanBus initialized; VanBusRx queue of size %d is set up\n"),
+            VanBusRx.QueueSize()
+        );
+      #endif // VAN_BUS_VERSION
     } // if
 
   #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
