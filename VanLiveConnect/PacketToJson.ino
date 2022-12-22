@@ -5367,11 +5367,9 @@ const IdenHandler_t* const handlers_end = handlers + sizeof(handlers) / sizeof(h
 const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 {
   #ifdef ON_DESK_MFD_ESP_MAC
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) // TODO - remove
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
       // On the desk test setup, we want to see a lot of detailed output
-
-      #ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
         if (! pkt.CheckCrc())
         {
             Serial.print(F("VAN PACKET CRC ERROR!\n"));
@@ -5386,15 +5384,11 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
             // Show byte content of packet for easy comparing with the repaired version
             pkt.DumpRaw(Serial);
 
-          #endif // PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
-
             if (! pkt.CheckCrcAndRepair()) return ""; // CRC error
 
-          #ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
             // Print again, after fix
             pkt.DumpRaw(Serial);
         } // if
-      #endif // PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
     }
     else
     {
@@ -5404,11 +5398,8 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
         {
           #ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
             // Show byte content of packet
-            if (pkt.IsSatnavPacket())
-            {
-                Serial.print(F("VAN PACKET CRC ERROR!\n"));
-                pkt.DumpRaw(Serial);
-            } // if
+            Serial.print(F("VAN PACKET CRC ERROR!\n"));
+            pkt.DumpRaw(Serial);
 
           #ifdef VAN_RX_ISR_DEBUGGING
             // Fully dump bit timings for packets that have CRC ERROR, for further analysis
