@@ -41,17 +41,4 @@
 #define AIR_CONDITIONER_DIAG_COMMAND_IDEN 0xA5C
 #define ECU_IDEN 0xB0E
 
-inline bool IsSatnavPacket(const TVanPacketRxDesc& pkt)
-{
-    return
-        pkt.DataLen() >= 3 && 
-        (
-            (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x07)
-            || pkt.Iden() == SATNAV_STATUS_1_IDEN
-            || pkt.Iden() == SATNAV_GUIDANCE_IDEN
-            || pkt.Iden() == SATNAV_REPORT_IDEN
-            || pkt.Iden() == SATNAV_TO_MFD_IDEN
-        );
-} // IsSatnavPacket
-
 #endif // VanIden_h

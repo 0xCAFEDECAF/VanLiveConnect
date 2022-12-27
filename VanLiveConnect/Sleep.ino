@@ -10,6 +10,9 @@ extern "C"
     #include "user_interface.h"
 }
 
+// Defined in Eeprom.ino
+void CommitEeprom();
+
 // Defined in IRrecv.ino
 void IrDisable();
 
@@ -42,6 +45,8 @@ void GoToSleep()
 
     wdt_reset();
     ESP.wdtFeed();
+
+    CommitEeprom();
 
     // Wake up by pulling pin low (GND)
     gpio_pin_wakeup_enable(GPIO_ID_PIN(LIGHT_SLEEP_WAKE_PIN), GPIO_PIN_INTR_LOLEVEL);

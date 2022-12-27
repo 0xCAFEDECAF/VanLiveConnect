@@ -98,7 +98,14 @@ void SetupVanReceiver()
   #elif defined VAN_RX_ISR_DEBUGGING
     #define VAN_PACKET_QUEUE_SIZE 60
   #else
-    #define VAN_PACKET_QUEUE_SIZE 150
+    #if WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
+      // Async TCP mode causes a lot less hiccups, so we can do with a much smaller RX queue
+      #define VAN_PACKET_QUEUE_SIZE 60
+    #else
+      // Sync TCP mode can cause hiccups of several seconds, even a value of 150 is not enough... But more
+      // than this uses too much RAM :-(
+      #define VAN_PACKET_QUEUE_SIZE 150
+    #endif
   #endif
 
     // GPIO pin connected to VAN bus transceiver output
@@ -176,6 +183,21 @@ const char* VanBusStatsToJson(char* buf, const int n)
 } // VanBusStatsToJson
 
 #endif // SHOW_VAN_RX_STATS
+
+inline bool IsImportantPacket(const TVanPacketRxDesc& pkt)
+{
+    return
+        pkt.DataLen() >= 3 && 
+        (
+            (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x07)
+            || pkt.Iden() == SATNAV_STATUS_1_IDEN
+            || pkt.Iden() == SATNAV_GUIDANCE_IDEN
+            || pkt.Iden() == SATNAV_REPORT_IDEN
+            || pkt.Iden() == SATNAV_TO_MFD_IDEN
+
+            || pkt.Iden() == CAR_STATUS1_IDEN  // Right-hand stalk button press
+        );
+} // IsImportantPacket
 
 void setup()
 {
@@ -283,10 +305,15 @@ void loop()
 
       #if VAN_BUS_VERSION_INT >= 000003001
 
-        // If RX queue is starting to overrun, keep only important (sat nav) packets
-      #define PANIC_AT_PERCENTAGE (60)
+        // If RX queue is starting to overrun, keep only important (sat nav, stalk button press) packets
+        #if WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
+          #define PANIC_AT_PERCENTAGE (60)
+        #else
+          // Sync TCP mode can cause hiccups of several seconds, so start throwing away packets very soon
+          #define PANIC_AT_PERCENTAGE (40)
+        #endif
         int nDiscarded = 0;
-        while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsSatnavPacket(pkt))
+        while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsImportantPacket(pkt))
         {
             bool isQueueOverrun2 = false;
             if (! VanBusRx.Receive(pkt, &isQueueOverrun2)) break;
@@ -309,7 +336,7 @@ void loop()
 
         LoopWebSocket(); // TODO - necessary?
 
-        SendJsonOnWebSocket(ParseVanPacketToJson(pkt), IsSatnavPacket(pkt));
+        SendJsonOnWebSocket(ParseVanPacketToJson(pkt), IsImportantPacket(pkt));
     }
 
     LoopWebSocket(); // TODO - necessary?

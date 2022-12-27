@@ -339,7 +339,6 @@ void CycleTripInfo()
 
         unsigned long now = millis();
 
-        // Arithmetic has safe roll-over
         if (! IsTripComputerPopupShowing())
         {
             // The trip computer popup was not visible: the stalk button triggers the trip computer popup to appear
