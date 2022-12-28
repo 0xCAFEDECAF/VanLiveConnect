@@ -2,17 +2,28 @@
 // Using "WebSockets" library (https://github.com/Links2004/arduinoWebSockets):
 #include <WebSocketsServer.h>
 
-// Note: in the file:
-//    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
-// the line:
-//   #define WEBSOCKETS_TCP_TIMEOUT (5000)
-// should be changed to:
-//   #define WEBSOCKETS_TCP_TIMEOUT (1000)
-// to prevent the VAN bus receiver from overrunning when the web socket disconnects
-// #if WEBSOCKETS_TCP_TIMEOUT > 1000
-// #error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
-// #error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set to 1000!"
-// #endif
+#ifdef STRICT_COMPILATION
+  #if WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
+
+  #warning "Please compile the WebSockets library for TCP asynchronous mode! To do this, define"
+  #warning "WEBSOCKETS_NETWORK_TYPE to be NETWORK_ESP8266_ASYNC in the header file"
+  #warning "...\Arduino\libraries\WebSockets\src\WebSockets.h, around line 118."
+  
+  // Note: if not using TCP asynchronous mode, the following #define must be changed from:
+  //   #define WEBSOCKETS_TCP_TIMEOUT (5000)
+  // to:
+  //   #define WEBSOCKETS_TCP_TIMEOUT (1000)
+  // as defined in the file
+  //    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h, around line 100
+  // This is to prevent the VAN bus receiver queue from overrunning when the web socket disconnects
+  //
+  // #if WEBSOCKETS_TCP_TIMEOUT > 1000
+  // #error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
+  // #error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set to 1000!"
+  // #endif
+
+  #endif  // WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
+#endif  // STRICT_COMPILATION
 
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;
@@ -341,5 +352,8 @@ void SetupWebSocket()
 
 void LoopWebSocket()
 {
+  // Async interface does not need a loop call
+  #if(WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC)
     webSocket.loop();
+  #endif
 } // LoopWebSocket
