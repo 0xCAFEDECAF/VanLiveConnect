@@ -42,7 +42,7 @@ typedef VanPacketParseResult_t (*TPacketParser)(TVanPacketRxDesc&, char*, const 
 struct IdenHandler_t
 {
     uint16_t iden;
-    char* idenStr;
+    const char* idenStr;
     int dataLen;
     bool ignoreDups;
     TPacketParser parser;
