@@ -3852,12 +3852,12 @@ function handleItemChange(item, value)
 			vehicleSpeed = parseInt(value);
 
 			let isDriving = vehicleSpeed >= 5;
-			let isDrivingFast = vehicleSpeed >= 130;
+			let isDrivingFast = vehicleSpeed >= 140;
 
 			if (localStorage.mfdDistanceUnit === "set_units_mph")
 			{
 				isDriving = vehicleSpeed >= 3;
-				isDrivingFast = vehicleSpeed >= 85;
+				isDrivingFast = vehicleSpeed >= 90;
 			} // if
 
 			// If driving fast, add glow effect
@@ -5031,18 +5031,20 @@ function handleItemChange(item, value)
 			if (item === "satnav_turn_at" && $("#satnav_turn_at_indication").css("display") === "block")
 			{
 				let parts = value.split(" ");
-				let reportedUnits = parts[1];
+				let reportedUnits = parts[1]; // 5000 m and less is reported in metres
 				if (reportedUnits === "m" || reportedUnits ==="yd")
 				{
-					let reportedDistance = parts[0];
-					if (
-						reportedDistance <= 300
-						|| (vehicleSpeed > 60 && reportedDistance <= 800)
-						|| (localStorage.mfdDistanceUnit === "set_units_mph" && vehicleSpeed > 35 && reportedDistance <= 800)
-						)
+					let distance = parts[0];
+					let change = distance <= 300;
+					if (localStorage.mfdDistanceUnit === "set_units_mph")
 					{
-						temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
+						change ||= (vehicleSpeed > 35 && distance <= 800) || (vehicleSpeed > 50 && distance <= 2000);
+					}
+					else
+					{
+						change ||= (vehicleSpeed > 60 && distance <= 800) || (vehicleSpeed > 80 && distance <= 2000);
 					} // if
+					if (change) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
 				} // if
 			} // if
 		} // case
