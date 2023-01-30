@@ -475,14 +475,15 @@ void UpdateLargeScreenForGuidanceModeOn()
 } // UpdateLargeScreenForGuidanceModeOn
 
 // Called when going out of sat nav guidance mode
-void UpdateLargeScreenForGuidanceModeOff(bool reachedDestination)
+void UpdateLargeScreenForGuidanceModeOff()
 {
-    // If the large screen is currently showing the trip computer, or if the destination is reached, the
+    // If the large screen is currently showing the trip computer, the
     // trip computer tab index on the large screen is copied into the small screen.
+    //
     // Note: upon stalk button press, the trip computer tab index on the large screen is updated:
     // - when the large screen is showing the trip computer
-    // - when it is not showing, but the trip computer popup is shown
-    if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER || reachedDestination)
+    // - when the large screen is not showing the trip computer, but the trip computer popup is visible
+    if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
     {
         if (tripComputerLargeScreenTab >= 0) smallScreen = tripComputerLargeScreenTab;
 
@@ -499,6 +500,9 @@ void UpdateLargeScreenForGuidanceModeOff(bool reachedDestination)
     {
         // Replicate a bug in the original MFD: if the large screen trip computer is *not* currently visible, the
         // small screen tab index is *not* updated.
+
+        // TODO - in some situations, the small screen tab index *is* updated here. Not exactly clear when it is
+        // updated, and when not :-(
 
         SetAllTabIndexes();
 

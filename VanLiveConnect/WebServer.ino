@@ -185,50 +185,11 @@ bool checkETag(const String& etag)
     return false;
 } // checkETag
 
-// serialDumpFilter == 0 means: no filtering; print all
-// serialDumpFilter != 0 means: print only the packet + JSON data for the specified IDEN
-uint16_t serialDumpFilter;
-
-// Set a simple filter on the dumping of packet + JSON data on Serial.
-// Surf to e.g. http://car.lan/dumpOnly?iden=8c4 to have only packets with IDEN 0x8C4 dumped on serial.
-// Surf to http://car.lan/dumpOnly?iden=0 to remove any filter, i.e. dump all packets.
-void HandleDumpFilter()
-{
-    Serial.print(F("Web server received request from "));
-    String ip = webServer.client().remoteIP().toString();
-    Serial.print(ip);
-    Serial.print(webServer.method() == HTTP_GET ? F(": GET - '") : F(": POST - '"));
-    Serial.print(webServer.uri());
-    bool found = false;
-    if (webServer.args() > 0)
-    {
-        Serial.print("?");
-        for (uint8_t i = 0; i < webServer.args(); i++)
-        {
-            if (! found && webServer.argName(i) == "iden" && webServer.arg(i).length() <= 3)
-            {
-                // Invalid conversion results in 0, which is ok: it corresponds to "remove any filter"
-                serialDumpFilter = strtol(webServer.arg(i).c_str(), NULL, 16);
-                found = true;
-            } // if
-
-            Serial.print(webServer.argName(i));
-            Serial.print(F("="));
-            Serial.print(webServer.arg(i));
-            if (i < webServer.args() - 1) Serial.print('&');
-        } // for
-    } // if
-    Serial.println(F("'"));
-
-    webServer.send(200, F("text/plain"),
-        ! found ? F("NOT OK!") :
-        serialDumpFilter == 0 ? F("OK: dumping all JSON data") :
-        F("OK: filtering JSON data"));
-} // HandleDumpFilter
-
 void HandleAndroidConnectivityCheck()
 {
     printHttpRequest();
+    //return; // TODO - keep this? Or respond to connectivity check?
+
     unsigned long start = millis();
 
     webServer.send(204, "");
@@ -566,8 +527,6 @@ void SetupWebServer()
 
     // -----
     // Miscellaneous
-
-    webServer.on(F("/dumpOnly"), HandleDumpFilter);
 
     // Doing this will prevent the "login" popup on Android.
     webServer.on(F("/generate_204"), HandleAndroidConnectivityCheck);

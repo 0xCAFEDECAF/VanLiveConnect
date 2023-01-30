@@ -5038,11 +5038,11 @@ function handleItemChange(item, value)
 					let change = distance <= 300;
 					if (localStorage.mfdDistanceUnit === "set_units_mph")
 					{
-						change ||= (vehicleSpeed > 35 && distance <= 800) || (vehicleSpeed > 50 && distance <= 2000);
+						change = change || (vehicleSpeed > 35 && distance <= 800) || (vehicleSpeed > 50 && distance <= 2000);
 					}
 					else
 					{
-						change ||= (vehicleSpeed > 60 && distance <= 800) || (vehicleSpeed > 80 && distance <= 2000);
+						change = change || (vehicleSpeed > 60 && distance <= 800) || (vehicleSpeed > 80 && distance <= 2000);
 					} // if
 					if (change) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
 				} // if
@@ -5524,6 +5524,7 @@ function handleItemChange(item, value)
 		{
 			// Has anything changed?
 			if (value === handleItemChange[item]) break;
+			let previousValue = handleItemChange[item];
 			handleItemChange[item] = value;
 
 			if (item === "set_fan_speed")
@@ -5533,9 +5534,10 @@ function handleItemChange(item, value)
 				$("#fan_icon").toggleClass("ledOff", ! on);
 			} // if
 
-			if (suppressClimateControlPopup !== null) break;  // Not when suppress timer is running
+			if (previousValue === undefined) break;  // No popup when receiving initial update
+			if (suppressClimateControlPopup !== null) break;  // No popup when suppress timer is running
 
-			// Not in menu or "pre_flight" screen, or if engine off
+			// No popup when in menu or "pre_flight" screen, or if engine off
 			if (inMenu() || currentLargeScreenId === "pre_flight"
 				|| engineRunning !== "YES" || contactKeyPosition !== "ON")
 			{

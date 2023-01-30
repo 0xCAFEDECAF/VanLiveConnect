@@ -48,7 +48,15 @@ void PrintSystemSpecs()
     Serial.printf_P(PSTR(" (%S)\n"), compileDate);
 
     Serial.print(F("Wi-Fi MAC address: "));
-    Serial.println(WiFi.macAddress());
+    Serial.print(WiFi.macAddress());
+  #ifdef ON_DESK_MFD_ESP_MAC
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
+    {
+        Serial.println(F(" == ON_DESK_MFD_ESP_MAC, i.e., this is the on-desk test setup, so:"));
+        Serial.print(F("--> Will print detailed debug info when a VAN bus packet with CRC error is received."));
+    }
+  #endif // ON_DESK_MFD_ESP_MAC
+    Serial.println();
 } // PrintSystemSpecs
 
 const char* EspSystemDataToJson(char* buf, const int n)

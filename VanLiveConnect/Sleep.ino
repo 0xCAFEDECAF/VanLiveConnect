@@ -61,7 +61,8 @@ void GoToSleep()
   #define FPM_SLEEP_MAX_TIME (0xFFFFFFF)
     wifi_fpm_do_sleep(FPM_SLEEP_MAX_TIME);
 
-    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (D1) is pulled low
+    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (D1) is pulled low. Connect this pin to CANL, which is pulled
+    // low (~ 0 Volt) when dominant, i.e. when VAN bus activity occurs.
 
     // Execution resumes here after wakeup
 

@@ -2579,7 +2579,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
     if (mfdStatus == MFD_SCREEN_OFF)
     {
         // TODO - is the following necessary? So that 'tripComputerLargeScreenTab' is copied into 'smallScreen' ?
-        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff(false);
+        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff();
 
         // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
         // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
@@ -2605,6 +2605,9 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdStatusPkt
+
+#define SET_FAN_SPEED_INVALID (0xFF)
+uint8_t setFanSpeed = SET_FAN_SPEED_INVALID;
 
 VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -2683,7 +2686,7 @@ VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const i
 
     bool rear_heater = data[0] & 0x01;
     bool ac_icon = data[0] & 0x10;
-    uint8_t setFanSpeed = data[4];
+    setFanSpeed = data[4];
     if (rear_heater) setFanSpeed -= 12;
     if (ac_icon) setFanSpeed -= 2;
     setFanSpeed =
@@ -3235,7 +3238,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     else if ((wasSatnavGuidanceActive && ! isSatnavGuidanceActive) || reachedDestination)
     {
         // Going out of guidance mode
-        UpdateLargeScreenForGuidanceModeOff(reachedDestination);
+        UpdateLargeScreenForGuidanceModeOff();
         updateScreen = true;
     } // if
 
@@ -5180,6 +5183,11 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"vin\": \"%-17.17s\""), vinNumber);
     } // if
 
+    if (setFanSpeed != SET_FAN_SPEED_INVALID)
+    {
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"set_fan_speed\": \"%u\""), setFanSpeed);
+    } // if
+
     if (strlen_P(satnavStatus2Str) != 0)
     {
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_status_2\": \"%S\""), satnavStatus2Str);
@@ -5231,9 +5239,6 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
     return buf;
 } // EquipmentStatusDataToJson
 
-// Defined in WebServer.ino
-extern uint16_t serialDumpFilter;
-
 // Check if the new packet data differs from the previous.
 // Optionally, print the new packet on serial port, highlighting the bytes that differ.
 bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
@@ -5255,7 +5260,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 
   #ifdef PRINT_RAW_PACKET_DATA
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
-    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
+    if (IsPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.printf_P(PSTR("--> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
 
@@ -5300,7 +5305,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     } // if
 
   #ifdef PRINT_RAW_PACKET_DATA
-    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
+    if (IsPacketSelected(iden, SELECTED_PACKETS))
     {
         // Now print the new packet's data in full
         Serial.printf_P(PSTR("FULL: %03X %1X (%s) "), iden, pkt.CommandFlags(), pkt.CommandFlagsStr());
@@ -5449,7 +5454,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
     if (result != VAN_PACKET_PARSE_OK) return "";
 
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    if ((serialDumpFilter == 0 || iden == serialDumpFilter) && IsPacketSelected(iden, SELECTED_PACKETS))
+    if (IsPacketSelected(iden, SELECTED_PACKETS))
     {
         Serial.print(F("Parsed to JSON object:\n"));
         PrintJsonText(jsonBuffer);
