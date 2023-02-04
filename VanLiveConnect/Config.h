@@ -96,8 +96,8 @@
 // -----
 // Sleep and wake up
 
-// After 1 minute (60,000 milliseconds) of VAN bus inactivity, go to sleep to save power
-#define SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY (60000UL)
+// After 5 minutes (5 * 60,000 milliseconds) of VAN bus inactivity, go to sleep to save power
+#define SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY (5 * 60000UL)
 
 // Connect the following pin to "VAN DATA" (in the given schematics that is "CANL") of the MCP2551 board, for waking
 // up at VAN bus activity.
@@ -264,7 +264,8 @@
 //   of CRC errors in the received VAN bus packets
 //#define PRINT_JSON_BUFFERS_ON_SERIAL
 
-// If PRINT_JSON_BUFFERS_ON_SERIAL is defined, which type of VAN-bus packets will be printed on the serial port?
+// If PRINT_JSON_BUFFERS_ON_SERIAL or PRINT_RAW_PACKET_DATA is defined, which type of VAN-bus packets will be
+// printed on the serial port?
 #define SELECTED_PACKETS VAN_PACKETS_ALL_VAN_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_COM2000_ETC_PKTS
 //#define SELECTED_PACKETS VAN_PACKETS_HEAD_UNIT_PKTS
