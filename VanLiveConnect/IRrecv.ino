@@ -47,9 +47,11 @@ extern bool economyMode;
 void PrintJsonText(const char* jsonBuffer);
 
 // Defined in OriginalMfd.ino
-void NoPopup();
 PGM_P TripComputerStr();
 PGM_P LargeScreenStr();
+void NoPopup();
+bool IsNotificationPopupShowing();
+bool IsTripComputerPopupShowing();
 PGM_P PopupStr();
 void CycleLargeScreen();
 
@@ -242,9 +244,12 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, pkt.buttonStr, heldStr);
 
     // "MOD" button pressed?
-    if (pkt.value == IB_MODE && ! inMenu && ! economyMode)
+    if (pkt.value == IB_MODE)
     {
-        // Will update 'LargeScreenStr()', may update 'TripComputerStr()' and 'PopupStr()'
+        // Ignore when in menu or in economy mode, or as long as any popup is showing
+        if (inMenu || economyMode || IsNotificationPopupShowing() || IsTripComputerPopupShowing()) return 0;
+
+        // May update 'LargeScreenStr()', 'TripComputerStr()' and 'PopupStr()'
         CycleLargeScreen();
 
         at += at >= IR_JSON_BUFFER_SIZE ? 0 :
@@ -292,6 +297,8 @@ void IrSetup()
 
         irrecv = new IRrecv(TEST_IR_RECV_PIN);
         irrecv->enableIRIn(); // Start the receiver
+
+        Serial.println(F("On-desk IR receiver has been set up"));
 
         return;
     } // if
