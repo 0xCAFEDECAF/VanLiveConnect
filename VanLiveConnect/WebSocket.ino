@@ -108,6 +108,7 @@ void FreeSavedJson()
 // Send a (JSON) message to the WebSocket client
 void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 {
+    if (json == 0) return;
     if (strlen(json) <= 0) return;
     if (websocketNum == WEBSOCKET_INVALID_NUM)
     {
