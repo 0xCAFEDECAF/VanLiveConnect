@@ -159,28 +159,6 @@ char mfd_html[] PROGMEM = R"=====(
 				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:345px;">lt</div>
 
 			</div>
-
-			<!-- Tuner info (small) -->
-
-			<div id="tuner_small" style="display:none;">
-
-				<div gid="tuner_band" class="dots" style="left:30px; top:160px; width:250px;">---</div>
-
-				<div gid="tuner_memory" class="dseg7" style="font-size:80px; left:310px; top:130px;">-</div>
-
-				<div gid="frequency" class="dseg7" style="font-size:70px; left:-20px; top:230px; width:240px;"></div>
-				<div gid="frequency_h" class="dseg7" style="font-size:40px; left:195px; top:230px; width:60px;"></div>
-				<div gid="frequency_khz" class="led ledOff" style="left:275px; top:230px; width:100px;">KHz</div>
-				<div gid="frequency_mhz" class="led ledOff" style="left:275px; top:273px; width:100px;">MHz</div>
-
-				<div id="fm_tuner_data_small" style="display:block;">
-					<div gid="rds_text" class="dseg14" style="font-size:55px; left:10px; top:330px; width:370px; text-align:right;"></div>
-
-					<div id="pty_8" class="dots" style="left:10px; top:410px; width:370px; text-align:right;"></div>
-
-					<div gid="pi_country" class="dots" style="left:10px; top:480px; width:370px; text-align:right;">--</div>
-				</div>
-			</div>
 		</div>	<!-- "Small" information panel -->
 
 		<!-- "Large" information panel -->
