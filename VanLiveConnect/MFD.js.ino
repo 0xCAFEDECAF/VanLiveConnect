@@ -402,16 +402,23 @@ function showPopup(id, msec)
 	return popupTimer[id];
 } // showPopup
 
+function NotifyServerAboutPopup(id, msec, message)
+{
+	if (webSocket)
+	{
+		var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
+		webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
+	} // if
+
+	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
+} // NotifyServerAboutPopup
+
 // Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
 // e.g. to know when to ignore a "MOD" button press from the IR remote control.
 function showPopupAndNotifyServer(id, msec, message)
 {
 	var timerId = showPopup(id, msec);
-
-	var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
-	webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
-
-	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
+	NotifyServerAboutPopup(id, msec, message);
 	return timerId;
 } // showPopupAndNotifyServer
 
@@ -1629,6 +1636,7 @@ function showAudioVolumePopup()
 	if ($("#contact_key_position").text() !== "" && $("#contact_key_position").text() !== "OFF")
 	{
 		$("#audio_settings_popup").show();
+		NotifyServerAboutPopup("audio_settings_popup", 4000);
 	}
 	else
 	{
@@ -1636,7 +1644,12 @@ function showAudioVolumePopup()
 		// head unit. To prevent the audio settings popup to flash up and disappear, show it only after
 		// 100 msec in this specific situation.
 		clearTimeout(audioSettingsPopupShowTimer);
-		audioSettingsPopupShowTimer = setTimeout(function () { $("#audio_settings_popup").show(); }, 100);
+		audioSettingsPopupShowTimer = setTimeout(function ()
+		{
+			$("#audio_settings_popup").show();
+			NotifyServerAboutPopup("audio_settings_popup", 4000);
+		},
+		100);
 	} // if
 	updatingAudioVolume = true;
 
@@ -1656,13 +1669,13 @@ function showAudioSettingsPopup(button)
 
 		// Show the audio settings popup
 		$("#audio_settings_popup").show();
+		NotifyServerAboutPopup("audio_settings_popup", 7500);
 
 		// Highlight the first audio setting ("bass") if just popped up, else highlight next audio setting
 		highlightAudioSetting(! isAudioMenuVisible);
 	} // if
 
 	// (Re-)start the popup visibility timer.
-	// Note: set to at least 12 seconds, otherwise the popup will appear again just before it is being force-closed.
 	if (isAudioMenuVisible) hideAudioSettingsPopupAfter(7500);
 } // showAudioSettingsPopup
 
@@ -1670,10 +1683,11 @@ function showAudioSettingsPopup(button)
 function showTunerPresetsPopup()
 {
 	$("#tuner_presets_popup").show();
+	NotifyServerAboutPopup("tuner_presets_popup", 8500);
 
 	// Hide the popup after 9 seconds
 	clearTimeout(handleItemChange.tunerPresetsPopupTimer);
-	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, 9000);
+	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, 8500);
 } // showTunerPresetsPopup
 
 // -----
