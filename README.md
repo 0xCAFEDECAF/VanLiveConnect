@@ -14,7 +14,6 @@ the VAN bus.</p>
 - [Building the Project](#building)
 - [Hints and tips](#hints_tips)
 - [Used Libraries](#libraries)
-- [Limitations, Caveats](#limits)
 - [Work to be Done](#todo)
 - [Frequently Asked Questions](#faq)
 - [References](#extref)
@@ -339,15 +338,6 @@ The application itself embeds:
 * Font [Dots All For Now JL. 1.00 - 7/16/01](https://fonts2u.com/download/dots-all-for-now-jl.font)
   (c) 2001 by Jeffrey N. Levine.
   License: Freeware for commercial or non-commercial use.
-
-## ⚠️ Limitations, Caveats<a name = "limits"></a>
-
-Not all VAN bus packets are received error-free; see [this explanation](https://github.com/0xCAFEDECAF/VanBus#limits).
-
-When using the sat nav, this sometimes causes a screen to stay empty. If that happens, try again by using the "Esc"
-button on the remote control and going into the same screen again.
-
-I am investigating how to improve on the error-free reception of VAN bus frames.
 
 ## 👷 Work to be Done<a name = "todo"></a>
 
