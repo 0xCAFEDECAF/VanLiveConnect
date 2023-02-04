@@ -93,7 +93,7 @@ void ResetTripInfo(uint16_t mfdStatus);
 void CycleTripInfo();
 
 // Defined in Eeprom.ino
-void WriteEeprom(int const address, uint8_t const val);
+void WriteEeprom(int const address, uint8_t const val, const char* message = 0);
 void CommitEeprom();
 
 // Forward declaration
@@ -783,7 +783,18 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
     return VAN_PACKET_PARSE_OK;
 } // ParseVinPkt
 
-int contactKeyPosition = 0;  // 0 = OFF, 1 = ACC, 2 = START, 3 = ON
+// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+PGM_P ContactKeyPositionStr(int data)
+{
+    return
+        data == CKP_OFF ? offStr :
+        data == CKP_ACC ? PSTR("ACC") :
+        data == CKP_START ? PSTR("START") :
+        data == CKP_ON ? onStr :
+        notApplicable3Str;
+} // TunerBandStr
+
+int contactKeyPosition = CKP_OFF;
 bool economyMode = false;
 
 VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -848,11 +859,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         data[0] & 0x80 ? PSTR("FULL") : PSTR("DIMMED (LIGHTS ON)"),
         data[0] & 0x0F,
 
-        contactKeyPosition == 0x00 ? offStr :
-        contactKeyPosition == 0x01 ? PSTR("ACC") :
-        contactKeyPosition == 0x03 ? onStr :
-        contactKeyPosition == 0x02 ? PSTR("START") :
-        ToHexStr((uint8_t)(data[1] & 0x03)),
+        ContactKeyPositionStr(contactKeyPosition),
 
         data[1] & 0x04 ? yesStr : noStr,
         economyMode ? onStr : offStr,
@@ -1008,8 +1015,8 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
             _floor(remainingKmToService, 100) :
             _floor(ToMiles(remainingKmToService), 100),
 
-        // TODO - hard coded value 30,000 kms for 100%
-        #define SERVICE_INTERVAL (30000)
+        // TODO - hard coded value 20,000 kms for 100%
+        #define SERVICE_INTERVAL (20000)
         remainingKmToService <= 0 ? PSTR("0") :
             remainingKmToService >= SERVICE_INTERVAL ? PSTR("1") :
                 ToFloatStr(floatBuf, (float)remainingKmToService / SERVICE_INTERVAL, 2, false),
@@ -1456,8 +1463,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         // Note: short-press = cycle screen; long-press = reset trip counter currently shown (if any)
         if (now - stalkLastPressed >= 1000) break;
 
-        // May update the value of 'tripComputerPopupTab' and the values as reported by 'TripComputerStr()'
-        // and 'SmallScreenStr()' below
+        // May update the value of 'tripComputerPopupTab' and the values as reported by 'TripComputerStr()',
+        // 'SmallScreenStr()' and 'PopupStr()' below
         CycleTripInfo();
 
         break;
@@ -2578,23 +2585,36 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     if (mfdStatus == MFD_SCREEN_OFF)
     {
-        // TODO - is the following necessary? So that 'tripComputerLargeScreenTab' is copied into 'smallScreen' ?
-        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff();
+        // On the original MFD, the MFD_SCREEN_OFF event while in sat nav guidance mode causes 'smallScreen' to
+        // be updated to the tab currently selected in the trip computer popup.
+        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff(true);
 
         // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
         // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
         // don't work well together.
         CommitEeprom();
 
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at,
+                PSTR(
+                    ",\n"
+                    "\"small_screen\": \"%S\",\n"
+                    "\"trip_computer_screen_tab\": \"%S\""
+                ),
+                SmallScreenStr(),
+                TripComputerStr()
+            );
+
         isSatnavGuidanceActive = false;
         isCurrentStreetKnown = false;
 
         // In the "minimal VAN network" (only MFD + head unit), the mfdStatus "MFD_SCREEN_OFF" does not imply that
-        // the MFD has switched off
+        // the MFD has switched off. This situation is recognized by the head unit still being powered on. In that
+        // case, don't update "large_screen".
         if (! isHeadUnitPowerOn)
         {
+            UpdateLargeScreenForMfdOff();  // 'largeScreen' will become 'LARGE_SCREEN_CLOCK'
             at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""), LargeScreenStr());
-            UpdateLargeScreenForMfdOff();
         } // if
     } // if
 
@@ -3282,7 +3302,7 @@ void InitSatnavGuidancePreference()
 
     // TODO - remove
     Serial.printf_P(
-        PSTR("Read value %u (%S) from EEPROM position %d\n"),
+        PSTR("satnavGuidancePreference: read value %u (%S) from EEPROM position %d\n"),
         satnavGuidancePreference,
         SatNavGuidancePreferenceStr(satnavGuidancePreference),
         SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
@@ -3292,7 +3312,7 @@ void InitSatnavGuidancePreference()
     // When the original MFD is plugged in, this is what it starts with
     satnavGuidancePreference = SGP_FASTEST_ROUTE;
 
-    WriteEeprom(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS, satnavGuidancePreference);
+    WriteEeprom(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS, satnavGuidancePreference, PSTR("Sat nav guidance preference"));
 } // InitSatnavGuidancePreference
 
 VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -3358,7 +3378,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         at = snprintf_P(buf, n, jsonFormatter, SatNavGuidancePreferenceStr(satnavGuidancePreference));
 
-        WriteEeprom(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS, satnavGuidancePreference);
+        WriteEeprom(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS, satnavGuidancePreference, PSTR("Sat nav guidance preference"));
     }
     else if (dataLen == 17 && data[0] == 0x20)
     {
