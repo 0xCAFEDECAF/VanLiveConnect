@@ -209,25 +209,28 @@ void NotificationPopupShowing(unsigned long since, long duration)
 } // NotificationPopupShowing
 
 // Return true if a notification popup (not the trip computer popup) is showing, otherwise return false
-bool IsNotificationPopupShowing()
+bool IsNotificationPopupShowing(bool beVerbose)
 {
     // Arithmetic has safe roll-over
     bool result = popupDuration != 0 && millis() - NotificationPopupShowingSince < popupDuration;
 
   #ifdef DEBUG_ORIGINAL_MFD
-    Serial.printf_P(
-        PSTR("[originalMfd] IsNotificationPopupShowing = %S (popupDuration = %ld"),
-        result ? yesStr : noStr,
-        popupDuration
-    );
-    if (popupDuration != 0)
+    if (beVerbose)
     {
         Serial.printf_P(
-            PSTR(", millis() - NotificationPopupShowingSince = %ld"),
-            millis() - NotificationPopupShowingSince
+            PSTR("[originalMfd] IsNotificationPopupShowing = %S (popupDuration = %ld"),
+            result ? yesStr : noStr,
+            popupDuration
         );
+        if (popupDuration != 0)
+        {
+            Serial.printf_P(
+                PSTR(", millis() - NotificationPopupShowingSince = %ld"),
+                millis() - NotificationPopupShowingSince
+            );
+        } // if
+        Serial.println(F(")"));
     } // if
-    Serial.println(F(")"));
   #endif // DEBUG_ORIGINAL_MFD
 
     return result;
@@ -585,14 +588,7 @@ void UpdateLargeScreenForGuidanceModeOff(bool mfdScreenOff = false)
         );
       #endif // DEBUG_ORIGINAL_MFD
 
-        if (smallScreen != oldSmallScreen)
-        {
-            // Replicate a bug in the original MFD: only write back to EEPROM under this specific condition
-            if (largeScreen == LARGE_SCREEN_TRIP_COMPUTER)
-            {
-                WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen, PSTR("Small screen"));
-            } // if
-        } // if
+        if (smallScreen != oldSmallScreen) WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen, PSTR("Small screen"));
     }
     else
     {
@@ -681,7 +677,7 @@ void UpdateLargeScreenForMfdOff()
 void CycleLargeScreen()
 {
     // Ignore as long as any popup is showing
-    if (IsNotificationPopupShowing()) return;
+    if (IsNotificationPopupShowing(true)) return;
     if (IsTripComputerPopupShowing()) return;
 
     // Keep track of the cycling through the large screens in the original MFD

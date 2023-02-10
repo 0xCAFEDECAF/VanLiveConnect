@@ -50,7 +50,7 @@ void PrintJsonText(const char* jsonBuffer);
 PGM_P TripComputerStr();
 PGM_P LargeScreenStr();
 void NoPopup();
-bool IsNotificationPopupShowing();
+bool IsNotificationPopupShowing(bool beVerbose = false);
 bool IsTripComputerPopupShowing();
 PGM_P PopupStr();
 void CycleLargeScreen();
@@ -247,7 +247,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     if (pkt.value == IB_MODE)
     {
         // Ignore when in menu or in economy mode, or as long as any popup is showing
-        if (inMenu || economyMode || IsNotificationPopupShowing() || IsTripComputerPopupShowing()) return 0;
+        if (inMenu || economyMode || IsNotificationPopupShowing(true) || IsTripComputerPopupShowing()) return 0;
 
         // May update 'LargeScreenStr()', 'TripComputerStr()' and 'PopupStr()'
         CycleLargeScreen();
