@@ -365,7 +365,6 @@ function hidePopup(id)
 	popup.hide();
 
 	if (webSocket) webSocket.send("mfd_popup_showing:NO");
-	$("#original_mfd_popup").empty();  // Debug info
 
 	clearTimeout(popupTimer[id]);
 	popupTimer[id] = undefined;
@@ -409,8 +408,6 @@ function NotifyServerAboutPopup(id, msec, message)
 		var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
 		webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
 	} // if
-
-	$("#original_mfd_popup").text("N_POP");  // "Notification popup" - Debug info
 } // NotifyServerAboutPopup
 
 // Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
@@ -4545,9 +4542,6 @@ function handleItemChange(item, value)
 		{
 			satnavCurrentStreet = value;
 
-			// Show the first three letters in the debug box. TODO - remove
-			$("#original_mfd_curr_street").text(satnavCurrentStreet.substring(0, 3));
-
 			if (satnavMode === "IN_GUIDANCE_MODE")
 			{
 				// Last received value empty ("")? Then copy current street into next street (if not empty)
@@ -5307,14 +5301,6 @@ function handleItemChange(item, value)
 			// Regardless where the original MFD is showing its trip computer data (small screen or large screen),
 			// we show it always in the small screen.
 			gotoSmallScreen(value);
-
-			if (mfdLargeScreen === "TRIP_COMPUTER")
-			{
-				// Show the first few letters of the screen name plus the first few letters of the trip computer tab
-				$("#original_mfd_large_screen").text(
-					mfdLargeScreen.substring(0, 4) + " " + tripComputerShortStr(localStorage.smallScreen)  // Debug info
-				);
-			}
 		} // case
 		break;
 
@@ -5325,34 +5311,12 @@ function handleItemChange(item, value)
 				value === "TRIP_INFO_1" ? 1 :
 				value === "TRIP_INFO_2" ? 2 : 0;
 			selectTabInTripComputerPopup(tabIndex);
-
-			$("#original_mfd_popup").text(tripComputerShortStr(value));  // Debug info
-		} // case
-		break;
-
-		case "small_screen":
-		{
-			// Show three letters of the screen name
-			$("#original_mfd_small_screen").text(tripComputerShortStr(value));
 		} // case
 		break;
 
 		case "large_screen":
 		{
 			mfdLargeScreen = value;
-
-			if (mfdLargeScreen === "TRIP_COMPUTER")
-			{
-				// Show the first few letters of the screen name plus the first few letters of the trip computer tab
-				$("#original_mfd_large_screen").text(
-					mfdLargeScreen.substring(0, 4) + " " + tripComputerShortStr(localStorage.smallScreen)
-				);
-			}
-			else
-			{
-				// Show the first few letters of the screen name
-				$("#original_mfd_large_screen").text(mfdLargeScreen.substring(0, 6));
-			} // if
 		} // case
 		break;
 
@@ -5371,8 +5335,6 @@ function handleItemChange(item, value)
 
 			let parts = value.split(" ");
 			let button = parts[0];
-
-			$("#ir_button_pressed").text(button.substring(0, 3));  // Debug info
 
 			if (button === "MENU_BUTTON")
 			{
@@ -5496,8 +5458,9 @@ function handleItemChange(item, value)
 				if (currentMenu === "satnav_enter_city_characters" || currentMenu === "satnav_enter_street_characters")
 				{
 					// In case both the "Val" packet and the "End_of_button_press" packet were missed...
-					let selectedChar = $("#satnav_to_mfd_show_characters_line_1 .invertedText").text();
-					if (! selectedChar) selectedChar = $("#satnav_to_mfd_show_characters_line_2 .invertedText").text();
+					let id = "#satnav_to_mfd_show_characters_line_";
+					let selectedChar = $(id + "1 .invertedText").text();
+					if (! selectedChar) selectedChar = $(id + "2 .invertedText").text();
 					if (selectedChar) satnavLastEnteredChar = selectedChar;
 				} // if
 
@@ -5525,12 +5488,6 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "mfd_popup":
-		{
-			$("#original_mfd_popup").text(value);  // Debug info
-		} // case
-		break;
-
 		case "recirc":
 		case "rear_heater_2":
 		case "ac_enabled":
@@ -5544,8 +5501,7 @@ function handleItemChange(item, value)
 			if (item === "set_fan_speed")
 			{
 				let on = value !== "0";
-				$("#fan_icon").toggleClass("ledOn", on);
-				$("#fan_icon").toggleClass("ledOff", ! on);
+				$("#fan_icon").toggleClass("ledOn", on).toggleClass("ledOff", ! on);
 			} // if
 
 			if (previousValue === undefined) break;  // No popup when receiving initial update
@@ -5574,13 +5530,7 @@ function handleItemChange(item, value)
 
 function setLanguage(language)
 {
-	var languageSelections =
-		"<span class='languageIcon'>D</span>" +
-		"<span class='languageIcon'>E</span>" +
-		"<span class='languageIcon'>F</span>" +
-		"<span class='languageIcon'>GB</span>" +
-		"<span class='languageIcon'>NL</span>" +
-		"<span class='languageIcon'>I</span>";
+	var languageSelections = "D E F GB NL I ".replace(/(.*?) /g, "<span class='languageIcon'>$1</span>");
 
 	thousandsSeparator = ".";  // Default
 
@@ -5680,6 +5630,7 @@ function setLanguage(language)
 
 			$("#satnav_enter_city_characters .tag").html("Enter city");
 			$("#satnav_enter_street_characters .tag").html("Enter street");
+			$("#satnav_enter_house_number .tag").html("Enter number");
 
 			id = "#satnav_enter_characters";
 			$(id + " .tag:eq(0)").html("Choose next letter");
@@ -5691,8 +5642,6 @@ function setLanguage(language)
 			$("#satnav_tag_service_list").html("Service list");
 			$("#satnav_tag_personal_address_list").html("Personal address list");
 			$("#satnav_tag_professional_address_list").html("Professional address list");
-
-			$("#satnav_enter_house_number .tag").html("Enter number");
 
 			id = "#satnav_show_personal_address";
 			$(id + " .tag:eq(0)").html("City");
@@ -5749,10 +5698,15 @@ function setLanguage(language)
 
 			$(".validateButton").html("Validate");
 			$("#satnav_disclaimer_validate_button").html("Validate");
-			$("#satnav_manage_personal_address_rename_button").html("Rename");
-			$("#satnav_manage_personal_address_delete_button").html("Delete");
-			$("#satnav_manage_professional_address_rename_button").html("Rename");
-			$("#satnav_manage_professional_address_delete_button").html("Delete");
+
+			id = "#satnav_manage_personal_address_";
+			$(id + "rename_button").html("Rename");
+			$(id + "delete_button").html("Delete");
+
+			id = "#satnav_manage_professional_address_";
+			$(id + "rename_button").html("Rename");
+			$(id + "delete_button").html("Delete");
+
 			$("#satnav_service_address_previous_button").html("Previous");
 			$("#satnav_service_address_next_button").html("Next");
 
@@ -5860,6 +5814,7 @@ function setLanguage(language)
 
 			$("#satnav_enter_city_characters .tag").html("Saisie de la ville");
 			$("#satnav_enter_street_characters .tag").html("Saisie de la voie");
+			$("#satnav_enter_house_number .tag").html("Saisie du num&eacute;ro");
 
 			id = "#satnav_enter_characters";
 			$(id + " .tag:eq(0)").html("Choisis une lettre");  // TODO - check
@@ -5871,8 +5826,6 @@ function setLanguage(language)
 			$("#satnav_tag_service_list").html("Choix d'un service");  // TODO - check
 			$("#satnav_tag_personal_address_list").html("R&eacute;pertoire personnel");  // TODO - check
 			$("#satnav_tag_professional_address_list").html("R&eacute;pertoire professionnel");  // TODO - check
-
-			$("#satnav_enter_house_number .tag").html("Saisie du num&eacute;ro");
 
 			id = "#satnav_show_personal_address";
 			$(id + " .tag:eq(0)").html("Ville");
@@ -5929,10 +5882,15 @@ function setLanguage(language)
 
 			$(".validateButton").html("Valider");
 			$("#satnav_disclaimer_validate_button").html("Valider");
-			$("#satnav_manage_personal_address_rename_button").html("Renommer");
-			$("#satnav_manage_personal_address_delete_button").html("Supprimer");
-			$("#satnav_manage_professional_address_rename_button").html("Renommer");
-			$("#satnav_manage_professional_address_delete_button").html("Supprimer");
+
+			id = "#satnav_manage_personal_address_";
+			$(id + "rename_button").html("Renommer");
+			$(id + "delete_button").html("Supprimer");
+
+			id = "#satnav_manage_professional_address_";
+			$(id + "rename_button").html("Renommer");
+			$(id + "delete_button").html("Supprimer");
+
 			$("#satnav_service_address_previous_button").html("Pr&eacute;c&eacute;dent");
 			$("#satnav_service_address_next_button").html("Suivant");
 
@@ -6038,6 +5996,7 @@ function setLanguage(language)
 
 			$("#satnav_enter_city_characters .tag").html("Stadt eingeben");
 			$("#satnav_enter_street_characters .tag").html("Stra&szlig;e eingeben");
+			$("#satnav_enter_house_number .tag").html("Hausnummer eingeben");
 
 			id = "#satnav_enter_characters";
 			$(id + " .tag:eq(0)").html("Buchstabe w&auml;hlen");  // TODO - check
@@ -6049,8 +6008,6 @@ function setLanguage(language)
 			$("#satnav_tag_service_list").html("Einen Dienst w&auml;hlen");  // TODO - check
 			$("#satnav_tag_personal_address_list").html("Pers&ouml;nliches Zielverzeichnis");  // TODO - check
 			$("#satnav_tag_professional_address_list").html("Berufliches Zielverzeichnis");  // TODO - check
-
-			$("#satnav_enter_house_number .tag").html("Hausnummer eingeben");
 
 			id = "#satnav_show_personal_address";
 			$(id + " .tag:eq(0)").html("Stadt");
@@ -6107,10 +6064,15 @@ function setLanguage(language)
 
 			$(".validateButton").html("Best&auml;tigen");
 			$("#satnav_disclaimer_validate_button").html("Best&auml;tigen");
-			$("#satnav_manage_personal_address_rename_button").html("Umbenennen");
-			$("#satnav_manage_personal_address_delete_button").html("L&ouml;schen");
-			$("#satnav_manage_professional_address_rename_button").html("Umbenennen");
-			$("#satnav_manage_professional_address_delete_button").html("L&ouml;schen");
+
+			id = "#satnav_manage_personal_address_";
+			$(id + "rename_button").html("Umbenennen");
+			$(id + "delete_button").html("L&ouml;schen");
+
+			id = "#satnav_manage_professional_address_";
+			$(id + "rename_button").html("Umbenennen");
+			$(id + "delete_button").html("L&ouml;schen");
+
 			$("#satnav_service_address_previous_button").html("Z&uuml;r&uuml;ck");
 			$("#satnav_service_address_next_button").html("Weiter");
 
@@ -6217,6 +6179,7 @@ function setLanguage(language)
 
 			$("#satnav_enter_city_characters .tag").html("Introducir la ciudad");
 			$("#satnav_enter_street_characters .tag").html("Introducir la calle");
+			$("#satnav_enter_house_number .tag").html("Introducir el n&uacute;mero");
 
 			id = "#satnav_enter_characters";
 			$(id + " .tag:eq(0)").html("Elegir letra");  // TODO - check
@@ -6228,8 +6191,6 @@ function setLanguage(language)
 			$("#satnav_tag_service_list").html("Seleccionar servicio");  // TODO - check
 			$("#satnav_tag_personal_address_list").html("Directorio personal");  // TODO - check
 			$("#satnav_tag_professional_address_list").html("Directorio profesional");  // TODO - check
-
-			$("#satnav_enter_house_number .tag").html("Introducir el n&uacute;mero");
 
 			id = "#satnav_show_personal_address";
 			$(id + " .tag:eq(0)").html("Ciudad");
@@ -6286,10 +6247,15 @@ function setLanguage(language)
 
 			$(".validateButton").html("Aceptar");
 			$("#satnav_disclaimer_validate_button").html("Aceptar");
-			$("#satnav_manage_personal_address_rename_button").html("Cambiar");
-			$("#satnav_manage_personal_address_delete_button").html("Suprimir");
-			$("#satnav_manage_professional_address_rename_button").html("Cambiar");
-			$("#satnav_manage_professional_address_delete_button").html("Suprimir");
+
+			id = "#satnav_manage_personal_address_";
+			$(id + "rename_button").html("Cambiar");
+			$(id + "delete_button").html("Suprimir");
+
+			id = "#satnav_manage_professional_address_";
+			$(id + "rename_button").html("Cambiar");
+			$(id + "delete_button").html("Suprimir");
+
 			$("#satnav_service_address_previous_button").html("Anterior");
 			$("#satnav_service_address_next_button").html("Siguiente");
 
@@ -6395,6 +6361,7 @@ function setLanguage(language)
 
 			$("#satnav_enter_city_characters .tag").html("Selezionare citt&agrave;");
 			$("#satnav_enter_street_characters .tag").html("Selezionare via");
+			$("#satnav_enter_house_number .tag").html("Selezionare numero civico");
 
 			id = "#satnav_enter_characters";
 			$(id + " .tag:eq(0)").html("Scegli lettera");  // TODO - check
@@ -6406,8 +6373,6 @@ function setLanguage(language)
 			$("#satnav_tag_service_list").html("Scelta un servizio");  // TODO - check
 			$("#satnav_tag_personal_address_list").html("Rubrica personale");  // TODO - check
 			$("#satnav_tag_professional_address_list").html("Rubrica professionale");  // TODO - check
-
-			$("#satnav_enter_house_number .tag").html("Selezionare numero civico");
 
 			id = "#satnav_show_personal_address";
 			$(id + " .tag:eq(0)").html("Citt&agrave;");
@@ -6464,10 +6429,15 @@ function setLanguage(language)
 
 			$(".validateButton").html("Convalidare");
 			$("#satnav_disclaimer_validate_button").html("Convalidare");
-			$("#satnav_manage_personal_address_rename_button").html("Rinominare");
-			$("#satnav_manage_personal_address_delete_button").html("Eliminare");
-			$("#satnav_manage_professional_address_rename_button").html("Rinominare");
-			$("#satnav_manage_professional_address_delete_button").html("Eliminare");
+
+			id = "#satnav_manage_personal_address_";
+			$(id + "rename_button").html("Rinominare");
+			$(id + "delete_button").html("Eliminare");
+
+			id = "#satnav_manage_professional_address_";
+			$(id + "rename_button").html("Rinominare");
+			$(id + "delete_button").html("Eliminare");
+
 			$("#satnav_service_address_previous_button").html("Precedente");
 			$("#satnav_service_address_next_button").html("Seguente");
 
@@ -6573,6 +6543,7 @@ function setLanguage(language)
 
 			$("#satnav_enter_city_characters .tag").html("Stad invoeren");
 			$("#satnav_enter_street_characters .tag").html("Straat invoeren");
+			$("#satnav_enter_house_number .tag").html("Nummer invoeren");
 
 			id = "#satnav_enter_characters";
 			$(id + " .tag:eq(0)").html("Kies letter");
@@ -6584,8 +6555,6 @@ function setLanguage(language)
 			$("#satnav_tag_service_list").html("Kies dienst");  // TODO - check
 			$("#satnav_tag_personal_address_list").html("Kies priv&eacute;-adres");  // TODO - check
 			$("#satnav_tag_professional_address_list").html("Kies zaken-adres");  // TODO - check
-
-			$("#satnav_enter_house_number .tag").html("Nummer invoeren");
 
 			id = "#satnav_show_personal_address";
 			$(id + " .tag:eq(0)").html("Stad");
@@ -6642,10 +6611,15 @@ function setLanguage(language)
 
 			$(".validateButton").html("Bevestigen");
 			$("#satnav_disclaimer_validate_button").html("Bevestigen");
-			$("#satnav_manage_personal_address_rename_button").html("Nieuwe naam");
-			$("#satnav_manage_personal_address_delete_button").html("Wissen");
-			$("#satnav_manage_professional_address_rename_button").html("Nieuwe naam");
-			$("#satnav_manage_professional_address_delete_button").html("Wissen");
+
+			id = "#satnav_manage_personal_address_";
+			$(id + "rename_button").html("Nieuwe naam");
+			$(id + "delete_button").html("Wissen");
+
+			id = "#satnav_manage_professional_address_";
+			$(id + "rename_button").html("Nieuwe naam");
+			$(id + "delete_button").html("Wissen");
+
 			$("#satnav_service_address_previous_button").html("Vorige");
 			$("#satnav_service_address_next_button").html("Volgende");
 

@@ -1,29 +1,6 @@
 
 // Following DOM elements are compiled conditionally
 
-#ifdef DEBUG_ORIGINAL_MFD
-
-// Tags indicating what is currently showing on the original MFD
-#define ORIGINAL_MFD_SCREEN_NAMES \
-"		<div id='original_mfd_small_screen' class='led ledOn' style='left:20px; top:505px; width:110px; height:37px;'></div>\n" \
-"		<div id='original_mfd_large_screen' class='led ledOn' style='left:140px; top:505px; width:240px; height:37px;'></div>\n" \
-"		<div id='original_mfd_popup' class='led ledOn' style='left:80px; top:460px; width:150px; height:37px;'></div>\n" \
-"		<div id='original_mfd_curr_street' class='led ledOn' style='left:20px; top:600px; width:100px; height:37px;'></div>\n"
-
-#else
-#define ORIGINAL_MFD_SCREEN_NAMES ""
-#endif // DEBUG_ORIGINAL_MFD
-
-#ifdef DEBUG_IR_RECV
-
-// Three-letter tag indicating the button pressed on the IR remote control
-#define IR_BUTTON_PRESSED \
-"		<div id='ir_button_pressed' class='led ledOn' style='left:20px; top:560px; width:100px; height:37px;'></div>\n"
-
-#else
-#define IR_BUTTON_PRESSED ""
-#endif // DEBUG_IR_RECV
-
 #ifdef DEBUG_WEBSOCKET
 
 // Flashing LED indicating web socket activity
@@ -2770,8 +2747,6 @@ char mfd_html[] PROGMEM = R"=====(
 
 )====="
 
-ORIGINAL_MFD_SCREEN_NAMES
-IR_BUTTON_PRESSED
 COMMS_LED
 
 R"=====(
