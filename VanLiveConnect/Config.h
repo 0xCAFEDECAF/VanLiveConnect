@@ -123,7 +123,7 @@
 //   the ESP to become completely unresponsive (caused by ground loop??). Instead, just disconnect the +12V line
 //   to simulate a power-off event.
 //
-#define LIGHT_SLEEP_WAKE_PIN D4
+#define LIGHT_SLEEP_WAKE_PIN D1
 
 // -----
 // Web server
