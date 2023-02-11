@@ -19,13 +19,13 @@ void IrDisable();
 void SetupSleep()
 {
     gpio_pin_wakeup_disable();
-    pinMode(LIGHT_SLEEP_WAKE_PIN, WAKEUP_PULLUP);
+    pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
 } // SetupSleep
 
 void WakeupCallback()
 {
     gpio_pin_wakeup_disable();
-    pinMode(LIGHT_SLEEP_WAKE_PIN, WAKEUP_PULLUP);
+    pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
 
     wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
