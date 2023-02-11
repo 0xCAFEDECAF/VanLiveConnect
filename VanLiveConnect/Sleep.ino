@@ -19,13 +19,13 @@ void IrDisable();
 void SetupSleep()
 {
     gpio_pin_wakeup_disable();
-    pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
+    pinMode(LIGHT_SLEEP_WAKE_PIN, WAKEUP_PULLUP);
 } // SetupSleep
 
 void WakeupCallback()
 {
     gpio_pin_wakeup_disable();
-    pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
+    pinMode(LIGHT_SLEEP_WAKE_PIN, WAKEUP_PULLUP);
 
     wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
@@ -48,10 +48,12 @@ void GoToSleep()
 
     CommitEeprom();
 
+    delay(1000);
+
     // Wake up by pulling pin low (GND)
     gpio_pin_wakeup_enable(GPIO_ID_PIN(LIGHT_SLEEP_WAKE_PIN), GPIO_PIN_INTR_LOLEVEL);
 
-    delay(500);
+    delay(1000);
 
     wifi_set_opmode(NULL_MODE);
     wifi_fpm_set_sleep_type(LIGHT_SLEEP_T);
@@ -61,10 +63,14 @@ void GoToSleep()
   #define FPM_SLEEP_MAX_TIME (0xFFFFFFF)
     wifi_fpm_do_sleep(FPM_SLEEP_MAX_TIME);
 
-    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (D1) is pulled low. Connect this pin to CANL, which is pulled
+    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (D4) is pulled low. Connect this pin to CANL, which is pulled
     // low (~ 0 Volt) when dominant, i.e. when VAN bus activity occurs.
 
     // Execution resumes here after wakeup
+
+    delay(1000);
+
+    Serial.println(F("=====> Waking up from light sleep mode"));
 
     delay(1000);
 
