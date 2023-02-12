@@ -170,11 +170,12 @@ const char* VanBusStatsToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"van_bus_stats\": \"VAN Rx Stats: %s\"\n"
+            "\"van_bus_stats\": \"VAN Rx Stats: %s\",\n"
+            "\"uptime_seconds\": \"%lu\"\n"
         "}\n"
     "}\n";
 
-    int at = snprintf_P(buf, n, jsonFormatter, VanBusStatsToStr());
+    int at = snprintf_P(buf, n, jsonFormatter, VanBusStatsToStr(), millis() / 1000);
 
     // JSON buffer overflow?
     if (at >= n) return "";
@@ -213,7 +214,7 @@ void setup()
 
     delay(1000);
     Serial.begin(115200);
-    Serial.println(F("Starting VAN bus \"Live Connect\" server"));
+    Serial.println(F("\nStarting VAN bus \"Live Connect\" server"));
 
     PrintSystemSpecs();
 
