@@ -2699,11 +2699,11 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="top:100px; width:230px;">Flash size (IDE)</div>
 					<div class="tag" style="top:130px; width:230px;">Flash speed (IDE)</div>
 					<div class="tag" style="top:160px; width:230px;">Flash mode (IDE)</div>
-					<div class="tag" style="top:190px; width:230px;">Reset Reason</div>
-					<div class="tag" style="top:220px; width:230px;">Reset Info</div>
-					<div class="tag" style="top:260px; width:230px;">SDK</div>
-					<div class="tag" style="top:290px; width:230px;">MD5 checksum</div>
-					<div class="tag" style="top:320px; width:230px;">Compiled @</div>
+					<div class="tag" style="top:190px; width:230px;">Compiled @</div>
+					<div class="tag" style="top:220px; width:230px;">MD5 checksum</div>
+					<div class="tag" style="top:250px; width:230px;">SDK</div>
+					<div class="tag" style="top:290px; width:230px;">Reset Reason</div>
+					<div class="tag" style="top:320px; width:230px;">Reset Info</div>
 					<div style="position:absolute; left:360px;">
 						<div class="tag" style="top:10px; width:260px;">CPU Speed</div>
 						<div class="tag" style="top:40px; width:260px;">Chip ID</div>
@@ -2711,6 +2711,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="tag" style="top:100px; width:260px;">IP address</div>
 						<div class="tag" style="top:130px; width:260px;">Wi-Fi RSSI</div>
 						<div class="tag" style="top:160px; width:260px;">Free RAM</div>
+						<div class="tag" style="top:190px; width:260px;">Uptime</div>
 					</div>
 				</div>
 				<div id="esp_boot_version" class="tag" style="left:240px; top:5px;">---</div>
@@ -2719,17 +2720,18 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="esp_flash_size_ide" class="tag" style="left:240px; top:95px;">---</div>
 				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:125px;">---</div>
 				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:155px;">---</div>
-				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:185px;">---</div>
-				<div id="esp_last_reset_info" class="tag" style="left:240px; top:215px; width:660px; text-align:left;">---</div>
-				<div id="esp_sdk_version" class="tag" style="left:240px; top:255px;">---</div>
-				<div id="img_md5_checksum" class="tag" style="left:240px; top:285px;">---</div>
-				<div id="img_compile_date" class="tag" style="left:240px; top:315px;">---</div>
+				<div id="img_compile_date" class="tag" style="left:240px; top:185px;">---</div>
+				<div id="img_md5_checksum" class="tag" style="left:240px; top:215px;">---</div>
+				<div id="esp_sdk_version" class="tag" style="left:240px; top:245px;">---</div>
+				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:285px;">---</div>
+				<div id="esp_last_reset_info" class="tag" style="left:240px; top:315px; width:660px; text-align:left;">---</div>
 				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px;">---</div>
 				<div id="esp_chip_id" class="tag" style="left:630px; top:35px;">---</div>
 				<div id="esp_mac_address" class="tag" style="left:630px; top:65px;">---</div>
 				<div id="esp_ip_address" class="tag" style="left:630px; top:95px;">---</div>
 				<div id="esp_wifi_rssi" class="tag" style="left:630px; top:125px;">---</div>
 				<div id="esp_free_ram" class="tag" style="left:630px; top:155px;">---</div>
+				<div id="uptime" class="tag" style="left:630px; top:185px;">---</div>
 			</div>
 
 			<div id="van_bus_stats" class="tag"

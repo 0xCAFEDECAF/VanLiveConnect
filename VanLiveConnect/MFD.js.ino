@@ -5520,6 +5520,12 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "uptime_seconds":
+		{
+			$("#uptime").text(new Date(value * 1000).toLocaleTimeString([], { timeZone: "UTC" }));
+		} // case
+		break;
+
 		default:
 		break;
 	} // switch
