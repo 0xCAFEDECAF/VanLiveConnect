@@ -159,6 +159,10 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    As the MCP2551 has 5V logic, a 5V ↔️ 3.3V [level converter] is needed to connect the CRX / RXD / R pin of the
    transceiver, via the level converter, to a GPIO pin of your ESP8266 board.
 
+   A board with the MCP2551 transceiver can be ordered e.g.
+   [here](https://webshop.domoticx.nl/can-bus-transceiver-module-5v-mcp2551) or
+   [here](https://nl.aliexpress.com/item/1005004475976642.html).
+
 ![schema](extras/schematics/Schematic%20using%20MCP2551_bb.png)
 
 > 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
@@ -167,6 +171,9 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    The SN65HVD230 transceiver already has 3.3V logic, so it is possible to directly connect the CRX / RXD / R pin of
    the transceiver to a GPIO pin of your ESP8266 board.
+
+   A board with the SN65HVD230 transceiver can be ordered
+   [here](https://webshop.domoticx.nl/index.php?route=product/product&product_id=3935).
 
 ![schema](extras/schematics/Schematic%20using%20SN65HVD230_bb.png)
 
