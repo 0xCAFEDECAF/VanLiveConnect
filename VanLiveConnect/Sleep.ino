@@ -30,11 +30,15 @@ void WakeupCallback()
     wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
 
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
 void GoToSleep()
 {
     Serial.printf_P
     (
-        PSTR("=====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %d\n"),
+        PSTR("=====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (%d)\n"),
+        XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
 
