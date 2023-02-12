@@ -116,8 +116,9 @@
 //   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
 //
 // - The following protection diodes may be required to prevent (negative) surge at power-off event:
-//   1.) GND ---|>|--- CANL
-//   2.) GND ---|>|--- +5V
+//     GND ---|>|--- CANL ---|>|--- +5V
+//                       \---|>|--- +3.3V
+//     GND ---|>|--- +5V
 //
 // - In the test setup on the desk, best not to power off using the main power switch; this sometimes causes
 //   the ESP to become completely unresponsive (caused by ground loop??). Instead, just disconnect the +12V line
