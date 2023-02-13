@@ -99,7 +99,7 @@ void SetupStore()
         fileMd5[fileMd5Last].md5 = md5.toString();
         if (++fileMd5Last >= MAX_FILE_MD5)
         {
-            Serial.println("=====> Too many files found: please increase MAX_FILE_MD5");
+            Serial.println("====> Too many files found: please increase MAX_FILE_MD5");
             break;
         } // if
     } // while

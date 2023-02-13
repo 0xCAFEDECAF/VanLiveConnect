@@ -37,7 +37,7 @@ void GoToSleep()
 {
     Serial.printf_P
     (
-        PSTR("=====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (%d)\n"),
+        PSTR("====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (%d)\n"),
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
@@ -74,7 +74,7 @@ void GoToSleep()
 
     delay(1000);
 
-    Serial.println(F("=====> Waking up from light sleep mode"));
+    Serial.println(F("====> Waking up from light sleep mode"));
 
     delay(1000);
 

@@ -126,7 +126,7 @@ void SetupVanReceiver()
     } // if
 
   #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
-    Serial.printf_P(PSTR("--> VanBusRx: DEBUGGING MODE IS ON!\n"));
+    Serial.printf_P(PSTR("==> VanBusRx: DEBUGGING MODE IS ON!\n"));
   #endif
 } // SetupVanReceiver
 

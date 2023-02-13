@@ -3783,7 +3783,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         if (packetFragmentNo != expectedFragmentNo)
         {
             Serial.printf_P(
-                PSTR("--> packetFragmentNo = %u ; expectedFragmentNo = %u\n"),
+                PSTR("==> packetFragmentNo = %u ; expectedFragmentNo = %u\n"),
                 packetFragmentNo,
                 expectedFragmentNo
             );
@@ -3804,7 +3804,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             if (++currentRecord >= MAX_SATNAV_RECORDS)
             {
                 // Warning on Serial output
-                Serial.print(F("--> WARNING: too many records in satnav report!\n"));
+                Serial.print(F("==> WARNING: too many records in satnav report!\n"));
             } // if
 
             currentString = 0;
@@ -3889,7 +3889,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
         {
             // Warning on serial output
-            Serial.print(F("--> WARNING: too many strings in record in satnav report!\n"));
+            Serial.print(F("==> WARNING: too many strings in record in satnav report!\n"));
         } // if
     } // while
 
@@ -5282,7 +5282,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if (IsPacketSelected(iden, SELECTED_PACKETS))
     {
-        Serial.printf_P(PSTR("--> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
+        Serial.printf_P(PSTR("==> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
 
         // The first time, or after an call to ResetPacketPrevData, handler->prevDataLen will be -1, so only
         // the "FULL: " line will be printed
@@ -5464,7 +5464,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
         || result == VAN_PACKET_PARSE_JSON_TOO_LONG
        )
     {
-        Serial.printf_P(PSTR("--> WARNING: VAN packet parsing result = '%S'!\n"), VanPacketParseResultStr(result));
+        Serial.printf_P(PSTR("==> WARNING: VAN packet parsing result = '%S'!\n"), VanPacketParseResultStr(result));
 
         // No use to return the JSON buffer; it is invalid
         return "";

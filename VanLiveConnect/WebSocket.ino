@@ -67,7 +67,7 @@ void SaveJsonForLater(const char* json)
     // Copy content, for sending later
     memcpy(savedJson[savedJsonIdx], json, strlen(json) + 1);
 
-    Serial.printf_P(PSTR("--> WebSocket: saved JSON data for later sending in slot '%d'\n"), savedJsonIdx);
+    Serial.printf_P(PSTR("==> WebSocket: saved JSON data for later sending in slot '%d'\n"), savedJsonIdx);
     Serial.print(F("JSON object:\n"));
     PrintJsonText(json);
 
@@ -82,7 +82,7 @@ void SendSavedJson()
     {
         if (savedJson[i] != NULL)
         {
-            Serial.printf_P(PSTR("--> WebSocket: sending saved JSON data packet no. '%d'\n"), i);
+            Serial.printf_P(PSTR("==> WebSocket: sending saved JSON data packet no. '%d'\n"), i);
             SendJsonOnWebSocket(savedJson[i]);
             free(savedJson[i]);
             savedJson[i] = NULL;
