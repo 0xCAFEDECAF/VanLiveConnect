@@ -115,9 +115,15 @@
 //   But just in case, ESP8266 board *does* seem to cope well with +5V voltage levels on input pins; see also:
 //   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
 //
-// - The following protection diodes may be required to prevent (negative) surge at power-off event:
-//     GND ---|>|--- CANL ---|>|--- +5V
-//                       \---|>|--- +3.3V
+// - The following clamping circuit is required to decouple the ESP from transient spikes that may occur on the VAN bus:
+//   ( ---[R]--- = resistor 1 kOhm, ---|>|--- = diode 1N4148 )
+//
+//   TODO - not sure whether to clamp to 3.3V or 5V; I guess 3.3V is safer.
+//
+//     CANL ---[R]---\
+//                   |
+//      GND ---|>|---+---|>|--- +3.3V on ESP board
+//
 //     GND ---|>|--- +5V
 //
 // - In the test setup on the desk, best not to power off using the main power switch; this sometimes causes
