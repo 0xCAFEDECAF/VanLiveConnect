@@ -30,14 +30,11 @@ void WakeupCallback()
     wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
 
-#define XSTR(x) STR(x)
-#define STR(x) #x
-
 void GoToSleep()
 {
     Serial.printf_P
     (
-        PSTR("====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (%d)\n"),
+        PSTR("====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%d)\n"),
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
@@ -53,6 +50,9 @@ void GoToSleep()
     CommitEeprom();
 
     delay(1000);
+
+    // TODO - need this?
+    //pinMode(LIGHT_SLEEP_WAKE_PIN, WAKEUP_PULLUP);
 
     // Wake up by pulling pin low (GND)
     gpio_pin_wakeup_enable(GPIO_ID_PIN(LIGHT_SLEEP_WAKE_PIN), GPIO_PIN_INTR_LOLEVEL);

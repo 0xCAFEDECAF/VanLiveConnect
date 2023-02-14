@@ -33,6 +33,9 @@ IPAddress apIP;
 // Encourage the compiler to use the a newer (C++11 ?) standard. If this is removed, it doesn't compile!
 char dummy_var_to_use_cppXX[] PROGMEM = R"==(")==";
 
+#define XSTR(x) STR(x)
+#define STR(x) #x
+
 // Over The Air (OTA) update, defined in BasicOTA.ino
 void SetupOta();
 void LoopOta();
@@ -110,6 +113,8 @@ void SetupVanReceiver()
 
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
+
+    Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%d)\n"), XSTR(RX_PIN), RX_PIN);
 
     if (VanBusRx.Setup(RX_PIN, VAN_PACKET_QUEUE_SIZE))
     {
