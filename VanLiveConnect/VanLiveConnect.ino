@@ -114,7 +114,7 @@ void SetupVanReceiver()
     // GPIO pin connected to VAN bus transceiver output
     #define RX_PIN D2
 
-    Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%d)\n"), XSTR(RX_PIN), RX_PIN);
+    Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%u)\n"), XSTR(RX_PIN), RX_PIN);
 
     if (VanBusRx.Setup(RX_PIN, VAN_PACKET_QUEUE_SIZE))
     {
@@ -292,9 +292,15 @@ void loop()
 
     LoopWebSocket(); // TODO - necessary?
 
-    // After 1 minute of VAN bus inactivity, go to sleep to save power
+    // After a few minutes of VAN bus inactivity, go to sleep to save power
+    unsigned long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
+  #ifdef ON_DESK_MFD_ESP_MAC
+    // On the desk test setup, we want to go to sleep much quicker
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
+  #endif // ON_DESK_MFD_ESP_MAC
+
     static unsigned long lastPacketAt = 0;
-    if (millis() - lastPacketAt >= SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY)
+    if (millis() - lastPacketAt >= sleepAfter)
     {
         GoToSleep();
         lastPacketAt = millis();

@@ -34,7 +34,7 @@ void GoToSleep()
 {
     Serial.printf_P
     (
-        PSTR("====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%d)\n"),
+        PSTR("====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%u)\n"),
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
@@ -67,16 +67,21 @@ void GoToSleep()
   #define FPM_SLEEP_MAX_TIME (0xFFFFFFF)
     wifi_fpm_do_sleep(FPM_SLEEP_MAX_TIME);
 
-    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (D1) is pulled low. Connect this pin to CANL, which is pulled
-    // low (~ 0 Volt) when dominant, i.e. when VAN bus activity occurs.
+    // Execution halts here until LIGHT_SLEEP_WAKE_PIN (see Config.h) is pulled low. Connect this pin to CANL, which
+    // is pulled low (~ 0 Volt) when dominant, i.e. when VAN bus activity occurs.
 
     // Execution resumes here after wakeup
 
-    delay(1000);
+    delay(100);
 
-    Serial.println(F("====> Waking up from light sleep mode"));
+    Serial.printf_P
+    (
+        PSTR("====> VAN bus activity on pin %s (GPIO%u) detected: waking up from light sleep mode\n"),
+        XSTR(LIGHT_SLEEP_WAKE_PIN),
+        LIGHT_SLEEP_WAKE_PIN
+    );
 
-    delay(1000);
+    delay(500);
 
     // Let's go for a fresh 'n fruity start
     ESP.restart();
