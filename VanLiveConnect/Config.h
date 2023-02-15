@@ -116,7 +116,7 @@
 //   https://ba0sh1.com/2016/08/03/is-esp8266-io-really-5v-tolerant/
 //
 // - The following clamping circuit is required to decouple the ESP from transient spikes that may occur on the VAN bus:
-//   ( ---[R]--- = resistor 1 kOhm, ---|>|--- = diode 1N4148 )
+//   ( ---[R]--- = resistor 470 Ohm, ---|>|--- = diode 1N4148 )
 //
 //   TODO - not sure whether to clamp to 3.3V or 5V; I guess 3.3V is safer.
 //
