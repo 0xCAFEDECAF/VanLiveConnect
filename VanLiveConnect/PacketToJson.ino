@@ -737,7 +737,7 @@ enum Fuel_t
 }; // Fuel_t
 
 #define VIN_NUMBER_LENGTH 17
-char vinNumber[VIN_NUMBER_LENGTH + 1];
+char vinNumber[VIN_NUMBER_LENGTH + 1] = {0};
 int fuelType = FUEL_PETROL;
 
 VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -746,6 +746,14 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
     // http://pinterpeti.hu/psavanbus/PSA-VAN.html#E24
 
     const uint8_t* data = pkt.Data();
+
+    // Only continue if content is valid
+    int i = 0;
+    while (data[i] != 0 && i < VIN_NUMBER_LENGTH)
+    {
+        if (! ((data[i] >= 'A' && data[i] <= 'Z') || (data[i] >= '0' && data[i] <= '9'))) return VAN_PACKET_NO_CONTENT;
+        i++;
+    } // for
 
     // Engine (fuel) types:
     // - "8" = XUD: diesel
