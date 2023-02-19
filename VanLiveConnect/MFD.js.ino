@@ -3136,7 +3136,9 @@ function satnavEscapeVocalSynthesisLevel()
 
 function satnavStopGuidance()
 {
-	localStorage.askForGuidanceContinuation = "NO";
+	// Try to reproduce a bug in the original MFD: if sat nav guidance is stopped while not on map,
+	// it will ask for guidance continuation later. So only clear if "on map".
+	if (satnavOnMap) localStorage.askForGuidanceContinuation = "NO";
 	selectDefaultScreen();
 } // satnavStopGuidance
 
@@ -3160,7 +3162,17 @@ function satnavPoweringOff(satnavMode)
 	handleItemChange.nSatNavDiscUnreadable = 1;
 	satnavDisclaimerAccepted = false;
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
-} // function
+} // satnavPoweringOff
+
+function satnavNoAudioIcon()
+{
+	clearTimeout(handleItemChange.audioSourceTimer);
+	handleItemChange.audioSourceTimer = undefined;
+	if (handleItemChange.headUnitLastSwitchedTo === "NAVIGATION") 
+	{
+		$("#satnav_no_audio_icon").toggle($("#volume").text() === "0");
+	} // if
+} // satnavNoAudioIcon
 
 function showPowerSavePopup()
 {
@@ -3784,6 +3796,25 @@ function handleItemChange(item, value)
 			} // if
 
 			selectDefaultScreen(value);
+		} // case
+		break;
+
+		case "head_unit_update_switch_to":
+		{
+			handleItemChange.headUnitLastSwitchedTo = value;
+			clearTimeout(handleItemChange.audioSourceTimer);
+			if ($("#audio_source").text() === "NAVIGATION") satnavNoAudioIcon();
+		} // case
+		break;
+
+		case "volume":
+		{
+			if (handleItemChange.headUnitLastSwitchedTo === "NAVIGATION")
+			{
+				// Wait for the audio source to stabilize
+				clearTimeout(handleItemChange.audioSourceTimer);
+				handleItemChange.audioSourceTimer = setTimeout(satnavNoAudioIcon, 500);
+			} // if
 		} // case
 		break;
 
@@ -5463,6 +5494,8 @@ function handleItemChange(item, value)
 					if (! selectedChar) selectedChar = $(id + "2 .invertedText").text();
 					if (selectedChar) satnavLastEnteredChar = selectedChar;
 				} // if
+
+				if (currentLargeScreenId === "satnav_vocal_synthesis_level") satnavNoAudioIcon();
 
 				buttonClicked();
 			}

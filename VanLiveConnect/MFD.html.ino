@@ -1703,6 +1703,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div style="border: 5px solid var(--main-color); border-radius:15px; position:absolute; left:20px; top:120px; width:300px; height:390px;">
 
+						<div id="satnav_no_audio_icon" class="icon iconSmall led ledOn fas fa-volume-mute" style="left:5px; top:5px; height:45px; width:60px;"></div>
+
 						<!-- "Turn at" indication -->
 						<div id="satnav_turn_at_indication" style="display:block;">
 							<div id="satnav_turn_at_number" class="dots" style="top:285px; width:200px; text-align:right;">-</div>
@@ -2503,7 +2505,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
 
 				<div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
-				<div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
+				<div id="volume" gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
 
 				<div class="tag" style="left:50px; top:215px; width:200px;">Bass</div>
 				<div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
