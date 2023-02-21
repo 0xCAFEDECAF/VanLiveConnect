@@ -335,6 +335,10 @@ function connectToWebSocket()
 			webSocket.send("mfd_temperature_unit:" + localStorage.mfdTemperatureUnit);
 			webSocket.send("mfd_time_unit:" + localStorage.mfdTimeUnit);
 
+			// Send current date-time
+			webSocket.send("time_offset:" + new Date().getTimezoneOffset() * -1);
+			webSocket.send("date_time:" + Date.now());  // Unix epoch, in milliseconds
+
 			// (Re-)start the "keep alive" timer
 			clearInterval(keepAliveWebSocketTimer);
 			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 6000);
@@ -3802,8 +3806,11 @@ function handleItemChange(item, value)
 		case "head_unit_update_switch_to":
 		{
 			handleItemChange.headUnitLastSwitchedTo = value;
-			clearTimeout(handleItemChange.audioSourceTimer);
-			if ($("#audio_source").text() === "NAVIGATION") satnavNoAudioIcon();
+			if ($("#audio_source").text() === "NAVIGATION")
+			{
+				clearTimeout(handleItemChange.audioSourceTimer);
+				handleItemChange.audioSourceTimer = setTimeout(satnavNoAudioIcon, 500);
+			} // if
 		} // case
 		break;
 
@@ -4531,15 +4538,6 @@ function handleItemChange(item, value)
 			$("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 		} // case
 		break;
-
-		// case "satnav_last_destination_city":
-		// {
-			// if (satnavStatus1.match(/ARRIVED_AT_DESTINATION/))
-			// {
-				// showPopup("satnav_reached_destination_popup", 10000);
-			// } // if
-		// } // case
-		// break;
 
 		case "satnav_personal_address_street":
 		case "satnav_professional_address_street":
