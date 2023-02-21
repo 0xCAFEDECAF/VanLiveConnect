@@ -96,6 +96,9 @@ void CycleTripInfo();
 void WriteEeprom(int const address, uint8_t const val, const char* message = 0);
 void CommitEeprom();
 
+// Defined in DateTime.ino
+const char* TimeStamp();
+
 // Forward declaration
 void ResetPacketPrevData();
 
@@ -3791,7 +3794,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         if (packetFragmentNo != expectedFragmentNo)
         {
             Serial.printf_P(
-                PSTR("==> packetFragmentNo = %u ; expectedFragmentNo = %u\n"),
+                PSTR("%s==> ERROR: satnav report (IDEN 0x6CE) packetFragmentNo = %u ; expectedFragmentNo = %u\n"),
+                TimeStamp(),
                 packetFragmentNo,
                 expectedFragmentNo
             );
@@ -3812,7 +3816,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             if (++currentRecord >= MAX_SATNAV_RECORDS)
             {
                 // Warning on Serial output
-                Serial.print(F("==> WARNING: too many records in satnav report!\n"));
+                Serial.printf_P(PSTR("%s==> WARNING: too many records in satnav report!\n"), TimeStamp());
             } // if
 
             currentString = 0;
@@ -3897,7 +3901,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         if (++currentString >= MAX_SATNAV_STRINGS_PER_RECORD)
         {
             // Warning on serial output
-            Serial.print(F("==> WARNING: too many strings in record in satnav report!\n"));
+            Serial.printf_P(PSTR("%s==> WARNING: too many strings in record in satnav report!\n"), TimeStamp());
         } // if
     } // while
 
@@ -5260,7 +5264,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
     if (at >= n) return "";
 
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    Serial.print(F("Equipment status data as JSON object:\n"));
+    Serial.printf_P(PSTR("%sEquipment status data as JSON object:\n"), TimeStamp());
     PrintJsonText(buf);
   #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
@@ -5290,7 +5294,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
     if (IsPacketSelected(iden, SELECTED_PACKETS))
     {
-        Serial.printf_P(PSTR("==> Received: %s packet (IDEN %03X)\n"), handler->idenStr, iden);
+        Serial.printf_P(PSTR("%sReceived: %s packet (IDEN %03X)\n"), TimeStamp(), handler->idenStr, iden);
 
         // The first time, or after an call to ResetPacketPrevData, handler->prevDataLen will be -1, so only
         // the "FULL: " line will be printed
@@ -5405,7 +5409,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
       // On the desk test setup, we want to see a lot of detailed output
         if (! pkt.CheckCrc())
         {
-            Serial.print(F("VAN PACKET CRC ERROR!\n"));
+            Serial.printf_P(PSTR("%sVAN PACKET CRC ERROR!\n"), TimeStamp());
 
           #ifdef VAN_RX_ISR_DEBUGGING
             // Show byte content of packet, plus full dump of bit timings for packets that have CRC ERROR,
@@ -5431,7 +5435,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
         {
           #ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
             // Show byte content of packet
-            Serial.print(F("VAN PACKET CRC ERROR!\n"));
+            Serial.printf_P(PSTR("%sVAN PACKET CRC ERROR!\n"), TimeStamp());
             pkt.DumpRaw(Serial);
 
           #ifdef VAN_RX_ISR_DEBUGGING
@@ -5472,7 +5476,11 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
         || result == VAN_PACKET_PARSE_JSON_TOO_LONG
        )
     {
-        Serial.printf_P(PSTR("==> WARNING: VAN packet parsing result = '%S'!\n"), VanPacketParseResultStr(result));
+        Serial.printf_P(
+            PSTR("%s==> WARNING: VAN packet parsing result = '%S'!\n"),
+            TimeStamp(),
+            VanPacketParseResultStr(result)
+        );
 
         // No use to return the JSON buffer; it is invalid
         return "";
@@ -5484,7 +5492,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
     if (IsPacketSelected(iden, SELECTED_PACKETS))
     {
-        Serial.print(F("Parsed to JSON object:\n"));
+        Serial.printf_P(PSTR("%sParsed to JSON object:\n"), TimeStamp());
         PrintJsonText(jsonBuffer);
     } // if
   #endif // PRINT_JSON_BUFFERS_ON_SERIAL

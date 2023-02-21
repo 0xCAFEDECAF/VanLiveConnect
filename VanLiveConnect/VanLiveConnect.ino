@@ -142,6 +142,10 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt);
 void SetupSleep();
 void GoToSleep();
 
+// Defined in DateTime.ino
+const char* DateTime(time_t, boolean = false);
+void PrintTimeStamp();
+
 // TODO - reduce size of large JSON packets like the ones containing guidance instruction icons
 #define JSON_BUFFER_SIZE 4096
 char jsonBuffer[JSON_BUFFER_SIZE];
@@ -405,6 +409,7 @@ void loop()
         lastUpdate2 = millis();
 
         // Print statistics
+        PrintTimeStamp();
         VanBusRx.DumpStats(Serial);
     } // if
   #endif // SHOW_VAN_RX_STATS

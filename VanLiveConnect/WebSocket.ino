@@ -25,6 +25,10 @@
   #endif  // WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
 #endif  // STRICT_COMPILATION
 
+#ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+#include <TimeLib.h>
+#endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;
 extern uint8_t mfdTemperatureUnit;
@@ -41,6 +45,10 @@ void NotificationPopupShowing(unsigned long since, long duration);
 
 // Defined in Esp.ino
 const char* EspSystemDataToJson(char* buf, const int n);
+
+// Defined in DateTime.ino
+void SetTimeZoneOffset(int newTimeZoneOffset);
+bool SetTime(uint32_t epoch, uint32_t msec);
 
 WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket server on port 81
 
@@ -88,7 +96,8 @@ void SendSavedJson()
             savedJson[i] = NULL;
         } // if
         i = (i + 1) % N_SAVED_JSON;
-    } while (i != savedJsonIdx);
+    }
+    while (i != savedJsonIdx);
 } // SendSavedJson
 
 void FreeSavedJson()
@@ -102,7 +111,8 @@ void FreeSavedJson()
             savedJson[i] = NULL;
         } // if
         i = (i + 1) % N_SAVED_JSON;
-    } while (i != savedJsonIdx);
+    }
+    while (i != savedJsonIdx);
 } // FreeSavedJson
 
 // Send a (JSON) message to the WebSocket client
@@ -144,6 +154,8 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
     unsigned long duration = millis() - start;
 
+    if (! result) Serial.printf_P(PSTR("FAILED to sending %zu JSON bytes via 'webSocket.sendTXT'\n"), strlen(json));
+
     if (! result || duration > 100)
     {
         // High possibility that this packet did in fact not come through
@@ -151,7 +163,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     }
     else
     {
-        FreeSavedJson();
+        SendSavedJson();
     } // if
 
     // Print a message if the WebSocket transmission took outrageously long (normally it takes around 1-2 msec).
@@ -243,7 +255,36 @@ void ProcessWebSocketClientMessage(const char* payload)
         mfdTimeUnit =
             value == "set_units_12h" ? MFD_TIME_UNIT_12H :
             MFD_TIME_UNIT_24H;
+    }
+
+  #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+
+    else if (clientMessage.startsWith("time_offset:"))
+    {
+        String value = clientMessage.substring(12);
+        SetTimeZoneOffset(value.toInt());
+    }
+    else if (clientMessage.startsWith("date_time:"))
+    {
+        String value = clientMessage.substring(10);
+        uint64_t epoch_msec = atoll(value.c_str());
+
+        uint32_t epoch = epoch_msec / 1000ULL;
+        uint32_t msec = epoch_msec % 1000ULL;
+
+        // Note: no idea how long this message has been in transport, so the time set here may be
+        // off a few (hundred) milliseconds...
+        if (SetTime(epoch, msec))
+        {
+            Serial.printf_P(
+                PSTR("==> Current date-time received from WebSocket client: %02d-%02d-%04d %02d:%02d:%02d.%03u\n"),
+                day(epoch), month(epoch), year(epoch), hour(epoch), minute(epoch), second(epoch), msec
+            );
+        } // if
     } // if
+
+  #endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+
 } // ProcessWebSocketClientMessage
 
 void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
@@ -252,7 +293,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
     {
         case WStype_DISCONNECTED:
         {
-            Serial.printf("[webSocket %u] Disconnected!\n", num);
+            Serial.printf_P(PSTR("%s[webSocket %u] Disconnected!\n"), TimeStamp(), num);
             if (num == websocketNum)
             {
                 websocketNum = prevWebsocketNum;
@@ -269,7 +310,8 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_CONNECTED:
         {
             IPAddress clientIp = webSocket.remoteIP(num);
-            Serial.printf_P(PSTR("[webSocket %u] Connected from %d.%d.%d.%d url: %s\n"),
+            Serial.printf_P(PSTR("%s[webSocket %u] Connected from %d.%d.%d.%d url: %s\n"),
+                TimeStamp(),
                 num,
                 clientIp[0], clientIp[1], clientIp[2], clientIp[3],
                 payload);
@@ -298,7 +340,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_TEXT:
         {
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("[webSocket %u] received text: '%s'"), num, payload);
+            Serial.printf_P(PSTR("%s[webSocket %u] received text: '%s'"), TimeStamp(), num, payload);
           #endif // DEBUG_WEBSOCKET
 
             if (num != websocketNum)
@@ -328,6 +370,23 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             ProcessWebSocketClientMessage((char*)payload);  // Process the message
         }
         break;
+
+      # if 0
+        case WStype_PING:
+        {
+            // pong will be sent automatically
+            Serial.printf("[webSocket %u] get ping\n", num);
+        }
+        break;
+
+        case WStype_PONG:
+        {
+            // answer to a ping we send
+            Serial.printf("[webSocket %u] get pong\n", num);
+        }
+        break;
+      #endif
+
     } // switch
 } // WebSocketEvent
 
@@ -346,7 +405,7 @@ void SetupWebSocket()
         PSTR("Async TCP"),
       #else
         PSTR("normal (synchronous) TCP"),
-      #endif
+      #endif  // WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
         WEBSOCKETS_TCP_TIMEOUT
     );
 } // SetupWebSocket
@@ -356,5 +415,5 @@ void LoopWebSocket()
   // Async interface does not need a loop call
   #if(WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC)
     webSocket.loop();
-  #endif
+  #endif  // WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
 } // LoopWebSocket
