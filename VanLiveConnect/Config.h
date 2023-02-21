@@ -281,4 +281,17 @@
 
 //#define PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
 
+// Define to prepend a time stamp to debug output
+// When not defined, output looks like this:
+//   Starting VAN bus "Live Connect" server
+// When defined, output looks like this:
+//   [08:43:45.641] Starting VAN bus "Live Connect" server
+//
+// This requires the Arduino 'Time' library (Paul Stoffregen, https://github.com/PaulStoffregen/Time,
+// https://playground.arduino.cc/Code/Time/ ). To install this library using the Arduino IDE, choose
+// menu "Sketch" --> "Include Library" --> "Manage Libraries", then enter "timelib" in the search box.
+// Click on the 'Time' entry, select the latest version (currently 1.6.1), then click the 'Install' button.
+//
+//#define PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+
 #endif // Config_h
