@@ -25,67 +25,67 @@ Don't bore us, give us the screenshots!
 
 **Main entry screen:**
 
-![screen](extras/screenshots/Clock.png)
+![screen](extras/Screenshots/Clock.png)
 
 **Tuner:**
 
-![screen](extras/screenshots/Tuner.png)
+![screen](extras/Screenshots/Tuner.png)
 
 **Tuner presets popup:**
 
-![screen](extras/screenshots/Tuner%20presets%20popup.png)
+![screen](extras/Screenshots/Tuner%20presets%20popup.png)
 
 **Audio settings:**
 
-![screen](extras/screenshots/Audio%20settings%20popup.png)
+![screen](extras/Screenshots/Audio%20settings%20popup.png)
 
 **CD player:**
 
-![screen](extras/screenshots/CD%20player.png)
+![screen](extras/Screenshots/CD%20player.png)
 
 **CD changer:**
 
-![screen](extras/screenshots/CD%20changer.png)
+![screen](extras/Screenshots/CD%20changer.png)
 
 **Second trip counter:**
 
-![screen](extras/screenshots/Trip%20counter%20%232.png)
+![screen](extras/Screenshots/Trip%20counter%20%232.png)
 
 **"Pre-flight" checks:**
 
-![screen](extras/screenshots/Pre-flight%20checks.png)
+![screen](extras/Screenshots/Pre-flight%20checks.png)
 
 **Instrument cluster (YMMV 🤣):**
 
-![screen](extras/screenshots/Instruments.png)
+![screen](extras/Screenshots/Instruments.png)
 
 **Current location:**
 
-![screen](extras/screenshots/Current%20location.png)
+![screen](extras/Screenshots/Current%20location.png)
 
 **Sat nav main menu:**
 
-![screen](extras/screenshots/Sat%20nav%20menu.png)
+![screen](extras/Screenshots/Sat%20nav%20menu.png)
 
 **Sat nav enter destination - city:**
 
-![screen](extras/screenshots/Sat%20nav%20enter%20city.png)
+![screen](extras/Screenshots/Sat%20nav%20enter%20city.png)
 
 **Sat nav - personal address entry (not mine!):**
 
-![screen](extras/screenshots/Sat%20nav%20personal%20address.png)
+![screen](extras/Screenshots/Sat%20nav%20personal%20address.png)
 
 **Sat nav guidance:**
 
-![screen](extras/screenshots/Sat%20nav%20guidance.png)
+![screen](extras/Screenshots/Sat%20nav%20guidance.png)
 
 **Door open popup:**
 
-![screen](extras/screenshots/Door%20open%20popup.png)
+![screen](extras/Screenshots/Door%20open%20popup.png)
 
 **Warning popup:**
 
-![screen](extras/screenshots/Warning%20popup.png)
+![screen](extras/Screenshots/Warning%20popup.png)
 
 ## 🎈 Description <a name = "description"></a>
 
@@ -163,7 +163,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    [here](https://webshop.domoticx.nl/can-bus-transceiver-module-5v-mcp2551) or
    [here](https://nl.aliexpress.com/item/1005004475976642.html).
 
-![schema](extras/schematics/Schematic%20using%20MCP2551_bb.png)
+![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
 
 > 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
@@ -175,7 +175,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    A board with the SN65HVD230 transceiver can be ordered e.g.
    [here](https://webshop.domoticx.nl/index.php?route=product/product&product_id=3935).
 
-![schema](extras/schematics/Schematic%20using%20SN65HVD230_bb.png)
+![schema](extras/Schematics/Schematic%20using%20SN65HVD230_bb.png)
 
 > 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
@@ -184,7 +184,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    two 4.7 kOhm resistors. Connect the GPIO pin of your ESP8266 board to the 1:2 [voltage divider] that is thus
    formed by the two resistors. Results may vary.
 
-![schema](extras/schematics/Schematic%20using%20voltage%20divider_bb.png)
+![schema](extras/Schematics/Schematic%20using%20voltage%20divider_bb.png)
    
 > 👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
      cause your car to explode! (or anything less catastrofic)
@@ -289,9 +289,9 @@ necessary functions is [MacroDroid - Device Automation]
 
 Below are screenshots that show two macros which perform all the necessary actions:
 
-|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20overview.png" width="250">|  |
+|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Screenshots/MacroDroid%20overview.png" width="250">|  |
 |---|---|
-|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20connect.png" width="250">|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/screenshots/MacroDroid%20disconnect.png" width="250">|
+|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Screenshots/MacroDroid%20connect.png" width="250">|<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Screenshots/MacroDroid%20disconnect.png" width="250">|
 
 #### "VanLiveConnect" macro
 
