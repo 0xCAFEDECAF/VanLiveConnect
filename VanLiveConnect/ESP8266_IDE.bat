@@ -8,6 +8,8 @@ set BOARDSPEC=esp8266:esp8266:d1_mini:xtal=160,ssl=basic,eesz=4M1M,ip=lm2n
 rem  Fill in your COM port here
 set COMPORT=COM3
 
-rem  Launch the Arduino IDE with the specified board options
+rem  Get the full directory name of the currently running script
 set MYPATH=%~dp0
+
+rem  Launch the Arduino IDE with the specified board options
 call "%MYPATH%..\extras\Scripts\ArduinoIdeEnv.bat"
