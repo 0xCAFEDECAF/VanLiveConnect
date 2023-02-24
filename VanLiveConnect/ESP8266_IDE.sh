@@ -11,7 +11,7 @@ COMPORT=/dev/ttyUSB0
 # Get the full directory name of the currently running script
 \cd `dirname $0`
 MYPATH=`pwd`
-\cd -
+\cd - > /dev/null
 
 # Launch the Arduino IDE with the specified board options
 . "${MYPATH}/../extras/Scripts/ArduinoIdeEnv.sh"
