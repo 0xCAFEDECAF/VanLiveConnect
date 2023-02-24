@@ -167,7 +167,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     }
     else
     {
-        SendSavedJson();
+        FreeSavedJson();
     } // if
 
     // Print a message if the WebSocket transmission took outrageously long (normally it takes around 1-2 msec).
