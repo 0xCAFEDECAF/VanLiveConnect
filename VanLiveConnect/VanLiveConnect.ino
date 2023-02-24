@@ -386,7 +386,7 @@ void loop()
       #if VAN_BUS_VERSION_INT >= 000003002
         if (! VanBusRx.IsEnabled())
         {
-            Serial.print(F("VAN BUS DISABLED!\n"));
+            Serial.print(F("==> Random noise detected on VAN bus; re-starting receiver\n"));
             VanBusRx.Enable();
         } // if
       #endif

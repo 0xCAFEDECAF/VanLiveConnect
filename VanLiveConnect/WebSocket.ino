@@ -5,10 +5,14 @@
 #ifdef STRICT_COMPILATION
   #if WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
 
+  // Note: setting #define WEBSOCKETS_NETWORK_TYPE NETWORK_ESP8266_ASYNC in WebSockets.h
+  // gives not only more reliable performance of the WebSocket, but also leads to less CRC error
+  // packets from the VAN bus.
+
   #warning "Please compile the WebSockets library for TCP asynchronous mode! To do this, define"
   #warning "WEBSOCKETS_NETWORK_TYPE to be NETWORK_ESP8266_ASYNC in the header file"
   #warning "...\Arduino\libraries\WebSockets\src\WebSockets.h, around line 118."
-  
+
   // Note: if not using TCP asynchronous mode, the following #define must be changed from:
   //   #define WEBSOCKETS_TCP_TIMEOUT (5000)
   // to:
@@ -277,7 +281,7 @@ void ProcessWebSocketClientMessage(const char* payload)
         if (SetTime(epoch, msec))
         {
             Serial.printf_P(
-                PSTR("==> Current date-time received from WebSocket client: %02d-%02d-%04d %02d:%02d:%02d.%03u\n"),
+                PSTR("==> Current date-time received from WebSocket client: %02d-%02d-%04d %02d:%02d:%02d.%03u UTC\n"),
                 day(epoch), month(epoch), year(epoch), hour(epoch), minute(epoch), second(epoch), msec
             );
         } // if
