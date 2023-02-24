@@ -38,6 +38,7 @@ void GoToSleep()
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
+    Serial.flush();
 
     IrDisable();
     VanBusRx.Disable();
@@ -80,6 +81,7 @@ void GoToSleep()
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
+    Serial.flush();
 
     delay(500);
 
