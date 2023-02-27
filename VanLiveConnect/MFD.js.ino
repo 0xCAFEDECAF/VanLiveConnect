@@ -542,13 +542,21 @@ function selectTabInTripComputerPopup(index)
 // -----
 // Functions for navigating through the screens and their subscreens/elements
 
+function resizeScreenToFit()
+{
+	let isMobile = window.matchMedia("(any-pointer:coarse)").matches;
+
+	if (! isMobile) $(":root").css("--scale-factor", (window.innerWidth - 10) / 1350 * window.devicePixelRatio);
+	else $(":root").css("--scale-factor", (window.innerWidth - 10) / 1350);
+} // resizeScreenToFit
+
 // Toggle full-screen mode
 function toggleFullScreen()
 {
 	if (! document.fullscreenElement && ! document.mozFullScreenElement && ! document.webkitFullscreenElement && ! document.msFullscreenElement)
 	{
 		// Enter full screen mode
-		var elem = document.documentElement;
+		let elem = document.documentElement;
 		if (elem.requestFullscreen) elem.requestFullscreen();
 		else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen(); // Firefox
 		else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); // Chrome and Safari
@@ -1269,10 +1277,7 @@ function navigateButtons(key)
 			let buttonOrientation = $("#" + gotoButtonId).parent().attr("button_orientation");
 			if (buttonOrientation === "horizontal")
 			{
-				buttonForNext =
-					key === "DOWN_BUTTON" || key === "RIGHT_BUTTON"
-						? "RIGHT_BUTTON"
-						: "LEFT_BUTTON";
+				buttonForNext = key === "DOWN_BUTTON" || key === "RIGHT_BUTTON" ? "RIGHT_BUTTON" : "LEFT_BUTTON";
 			} // if
 
 			let nextButtonId = $("#" + gotoButtonId).attr(buttonForNext);
@@ -1628,6 +1633,8 @@ function showAudioVolumePopup()
 	if (isAudioMenuVisible) return hideAudioSettingsPopupAfter(11500);
 
 	hideTunerPresetsPopup();  // If the tuner presets popup is visible, hide it
+	hidePopup("trip_computer_popup");
+	hidePopup("audio_popup");
 
 	// In the audio settings popup, unhighlight any audio setting
 	$("#" + highlightIds[audioSettingHighlightIndex]).hide();
@@ -2915,22 +2922,23 @@ function satnavGuidanceSetPreference(value)
 	if (value === undefined || value === "---") return;
 
 	// Copy the correct text into the guidance preference popup
-	var satnavGuidancePreferenceText =
-		value === "FASTEST_ROUTE" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(0)").text() :
-		value === "SHORTEST_DISTANCE" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(1)").text() :
-		value === "AVOID_HIGHWAY" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(2)").text() :
-		value === "COMPROMISE_FAST_SHORT" ? $("#satnav_guidance_preference_menu .tickBoxLabel:eq(3)").text() :
+	var menuId = "#satnav_guidance_preference_menu";
+	var preferenceText =
+		value === "FASTEST_ROUTE" ? $(menuId + " .tickBoxLabel:eq(0)").text() :
+		value === "SHORTEST_DISTANCE" ? $(menuId + " .tickBoxLabel:eq(1)").text() :
+		value === "AVOID_HIGHWAY" ? $(menuId + " .tickBoxLabel:eq(2)").text() :
+		value === "COMPROMISE_FAST_SHORT" ? $(menuId + " .tickBoxLabel:eq(3)").text() :
 		"??";
-	$("#satnav_guidance_current_preference_text").text(satnavGuidancePreferenceText.toLowerCase());
+	$("#satnav_guidance_current_preference_text").text(preferenceText.toLowerCase());
 
 	// Also set the correct tick box in the guidance preference menu
-	var satnavGuidancePreferenceTickBoxId =
-		value === "FASTEST_ROUTE" ? "satnav_guidance_preference_fastest" :
-		value === "SHORTEST_DISTANCE" ? "satnav_guidance_preference_shortest" :
-		value === "AVOID_HIGHWAY" ? "satnav_guidance_preference_avoid_highway" :
-		value === "COMPROMISE_FAST_SHORT" ? "satnav_guidance_preference_compromise" :
+	var preferenceTickBoxId =
+		value === "FASTEST_ROUTE" ? "fastest" :
+		value === "SHORTEST_DISTANCE" ? "shortest" :
+		value === "AVOID_HIGHWAY" ? "avoid_highway" :
+		value === "COMPROMISE_FAST_SHORT" ? "compromise" :
 		undefined;
-	setTick(satnavGuidancePreferenceTickBoxId);
+	setTick("satnav_guidance_preference_" + preferenceTickBoxId);
 } // satnavGuidanceSetPreference
 
 function satnavGuidancePreferenceSelectTickedButton()
@@ -6720,6 +6728,8 @@ function htmlBodyOnLoad()
 	setLanguage(localStorage.mfdLanguage);
 
 	gotoSmallScreen(localStorage.smallScreen);
+
+	resizeScreenToFit();
 
 	// Update time now and every next second
 	updateDateTime();

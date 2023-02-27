@@ -34,9 +34,12 @@ char carInfo_css[] PROGMEM = R"=====(
   --highlight-color:rgba(223,231,242,0.4);
   --selected-element-color:rgb(41,55,74);
   --disabled-element-color:rgb(67,82,105);
+  --scale-factor:0.63;
 }
 body
 {
+  overflow: hidden; /* No scrollbars */
+
   background-color:var(--background-color);
   font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
   color:var(--main-color);
@@ -46,12 +49,10 @@ body
   background-image: url('background.jpg');
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: inherit;
+  background-size: 100%;
 
-  /* TODO - background-blend-mode not supported by IE11 */
-  /*background-blend-mode: luminosity; */
-  /*background-blend-mode: multiply; */
-  /*background-blend-mode: lighten;*/
+  transform:scale(var(--scale-factor));
+  transform-origin: 0 0;
 }
 .languageIcon
 {

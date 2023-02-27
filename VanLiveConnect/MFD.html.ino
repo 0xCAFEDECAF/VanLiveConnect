@@ -32,7 +32,8 @@ char mfd_html[] PROGMEM = R"=====(
 		<!-- Our own stuff. Added '?foo=1' to force Chrome reload; see also https://stackoverflow.com/a/70410178 -->
 		<script src="MFD.js?foo=1" async></script>
 	</head>
-	<body translate="no" onload = "htmlBodyOnLoad();">
+	<body translate="no" onload="htmlBodyOnLoad();" onresize="resizeScreenToFit();">
+
 
 		<!-- "Small" information panel -->
 
