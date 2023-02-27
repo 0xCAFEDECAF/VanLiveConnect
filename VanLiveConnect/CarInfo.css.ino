@@ -34,7 +34,7 @@ char carInfo_css[] PROGMEM = R"=====(
   --highlight-color:rgba(223,231,242,0.4);
   --selected-element-color:rgb(41,55,74);
   --disabled-element-color:rgb(67,82,105);
-  --scale-factor:0.63;
+  --scale-factor:1;
 }
 body
 {

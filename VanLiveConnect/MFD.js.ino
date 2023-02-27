@@ -546,8 +546,15 @@ function resizeScreenToFit()
 {
 	let isMobile = window.matchMedia("(any-pointer:coarse)").matches;
 
-	if (! isMobile) $(":root").css("--scale-factor", (window.innerWidth - 10) / 1350 * window.devicePixelRatio);
-	else $(":root").css("--scale-factor", (window.innerWidth - 10) / 1350);
+	if (! isMobile)
+	{
+		$(":root").css("--scale-factor", (window.innerWidth - 10) / 1350 * window.devicePixelRatio);
+		$("#body").css("background-size", window.devicePixelRatio * 100 + "%");
+	}
+	else
+	{
+		$(":root").css("--scale-factor", (window.innerWidth - 10) / 1350);
+	} // if
 } // resizeScreenToFit
 
 // Toggle full-screen mode
@@ -2764,7 +2771,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 	// Nothing in the entry field?
 	if ($(entrySelector).text()[0] === "-")
 	{
-		$(".satNavEntryExistsTag" ).hide();
+		$(".satNavEntryExistsTag").hide();
 		return;
 	} // if
 
@@ -2777,7 +2784,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 	$("#satnav_rename_entry_in_directory_validate_button").toggleClass("buttonDisabled", entryExists);
 	$("#satnav_archive_in_directory_personal_button").toggleClass("buttonDisabled", entryExists);
 	$("#satnav_archive_in_directory_professional_button").toggleClass("buttonDisabled", entryExists);
-	$(".satNavEntryExistsTag" ).toggle(entryExists);
+	$(".satNavEntryExistsTag").toggle(entryExists);
 } // satnavDirectoryEntryEnterCharacter
 
 // Handles pressing the "Validate" button in the sat nav directory rename entry screen
