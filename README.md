@@ -187,7 +187,9 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 ![schema](extras/Schematics/Schematic%20using%20voltage%20divider_bb.png)
    
 > 👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
-     cause your car to explode! (or anything less catastrofic)
+     cause your car to explode! (or anything less catastrophic)
+
+### Infra-red control
 
 When the IR remote control is used to navigate, e.g. through the sat nav menus, this is usually not reflected on the
 comfort bus. So, reading the VAN comfort bus is not enough to detect e.g. scrolling through the menus or lists
@@ -196,6 +198,14 @@ presented.
 To see the navigation through the menus and lists also on the browser screen, simply connect an infra-red
 receiver, e.g. like [this one](https://www.tinytronics.nl/shop/en/communication/infrared/hx1838-ir-receiver-38khz),
 on pins D5, D6 and D7, facing outward; see also the above schematics.
+
+> 👉 Notes:
+>  * Don't remove or unsolder the infra-red receiver (PCB) from the original MFD type C display. The original
+     MFD needs that to receive the commands you send to it, in order to generate the correct VAN bus packets.
+>  * The infra-red receiver is not needed to switch screens. If you turn on the head unit (radio, CD player, ...)
+     the screen will automatically switch to it. You can also switch screens on your smart phone or tablet simply
+     by tapping the center of the screen. The smart phone or tablet will cycle only through the applicable screens,
+     i.e., if the head unit is not powered on, the head unit screen will be skipped.
 
 ## 🚀 Building the Project<a name = "building"></a>
 
@@ -276,7 +286,7 @@ If you have no experience in compiling and uploading, have a look at this excell
 #### 5. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
-the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware always causes the board to
+the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware sometimes causes the board to
 crash the very first time, but after that it works (uploads) fine.
 
 ## 💡 Hints, tips<a name = "hints_tips"></a>
