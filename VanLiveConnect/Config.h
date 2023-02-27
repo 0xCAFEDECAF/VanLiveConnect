@@ -243,8 +243,7 @@
 // -----
 // Debugging
 
-// Define to see infrared key hash values and timing on the serial port. Also, the pressed button is shown
-// as three-letter tag in a small box in the bottom left of the MFD.html page.
+// Define to see infrared key hash values and timing on the serial port.
 //#define DEBUG_IR_RECV
 
 //#define DEBUG_WEBSERVER
@@ -267,8 +266,6 @@
 //#define PRINT_RAW_PACKET_DATA
 
 // Define to see JSON buffers printed on the serial port
-// Note: for some reason, having JSON buffers printed on the serial port seems to reduce the number
-//   of CRC errors in the received VAN bus packets
 //#define PRINT_JSON_BUFFERS_ON_SERIAL
 
 // If PRINT_JSON_BUFFERS_ON_SERIAL or PRINT_RAW_PACKET_DATA is defined, which type of VAN-bus packets will be
