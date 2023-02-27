@@ -63,50 +63,54 @@ bool inMenu = false;  // true if user is browsing the menus
 bool irButtonFasterRepeat = false;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
 #define N_SAVED_JSON 3
-int savedJsonIdx = 0;
+int savedJsonNextFreeSlot = 0;
 char* savedJson[N_SAVED_JSON];
 
 // Save JSON data for later sending
 void SaveJsonForLater(const char* json)
 {
     // Free a slot if necessary
-    if (savedJson[savedJsonIdx] != NULL) free(savedJson[savedJsonIdx]);
+    if (savedJson[savedJsonNextFreeSlot] != NULL) free(savedJson[savedJsonNextFreeSlot]);
 
     // Allocate memory
-    savedJson[savedJsonIdx] = (char*) malloc(strlen(json) + 1);
-    if (savedJson[savedJsonIdx] == NULL) return;
+    savedJson[savedJsonNextFreeSlot] = (char*) malloc(strlen(json) + 1);
+    if (savedJson[savedJsonNextFreeSlot] == NULL) return;
 
     // Copy content, for sending later
-    memcpy(savedJson[savedJsonIdx], json, strlen(json) + 1);
+    memcpy(savedJson[savedJsonNextFreeSlot], json, strlen(json) + 1);
 
-    Serial.printf_P(PSTR("==> WebSocket: saved JSON data for later sending in slot '%d'\n"), savedJsonIdx);
+    Serial.printf_P(PSTR("==> WebSocket: saved JSON data for later sending in slot '%d'\n"), savedJsonNextFreeSlot);
     Serial.print(F("JSON object:\n"));
     PrintJsonText(json);
 
-    savedJsonIdx = (savedJsonIdx + 1) % N_SAVED_JSON;
+    savedJsonNextFreeSlot = (savedJsonNextFreeSlot + 1) % N_SAVED_JSON;
 } // SaveJsonForLater
 
 // Send any JSON data that was saved for later sending
 void SendSavedJson()
 {
-    int i = savedJsonIdx;
+    if (websocketNum == WEBSOCKET_INVALID_NUM) return;
+
+    int i = savedJsonNextFreeSlot;
     do
     {
         if (savedJson[i] != NULL)
         {
             Serial.printf_P(PSTR("==> WebSocket: sending saved JSON data packet no. '%d'\n"), i);
-            SendJsonOnWebSocket(savedJson[i]);
-            free(savedJson[i]);
-            savedJson[i] = NULL;
+            if (webSocket.sendTXT(websocketNum, savedJson[i]))
+            {
+                free(savedJson[i]);
+                savedJson[i] = NULL;
+            } // if
         } // if
         i = (i + 1) % N_SAVED_JSON;
     }
-    while (i != savedJsonIdx);
+    while (i != savedJsonNextFreeSlot);
 } // SendSavedJson
 
 void FreeSavedJson()
 {
-    int i = savedJsonIdx;
+    int i = savedJsonNextFreeSlot;
     do
     {
         if (savedJson[i] != NULL)
@@ -116,7 +120,7 @@ void FreeSavedJson()
         } // if
         i = (i + 1) % N_SAVED_JSON;
     }
-    while (i != savedJsonIdx);
+    while (i != savedJsonNextFreeSlot);
 } // FreeSavedJson
 
 // Send a (JSON) message to the WebSocket client
@@ -139,14 +143,18 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
     for (int attempt = 0; attempt < 3; attempt++)
     {
+      #ifdef DEBUG_WEBSOCKET
         if (attempt != 0)
         {
             Serial.printf_P(
-                PSTR("Sending %zu JSON bytes via 'webSocket.sendTXT' attempt no.: %d\n"),
+                PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT' attempt no.: %d\n"),
+                TimeStamp(),
+                websocketNum,
                 strlen(json),
                 attempt + 1
             );
         } // if
+      #endif // DEBUG_WEBSOCKET
 
         // Don't broadcast (webSocket.broadcastTXT(json)); serve only the last one connected
         // (the others are probably already dead)
@@ -158,7 +166,14 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
     unsigned long duration = millis() - start;
 
-    if (! result) Serial.printf_P(PSTR("FAILED to sending %zu JSON bytes via 'webSocket.sendTXT'\n"), strlen(json));
+    if (! result)
+    {
+        Serial.printf_P(
+            PSTR("%s[webSocket %u] FAILED to send %zu JSON bytes via 'webSocket.sendTXT'\n"),
+            TimeStamp(),
+            websocketNum,
+            strlen(json));
+    } // if
 
     if (! result || duration > 100)
     {
@@ -167,7 +182,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     }
     else
     {
-        FreeSavedJson();
+        SendSavedJson();
     } // if
 
     // Print a message if the WebSocket transmission took outrageously long (normally it takes around 1-2 msec).
