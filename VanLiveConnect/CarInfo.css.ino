@@ -312,6 +312,7 @@ body
   top:200px;
   width:850px;
   height:200px;
+  display:none;
 }
 .messagePopupArea
 {
@@ -460,12 +461,30 @@ body
 /* Multimedia */
 .mediaStatus
 {
+  position:absolute;
+  overflow:hidden;
+  text-align:center;
+  font-size:100px;
+  width:160px;
+  height:140px;
+  line-height:1;
+  border:5px solid;
+  border-radius:15px;
   display:none;
   left:600px;
   top:140px;
 }
 .mediaStatusInPopup
 {
+  position:absolute;
+  overflow:hidden;
+  text-align:center;
+  font-size:100px;
+  width:160px;
+  height:140px;
+  line-height:1;
+  border:5px solid;
+  border-radius:15px;
   display:none;
   left:600px;
   top:35px;

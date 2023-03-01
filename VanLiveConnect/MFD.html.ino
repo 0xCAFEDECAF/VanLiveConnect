@@ -70,7 +70,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div gid="avg_speed_1" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
 					<div gid="speed_unit" class="tag tripComputerTag" style="top:205px;">km/h</div>
 
-					<div class="icon iconSmall" style="top:280px; width:80px;">...</div>
+					<div class="icon iconSmall" style="top:280px;">...</div>
 					<div class="icon iconSmall fas fa-car-side" style="left:50px; top:280px;"></div>
 					<div gid="distance_1" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
 					<div gid="distance_unit" class="tag tripComputerTag" style="top:325px;">km</div>
@@ -91,7 +91,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div gid="avg_speed_2" class="dots" style="left:100px; top:150px; width:220px; text-align:right;">--</div>
 					<div gid="speed_unit" class="tag tripComputerTag" style="top:205px;">km/h</div>
 
-					<div class="icon iconSmall" style="top:280px; width:80px;">...</div>
+					<div class="icon iconSmall" style="top:280px;">...</div>
 					<div class="icon iconSmall fas fa-car-side" style="left:50px; top:280px;"></div>
 					<div gid="distance_2" class="dots" style="left:100px; top:270px; width:220px; text-align:right;">--</div>
 					<div gid="distance_unit" class="tag tripComputerTag" style="top:325px;">km</div>
@@ -112,7 +112,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="satnav_curr_street_small"
 					on_enter="satnavCutoffBottomLines($('#satnav_curr_street_small [gid=\'satnav_curr_street_shown\']'));"
 					class="icon" style="word-wrap:break-word; top:270px; height:280px; width:390px;">
-					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px; white-space:normal;"></div>
+					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px;"></div>
 				</div>
 
 			</div>
@@ -145,11 +145,6 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Large clock (nothing better to show) -->
 
-			<!--
-				TODO - draw an analog clock instead; so much more elegant!
-				See e.g. https://www.w3schools.com/graphics/canvas_clock_start.asp
-			-->
-
 			<div id="clock" style="display:block;">
 				<div id="date_weekday" class="tag" style="font-size:80px; top:50px; width:960px; text-align:center;">---</div>
 				<div id="date" class="tag" style="font-size:70px; top:140px; width:960px; text-align:center;">---</div>
@@ -163,8 +158,6 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Also show exterior temperature -->
 				<div gid="exterior_temp_shown" class="tag"
 					style="font-size:120px; top:330px; width:960px; height:220px; line-height:1.8; text-align:center;"></div>
-
-				<!-- Obviously, we would like some weather icon here... would need at least location data (GPS) -->
 
 				<!--
 					"Gear" icon in the bottom right corner
@@ -274,25 +267,25 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="tag" style="left:50px; top:218px; width:200px;">Side</div>
 						<div gid="tape_side" class="dseg7" style="font-size:120px; left:280px; top:145px; width:140px;">-</div>
 
-						<div gid="tape_status_stopped" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_stopped" class="mediaStatus">
 							<div class="centerAligned fas fa-stop"></div>
 						</div>
-						<div gid="tape_status_loading" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_loading" class="mediaStatus">
 							<div class="centerAligned fas fa-sign-in-alt"></div>
 						</div>
-						<div gid="tape_status_play" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_play" class="mediaStatus">
 							<div class="centerAligned fas fa-play"></div>
 						</div>
-						<div gid="tape_status_fast_forward" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_fast_forward" class="mediaStatus">
 							<div class="centerAligned fas fa-forward"></div>
 						</div>
-						<div gid="tape_status_next_track" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_next_track" class="mediaStatus">
 							<div class="centerAligned fas fa-fast-forward"></div>
 						</div>
-						<div gid="tape_status_rewind" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_rewind" class="mediaStatus">
 							<div class="centerAligned fas fa-backward"></div>
 						</div>
-						<div gid="tape_status_previous_track" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="tape_status_previous_track" class="mediaStatus">
 							<div class="centerAligned fas fa-fast-backward"></div>
 						</div>
 
@@ -305,25 +298,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div gid="cd_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-						<div gid="cd_status_pause" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_pause" class="mediaStatus">
 							<div class="centerAligned fas fa-pause"></div>
 						</div>
-						<div gid="cd_status_play" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_play" class="mediaStatus">
 							<div class="centerAligned fas fa-play"></div>
 						</div>
-						<div gid="cd_status_fast_forward" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_fast_forward" class="mediaStatus">
 							<div class="centerAligned fas fa-forward"></div>
 						</div>
-						<div gid="cd_status_rewind" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_rewind" class="mediaStatus">
 							<div class="centerAligned fas fa-backward"></div>
 						</div>
-						<div gid="cd_status_searching" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_searching" class="mediaStatus">
 							<div class="centerAligned fas fa-compact-disc"></div>
 						</div>
-						<div gid="cd_status_loading" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_loading" class="mediaStatus">
 							<div class="centerAligned fas fa-sign-in-alt"></div>
 						</div>
-						<div gid="cd_status_eject" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_status_eject" class="mediaStatus">
 							<div class="centerAligned fas fa-eject"></div>
 						</div>
 
@@ -350,25 +343,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-						<div gid="cd_changer_status_pause" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_changer_status_pause" class="mediaStatus">
 							<div class="centerAligned fas fa-pause"></div>
 						</div>
-						<div gid="cd_changer_status_play" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_changer_status_play" class="mediaStatus">
 							<div class="centerAligned fas fa-play"></div>
 						</div>
-						<div gid="cd_changer_status_searching" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_changer_status_searching" class="mediaStatus">
 							<div class="centerAligned fas fa-compact-disc"></div>
 						</div>
-						<div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_changer_status_fast_forward" class="mediaStatus">
 							<div class="centerAligned fas fa-forward"></div>
 						</div>
-						<div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_changer_status_rewind" class="mediaStatus">
 							<div class="centerAligned fas fa-backward"></div>
 						</div>
-						<div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="icon iconLarge iconBorder mediaStatus">
+						<div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="mediaStatus">
 							<div class="centerAligned fas fa-sign-in-alt"></div>
 						</div>
-						<div gid="cd_changer_status_eject" class="icon iconLarge iconBorder mediaStatus">
+						<div gid="cd_changer_status_eject" class="mediaStatus">
 							<div class="centerAligned fas fa-eject"></div>
 						</div>
 
@@ -403,7 +396,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Vehicle data -->
 			<div style="display:none;">
 
-				<!-- Fuel level, both as number (in litres) and as linear gauge -->
+				<!-- Fuel level, both as number and as linear gauge -->
 
 				<div class="icon iconMedium fas fa-gas-pump" style="left:20px; top:40px;"></div>
 
@@ -2001,7 +1994,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Popups in the "large" information panel -->
 
 			<div id="climate_control_popup"
-				class="icon notificationPopup" style="display:none;">
+				class="icon notificationPopup">
 
 				<!-- Status LEDs -->
 				<div id="fan_icon" class="iconSmall led ledOn" style="left:350px; top:45px;">
@@ -2031,7 +2024,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Audio popup -->
 
 			<div id="audio_popup"
-				class="icon notificationPopup" style="top:100px; height:350px; display:none;">
+				class="icon notificationPopup" style="top:100px; height:350px;">
 
 				<!-- Status LEDs -->
 
@@ -2087,25 +2080,25 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="left:180px; top:113px; width:200px;">Side</div>
 					<div gid="tape_side" class="dseg7" style="font-size:120px; left:380px; top:40px; width:140px;">-</div>
 
-					<div gid="tape_status_stopped" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_stopped" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-stop"></div>
 					</div>
-					<div gid="tape_status_loading" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_loading" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-sign-in-alt"></div>
 					</div>
-					<div gid="tape_status_play" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_play" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-play"></div>
 					</div>
-					<div gid="tape_status_fast_forward" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_fast_forward" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-forward"></div>
 					</div>
-					<div gid="tape_status_next_track" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_next_track" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-fast-forward"></div>
 					</div>
-					<div gid="tape_status_rewind" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_rewind" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-backward"></div>
 					</div>
-					<div gid="tape_status_previous_track" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="tape_status_previous_track" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-fast-backward"></div>
 					</div>
 
@@ -2119,25 +2112,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div gid="cd_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
-					<div gid="cd_status_pause" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_pause" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-pause"></div>
 					</div>
-					<div gid="cd_status_play" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_play" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-play"></div>
 					</div>
-					<div gid="cd_status_fast_forward" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_fast_forward" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-forward"></div>
 					</div>
-					<div gid="cd_status_rewind" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_rewind" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-backward"></div>
 					</div>
-					<div gid="cd_status_searching" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_searching" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-compact-disc"></div>
 					</div>
-					<div gid="cd_status_loading" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_loading" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-sign-in-alt"></div>
 					</div>
-					<div gid="cd_status_eject" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_status_eject" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-eject"></div>
 					</div>
 
@@ -2162,25 +2155,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
-					<div gid="cd_changer_status_pause" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_pause" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-pause"></div>
 					</div>
-					<div gid="cd_changer_status_play" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_play" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-play"></div>
 					</div>
-					<div gid="cd_changer_status_searching" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_searching" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-compact-disc"></div>
 					</div>
-					<div gid="cd_changer_status_fast_forward" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_fast_forward" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-forward"></div>
 					</div>
-					<div gid="cd_changer_status_rewind" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_rewind" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-backward"></div>
 					</div>
-					<div gid="cd_changer_status_loading" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_loading" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-sign-in-alt"></div>
 					</div>
-					<div gid="cd_changer_status_eject" class="icon iconLarge iconBorder mediaStatusInPopup">
+					<div gid="cd_changer_status_eject" class="mediaStatusInPopup">
 						<div class="centerAligned fas fa-eject"></div>
 					</div>
 
@@ -2202,12 +2195,12 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Destination reached popup -->
 
 			<div id="satnav_reached_destination_popup"
-				class="icon notificationPopup" style="top:160px; height:280px; display:none;">
+				class="icon notificationPopup" style="top:160px; height:280px;">
 
 				<div class="centerAligned" style="position:absolute; left:10px; width:830px; height:200px;">
 					<div id="satnav_reached_destination_popup_title">Destination reached</div>
 					<div gid="satnav_last_destination_city" class="dots"
-						style="top:90px; width:830px; height:90px; font-size:40px; white-space:norap;">
+						style="top:90px; width:830px; height:90px; font-size:40px; white-space:nowrap;">
 					</div>
 					<div class="dots"
 						style="top:140px; width:830px; height:80px; font-size:40px;">
@@ -2220,7 +2213,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="trip_computer_popup"
 				on_enter="initTripComputerPopup();"
-				class="icon notificationPopup" style="left:30px; top:160px; height:280px; width:850px; display:none;">
+				class="icon notificationPopup" style="left:30px; top:160px; height:280px; width:850px;">
 
 				<div class="verticalLine" style="left:130px; height:280px;"></div>
 
@@ -2314,7 +2307,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Door open popup -->
 
-			<div id="door_open_popup" class="icon notificationPopup" style="display:none;">
+			<div id="door_open_popup" class="icon notificationPopup">
 				<div class="centerAligned icon" style="position:absolute; left:40px; width:200px; height:175px;">
 					<svg width="160px" height="175px" style="fill:var(--main-color)">
 						<defs>
@@ -2343,7 +2336,7 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>	<!-- "door_open_popup" -->
 
 			<!-- Notification popup, with warning or information icon -->
-			<div id="notification_popup" class="icon notificationPopup" style="display:none;">
+			<div id="notification_popup" class="icon notificationPopup">
 				<div id="notification_icon_warning" class="glow centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
 					style="display:none; position:absolute; line-height:2.2; left:-20px; width:260px; height:260px"></div>
 				<div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
@@ -2354,7 +2347,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Sat nav initializing popup -->
 
-			<div id="satnav_initializing_popup" class="icon notificationPopup" style="display:none;">
+			<div id="satnav_initializing_popup" class="icon notificationPopup">
 				<div class="centerAligned messagePopupArea">
 					Navigation system<br />being initialised
 				</div>
@@ -2364,7 +2357,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_input_stored_in_personal_dir_popup"
 				on_exit="upMenu();"
-				class="icon notificationPopup" style="display:none;">
+				class="icon notificationPopup">
 				<div class="centerAligned messagePopupArea">
 					Input has been stored in<br />the personal<br />directory
 				</div>
@@ -2374,7 +2367,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_input_stored_in_professional_dir_popup"
 				on_exit="upMenu();"
-				class="icon notificationPopup" style="display:none;">
+				class="icon notificationPopup">
 				<div class="centerAligned messagePopupArea">
 					Input has been stored in<br />the professional<br />directory
 				</div>
@@ -2384,7 +2377,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_delete_item_popup"
 				on_enter="selectButton('satnav_delete_item_popup_no_button');"
-				class="icon notificationPopup" style="display:none; top:120px; height:350px;">
+				class="icon notificationPopup" style="top:120px; height:350px;">
 				<div class="centerAligned yesNoPopupArea" style="height:300px;">
 					<div id="satnav_delete_item_popup_title">Delete item ?<br /></div>
 
@@ -2409,8 +2402,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_computing_route_popup"
 				on_exit="showOrTimeoutDestinationNotAccessiblePopup();"
-				class="icon notificationPopup"
-				style="display:none;">
+				class="icon notificationPopup">
 				<div class="centerAligned messagePopupArea">Computing route<br />in progress</div>
 			</div>	<!-- "satnav_computing_route_popup" -->
 
@@ -2422,7 +2414,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="satnav_guidance_preference_popup"
 				on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
 				on_esc="showDestinationNotAccessiblePopupIfApplicable();"
-				class="icon notificationPopup" style="display:none; height:300px;">
+				class="icon notificationPopup" style="height:300px;">
 				<div class="centerAligned yesNoPopupArea">
 					<span id="satnav_guidance_preference_popup_title">Keep criteria</span>
 					"<span id="satnav_guidance_current_preference_text">fastest route</span>"?
@@ -2448,7 +2440,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_delete_directory_data_popup"
 				on_enter="selectButton('satnav_delete_directory_data_popup_no_button');"
-				class="icon notificationPopup" style="display:none; height:300px;">
+				class="icon notificationPopup" style="height:300px;">
 				<div class="centerAligned yesNoPopupArea">
 					<div id="satnav_delete_directory_data_popup_title">This will delete all data in directories</div>
 
@@ -2471,7 +2463,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="satnav_continue_guidance_popup"
 				on_enter="selectButton('satnav_continue_guidance_popup_yes_button');"
-				class="icon notificationPopup" style="display:none; height:300px;">
+				class="icon notificationPopup" style="height:300px;">
 				<div class="centerAligned yesNoPopupArea">
 					<div id="satnav_continue_guidance_popup_title">Continue guidance to destination ?</div>
 
@@ -2492,7 +2484,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Status popup (without icon) -->
 
-			<div id="status_popup" class="icon notificationPopup" style="display:none;">
+			<div id="status_popup" class="icon notificationPopup">
 				<div id="status_popup_text" class="centerAligned messagePopupArea">
 				</div>
 			</div>	<!-- "status_popup" -->
@@ -2500,7 +2492,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Audio settings popup -->
 
 			<div id="audio_settings_popup" class="icon notificationPopup" 
-				style="display:none; left:50px; top:80px; width:830px; height:430px;">
+				style="left:50px; top:80px; width:830px; height:430px;">
 
 				<div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
 				<div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
@@ -2533,7 +2525,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Screen brightness popup -->
 
-			<div id="screen_brightness_popup" class="icon notificationPopup" style="display:none;">
+			<div id="screen_brightness_popup" class="icon notificationPopup">
 				<div class="icon iconLarge fas fa-sun" style="left:70px; top:50px;"></div>
 				<div id="screen_brightness_popup_value" class="dseg7" style="left:580px; top:60px; width:150px; text-align:right; font-size:90px">14</div>
 
@@ -2575,7 +2567,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- "Popup" window for tuner presets -->
 
-		<div id="tuner_presets_popup" class="icon notificationPopup" style="display:none; left:150px; top:140px; width:1040px; height:310px; text-align:left;">
+		<div id="tuner_presets_popup" class="icon notificationPopup" style="left:150px; top:140px; width:1040px; height:310px; text-align:left;">
 
 			<!-- Highlight boxes -->
 			<div id="presets_memory_1_select" class="highlight icon iconBorder" style="left:20px; top:15px; width:470px; height:75px;"></div>
