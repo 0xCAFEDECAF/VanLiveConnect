@@ -455,6 +455,8 @@ function showNotificationPopup(message, msec, isWarning)
 
 	// TODO - if popup is already showing with this message, return here
 
+	hideAllPopups();
+
 	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
 	return showPopupAndNotifyServer("notification_popup", msec, message);
 } // showNotificationPopup
@@ -542,6 +544,11 @@ function selectTabInTripComputerPopup(index)
 // -----
 // Functions for navigating through the screens and their subscreens/elements
 
+function isScreenFullSize()
+{
+	return document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+} // isScreenFullSize
+
 function resizeScreenToFit()
 {
 	let isMobile = window.matchMedia("(any-pointer:coarse)").matches;
@@ -555,12 +562,23 @@ function resizeScreenToFit()
 	{
 		$(":root").css("--scale-factor", (window.innerWidth - 10) / 1350);
 	} // if
+
+	if (isScreenFullSize()) $("#full_screen_button").removeClass("fa-expand").addClass("fa-compress");
+	else $("#full_screen_button").removeClass("fa-compress").addClass("fa-expand");
 } // resizeScreenToFit
 
 // Toggle full-screen mode
 function toggleFullScreen()
 {
-	if (! document.fullscreenElement && ! document.mozFullScreenElement && ! document.webkitFullscreenElement && ! document.msFullscreenElement)
+	if (isScreenFullSize())
+	{
+		// Exit full screen mode
+		if (document.exitFullscreen) document.exitFullscreen();
+		else if (document.msExitFullscreen) document.msExitFullscreen();
+		else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+		else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+	}
+	else
 	{
 		// Enter full screen mode
 		let elem = document.documentElement;
@@ -568,14 +586,6 @@ function toggleFullScreen()
 		else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen(); // Firefox
 		else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); // Chrome and Safari
 		else if (elem.msRequestFullscreen) elem.msRequestFullscreen(); // IE
-	}
-	else
-	{
-		// Exit full screen mode
-		if (document.exitFullscreen) document.exitFullscreen();
-		else if (document.msExitFullscreen) document.msExitFullscreen();
-		else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-		else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
 	} // if
 } // toggleFullScreen
 
@@ -1719,6 +1729,9 @@ function setColorTheme(theme)
 	$(":root").css("--highlight-color", theme === "set_light_theme" ? "rgba(84,101,125,0.4)" : "rgba(223,231,242,0.4)");
 	$(":root").css("--selected-element-color", theme === "set_light_theme" ? "rgb(207,205,217)" : "rgb(41,55,74)");
 	$(":root").css("--disabled-element-color", theme === "set_light_theme" ? "rgb(172,183,202)" : "rgb(67,82,105)");
+
+	// Different background image (if available) for light theme
+	$("body").css("background-image", theme === "set_light_theme" ? "url('background_light.jpg')" : "url('background.jpg')");
 
 	setDimLevel(headlightStatus, theme);  // Will adjust main color (dark theme) or background color (light theme)
 } // setColorTheme
@@ -4152,6 +4165,8 @@ function handleItemChange(item, value)
 				nDoorsOpen > 1 ? doorsOpenText :
 				doorOpenText;
 
+			hideTunerPresetsPopup();
+
 			// Set the correct text and show the "door open" popup
 			$("#door_open_popup_text").html(popupText);
 			showPopupAndNotifyServer("door_open_popup", 8000);
@@ -4382,7 +4397,7 @@ function handleItemChange(item, value)
 			if (satnavInitialized) hidePopup("satnav_initializing_popup");
 
 			// Button texts in menus
-			$("#satnav_navigation_options_menu_stop_guidance_button").html(
+			$("#satnav_navigation_options_menu .button:eq(3)").html(
 				value === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			// Just entered guidance mode?
@@ -5612,6 +5627,10 @@ function setLanguage(language)
 			$(id + " .button:eq(3)").html("Set format and units");
 
 			$("#set_screen_brightness .menuTitleLine").html("Set brightness<br />");
+			$("#set_dark_theme_tag").html("Dark theme");
+			$("#set_light_theme_tag").html("Light theme");
+			$("#set_screen_brightness div:eq(2)").html("Brightness");
+
 			$("#set_date_time .menuTitleLine").html("Set date and time<br />");
 			$("#set_language .menuTitleLine").html("Select a language<br />");
 			$("#set_units .menuTitleLine").html("Set format and units<br />");
@@ -5795,6 +5814,10 @@ function setLanguage(language)
 			$(id + " .button:eq(3)").html("R&eacute;glage des formats et unit&eacute;s");
 
 			$("#set_screen_brightness .menuTitleLine").html("R&eacute;glage luminosit&eacute;<br />");
+			$("#set_dark_theme_tag").html("Th&egrave;me fonc&eacute;");
+			$("#set_light_theme_tag").html("Th&egrave;me clair");
+			$("#set_screen_brightness div:eq(2)").html("Luminosit&eacute;");
+
 			$("#set_date_time .menuTitleLine").html("R&eacute;glage de date et heure<br />");
 			$("#set_language .menuTitleLine").html("Choix de la langue<br />");
 			$("#set_units .menuTitleLine").html("R&eacute;glage des formats et unit&eacute;s<br />");
@@ -5977,6 +6000,10 @@ function setLanguage(language)
 			$(id + " .button:eq(3)").html("Einstellen der Einheiten");
 
 			$("#set_screen_brightness .menuTitleLine").html("Helligkeit einstellen<br />");
+			$("#set_dark_theme_tag").html("Dunkles Thema");
+			$("#set_light_theme_tag").html("Helles Thema");
+			$("#set_screen_brightness div:eq(2)").html("Bildhelligkeit");
+
 			$("#set_date_time .menuTitleLine").html("Datum und Uhrzeit einstellen<br />");
 			$("#set_language .menuTitleLine").html("Sprache w&auml;hlen<br />");
 			$("#set_units .menuTitleLine").html("Einstellen der Einheiten<br />");
@@ -6159,6 +6186,10 @@ function setLanguage(language)
 			$(id + " .button:eq(3)").html("Ajustar formatos y unidades");
 
 			$("#set_screen_brightness .menuTitleLine").html("Ajustar luminosidad<br />");
+			$("#set_dark_theme_tag").html("Tema oscuro");
+			$("#set_light_theme_tag").html("Tema claro");
+			$("#set_screen_brightness div:eq(2)").html("Luminosidad");
+
 			$("#set_date_time .menuTitleLine").html("Ajustar hora y fecha<br />");
 			$("#set_language .menuTitleLine").html("Seleccionar idioma<br />");
 			$("#set_units .menuTitleLine").html("Ajustar formatos y unidades<br />");
@@ -6336,12 +6367,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Configurazione monitor<br />");
-			$(id + " .button:eq(0)").html("Regolazione luminosita");
+			$(id + " .button:eq(0)").html("Regolazione luminosit&agrave;");
 			$(id + " .button:eq(1)").html("Regolazione date e ora");
 			$(id + " .button:eq(2)").html("Scelta della lingua " + languageSelections);
 			$(id + " .button:eq(3)").html("Regolazione formato e unita");
 
-			$("#set_screen_brightness .menuTitleLine").html("Regolazione luminosita<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Regolazione luminosit&agrave;<br />");
+			$("#set_dark_theme_tag").html("Tema nero");
+			$("#set_light_theme_tag").html("Tema chiaro");
+			$("#set_screen_brightness div:eq(2)").html("Luminosit&agrave;");
+
 			$("#set_date_time .menuTitleLine").html("Regolazione hora y fecha<br />");
 			$("#set_language .menuTitleLine").html("Scelta della lingua<br />");
 			$("#set_units .menuTitleLine").html("Regolazione formato e unita<br />");
@@ -6524,6 +6559,10 @@ function setLanguage(language)
 			$(id + " .button:eq(3)").html("Instelling van eenheden");
 
 			$("#set_screen_brightness .menuTitleLine").html("Instelling helderheid<br />");
+			$("#set_dark_theme_tag").html("Donkere modus");
+			$("#set_light_theme_tag").html("Lichte modus");
+			$("#set_screen_brightness div:eq(2)").html("Helderheid");
+
 			$("#set_date_time .menuTitleLine").html("Instelling datum en tijd<br />");
 			$("#set_language .menuTitleLine").html("Taalkeuze<br />");
 			$("#set_units .menuTitleLine").html("Instelling van eenheden<br />");

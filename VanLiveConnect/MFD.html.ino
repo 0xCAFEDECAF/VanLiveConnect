@@ -608,14 +608,14 @@ char mfd_html[] PROGMEM = R"=====(
 						UP_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
 						class="tickBox button">
-					</span> Normal video<br style="line-height:120px;" />
+					</span> <span id="set_dark_theme_tag">Dark theme</span><br style="line-height:120px;" />
 					<span id="set_light_theme"
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						DOWN_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
 						class="tickBox button buttonSelected">
-					</span> Reverse video
+					</span> <span id="set_light_theme_tag">Light theme</span>
 				</div>
 
 				<div class="tag"
@@ -1033,8 +1033,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div class="button" on_click="showPopup('satnav_delete_directory_data_popup');">Delete directories</div>
 
-					<div id="satnav_navigation_options_menu_stop_guidance_button" class="button"
-						on_click="satnavStopOrResumeGuidance();">Resume guidance</div>
+					<div class="button" on_click="satnavStopOrResumeGuidance();">Resume guidance</div>
 				</div>	<!-- "satnav_navigation_options_menu" -->
 
 				<!-- Sat nav directory management menu -->
@@ -2305,6 +2304,40 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 			</div>	<!-- "trip_computer_popup" -->
 
+			<!-- Audio settings popup -->
+
+			<div id="audio_settings_popup" class="icon notificationPopup" 
+				style="left:50px; top:80px; width:830px; height:430px;">
+
+				<div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
+				<div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
+
+				<div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
+				<div id="volume" gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
+
+				<div class="tag" style="left:50px; top:215px; width:200px;">Bass</div>
+				<div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
+				<div class="tag" style="left:50px; top:285px; width:200px;">Treble</div>
+				<div id="treble" class="dots" style="left:260px; top:285px; width:100px; text-align:right;">-</div>
+
+				<div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
+
+				<div class="tag" style="left:410px; top:215px; width:200px;">Fader</div>
+				<div id="fader" class="dots" style="left:640px; top:215px; width:150px; text-align:right;">-</div>
+				<div class="tag" style="left:410px; top:285px; width:200px;">Balance</div>
+				<div id="balance" class="dots" style="left:640px; top:285px; width:150px; text-align:right;">-</div>
+
+				<div id="auto_volume" class="led ledOff" style="left:525px; top:360px; width:260px;">AUTO-VOL</div>
+
+				<!-- Highlight boxes -->
+				<div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:200px; width:320px; height:60px;"></div>
+				<div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:270px; width:320px; height:60px;"></div>
+				<div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:348px; width:147px; height:37px;"></div>
+				<div id="fader_select" class="highlight icon iconBorder" style="left:400px; top:200px; width:390px; height:60px;"></div>
+				<div id="balance_select" class="highlight icon iconBorder" style="left:400px; top:270px; width:390px; height:60px;"></div>
+				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:515px; top:348px; width:257px; height:37px;"></div>
+			</div>	<!-- "audio_settings_popup" -->
+
 			<!-- Door open popup -->
 
 			<div id="door_open_popup" class="icon notificationPopup">
@@ -2489,40 +2522,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 			</div>	<!-- "status_popup" -->
 
-			<!-- Audio settings popup -->
-
-			<div id="audio_settings_popup" class="icon notificationPopup" 
-				style="left:50px; top:80px; width:830px; height:430px;">
-
-				<div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
-				<div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
-
-				<div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
-				<div id="volume" gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
-
-				<div class="tag" style="left:50px; top:215px; width:200px;">Bass</div>
-				<div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
-				<div class="tag" style="left:50px; top:285px; width:200px;">Treble</div>
-				<div id="treble" class="dots" style="left:260px; top:285px; width:100px; text-align:right;">-</div>
-
-				<div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
-
-				<div class="tag" style="left:410px; top:215px; width:200px;">Fader</div>
-				<div id="fader" class="dots" style="left:640px; top:215px; width:150px; text-align:right;">-</div>
-				<div class="tag" style="left:410px; top:285px; width:200px;">Balance</div>
-				<div id="balance" class="dots" style="left:640px; top:285px; width:150px; text-align:right;">-</div>
-
-				<div id="auto_volume" class="led ledOff" style="left:525px; top:360px; width:260px;">AUTO-VOL</div>
-
-				<!-- Highlight boxes -->
-				<div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:200px; width:320px; height:60px;"></div>
-				<div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:270px; width:320px; height:60px;"></div>
-				<div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:348px; width:147px; height:37px;"></div>
-				<div id="fader_select" class="highlight icon iconBorder" style="left:400px; top:200px; width:390px; height:60px;"></div>
-				<div id="balance_select" class="highlight icon iconBorder" style="left:400px; top:270px; width:390px; height:60px;"></div>
-				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:515px; top:348px; width:257px; height:37px;"></div>
-			</div>	<!-- "audio_settings_popup" -->
-
 			<!-- Screen brightness popup -->
 
 			<div id="screen_brightness_popup" class="icon notificationPopup">
@@ -2560,7 +2559,7 @@ char mfd_html[] PROGMEM = R"=====(
 		<!-- Small area in the top right of the screen which triggers changing to full-screen mode -->
 		<div onclick="toggleFullScreen();"
 			style="display:block; position:absolute; left:800px; top:0px; width:550px; height:250px; text-align:right; opacity:50%">
-			<i class="fas fa-expand"></i>
+			<i id="full_screen_button" class="fas fa-expand"></i>
 		</div>
 
 		<!-- Full-screen popups -->
