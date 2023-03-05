@@ -317,7 +317,7 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
-        lastPacketAt = pkt.Millis();  // Retrieve packet reception time stamp from ISR
+        lastPacketAt = millis();
 
       #if VAN_BUS_VERSION_INT >= 000003001
 
