@@ -11,17 +11,17 @@ var thousandsSeparator = ",";
 function addThousandsSeparator(x)
 {
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
-} // addThousandsSeparator
+}
 
 function clamp(num, min, max)
 {
 	return Math.min(Math.max(num, min), max);
-} // clamp
+}
 
 function incModulo(i, mod)
 {
 	return (i + 1) % mod;
-} // clamp
+}
 
 // -----
 // On-screen clocks
@@ -36,7 +36,7 @@ function CapFirstLetter(string)
 		return firstLetter.toUpperCase() + string.slice(2);
 	} // if
 	return firstLetter.toUpperCase() + string.slice(1);
-} // CapFirstLetter
+}
 
 // Show the current date and time
 function updateDateTime()
@@ -74,7 +74,7 @@ function updateDateTime()
 	if (locale === "nl" || locale === "es-ES") time = time.replace(/0(\d:)/, "$1");  // No leading "0"
 	$("#time").text(time);
 	$("#time_small").text(time.replace(/.m.$/, ""));  // No trailing '.m.'
-} // updateDateTime
+}
 
 // -----
 // System
@@ -93,7 +93,7 @@ function showViewportSizes()
 	$("#viewport_height").text($(window).height());  // height of browser viewport
 	$("#screen_height").text(window.screen.height);
 	$("#window_height").text(window.innerHeight);
-} // showViewportSizes
+}
 
 // -----
 // IR remote control
@@ -167,7 +167,7 @@ function processJsonObject(item, jsonObject)
 
 	// Check if a handler must be invoked
 	handleItemChange(item, jsonObject);
-} // processJsonObject
+}
 
 function writeToDom(jsonObj)
 {
@@ -210,7 +210,7 @@ function writeToDom(jsonObj)
 			processJsonObject(item, jsonObj[item]);
 		} // if
 	} // for
-} // writeToDom
+}
 
 // -----
 // Functions for handling the WebSocket
@@ -298,7 +298,7 @@ var keepAliveWebSocketTimer;
 function keepAliveWebSocket()
 {
 	webSocket.send("keepalive");
-} // keepAliveWebSocket
+}
 
 // Prevent double re-connecting when user reloads the page
 var websocketPreventConnect = false;
@@ -351,7 +351,7 @@ function connectToWebSocket()
 			clearInterval(keepAliveWebSocketTimer);
 		}
 	);
-} // connectToWebSocket
+}
 
 // -----
 // Functions for popups
@@ -378,7 +378,7 @@ function hidePopup(id)
 	if (onExit) eval(onExit);
 
 	return true;
-} // hidePopup
+}
 
 // Show the specified popup, with an optional timeout
 function showPopup(id, msec)
@@ -403,7 +403,7 @@ function showPopup(id, msec)
 	clearTimeout(popupTimer[id]);
 	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
 	return popupTimer[id];
-} // showPopup
+}
 
 function NotifyServerAboutPopup(id, msec, message)
 {
@@ -412,7 +412,7 @@ function NotifyServerAboutPopup(id, msec, message)
 		var messageText = message !== undefined ? (" \"" + message.replace(/<[^>]*>/g, ' ') + "\"") : "";
 		webSocket.send("mfd_popup_showing:" + (msec === 0 ? 0xFFFFFFFF : msec) + " " + id + messageText);
 	} // if
-} // NotifyServerAboutPopup
+}
 
 // Show a popup and send an update on the web socket, The software on the ESP needs to know when a popup is showing,
 // e.g. to know when to ignore a "MOD" button press from the IR remote control.
@@ -421,7 +421,7 @@ function showPopupAndNotifyServer(id, msec, message)
 	var timerId = showPopup(id, msec);
 	NotifyServerAboutPopup(id, msec, message);
 	return timerId;
-} // showPopupAndNotifyServer
+}
 
 // Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
 function hideAllPopups(except)
@@ -432,7 +432,7 @@ function hideAllPopups(except)
 	{
 		if ($(selector).attr("id") !== except) hidePopup($(selector).attr("id"));
 	});
-} // hideAllPopups
+}
 
 // Hide the notification popup, but only if it is the specified one
 function hideNotificationPopup(timerId)
@@ -441,7 +441,7 @@ function hideNotificationPopup(timerId)
 	var popupTimerId = popupTimer["notification_popup"];
 	if (popupTimerId === undefined) return;
 	if (timerId === popupTimerId) hidePopup("notification_popup");
-} // hideNotificationPopup
+}
 
 // Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
 // (isWarning == false, default) or "warning" (isWarning == true).
@@ -459,14 +459,14 @@ function showNotificationPopup(message, msec, isWarning)
 
 	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
 	return showPopupAndNotifyServer("notification_popup", msec, message);
-} // showNotificationPopup
+}
 
 // Show a simple status popup (no icon) with a message and an optional timeout
 function showStatusPopup(message, msec)
 {
 	$("#status_popup_text").html(message);  // Set the popup text
 	showPopupAndNotifyServer("status_popup", msec);  // Show the popup
-} // showStatusPopup
+}
 
 function showAudioPopup(id)
 {
@@ -493,7 +493,7 @@ function showAudioPopup(id)
 	showPopupAndNotifyServer("audio_popup", 8000);
 	$("#" + id).siblings("div[id$=popup]").hide();
 	$("#" + id).show();
-} // showAudioPopup
+}
 
 // If the "trip_computer_popup" is has no tab selected, select that of the current small screen
 function initTripComputerPopup()
@@ -517,14 +517,14 @@ function initTripComputerPopup()
 	var selectedId = mapping[localStorage.smallScreen] || "trip_computer_popup_fuel_data";
 	$("#" + selectedId).show();
 	$("#" + selectedId + "_button").addClass("tabActive");
-} // initTripComputerPopup
+}
 
 // Unselect any tab in the trip computer popup
 function resetTripComputerPopup()
 {
 	$("#trip_computer_popup .tabContent").hide();
 	$("#trip_computer_popup .tabLeft").removeClass("tabActive");
-} // resetTripComputerPopup
+}
 
 // In the "trip_computer_popup", select a specific tab
 function selectTabInTripComputerPopup(index)
@@ -539,7 +539,7 @@ function selectTabInTripComputerPopup(index)
 	// Select the specified tab
 	$(tabs[index]).show();
 	$(tabButtons[index]).addClass("tabActive");
-} // selectTabInTripComputerPopup
+}
 
 // -----
 // Functions for navigating through the screens and their subscreens/elements
@@ -547,7 +547,7 @@ function selectTabInTripComputerPopup(index)
 function isScreenFullSize()
 {
 	return document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-} // isScreenFullSize
+}
 
 function resizeScreenToFit()
 {
@@ -565,7 +565,7 @@ function resizeScreenToFit()
 
 	if (isScreenFullSize()) $("#full_screen_button").removeClass("fa-expand").addClass("fa-compress");
 	else $("#full_screen_button").removeClass("fa-compress").addClass("fa-expand");
-} // resizeScreenToFit
+}
 
 // Toggle full-screen mode
 function toggleFullScreen()
@@ -587,7 +587,7 @@ function toggleFullScreen()
 		else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); // Chrome and Safari
 		else if (elem.msRequestFullscreen) elem.msRequestFullscreen(); // IE
 	} // if
-} // toggleFullScreen
+}
 
 // Set visibility of an element by ID, together with all its parents in the 'div' hierarchy
 function setVisibilityOfElementAndParents(id, value)
@@ -598,7 +598,7 @@ function setVisibilityOfElementAndParents(id, value)
 		el.style.display = value;
 		el = el.parentNode;
 	} // while
-} // setVisibilityOfElementAndParents
+}
 
 // Functions setting the large screen (right hand side of the display)
 
@@ -644,7 +644,7 @@ function changeLargeScreenTo(id)
 
 	// Report back to server (ESP) that user is not browsing the menus
 	if (! inMenu() && webSocket !== undefined) webSocket.send("in_menu:NO");
-} // changeLargeScreenTo
+}
 
 var changeBackScreenId;
 var changeBackScreenTimer;
@@ -682,7 +682,7 @@ function changeBackLargeScreenAfter(msec)
 	);
 
 	changeBackScreenTimerEnd = Date.now() + msec;
-} // changeBackLargeScreenAfter
+}
 
 // Temporarily switch to a specific screen on the right hand side of the display
 function temporarilyChangeLargeScreenTo(id, msec)
@@ -722,14 +722,14 @@ function temporarilyChangeLargeScreenTo(id, msec)
 	} // if
 
 	changeBackLargeScreenAfter(msec);
-} // temporarilyChangeLargeScreenTo
+}
 
 function cancelChangeBackScreenTimer()
 {
 	clearTimeout(changeBackScreenTimer);
 	changeBackScreenTimer = undefined;
 	changeBackScreenId = undefined;
-} // cancelChangeBackScreenTimer
+}
 
 function preventTemporaryScreenChange(msec)
 {
@@ -739,7 +739,7 @@ function preventTemporaryScreenChange(msec)
 		function () { preventTemporaryScreenChangeTimer = null; },
 		msec
 	);
-} // preventTemporaryScreenChange
+}
 
 // Vehicle data
 var contactKeyPosition;
@@ -794,7 +794,7 @@ function selectDefaultScreen(audioSource)
 	if (! selectedScreenId) selectedScreenId = "clock";
 
 	changeLargeScreenTo(selectedScreenId);
-} // selectDefaultScreen
+}
 
 // Cycle through the large screens (right hand side of the display)
 function nextLargeScreen()
@@ -863,7 +863,7 @@ function nextLargeScreen()
 	if (i >= screenIds.length) i = 0;
 
 	changeLargeScreenTo(screenIds[i]);
-} // nextLargeScreen
+}
 
 // Functions setting the small screen (left hand side of the display)
 
@@ -877,7 +877,7 @@ function changeSmallScreenTo(id)
 	setVisibilityOfElementAndParents(currentSmallScreenId, "none");
 	setVisibilityOfElementAndParents(id, "block");
 	currentSmallScreenId = id;
-} // changeSmallScreenTo
+}
 
 // Open a "trip_info" tab in the small (left) information panel
 function openTripInfoTab(evt, tabName)
@@ -886,14 +886,14 @@ function openTripInfoTab(evt, tabName)
 	$("#trip_info .tablinks").removeClass("active");
 	$("#" + tabName).show();
 	evt.currentTarget.className += " active";
-} // openTripInfoTab
+}
 
 function changeToTripCounter(id)
 {
 	// Simulate a "tab click" event
 	var event = { currentTarget: document.getElementById(id + "_button")};
 	openTripInfoTab(event, id);
-} // changeToTripCounter
+}
 
 // Only for debugging
 function tripComputerShortStr(tripComputerStr)
@@ -906,7 +906,7 @@ function tripComputerShortStr(tripComputerStr)
 		"FUEL_CONSUMPTION": "FUE"
 	};
 	return mapping[tripComputerStr] || "??";
-} // tripComputerShortStr
+}
 
 // Change to the correct screen and trip counter, given the reported value of "trip_computer_screen_tab"
 function gotoSmallScreen(smallScreenName)
@@ -941,7 +941,7 @@ function gotoSmallScreen(smallScreenName)
 		} // case
 		break;
 	} // switch
-} // gotoSmallScreen
+}
 
 // -----
 // Functions for navigating through button sets and menus
@@ -961,7 +961,7 @@ function inMenu()
 
 	return currentMenu !== undefined
 		&& mainScreenIds.indexOf(currentLargeScreenId) < 0;  // And not in one of the "main" screens?
-} // inMenu
+}
 
 // Select the first menu item (even if disabled)
 function selectFirstMenuItem(id)
@@ -969,7 +969,7 @@ function selectFirstMenuItem(id)
 	var allButtons = $("#" + id).find(".button");
 	$(allButtons[0]).addClass("buttonSelected");
 	allButtons.slice(1).removeClass("buttonSelected");
-} // selectFirstMenuItem
+}
 
 // Enter a specific menu. Selects the first button, thereby skipping disabled buttons.
 function gotoMenu(menu)
@@ -1011,7 +1011,7 @@ function gotoMenu(menu)
 	// Perform menu's "on_goto" action, if specified
 	var onGoto = $("#" + currentMenu).attr("on_goto");
 	if (onGoto) eval(onGoto);
-} // gotoMenu
+}
 
 function gotoTopLevelMenu(menu)
 {
@@ -1026,7 +1026,7 @@ function gotoTopLevelMenu(menu)
 	currentMenu = currentLargeScreenId;
 
 	gotoMenu(menu);
-} // gotoTopLevelMenu
+}
 
 // Selects the specified button, thereby skipping disabled buttons, following "DOWN_BUTTON" / "RIGHT_BUTTON"
 // attributes if and where present. Wraps if necessary. Also de-selects all other buttons within the same div.
@@ -1038,7 +1038,7 @@ function selectButton(id)
 	var allButtons = selectedButton.parent().find(".button");
 	allButtons.removeClass("buttonSelected");
 	selectedButton.addClass("buttonSelected");
-} // selectButton
+}
 
 // Retrieve the currently selected button and its screen
 function findSelectedButton()
@@ -1077,7 +1077,7 @@ function findSelectedButton()
 		screen: screen,
 		button: currentButton
 	};
-} // findSelectedButton
+}
 
 // Handle the 'Val' (enter) button
 function buttonClicked()
@@ -1094,13 +1094,13 @@ function buttonClicked()
 	if (! goto_id) return;
 
 	gotoMenu(goto_id);  // Change to the menu screen with that ID
-} // buttonClicked
+}
 
 function upMenu()
 {
 	currentMenu = menuStack.pop();
 	if (currentMenu) changeLargeScreenTo(currentMenu);
-} // upMenu
+}
 
 function exitMenu()
 {
@@ -1108,7 +1108,7 @@ function exitMenu()
 	var onEsc = $("#" + currentLargeScreenId).attr("on_esc");
 	if (onEsc) return eval(onEsc);
 	upMenu();
-} // exitMenu
+}
 
 // Returns the passed id or, if undefined, the id of the button that has focus (has class "selectedButton")
 function getFocusId(id)
@@ -1121,7 +1121,7 @@ function getFocusId(id)
 	} // if
 
 	return id;
-} // getFocusId
+}
 
 function setTick(id)
 {
@@ -1132,17 +1132,17 @@ function setTick(id)
 	$("#" + id).parent().parent().find(".tickBox").each(function() { $(this).empty() } );
 
 	$("#" + id).html("<b>&#10004;</b>");
-} // setTick
+}
 
 function isValidTickId(groupId, valueId)
 {
 	return $("#" + groupId).find(".tickBox").map(function() { return this.id; }).get().indexOf(valueId) >= 0;
-} // isValidTickId
+}
 
 function getTickedId(groupId)
 {
 	return $("#" + groupId).find(".tickBox").filter(function() { return $(this).text(); }).attr("id");
-} // getTickedId
+}
 
 function toggleTick(id)
 {
@@ -1153,7 +1153,7 @@ function toggleTick(id)
 	$("#" + id).parent().parent().find(".tickBox").each(function() { $(this).empty() } );
 
 	$("#" + id).html($("#" + id).text() === "" ? "<b>&#10004;</b>" : "");
-} // toggleTick
+}
 
 // Handle an arrow key press in a screen with buttons
 function keyPressed(key)
@@ -1169,7 +1169,7 @@ function keyPressed(key)
 	if (action) return eval(action);
 
 	navigateButtons(key);
-} // keyPressed
+}
 
 // As inspired by https://stackoverflow.com/a/2771544
 function getTextWidth(selector)
@@ -1179,7 +1179,7 @@ function getTextWidth(selector)
 	var width = $(selector).find('span:first').width();
 	$(selector).html(htmlOrg);
 	return width;
-} // getTextWidth
+}
 
 // Associative array, using the button element ID as key
 var buttonOriginalWidths = {};
@@ -1203,7 +1203,7 @@ function resizeButton(id)
 		button.width(widthAtLeast);  // Resize button to fit text
 		button.css('z-index', 1);  // Bring to front
 	} // if
-} // resizeButton
+}
 
 function restoreButtonSize(id)
 {
@@ -1213,12 +1213,12 @@ function restoreButtonSize(id)
 	elem.width(buttonOriginalWidths[id]);  // Reset width of button to original size
 	elem.css({ 'marginLeft': '' });  // Place back in original position
 	elem.css('z-index', '');  // No longer bring to front
-} // restoreButtonSize
+}
 
 function restoreButtonSizes()
 {
 	for (let id in buttonOriginalWidths) restoreButtonSize(id);
-} // restoreButtonSizes
+}
 
 // Handle an arrow key press in a screen with buttons
 function navigateButtons(key)
@@ -1334,7 +1334,7 @@ function navigateButtons(key)
 	// Perform "on_enter" action, if specified
 	var onEnter = gotoButton.attr("on_enter");
 	if (onEnter) eval(onEnter);
-} // navigateButtons
+}
 
 // -----
 // Functions for navigating through letters in a string
@@ -1366,7 +1366,7 @@ function highlightLetter(id, index)
 		+ "<span class='invertedText'>" + text[highlightIndexes[id]] + "</span>"
 		+ text.substr(highlightIndexes[id] + 1, text.length);
 	$("#" + id).html(text);
-} // highlightLetter
+}
 
 // Remove any highlight from a text element
 function unhighlightLetter(id)
@@ -1376,12 +1376,12 @@ function unhighlightLetter(id)
 
 	var text = $("#" + id).text();
 	$("#" + id).html(text);
-} // unhighlightLetter
+}
 
 function highlightFirstLetter(id)
 {
 	highlightLetter(id, 0);
-} // highlightFirstLetter
+}
 
 function highlightNextLetter(id)
 {
@@ -1391,7 +1391,7 @@ function highlightNextLetter(id)
 	if (highlightIndexes[id] === undefined) highlightIndexes[id] = 0; else highlightIndexes[id]++;
 	if (highlightIndexes[id] >= $("#" + id).text().length) highlightIndexes[id] = 0;  // Roll over
 	highlightLetter(id);
-} // highlightNextLetter
+}
 
 function highlightPreviousLetter(id)
 {
@@ -1402,7 +1402,7 @@ function highlightPreviousLetter(id)
 	if (highlightIndexes[id] === undefined) highlightIndexes[id] = last; else highlightIndexes[id]--;
 	if (highlightIndexes[id] < 0) highlightIndexes[id] = last;  // Roll over
 	highlightLetter(id);
-} // highlightPreviousLetter
+}
 
 // -----
 // Functions for navigating through lines in a list
@@ -1414,7 +1414,7 @@ function splitIntoLines(id)
 	var html = $("#" + id).html();
 	var brExp = /<br\s*\/?>/i;
 	return html.split(brExp);
-} // splitIntoLines
+}
 
 // Highlight a line in an element with lines
 function highlightLine(id)
@@ -1451,7 +1451,7 @@ function highlightLine(id)
 	var wantNVisibleLines = Math.floor(nVisibleLines);
 	var tooManyPixels = (nVisibleLines - wantNVisibleLines) * heightOfUnhighlightedLine;
 	if (tooManyPixels > 0) $("#" + id).height($("#" + id).height() - tooManyPixels);  // Shrink a bit
-} // highlightLine
+}
 
 // Remove any highlight from element with lines
 function unhighlightLine(id)
@@ -1470,7 +1470,7 @@ function unhighlightLine(id)
 	lines[highlightIndexes[id]] = lines[highlightIndexes[id]].replace(/<[^>]*>/g, '');
 
 	$("#" + id).html(lines.join('<br />'));
-} // unhighlightLine
+}
 
 function highlightFirstLine(id)
 {
@@ -1482,7 +1482,7 @@ function highlightFirstLine(id)
 	highlightLine(id);
 
 	$("#" + id).scrollTop(0);  // Make sure the top line is visible
-} // highlightFirstLine
+}
 
 function highlightNextLine(id)
 {
@@ -1508,7 +1508,7 @@ function highlightNextLine(id)
 		// Try to keep at least one next line visible
 		$("#" + id).scrollTop($("#" + id).scrollTop() + scrollBy);
 	} // if
-} // highlightNextLine
+}
 
 function highlightPreviousLine(id)
 {
@@ -1533,7 +1533,7 @@ function highlightPreviousLine(id)
 		// Try to keep at least one previous line visible
 		$("#" + id).scrollTop($("#" + id).scrollTop() - heightOfUnhighlightedLine);
 	}
-} // highlightPreviousLine
+}
 
 // -----
 // Functions for drawing arcs (circle segments). Used for sat nav guidance on/near roundabouts.
@@ -1557,7 +1557,7 @@ function polarToCartesian(centerX, centerY, radius, angleInDegrees)
 		x: centerX + (radius * Math.cos(angleInRadians)),
 		y: centerY + (radius * Math.sin(angleInRadians))
 	};
-} // polarToCartesian
+}
 
 function describeArc(x, y, radius, startAngle, endAngle)
 {
@@ -1573,7 +1573,7 @@ function describeArc(x, y, radius, startAngle, endAngle)
 	].join(" ");
 
 	return d;
-} // describeArc
+}
 
 // -----
 // Audio settings and tuner presets popups
@@ -1593,14 +1593,14 @@ function hideAudioSettingsPopup()
 	isAudioMenuVisible = false;
 
 	return hidePopup("audio_settings_popup");
-} // hideAudioSettingsPopup
+}
 
 function hideAudioSettingsPopupAfter(msec)
 {
 	// (Re-)arm the timer to hide the popup after the specified number of milliseconds
 	clearTimeout(audioSettingsPopupHideTimer);
 	audioSettingsPopupHideTimer = setTimeout(hideAudioSettingsPopup, msec);
-} // hideAudioSettingsPopupAfter
+}
 
 // The IDs of the audio settings highlight boxes to be cycled through
 var highlightIds =
@@ -1636,12 +1636,12 @@ function highlightAudioSetting(goToFirst)
 
 	updatingAudioVolume = false;
 	isAudioMenuVisible = true;
-} // highlightAudioSetting
+}
 
 function hideTunerPresetsPopup()
 {
 	return hidePopup("tuner_presets_popup");
-} // hideTunerPresetsPopup
+}
 
 // Show the audio volume popup
 function showAudioVolumePopup()
@@ -1679,7 +1679,7 @@ function showAudioVolumePopup()
 	updatingAudioVolume = true;
 
 	hideAudioSettingsPopupAfter(4000);  // Hide popup after 4 seconds
-} // showAudioVolumePopup
+}
 
 // Show the audio settings popup
 function showAudioSettingsPopup(button)
@@ -1702,7 +1702,7 @@ function showAudioSettingsPopup(button)
 
 	// (Re-)start the popup visibility timer.
 	if (isAudioMenuVisible) hideAudioSettingsPopupAfter(7500);
-} // showAudioSettingsPopup
+}
 
 // Show the tuner presets popup
 function showTunerPresetsPopup()
@@ -1713,7 +1713,7 @@ function showTunerPresetsPopup()
 	// Hide the popup after 9 seconds
 	clearTimeout(handleItemChange.tunerPresetsPopupTimer);
 	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, 8500);
-} // showTunerPresetsPopup
+}
 
 // -----
 // Color theme and dimming
@@ -1734,13 +1734,13 @@ function setColorTheme(theme)
 	$("body").css("background-image", theme === "set_light_theme" ? "url('background_light.jpg')" : "url('background.jpg')");
 
 	setDimLevel(headlightStatus, theme);  // Will adjust main color (dark theme) or background color (light theme)
-} // setColorTheme
+}
 
 function colorThemeTickSet()
 {
 	toggleTick();
 	setColorTheme(getTickedId("set_screen_brightness"));
-} // colorThemeTickSet
+}
 
 function colorThemeSelectTickedButton()
 {
@@ -1751,7 +1751,7 @@ function colorThemeSelectTickedButton()
 	if (isValidTickId("set_screen_brightness", theme)) id = theme; else localStorage.colorTheme = id;
 	setTick(id);
 	$("#" + id).addClass("buttonSelected");  // On entry into units screen, select this button
-} // colorThemeSelectTickedButton
+}
 
 function setLuminosity(luminosity, theme)
 {
@@ -1766,7 +1766,7 @@ function setLuminosity(luminosity, theme)
 	else $(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
 
 	return luminosity;
-} // setLuminosity
+}
 
 function initDimLevel()
 {
@@ -1776,7 +1776,7 @@ function initDimLevel()
 
 	$("#display_brightness_level").text(localStorage.dimLevel);
 	$("#display_reduced_brightness_level").text(localStorage.dimLevelReduced);
-} // initDimLevel
+}
 
 function setDimLevel(headlightStatus, theme)
 {
@@ -1788,7 +1788,7 @@ function setDimLevel(headlightStatus, theme)
 
 	$("#display_brightness_level").toggle(! headlightsOn);
 	$("#display_reduced_brightness_level").toggle(headlightsOn);
-} // setDimLevel
+}
 
 function adjustDimLevel(headlightStatus, button)
 {
@@ -1803,7 +1803,7 @@ function adjustDimLevel(headlightStatus, button)
 	$("#" + id).text((+luminosity - 63) / 2);
 
 	return id;
-} // adjustDimLevel
+}
 
 function setBrightnessEscape()
 {
@@ -1812,7 +1812,7 @@ function setBrightnessEscape()
 	setColorTheme(localStorage.colorTheme);
 
 	upMenu();
-} // setBrightnessEscape
+}
 
 function setBrightnessValidate()
 {
@@ -1823,7 +1823,7 @@ function setBrightnessValidate()
 	upMenu();
 	upMenu();
 	upMenu();
-} // setBrightnessValidate
+}
 
 // -----
 // Functions for selecting MFD language
@@ -1847,13 +1847,13 @@ function setLanguageSelectTickedButton()
 	$("#" + id).addClass("buttonSelected");
 
 	$("#set_language_validate_button").removeClass("buttonSelected");
-} // setLanguageSelectTickedButton
+}
 
 function setLanguageTickSet()
 {
 	toggleTick();
 	setLanguage(getTickedId("set_language"));
-} // setLanguageTickSet
+}
 
 function setLanguageValidate()
 {
@@ -1865,7 +1865,7 @@ function setLanguageValidate()
 	upMenu();
 	upMenu();
 	upMenu();
-} // setLanguageValidate
+}
 
 // -----
 // Functions for selecting MFD formats and units
@@ -1883,7 +1883,7 @@ function invalidateAllDistanceFields()
 	$("#distance_to_service").text("---");
 	$("#odometer_1").text("--.-");
 	$('[gid="distance_to_empty"]').text("--");
-} // invalidateAllDistanceFields
+}
 
 function unitsSelectTickedButtons()
 {
@@ -1906,7 +1906,7 @@ function unitsSelectTickedButtons()
 	setTick(id);
 
 	$("#set_units_validate_button").removeClass("buttonSelected");
-} // unitsSelectTickedButtons
+}
 
 function unitsValidate()
 {
@@ -1925,7 +1925,7 @@ function unitsValidate()
 	upMenu();
 	upMenu();
 	upMenu();
-} // unitsValidate
+}
 
 var mfdLargeScreen = "CLOCK";  // Screen currently shown in the "large" (right hand side) area on the original MFD
 
@@ -1940,7 +1940,7 @@ function changeToInstrumentsScreen()
 	if (inMenu()) return;  // No screen change while browsing the menus
 
 	changeLargeScreenTo("instruments");
-} // changeToInstrumentsScreen
+}
 
 // -----
 // Functions for satellite navigation menu and screen handling
@@ -1984,7 +1984,7 @@ function satnavShowDisclaimer()
 
 	currentMenu = "satnav_disclaimer";
 	changeLargeScreenTo(currentMenu);
-} // satnavShowDisclaimer
+}
 
 // When vehicle is moving, certain menus are disabled
 
@@ -1995,7 +1995,7 @@ function satnavVehicleMoving()
 {
 	var gpsSpeed = parseInt($("#satnav_gps_speed").text() || 0);  // Always reported in km/h
 	return gpsSpeed >= 2;
-} // satnavVehicleMoving
+}
 
 function satnavCutoffBottomLines(selector)
 {
@@ -2013,7 +2013,7 @@ function satnavCutoffBottomLines(selector)
 		styleObject.removeProperty('top');
 		styleObject.removeProperty('transform');
 	} // if
-} // satnavCutoffBottomLines
+}
 
 function satnavGotoMainMenu()
 {
@@ -2035,7 +2035,7 @@ function satnavGotoMainMenu()
 	gotoMenu("satnav_main_menu");
 
 	satnavShowDisclaimer();
-} // satnavGotoMainMenu
+}
 
 function satnavGotoListScreen()
 {
@@ -2092,14 +2092,14 @@ function satnavGotoListScreen()
 
 	// We could get here via "Esc" and then the currently selected line must be highlighted
 	highlightLine("satnav_choice_list");
-} // satnavGotoListScreen
+}
 
 function satnavGotoListScreenEmpty()
 {
 	satnavGotoListScreen();
 	$("#satnav_choice_list").empty();
 	highlightFirstLine("satnav_choice_list");
-} // satnavGotoListScreenEmpty
+}
 
 function satnavGotoListScreenServiceList()
 {
@@ -2107,7 +2107,7 @@ function satnavGotoListScreenServiceList()
 	handleItemChange.mfdToSatnavRequest = "service";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
-} // satnavGotoListScreenServiceList
+}
 
 function satnavGotoListScreenPersonalAddressList()
 {
@@ -2115,7 +2115,7 @@ function satnavGotoListScreenPersonalAddressList()
 	handleItemChange.mfdToSatnavRequest = "personal_address_list";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
-} // satnavGotoListScreenPersonalAddressList
+}
 
 function satnavGotoListScreenProfessionalAddressList()
 {
@@ -2123,7 +2123,7 @@ function satnavGotoListScreenProfessionalAddressList()
 	handleItemChange.mfdToSatnavRequest = "professional_address_list";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
-} // satnavGotoListScreenProfessionalAddressList
+}
 
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
 function satnavSelectFirstAvailableCharacter()
@@ -2137,7 +2137,7 @@ function satnavSelectFirstAvailableCharacter()
 
 	$("#satnav_to_mfd_show_characters_line_2").removeClass("buttonSelected");
 	unhighlightLetter("satnav_to_mfd_show_characters_line_2");
-} // satnavSelectFirstAvailableCharacter
+}
 
 function satnavEnterCityCharactersScreen()
 {
@@ -2147,7 +2147,7 @@ function satnavEnterCityCharactersScreen()
 	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");  // TODO - check
 	restoreButtonSizes();
 	satnavSelectFirstAvailableCharacter();  // TODO - check
-} // satnavEnterCityCharactersScreen
+}
 
 function satnavEnterStreetCharactersScreen()
 {
@@ -2157,7 +2157,7 @@ function satnavEnterStreetCharactersScreen()
 	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");
 	restoreButtonSizes();
 	satnavSelectFirstAvailableCharacter();  // TODO - check
-} // satnavEnterStreetCharactersScreen
+}
 
 var satnavAvailableCharactersStack = [];
 
@@ -2186,7 +2186,7 @@ function satnavConfirmCityMode()
 	$("#satnav_enter_characters_change_or_city_center_button").text(changeText);
 
 	satnavSelectFirstAvailableCharacter();
-} // satnavConfirmCityMode
+}
 
 var userHadOpportunityToEnterStreet = false;
 
@@ -2217,7 +2217,7 @@ function satnavConfirmStreetMode()
 	satnavSelectFirstAvailableCharacter();
 
 	userHadOpportunityToEnterStreet = false;
-} // satnavConfirmStreetMode
+}
 
 // Puts the "Enter city" and "Enter street" screen into the mode where the user is entering a new city resp. street
 // character by character
@@ -2233,7 +2233,7 @@ function satnavEnterByLetterMode()
 		currentMenu === "satnav_enter_street_characters" ? cityCenterText : changeText);
 
 	satnavSelectFirstAvailableCharacter();
-} // satnavEnterByLetterMode
+}
 
 // Currently entering destination city?
 function satnavEnteringCity()
@@ -2241,32 +2241,32 @@ function satnavEnteringCity()
 	// The right-most button in the "Enter city/street" screens is "Change" when entering city
 	// ("City centre" when entering street)
 	return $("#satnav_enter_characters_change_or_city_center_button").text().replace(/\s*/g, "") === changeText;
-} // satnavEnteringCity
+}
 
 // Currently entering destination city in "character-by-character entry" mode?
 function satnavEnteringCityByLetter()
 {
 	return $("#satnav_current_destination_city").is(":hidden");
-} // satnavEnteringCityByLetter
+}
 
 // Currently entering destination street in "character-by-character entry" mode?
 function satnavEnteringStreetByLetter()
 {
 	return $("#satnav_current_destination_street").is(":hidden");
-} // satnavEnteringStreetByLetter
+}
 
 // Currently entering destination in "character-by-character entry" mode?
 function satnavEnteringByLetter()
 {
 	if (satnavEnteringCity()) return satnavEnteringCityByLetter();
 	return satnavEnteringStreetByLetter();
-} // satnavEnteringByLetter
+}
 
 // Toggle between "character-by-character entry" mode, and "confirm current destination city" mode
 function satnavToggleCityEntryMode()
 {
 	if (satnavEnteringCityByLetter()) satnavConfirmCityMode(); else satnavEnterByLetterMode();
-} // satnavToggleCityEntryMode
+}
 
 function satnavEnterCharactersChangeOrCityCenterButtonPress()
 {
@@ -2280,19 +2280,19 @@ function satnavEnterCharactersChangeOrCityCenterButtonPress()
 		// Entering street and chosen "City centre" button: directly go to the "Programmed destination" screen
 		gotoMenu("satnav_show_current_destination");
 	} // if
-} // satnavEnterCharactersChangeOrCityCenterButtonPress
+}
 
 function satnavEnterCity()
 {
 	gotoMenu("satnav_enter_city_characters");
 	satnavConfirmCityMode();
-} // satnavEnterCity
+}
 
 function satnavEnterNewCity()
 {
 	gotoMenu("satnav_enter_city_characters");
 	satnavEnterByLetterMode();
-} // satnavEnterNewCity
+}
 
 function satnavEnterNewCityForService()
 {
@@ -2304,7 +2304,7 @@ function satnavEnterNewCityForService()
 	satnavLastEnteredChar = null;
 
 	satnavEnterNewCity();
-} // satnavEnterNewCityForService
+}
 
 function satnavGotoEnterCity()
 {
@@ -2317,7 +2317,7 @@ function satnavGotoEnterCity()
 	currentMenu = undefined;
 
 	satnavEnterCity();
-} // satnavGotoEnterCity
+}
 
 function satnavGotoEnterStreetOrNumber()
 {
@@ -2340,7 +2340,7 @@ function satnavGotoEnterStreetOrNumber()
 		if ($("#satnav_current_destination_street").text() === "") satnavGotoListScreen();
 		else gotoMenu("satnav_current_destination_house_number");
 	} // if
-} // satnavGotoEnterStreetOrNumber
+}
 
 // Scrape the entered character from the screen (from the DOM). Used as a last-resort if the
 // "mfd_to_satnav_enter_character" packet is missed.
@@ -2351,7 +2351,7 @@ function satnavGrabSelectedCharacter()
 	var selectedChar = $("#satnav_to_mfd_show_characters_line_1 .invertedText").text();
 	if (! selectedChar) selectedChar = $("#satnav_to_mfd_show_characters_line_2 .invertedText").text();
 	if (selectedChar) satnavLastEnteredChar = selectedChar;
-} // satnavGrabSelectedCharacter
+}
 
 function satnavEnterCharacter()
 {
@@ -2364,7 +2364,7 @@ function satnavEnterCharacter()
 	$("#satnav_enter_characters_correction_button").removeClass("buttonDisabled");  // Enable the "Correction" button
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");  // Disable the "Validate" button
 	highlightFirstLine("satnav_choice_list");
-} // satnavEnterCharacter
+}
 
 var showAvailableCharactersTimer = null;
 
@@ -2396,7 +2396,7 @@ function satnavRemoveEnteredCharacter(newState)
 
 	// Jump back to the characters
 	if (currentText.length === 0) satnavSelectFirstAvailableCharacter();
-} // satnavRemoveEnteredCharacter
+}
 
 // Boolean to indicate if the user has pressed 'Esc' within a list of cities or streets; in that case the entered
 // characters are removed until there is more than one character to choose from.
@@ -2416,7 +2416,7 @@ function satnavEnterOrDeleteCharacter(newState)
 	} // if
 
 	satnavEnterOrDeleteCharacterExpectedState = newState;
-} // satnavEnterOrDeleteCharacter
+}
 
 function satnavCheckIfCityCenterMustBeAdded()
 {
@@ -2431,7 +2431,7 @@ function satnavCheckIfCityCenterMustBeAdded()
 	{
 		$("#satnav_choice_list").html(cityCenterText + "<br />" + $("#satnav_choice_list").html());
 	} // if
-} // satnavCheckIfCityCenterMustBeAdded
+}
 
 function satnavListItemClicked()
 {
@@ -2452,7 +2452,7 @@ function satnavListItemClicked()
 		// Pop away this screen, so that escaping from the next screen leads to the previous
 		currentMenu = menuStack.pop();
 	} // if
-} // satnavListItemClicked
+}
 
 // A new digit has been entered for the house number
 function satnavEnterDigit(enteredNumber)
@@ -2476,7 +2476,7 @@ function satnavEnterDigit(enteredNumber)
 	s = s.replace(/[\s_]/g, "");  // Strip the entry formatting: remove spaces and underscores
 	var nDigitsEntered = s.toString().length;
 	if (nDigitsEntered === highestHouseNumberInRange.toString().length) keyPressed("DOWN_BUTTON");
-} // satnavEnterDigit
+}
 
 function satnavConfirmHouseNumber()
 {
@@ -2496,7 +2496,7 @@ function satnavConfirmHouseNumber()
 	// None of the buttons is selected
 	$("#satnav_enter_house_number_validate_button").removeClass("buttonSelected");
 	$("#satnav_enter_house_number_change_button").removeClass("buttonSelected");
-} // satnavConfirmHouseNumber
+}
 
 var lowestHouseNumberInRange = 0;
 var highestHouseNumberInRange = 0;
@@ -2506,7 +2506,7 @@ function satnavClearEnteredNumber()
 {
 	var nDigits = highestHouseNumberInRange.toString().length;
 	$("#satnav_entered_number").text("_ ".repeat(nDigits));
-} // satnavClearEnteredNumber
+}
 
 function satnavHouseNumberEntryMode()
 {
@@ -2521,7 +2521,7 @@ function satnavHouseNumberEntryMode()
 
 	// No entered number, so disable the "Change" button
 	$("#satnav_enter_house_number_change_button").addClass("buttonDisabled");
-} // satnavHouseNumberEntryMode
+}
 
 // Checks if the chosen or entered house number is valid. If not valid, shows a popup to indicate this. If valid,
 // proceeds to the next screen: "satnav_show_current_destination".
@@ -2572,7 +2572,7 @@ function satnavCheckEnteredHouseNumber()
 	$("#satnav_current_destination_house_number_shown").html(enteredNumber === "" ? noNumberText : enteredNumber);
 
 	gotoMenu("satnav_show_current_destination");
-} // satnavCheckEnteredHouseNumber
+}
 
 function satnavClearLastDestination()
 {
@@ -2580,7 +2580,7 @@ function satnavClearLastDestination()
 	$('[gid="satnav_last_destination_street_shown"]').empty();
 	$("#satnav_last_destination_house_number_shown").empty();
 	$("#satnav_reached_destination_house_number").empty();
-} // satnavClearLastDestination
+}
 
 function satnavChangeProgrammedDestination()
 {
@@ -2591,7 +2591,7 @@ function satnavChangeProgrammedDestination()
 		'satnav_select_from_memory_menu' : 'satnav_main_menu';
 	changeLargeScreenTo(currentMenu);
 	selectFirstMenuItem(currentMenu);
-} // satnavChangeProgrammedDestination
+}
 
 function satnavEnterShowServiceAddress()
 {
@@ -2599,7 +2599,7 @@ function satnavEnterShowServiceAddress()
 	$("#satnav_show_service_address .dots:not(#satnav_to_mfd_list_size)").empty();
 
 	$("#satnav_service_address_entry_number").text("1");
-} // satnavEnterShowServiceAddress
+}
 
 // Enable/disable the buttons in the "satnav_show_service_address" screen. Also select the appropriate button.
 function satnavServiceAddressSetButtons(selectedEntry)
@@ -2630,7 +2630,7 @@ function satnavServiceAddressSetButtons(selectedEntry)
 		$("#satnav_service_address_validate_button").removeClass("buttonSelected");
 		$("#satnav_service_address_previous_button").addClass("buttonSelected");
 	} // if
-} // satnavServiceAddressSetButtons
+}
 
 function satnavArchiveInDirectoryCreatePersonalEntry()
 {
@@ -2643,7 +2643,7 @@ function satnavArchiveInDirectoryCreatePersonalEntry()
 	localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
 
 	showPopup("satnav_input_stored_in_personal_dir_popup", 7000);
-} // satnavArchiveInDirectoryCreatePersonalEntry
+}
 
 function satnavArchiveInDirectoryCreateProfessionalEntry()
 {
@@ -2656,7 +2656,7 @@ function satnavArchiveInDirectoryCreateProfessionalEntry()
 	localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
 
 	showPopup("satnav_input_stored_in_professional_dir_popup", 7000);
-} // satnavArchiveInDirectoryCreateProfessionalEntry
+}
 
 function satnavSetDirectoryAddressScreenMode(mode)
 {
@@ -2688,7 +2688,7 @@ function satnavSetDirectoryAddressScreenMode(mode)
 		$("#satnav_manage_professional_address_rename_button").addClass("buttonSelected");
 		resizeButton("satnav_manage_professional_address_rename_button");
 	} // if
-} // satnavSetDirectoryAddressScreenMode
+}
 
 // Select the first letter in the first row
 function satnavSelectFirstLineOfDirectoryEntryScreen(screenId)
@@ -2701,7 +2701,7 @@ function satnavSelectFirstLineOfDirectoryEntryScreen(screenId)
 
 	$("#" + line2id).removeClass("buttonSelected");
 	unhighlightLetter(line2id);
-} // satnavSelectFirstLineOfDirectoryEntryScreen
+}
 
 function satnavEnterArchiveInDirectoryScreen()
 {
@@ -2715,7 +2715,7 @@ function satnavEnterArchiveInDirectoryScreen()
 	// On entry into this screen, all buttons are disabled
 	$("#satnav_archive_in_directory .button").addClass("buttonDisabled");
 	$("#satnav_archive_in_directory .button").removeClass("buttonSelected");
-} // satnavEnterArchiveInDirectoryScreen
+}
 
 function satnavEnterRenameDirectoryEntryScreen()
 {
@@ -2729,7 +2729,7 @@ function satnavEnterRenameDirectoryEntryScreen()
 	// On entry into this screen, all buttons are disabled
 	$("#satnav_rename_entry_in_directory .button").addClass("buttonDisabled");
 	$("#satnav_rename_entry_in_directory .button").removeClass("buttonSelected");
-} // satnavEnterRenameDirectoryEntryScreen
+}
 
 // A new character is entered in the "satnav_rename_entry_in_directory" or "satnav_archive_in_directory" screen
 function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
@@ -2798,7 +2798,7 @@ function satnavDirectoryEntryEnterCharacter(screenId, availableCharacters)
 	$("#satnav_archive_in_directory_personal_button").toggleClass("buttonDisabled", entryExists);
 	$("#satnav_archive_in_directory_professional_button").toggleClass("buttonDisabled", entryExists);
 	$(".satNavEntryExistsTag").toggle(entryExists);
-} // satnavDirectoryEntryEnterCharacter
+}
 
 // Handles pressing the "Validate" button in the sat nav directory rename entry screen
 function satnavDirectoryEntryRenameValidateButton()
@@ -2832,7 +2832,7 @@ function satnavDirectoryEntryRenameValidateButton()
 	menuStack.pop();
 	currentMenu = menuStack.pop();
 	changeLargeScreenTo(currentMenu);
-} // satnavDirectoryEntryRenameValidateButton
+}
 
 function satnavDeleteDirectoryEntry()
 {
@@ -2862,7 +2862,7 @@ function satnavDeleteDirectoryEntry()
 	// Go all the way back to the "Directory management" menu
 	upMenu();
 	upMenu();
-} // satnavDeleteDirectoryEntry
+}
 
 // Handles pressing "UP" on the "Correction" button in the sat nav directory entry screens
 function satnavDirectoryEntryMoveUpFromCorrectionButton(screenId)
@@ -2880,7 +2880,7 @@ function satnavDirectoryEntryMoveUpFromCorrectionButton(screenId)
 		// In this case, "UP" simply moves back to the second line
 		navigateButtons('UP_BUTTON');
 	} // if
-} // satnavDirectoryEntryMoveUpFromCorrectionButton
+}
 
 function satnavDeleteDirectories()
 {
@@ -2892,7 +2892,7 @@ function satnavDeleteDirectories()
 	// Save in local (persistent) store
 	localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
 	localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
-} // satnavDeleteDirectories
+}
 
 function satnavSwitchToGuidanceScreen()
 {
@@ -2900,7 +2900,7 @@ function satnavSwitchToGuidanceScreen()
 	menuStack = [];
 	currentMenu = "satnav_guidance";
 	changeLargeScreenTo(currentMenu);
-} // satnavSwitchToGuidanceScreen
+}
 
 // Show the "Destination is not accessible by road" popup, if applicable
 function showDestinationNotAccessiblePopupIfApplicable()
@@ -2935,7 +2935,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	satnavDestinationNotAccessibleByRoadPopupShown = true;
 
 	return true;
-} // showDestinationNotAccessiblePopupIfApplicable
+}
 
 function satnavGuidanceSetPreference(value)
 {
@@ -2959,7 +2959,7 @@ function satnavGuidanceSetPreference(value)
 		value === "COMPROMISE_FAST_SHORT" ? "compromise" :
 		undefined;
 	setTick("satnav_guidance_preference_" + preferenceTickBoxId);
-} // satnavGuidanceSetPreference
+}
 
 function satnavGuidancePreferenceSelectTickedButton()
 {
@@ -2987,7 +2987,7 @@ function satnavGuidancePreferenceSelectTickedButton()
 	} // if
 
 	$("#satnav_guidance_preference_menu_validate_button").removeClass("buttonSelected");
-} // satnavGuidancePreferenceSelectTickedButton
+}
 
 function satnavGuidancePreferencePopupYesButton()
 {
@@ -2996,7 +2996,7 @@ function satnavGuidancePreferencePopupYesButton()
 	if (showDestinationNotAccessiblePopupIfApplicable()) return;
 
 	if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
-} // satnavGuidancePreferencePopupYesButton
+}
 
 function satnavGuidancePreferencePopupNoButton()
 {
@@ -3004,7 +3004,7 @@ function satnavGuidancePreferencePopupNoButton()
 	hidePopup('satnav_computing_route_popup');
 	changeLargeScreenTo('satnav_guidance_preference_menu');
 	satnavGuidancePreferenceSelectTickedButton();
-} // satnavGuidancePreferencePopupNoButton
+}
 
 function satnavGuidancePreferenceEscape()
 {
@@ -3018,7 +3018,7 @@ function satnavGuidancePreferenceEscape()
 	{
 		selectDefaultScreen();
 	} // if
-} // satnavGuidancePreferenceEscape
+}
 
 function satnavGuidancePreferenceValidate()
 {
@@ -3032,7 +3032,7 @@ function satnavGuidancePreferenceValidate()
 	{
 		satnavSwitchToGuidanceScreen();
 	} // if
-} // satnavGuidancePreferenceValidate
+}
 
 function satnavCalculatingRoute()
 {
@@ -3049,7 +3049,7 @@ function satnavCalculatingRoute()
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
 
 	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
-} // satnavCalculatingRoute
+}
 
 function showOrTimeoutDestinationNotAccessiblePopup()
 {
@@ -3062,7 +3062,7 @@ function showOrTimeoutDestinationNotAccessiblePopup()
 		function () { satnavDestinationNotAccessibleByRoadPopupShown = true; },
 		10000
 	);
-} // showOrTimeoutDestinationNotAccessiblePopup 
+}
 
 // Format a string like "45 km", "15 mi", "7000 m", "880 yd" or "60 m". Return an array [distance, unit]
 function satnavFormatDistance(distanceStr)
@@ -3088,7 +3088,7 @@ function satnavFormatDistance(distanceStr)
 	{
 		return [ distance, unit ];
 	} // if
-} // satnavFormatDistance
+}
 
 function satnavSetAudioLed(playingAudio)
 {
@@ -3117,7 +3117,7 @@ function satnavSetAudioLed(playingAudio)
 			5000
 		);
 	} // if
-} // satnavSetAudioLed
+}
 
 var suppressScreenChangeToAudio = null;
 
@@ -3149,7 +3149,7 @@ function satnavValidateVocalSynthesisLevel()
 		upMenu();
 		upMenu();
 	} // if
-} // satnavValidateVocalSynthesisLevel
+}
 
 function satnavEscapeVocalSynthesisLevel()
 {
@@ -3164,7 +3164,7 @@ function satnavEscapeVocalSynthesisLevel()
 	var comingFromMenu = menuStack[menuStack.length - 1];
 	upMenu();
 	if (comingFromMenu === "satnav_guidance_tools_menu") upMenu();
-} // satnavEscapeVocalSynthesisLevel
+}
 
 function satnavStopGuidance()
 {
@@ -3172,12 +3172,12 @@ function satnavStopGuidance()
 	// it will ask for guidance continuation later. So only clear if "on map".
 	if (satnavOnMap) localStorage.askForGuidanceContinuation = "NO";
 	selectDefaultScreen();
-} // satnavStopGuidance
+}
 
 function satnavStopOrResumeGuidance()
 {
 	if (satnavMode === "IN_GUIDANCE_MODE") satnavStopGuidance(); else satnavSwitchToGuidanceScreen();
-} // satnavStopOrResumeGuidance
+}
 
 function satnavPoweringOff(satnavMode)
 {
@@ -3194,7 +3194,7 @@ function satnavPoweringOff(satnavMode)
 	handleItemChange.nSatNavDiscUnreadable = 1;
 	satnavDisclaimerAccepted = false;
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
-} // satnavPoweringOff
+}
 
 function satnavNoAudioIcon()
 {
@@ -3204,7 +3204,7 @@ function satnavNoAudioIcon()
 	{
 		$("#satnav_no_audio_icon").toggle($("#volume").text() === "0");
 	} // if
-} // satnavNoAudioIcon
+}
 
 function showPowerSavePopup()
 {
@@ -3217,7 +3217,7 @@ function showPowerSavePopup()
 		"set_language_dutch": "Omschakeling naar<br />energiebesparingsmodus"
 	};
 	showNotificationPopup(translations[localStorage.mfdLanguage] || "Changing to<br />power-save mode", 15000);
-} // showPowerSavePopup
+}
 
 // -----
 // Handling of 'system' screen
@@ -3233,7 +3233,7 @@ function gearIconAreaClicked()
 	{
 		changeLargeScreenTo("clock");
 	} // if
-} // gearIconAreaClicked
+}
 
 // -----
 // Handling of doors and boot status
@@ -5590,7 +5590,7 @@ function handleItemChange(item, value)
 		default:
 		break;
 	} // switch
-} // handleItemChange
+}
 
 // -----
 // Functions for localization (language, units)
@@ -6726,7 +6726,7 @@ function setLanguage(language)
 
 	$("#door_open_popup_text").html(doorOpenText);
 	satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
-} // setLanguage
+}
 
 function setUnits(distanceUnit, temperatureUnit, timeUnit)
 {
@@ -6763,7 +6763,7 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 		$("#climate_control_popup .tag:eq(1)").html("&deg;C");
 		$("#climate_control_popup .tag:eq(3)").html("&deg;C");
 	} // if
-} // setUnits
+}
 
 // To be called by the body "onload" event
 function htmlBodyOnLoad()
@@ -6782,6 +6782,6 @@ function htmlBodyOnLoad()
 	setInterval(updateDateTime, 1000);
 
 	connectToWebSocket();
-} // htmlBodyOnLoad
+}
 
 )=====";
