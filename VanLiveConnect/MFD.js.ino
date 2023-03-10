@@ -733,6 +733,8 @@ function cancelChangeBackScreenTimer()
 
 function preventTemporaryScreenChange(msec)
 {
+	cancelChangeBackScreenTimer();
+
 	clearTimeout(preventTemporaryScreenChangeTimer);
 	preventTemporaryScreenChangeTimer = setTimeout
 	(
@@ -750,10 +752,10 @@ var menuStack = [];
 
 function selectDefaultScreen(audioSource)
 {
-	cancelChangeBackScreenTimer();
-
 	// Ignore invocation during engine start
 	if (currentLargeScreenId === "pre_flight" && contactKeyPosition === "START") return;
+
+	preventTemporaryScreenChange(3000);  // No autonomous screen change for the next 3 seconds
 
 	// We're no longer in any menu
 	menuStack = [];
@@ -801,8 +803,6 @@ function nextLargeScreen()
 {
 
 	if (inMenu()) return;  // Don't cycle through menu screens
-
-	cancelChangeBackScreenTimer();
 
 	preventTemporaryScreenChange(10000);  // No autonomous screen change for the next 10 seconds
 
@@ -2902,7 +2902,8 @@ function satnavSwitchToGuidanceScreen()
 	changeLargeScreenTo(currentMenu);
 }
 
-// Show the "Destination is not accessible by road" popup, if applicable
+// Show the "Destination is not accessible by road" popup, if applicable.
+// Returns 'false' if it is not (yet) the right moment to check if the popup must be shown.
 function showDestinationNotAccessiblePopupIfApplicable()
 {
 	if (! satnavDestinationNotAccessible) return false;
@@ -2911,12 +2912,13 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
 
-	// Show this popup only once at start of guidance or after recalculation
+	// Show this popup only if the current location is known (to emulate behaviour of MFD).
+	// This seems to be the criterion used by the original MFD.
+	if (satnavCurrentStreet === "") return false;
+
+	// Show popup only once at start of guidance or after recalculation
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
 
-	// But only if the current location is known (to emulate behaviour of MFD)
-	//if (satnavCurrentStreet !== "") --> This seems to be the criterion used by the original MFD (which is also incorrect)
-	//if (satnavGpsFix)
 	if (! satnavDestinationReachable && satnavOnMap)
 	{
 		hidePopup();
@@ -3204,6 +3206,22 @@ function satnavNoAudioIcon()
 	{
 		$("#satnav_no_audio_icon").toggle($("#volume").text() === "0");
 	} // if
+}
+
+function satnavRetrievingInstruction()
+{
+	// TODO - check translations from English
+	let translations =
+	{
+		"set_language_french": "Chercher instruction",
+		"set_language_german": "Anweisung suchen",
+		"set_language_spanish": "Buscar instrucci&oacute;n",
+		"set_language_italian": "Cercare istruzione",
+		"set_language_dutch": "Opzoeken instructie"
+	};
+	let content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
+	$("#satnav_guidance_next_street").html(content);
+	satnavCutoffBottomLines($("#satnav_guidance_next_street"));
 }
 
 function showPowerSavePopup()
@@ -4306,11 +4324,7 @@ function handleItemChange(item, value)
 		{
 			satnavDestinationNotAccessible = value === "YES";
 
-			if (satnavDestinationNotAccessible)
-			{
-				// Note: we do not want this popup while driving
-				showDestinationNotAccessiblePopupIfApplicable();
-			}
+			if (satnavDestinationNotAccessible) showDestinationNotAccessiblePopupIfApplicable();
 		} // case
 		break;
 
@@ -4346,6 +4360,12 @@ function handleItemChange(item, value)
 			{
 				changeBackLargeScreenAfter(2000);
 			} // if
+		} // case
+		break;
+
+		case "satnav_calculating_route":
+		{
+			if (value === "YES") satnavRetrievingInstruction();
 		} // case
 		break;
 
@@ -4396,9 +4416,10 @@ function handleItemChange(item, value)
 			satnavInitialized = value !== "INITIALIZING";
 			if (satnavInitialized) hidePopup("satnav_initializing_popup");
 
-			// Button texts in menus
-			$("#satnav_navigation_options_menu .button:eq(3)").html(
-				value === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+			if (value !== "IN_GUIDANCE_MODE")
+			{
+				$("#satnav_navigation_options_menu .button:eq(3)").html(resumeGuidanceText);
+			} // if
 
 			// Just entered guidance mode?
 			if (value === "IN_GUIDANCE_MODE")
@@ -4472,21 +4493,14 @@ function handleItemChange(item, value)
 			satnavRouteComputed = newValue;
 
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
-			if (! $("#satnav_guidance").is(":visible")) break;
-			if (satnavRouteComputed) break;
-
-			// TODO - check translations from English
-			let translations =
+			if (satnavRouteComputed)
 			{
-				"set_language_french": "Chercher instruction",
-				"set_language_german": "Anweisung suchen",
-				"set_language_spanish": "Buscar instrucci&oacute;n",
-				"set_language_italian": "Cercare istruzione",
-				"set_language_dutch": "Opzoeken instructie"
-			};
-			let content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
-			$("#satnav_guidance_next_street").html(content);
-			satnavCutoffBottomLines($("#satnav_guidance_next_street"));
+				$("#satnav_navigation_options_menu .button:eq(3)").html(stopGuidanceText);
+				break;
+			} // if
+			if (! $("#satnav_guidance").is(":visible")) break;
+
+			satnavRetrievingInstruction();
 		} // case
 		break;
 
@@ -4614,6 +4628,8 @@ function handleItemChange(item, value)
 				let selector = $("#satnav_guidance_curr_street");
 				selector.html(value.match(/\(.*\)/) ? value : streetNotListedText);
 				satnavCutoffBottomLines(selector);
+
+				showDestinationNotAccessiblePopupIfApplicable();
 			} // if
 
 			// In the current location screen, show "City", or "Street (City)", otherwise "Street not listed"
