@@ -59,6 +59,56 @@ void PrintSystemSpecs()
     Serial.println();
 } // PrintSystemSpecs
 
+String EspGetResetInfo()
+{
+    struct rst_info* espResetInfo = ESP.getResetInfoPtr();
+
+    if (espResetInfo == NULL) return String();
+
+    static const int bufSize = 200;
+    char buf[bufSize];
+
+    // https://www.espressif.com/sites/default/files/documentation/esp8266_reset_causes_and_common_fatal_exception_causes_en.pdf#page=5
+    int at = snprintf_P(buf, bufSize, PSTR("%x (%S)"),
+
+        espResetInfo->reason,
+
+        espResetInfo->reason == REASON_DEFAULT_RST ? PSTR("DEFAULT") :
+        espResetInfo->reason == REASON_WDT_RST ? PSTR("WDT") :
+        espResetInfo->reason == REASON_EXCEPTION_RST ? PSTR("EXCEPTION") :
+        espResetInfo->reason == REASON_SOFT_WDT_RST ? PSTR("SOFT_WDT") :
+        espResetInfo->reason == REASON_SOFT_RESTART ? PSTR("SOFT_RESTART") :
+        espResetInfo->reason == REASON_DEEP_SLEEP_AWAKE ? PSTR("DEEP_SLEEP_AWAKE") :
+        espResetInfo->reason == REASON_EXT_SYS_RST ? PSTR("EXT_SYS_RST") :
+        PSTR("???")
+    );
+
+    if (espResetInfo->reason == REASON_WDT_RST ||
+        espResetInfo->reason == REASON_EXCEPTION_RST ||
+        espResetInfo->reason == REASON_SOFT_WDT_RST)
+    {
+        if (espResetInfo->reason == REASON_EXCEPTION_RST)
+        {
+            // https://links2004.github.io/Arduino/dc/deb/md_esp8266_doc_exception_causes.html
+            // https://www.espressif.com/sites/default/files/documentation/esp8266_reset_causes_and_common_fatal_exception_causes_en.pdf#page=6
+            at += at >= bufSize ? 0 :
+                snprintf_P(buf + at, bufSize - at, PSTR(" Fatal exception (%d):"), espResetInfo->exccause);
+        } // if
+
+        at += at >= bufSize ? 0 :
+            snprintf_P(buf + at, bufSize - at,
+                PSTR(" epc1=0x%08x epc2=0x%08x epc3=0x%08x excvaddr=0x%08x depc=0x%08x"),
+                espResetInfo->epc1,
+                espResetInfo->epc2,
+                espResetInfo->epc3,
+                espResetInfo->excvaddr,
+                espResetInfo->depc
+            );
+    } // if
+
+    return String(buf);
+}
+
 const char* EspSystemDataToJson(char* buf, const int n)
 {
     const static char jsonFormatter[] PROGMEM =
@@ -95,7 +145,7 @@ const char* EspSystemDataToJson(char* buf, const int n)
     int at = snprintf_P(buf, n, jsonFormatter,
 
         ESP.getResetReason().c_str(),
-        ESP.getResetInfo().c_str(),
+        EspGetResetInfo().c_str(),
 
         ESP.getBootVersion(),
         ESP.getCpuFreqMHz(), // system_get_cpu_freq(),
