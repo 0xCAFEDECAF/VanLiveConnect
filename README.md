@@ -291,7 +291,22 @@ crash the very first time, but after that it works (uploads) fine.
 
 ## 💡 Hints, tips<a name = "hints_tips"></a>
 
-### Automating your smart phone or tablet
+### OpenVPN
+
+If you are using [OpenVPN for Android](https://f-droid.org/en/packages/de.blinkt.openvpn/) in "Always-on VPN" mode,
+you will need to add a route to the local network. Without this route, your smartphone or tablet device will not be
+able to find the ESP device after it connects to the ESP's Wi-Fi access point.
+
+To add the route:
+* Open the "OpenVPN for Android" app
+* Tap the 'pen' icon next to your connection profile
+* Tap the 'ROUTING' tab
+* Under the 'IPv4' section:
+  - Untick 'Use default route'
+  - Tap 'Excluded Networks'
+  - Enter `192.168.244.0/24` and tap 'OK'
+
+### Automating your smartphone or tablet
 
 It is possible (and very convenient!) to automate all actions that are needed to start displaying your
 vehicle information on your smartphone or tablet as soon as you enter the vehicle. An excellent app that offers all
