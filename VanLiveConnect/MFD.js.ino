@@ -100,6 +100,10 @@ function showViewportSizes()
 
 var ignoringIrCommands = false;
 
+// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
+// The only exceptions are the '+' and '-' buttons in specific menu screens.
+var acceptingHeldValButton = false;
+
 // -----
 // Functions for parsing and handling VAN bus packet data as received in JSON format
 
@@ -418,9 +422,9 @@ function NotifyServerAboutPopup(id, msec, message)
 // e.g. to know when to ignore a "MOD" button press from the IR remote control.
 function showPopupAndNotifyServer(id, msec, message)
 {
-	var timerId = showPopup(id, msec);
+	var timer = showPopup(id, msec);
 	NotifyServerAboutPopup(id, msec, message);
-	return timerId;
+	return timer;
 }
 
 // Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
@@ -435,12 +439,12 @@ function hideAllPopups(except)
 }
 
 // Hide the notification popup, but only if it is the specified one
-function hideNotificationPopup(timerId)
+function hideNotificationPopup(timer)
 {
-	if (timerId === undefined) return;
-	var popupTimerId = popupTimer["notification_popup"];
-	if (popupTimerId === undefined) return;
-	if (timerId === popupTimerId) hidePopup("notification_popup");
+	if (timer === undefined) return;
+	var popupTimer = popupTimer["notification_popup"];
+	if (popupTimer === undefined) return;
+	if (timer === popupTimer) hidePopup("notification_popup");
 }
 
 // Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
@@ -2915,6 +2919,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Show this popup only if the current location is known (to emulate behaviour of MFD).
 	// This seems to be the criterion used by the original MFD.
 	if (satnavCurrentStreet === "") return false;
+	if ($("#satnav_not_on_map_icon").is(':visible')) return false;
 
 	// Show popup only once at start of guidance or after recalculation
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
@@ -3275,10 +3280,6 @@ var vehicleSpeed;
 var icyConditions = false;
 var wasRiskOfIceWarningShown = false;
 var riskOfIceText = "Risk of ice!";
-
-// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
-// The only exceptions are the '+' and '-' buttons in specific menu screens.
-var acceptingHeldValButton = false;
 
 function handleItemChange(item, value)
 {
@@ -4416,15 +4417,14 @@ function handleItemChange(item, value)
 			satnavInitialized = value !== "INITIALIZING";
 			if (satnavInitialized) hidePopup("satnav_initializing_popup");
 
-			if (value !== "IN_GUIDANCE_MODE")
-			{
-				$("#satnav_navigation_options_menu .button:eq(3)").html(resumeGuidanceText);
-			} // if
+			let text = value === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText;
+			$("#satnav_navigation_options_menu .button:eq(3)").html(text);
+			$("#satnav_guidance_tools_menu .button:eq(3)").html(text);
 
 			// Just entered guidance mode?
 			if (value === "IN_GUIDANCE_MODE")
 			{
-				resetTripComputerPopup();  // Reset the trip computer popup contents
+				resetTripComputerPopup();
 
 				if ($("#satnav_guidance_preference_menu").is(":visible")) break;
 				satnavSwitchToGuidanceScreen();
@@ -4493,11 +4493,6 @@ function handleItemChange(item, value)
 			satnavRouteComputed = newValue;
 
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
-			if (satnavRouteComputed)
-			{
-				$("#satnav_navigation_options_menu .button:eq(3)").html(stopGuidanceText);
-				break;
-			} // if
 			if (! $("#satnav_guidance").is(":visible")) break;
 
 			satnavRetrievingInstruction();
@@ -5691,7 +5686,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Directory management");
 			$(id + " .button:eq(1)").html("Vocal synthesis volume");
 			$(id + " .button:eq(2)").html("Delete directories");
-			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			id = "#satnav_directory_management_menu";
 			$(id + " .menuTitleLine").html("Directory management<br />");
@@ -5703,7 +5697,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Guidance criteria");
 			$(id + " .button:eq(1)").html("Programmed destination");
 			$(id + " .button:eq(2)").html("Vocal synthesis volume");
-			$(id + " .button:eq(3)").html(stopGuidanceText);
 
 			id = "#satnav_guidance_preference_menu";
 			$(id + " .tickBoxLabel:eq(0)").html("Fastest route<br />");
@@ -5879,7 +5872,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Gestion des r&eacute;pertoires");
 			$(id + " .button:eq(1)").html("Volume synth&egrave;se vocale");
 			$(id + " .button:eq(2)").html("Effacement des r&eacute;pertoires");
-			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			id = "#satnav_directory_management_menu";
 			$(id + " .menuTitleLine").html("Gestion des r&eacute;pertoires<br />");
@@ -5891,7 +5883,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Crit&egrave;res de guidage");
 			$(id + " .button:eq(1)").html("Destination programm&eacute;e");
 			$(id + " .button:eq(2)").html("Volume synth&egrave;se vocale");
-			$(id + " .button:eq(3)").html(stopGuidanceText);
 
 			id = "#satnav_guidance_preference_menu";
 			$(id + " .tickBoxLabel:eq(0)").html("Trajet le plus rapide<br />");
@@ -6065,7 +6056,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Verwalben der Verzeichnisse");
 			$(id + " .button:eq(1)").html("Lautst. der Synthesestimme");
 			$(id + " .button:eq(2)").html("L&ouml;schen der Verzeichnisse");
-			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			id = "#satnav_directory_management_menu";
 			$(id + " .menuTitleLine").html("Verwalben der Verzeichnisse<br />");
@@ -6077,7 +6067,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("F&uuml;hrungskriterien");
 			$(id + " .button:eq(1)").html("Programmiertes Ziel");
 			$(id + " .button:eq(2)").html("Lautst. der Synthesestimme");
-			$(id + " .button:eq(3)").html(stopGuidanceText);
 
 			id = "#satnav_guidance_preference_menu";
 			$(id + " .tickBoxLabel:eq(0)").html("Die schnellste Route<br />");
@@ -6252,7 +6241,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Gesti&oacute;n de directorios");
 			$(id + " .button:eq(1)").html("Volumen de s&iacute;ntesis vocal");
 			$(id + " .button:eq(2)").html("Borrado de directorios");
-			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			id = "#satnav_directory_management_menu";
 			$(id + " .menuTitleLine").html("Gesti&oacute;n de directorios<br />");
@@ -6264,7 +6252,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Criterios de guiado");
 			$(id + " .button:eq(1)").html("Destino programado");
 			$(id + " .button:eq(2)").html("Volumen de s&iacute;ntesis vocal");
-			$(id + " .button:eq(3)").html(stopGuidanceText);
 
 			id = "#satnav_guidance_preference_menu";
 			$(id + " .tickBoxLabel:eq(0)").html("M&aacute;s r&aacute;pido<br />");
@@ -6438,7 +6425,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Gestione rubrica");
 			$(id + " .button:eq(1)").html("Volume navigazione");
 			$(id + " .button:eq(2)").html("Cancella rubrica");
-			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			id = "#satnav_directory_management_menu";
 			$(id + " .menuTitleLine").html("Gestione rubrica<br />");
@@ -6450,7 +6436,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Criteri di guida");
 			$(id + " .button:eq(1)").html("Destinazione programmata");
 			$(id + " .button:eq(2)").html("Volume navigazione");
-			$(id + " .button:eq(3)").html(stopGuidanceText);
 
 			id = "#satnav_guidance_preference_menu";
 			$(id + " .tickBoxLabel:eq(0)").html("Percorso pi&ugrave; rapido<br />");
@@ -6624,7 +6609,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Adressenbestand");
 			$(id + " .button:eq(1)").html("Geluidsvolume");
 			$(id + " .button:eq(2)").html("Bestanden wissen");
-			$(id + " .button:eq(3)").html(satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 
 			id = "#satnav_directory_management_menu";
 			$(id + " .menuTitleLine").html("Adressenbestand<br />");
@@ -6636,7 +6620,6 @@ function setLanguage(language)
 			$(id + " .button:eq(0)").html("Navigatiecriteria");
 			$(id + " .button:eq(1)").html("Geprogrammeerde bestemming");
 			$(id + " .button:eq(2)").html("Geluidsvolume");
-			$(id + " .button:eq(3)").html(stopGuidanceText);
 
 			id = "#satnav_guidance_preference_menu";
 			$(id + " .tickBoxLabel:eq(0)").html("Snelste weg<br />");
@@ -6742,6 +6725,11 @@ function setLanguage(language)
 
 	$("#door_open_popup_text").html(doorOpenText);
 	satnavGuidanceSetPreference(localStorage.satnavGuidancePreference);
+
+	$("#satnav_navigation_options_menu .button:eq(3)").html(
+		satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
+	$("#satnav_guidance_tools_menu .button:eq(3)").html(
+		satnavMode === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText);
 }
 
 function setUnits(distanceUnit, temperatureUnit, timeUnit)
