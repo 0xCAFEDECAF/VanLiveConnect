@@ -2696,8 +2696,8 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="top:190px; width:230px;">Compiled @</div>
 					<div class="tag" style="top:220px; width:230px;">MD5 checksum</div>
 					<div class="tag" style="top:250px; width:230px;">SDK</div>
-					<div class="tag" style="top:290px; width:230px;">Reset Reason</div>
-					<div class="tag" style="top:320px; width:230px;">Reset Info</div>
+					<div class="tag" style="top:280px; width:230px;">Reset Reason</div>
+					<div class="tag" style="top:310px; width:230px;">Reset Info</div>
 					<div style="position:absolute; left:360px;">
 						<div class="tag" style="top:10px; width:260px;">CPU Speed</div>
 						<div class="tag" style="top:40px; width:260px;">Chip ID</div>
@@ -2717,8 +2717,8 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="img_compile_date" class="tag" style="left:240px; top:185px;">---</div>
 				<div id="img_md5_checksum" class="tag" style="left:240px; top:215px;">---</div>
 				<div id="esp_sdk_version" class="tag" style="left:240px; top:245px;">---</div>
-				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:285px;">---</div>
-				<div id="esp_last_reset_info" class="tag" style="left:240px; top:315px; width:660px; text-align:left;">---</div>
+				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:275px;">---</div>
+				<div id="esp_last_reset_info" class="tag" style="left:240px; top:305px; width:660px; text-align:left; white-space:normal; height:60px;">---</div>
 				<div id="esp_cpu_speed" class="tag" style="left:630px; top:5px;">---</div>
 				<div id="esp_chip_id" class="tag" style="left:630px; top:35px;">---</div>
 				<div id="esp_mac_address" class="tag" style="left:630px; top:65px;">---</div>
@@ -2729,9 +2729,7 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>
 
 			<div id="van_bus_stats" class="tag"
-				style="left:420px; top:490px; width:830px; text-align:left; font-size:25px; white-space:normal;">
-				VAN Rx Stats: received pkts: ---, corrupt: -- (-.---%)
-			</div>
+				style="left:420px; top:485px; width:830px; text-align:left; font-size:25px; white-space:normal;"></div>
 
 			<!-- "Back" icon in the bottom right corner -->
 			<div class="iconSmall led ledOn" style="left:1260px; top:480px;">
