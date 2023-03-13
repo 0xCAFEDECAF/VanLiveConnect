@@ -89,7 +89,7 @@ Don't bore us, give us the screenshots!
 
 ## 🎈 Description <a name = "description"></a>
 
-This application creates a Wi-Fi access point to which you can connect with your smart phone.
+This application creates a Wi-Fi access point to which you can connect with your smartphone.
 It contains a captive portal so as soon as you are connected a message gets displayed on your phone to log in.
 If you tap the message, a browser opens, giving a live visual display of the data as read from the VAN bus.
 
@@ -132,7 +132,7 @@ in their newer cars with the CAN bus protocol, however some models had VAN bus i
 supposedly fitted with a VAN (comfort) bus.
 
 The application will tap in on the vehicle's VAN bus and visualize the captured data in a browser on your
-smart phone, tablet, laptop or any other device that runs a web browser. The application will run on any
+smartphone, tablet, laptop or any other device that runs a web browser. The application will run on any
 ESP8266 / ESP8285 based board, e.g. [Wemos/Lolin D1 mini](https://www.wemos.cc/en/latest/d1/d1_mini.html)
 is supported.
 
@@ -203,8 +203,8 @@ on pins D5, D6 and D7, facing outward; see also the above schematics.
 >  * Don't remove or unsolder the infra-red receiver (PCB) from the original MFD type C display. The original
      MFD needs that to receive the commands you send to it, in order to generate the correct VAN bus packets.
 >  * The infra-red receiver is not needed to switch screens. If you turn on the head unit (radio, CD player, ...)
-     the screen will automatically switch to it. You can also switch screens on your smart phone or tablet simply
-     by tapping the center of the screen. The smart phone or tablet will cycle only through the applicable screens,
+     the screen will automatically switch to it. You can also switch screens on your smartphone or tablet simply
+     by tapping the center of the screen. The smartphone or tablet will cycle only through the applicable screens,
      i.e., if the head unit is not powered on, the head unit screen will be skipped.
 
 ## 🚀 Building the Project<a name = "building"></a>
@@ -294,7 +294,7 @@ crash the very first time, but after that it works (uploads) fine.
 ### Automating your smart phone or tablet
 
 It is possible (and very convenient!) to automate all actions that are needed to start displaying your
-vehicle information on your smart phone or tablet as soon as you enter the vehicle. An excellent app that offers all
+vehicle information on your smartphone or tablet as soon as you enter the vehicle. An excellent app that offers all
 necessary functions is [MacroDroid - Device Automation]
 
 Below are screenshots that show two macros which perform all the necessary actions:
