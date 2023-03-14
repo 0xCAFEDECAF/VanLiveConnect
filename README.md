@@ -96,7 +96,7 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 * The SSID of the Wi-Fi access point is: "PSA display AP" (with the spaces, without the quotes)
 * No password is needed.
 
-Of course you can modify the SSID and choose your own password by editing the [``Config.h``](VanLiveConnect/Config.h)
+Of course you can modify the SSID and choose your own password by editing the [`Config.h`](VanLiveConnect/Config.h)
 file.
 
 ## 🕹️ MFD functions supported
@@ -146,7 +146,7 @@ The web page itself, as served by this sketch, uses and self-hosts the following
 * FontAwesome v5.15.2 - original download
   [here](https://use.fontawesome.com/releases/v5.15.2/fontawesome-free-5.15.2-web.zip).
 
-As said, the served web page self-hosts all resources. No internet connection is needed!
+As said, the served web page self-hosts all resources. No Internet connection is needed!
 
 ## 🔌 Schematics <a name = "schematics"></a>
 
@@ -304,7 +304,9 @@ To add the route:
 * Under the 'IPv4' section:
   - Untick 'Use default route'
   - Tap 'Excluded Networks'
-  - Enter `192.168.244.0/24` and tap 'OK'
+  - Enter `192.168.244.0/24` (note: the `"192.168.244."` part must match with the IP address as specified in
+    [`Config.h`](VanLiveConnect/Config.h#L49)).
+  - Tap 'OK'
 
 ### Automating your smartphone or tablet
 
