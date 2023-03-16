@@ -156,8 +156,8 @@ char jsonBuffer[JSON_BUFFER_SIZE];
 
 const char* VanBusStatsToStr()
 {
-    #define BUFFER_SIZE 120
-    static char buffer[BUFFER_SIZE];
+    static const int bufSize = 120;
+    static char buffer[bufSize];
 
     GString str(buffer);
     PrintAdapter streamer(str);
@@ -165,7 +165,7 @@ const char* VanBusStatsToStr()
     VanBusRx.DumpStats(streamer, false);
 
     // Replace '\n' by string terminator '\0'
-    buffer[BUFFER_SIZE - 1] = '\0';
+    buffer[bufSize - 1] = '\0';
     char *p = strchr(buffer, '\n');
     if (p != NULL) *p = '\0';
 
