@@ -25,6 +25,7 @@ const char PROGMEM compileDate[] = __DATE__ " " __TIME__;
 void PrintSystemSpecs()
 {
     Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
+    Serial.printf_P(PSTR("Arduino ESP8266 board package version: %s\n"), ARDUINO_ESP8266_RELEASE);
     Serial.printf_P(PSTR("SDK: %s\n"), system_get_sdk_version());
 
     uint32_t realSize = ESP.getFlashChipRealSize();
@@ -196,7 +197,7 @@ const char* EspRuntimeDataToJson(char* buf, const int n)
         "\"data\":\n"
         "{\n"
             "\"esp_wifi_rssi\": \"%d dB\",\n"
-            "\"esp_free_ram\": \"%u bytes\"\n"
+            "\"esp_free_ram\": \"%lu bytes\"\n"
         "}\n"
     "}\n";
 
