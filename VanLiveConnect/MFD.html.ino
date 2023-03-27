@@ -1058,7 +1058,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
 					<div id="satnav_tools_menu_stop_guidance_button" class="button"
-						on_click="satnavStopGuidance();">Stop guidance</div>
+						on_click="satnavStopOrResumeGuidance();">Stop guidance</div>
 				</div>	<!-- "satnav_guidance_tools_menu" -->
 
 				<!-- Sat nav guidance criteria menu -->
@@ -1453,7 +1453,6 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>	<!-- "satnav_show_current_destination" -->
 
-					<!-- TODO - Might need the full screen width for long city / street names -->
 					<div id="satnav_show_programmed_destination"
 						on_enter="satnavClearLastDestination();"
 						on_esc="upMenu(); upMenu();"
@@ -2199,7 +2198,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div class="centerAligned" style="position:absolute; left:10px; width:830px; height:200px;">
 					<div id="satnav_reached_destination_popup_title">Destination reached</div>
 					<div gid="satnav_last_destination_city" class="dots"
-						style="top:90px; width:830px; height:90px; font-size:40px; white-space:nowrap;">
+						style="top:90px; width:830px; font-size:40px; white-space:nowrap;">
 					</div>
 					<div class="dots"
 						style="top:140px; width:830px; height:80px; font-size:40px;">
