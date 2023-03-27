@@ -442,9 +442,9 @@ function hideAllPopups(except)
 function hideNotificationPopup(timer)
 {
 	if (timer === undefined) return;
-	var popupTimer = popupTimer["notification_popup"];
-	if (popupTimer === undefined) return;
-	if (timer === popupTimer) hidePopup("notification_popup");
+	var popupTimerId = popupTimer["notification_popup"];
+	if (popupTimerId === undefined) return;
+	if (timer === popupTimerId) hidePopup("notification_popup");
 }
 
 // Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
@@ -1726,7 +1726,7 @@ var headlightStatus = "";
 
 function setColorTheme(theme)
 {
-	$(":root").css("--main-color", theme === "set_light_theme" ? "#271b42" : "hsl(215,42%,91%)");
+	$(":root").css("--main-color", theme === "set_light_theme" ? "rgb(39,27,66)" : "hsl(215,42%,91%)");
 	$(":root").css("--background-color", theme === "set_light_theme" ? "hsl(240,6%,91%)" : "rgb(8,7,19)");
 	$(":root").css("--led-off-color", theme === "set_light_theme" ? "rgb(189,189,189)" : "rgb(25,31,40)");
 	$(":root").css("--notification-color", theme === "set_light_theme" ? "rgba(205,209,213,0.95)" : "rgba(15,19,23,0.95)");
@@ -3178,6 +3178,8 @@ function satnavStopGuidance()
 	// Try to reproduce a bug in the original MFD: if sat nav guidance is stopped while not on map,
 	// it will ask for guidance continuation later. So only clear if "on map".
 	if (satnavOnMap) localStorage.askForGuidanceContinuation = "NO";
+
+	satnavClearLastDestination();
 	selectDefaultScreen();
 }
 
@@ -4669,9 +4671,9 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_personal_address_manage_buttons").is(":visible"))
 			{
-				let title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
+				let title = $("#satnav_rename_entry_in_directory_title").text();
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
-				$("#satnav_delete_directory_entry_in_popup").text(value);
+				$("#satnav_delete_directory_entry_in_popup").text(value.replace(/&#x24E7;/, ''));
 
 				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
 				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonSelected", entryOnDisc);
@@ -4696,9 +4698,9 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_professional_address_manage_buttons").is(":visible"))
 			{
-				let title = $("#satnav_rename_entry_in_directory_title").text().replace(/\s+\(.*\)/, "");
+				let title = $("#satnav_rename_entry_in_directory_title").text();
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
-				$("#satnav_delete_directory_entry_in_popup").text(value);
+				$("#satnav_delete_directory_entry_in_popup").text(value.replace(/&#x24E7;/, ''));
 
 				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
 				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonSelected", entryOnDisc);
