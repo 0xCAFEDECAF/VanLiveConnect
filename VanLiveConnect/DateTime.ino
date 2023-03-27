@@ -10,25 +10,11 @@ void SetTimeZoneOffset(int newTimeZoneOffset)
 
 #include <TimeLib.h>
 
-int _msecLastSet = 0;
-
 // Check if an epoch value is valid
 inline boolean IsTimeValid(time_t t)
 {
     return (t >= 1451606400UL);  // 2016-01-01 0:00:00
 } // IsTimeValid 
-
-bool SetTime(uint32_t epoch, uint32_t msec)
-{
-    if (! IsTimeValid(epoch)) return false;
-
-    _msecLastSet = millis() % 1000 - msec;
-
-    epoch += _timeZoneOffset * 60;
-    setTime(epoch);  // function from TimeLib.h
-
-    return true;
-} // SetTime
 
 char _dt[20];
 const char* DateTime(time_t t, boolean full)
@@ -78,12 +64,39 @@ const char* DateTime(time_t t, boolean full)
     return _dt;
 } // DateTime
 
+uint32_t _msec = 0;
+unsigned long _millis_at_setTime = 0;
+
+bool SetTime(uint32_t epoch, uint32_t msec)
+{
+    if (! IsTimeValid(epoch)) return false;
+
+    msec += 30;  // Typical latency
+
+    _msec = msec;
+    _millis_at_setTime = millis();
+
+    epoch += _timeZoneOffset * 60;
+    setTime(epoch);  // function from TimeLib.h
+
+    return true;
+} // SetTime
+
 char _ts[sizeof(_dt) + 7];
 const char* TimeStamp()
 {
     time_t t = now();
-    if (_msecLastSet < 0) t++;
-    sprintf_P(_ts, "[%s.%03lu] ", DateTime(t), (millis() - _msecLastSet) % 1000UL);
+    unsigned long m = millis();
+    unsigned long diff = (m - _millis_at_setTime) % 1000UL;
+    unsigned long msec = _msec + diff;
+
+    if (msec > 1000)
+    {
+        t++;
+        msec -= 1000;
+    } // if
+
+    sprintf_P(_ts, "[%s.%03lu] ", DateTime(t), msec);
     return _ts;
 } // TimeStamp
 
