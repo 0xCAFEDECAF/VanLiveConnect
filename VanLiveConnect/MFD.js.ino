@@ -555,16 +555,17 @@ function isScreenFullSize()
 
 function resizeScreenToFit()
 {
-	let isMobile = window.matchMedia("(any-pointer:coarse)").matches;
+	const scale = Math.min((window.innerHeight - 5) / 640, (window.innerWidth - 15) / 1350);
 
+	const isMobile = window.matchMedia("(any-pointer:coarse)").matches;
 	if (! isMobile)
 	{
-		$(":root").css("--scale-factor", (window.innerWidth - 10) / 1350 * window.devicePixelRatio);
-		$("#body").css("background-size", window.devicePixelRatio * 100 + "%");
+		$(":root").css("--scale-factor", scale * window.devicePixelRatio);
+		$("#body").css("background-size", 1370 * window.devicePixelRatio * scale + "px");
 	}
 	else
 	{
-		$(":root").css("--scale-factor", (window.innerWidth - 10) / 1350);
+		$(":root").css("--scale-factor", scale);
 	} // if
 
 	if (isScreenFullSize()) $("#full_screen_button").removeClass("fa-expand").addClass("fa-compress");
@@ -1662,7 +1663,7 @@ function showAudioVolumePopup()
 
 	if (inMenu()) return;  // Don't pop up when user is browsing the menus
 
-	if ($("#contact_key_position").text() !== "" && $("#contact_key_position").text() !== "OFF")
+	if ($("#contact_key_position").text() !== "OFF")
 	{
 		$("#audio_settings_popup").show();
 		NotifyServerAboutPopup("audio_settings_popup", 4000);
@@ -3000,7 +3001,7 @@ function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
 
-	if (showDestinationNotAccessiblePopupIfApplicable()) return;
+	//if (showDestinationNotAccessiblePopupIfApplicable()) return;
 
 	if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
 }
@@ -3697,6 +3698,14 @@ function handleItemChange(item, value)
 				handleItemChange.infoTrafficPopupTimer =
 					showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information",
 						$("#satnav_guidance").is(":visible") ? 5000 : 10000);
+
+				// In case the "NO" packet is missed
+				clearTimeout(handleItemChange.infoTrafficOffTimer);
+				handleItemChange.infoTrafficOffTimer = setTimeout
+				(
+					function () { handleItemChange.infoTraffic = "NO"; },
+					300000
+				);
 			}
 			else
 			{
