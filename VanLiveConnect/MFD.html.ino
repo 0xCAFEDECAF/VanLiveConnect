@@ -507,7 +507,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- Contact key position -->
 					<div class="icon iconSmall fas fa-key" style="left:20px; top:373px;"></div>
 
-					<div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;"></div>
+					<div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;">OFF</div>
 
 					<!-- Dashboard illumination level -->
 					<div class="icon iconSmall fas fa-tachometer-alt" style="left:710px; top:373px;"></div>
@@ -1417,7 +1417,6 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>	<!-- "satnav_show_service_address" -->
 
-					<!-- TODO - Might need the full screen width for long city / street names -->
 					<div id="satnav_show_current_destination"
 						on_goto="selectFirstMenuItem('satnav_show_current_destination');"
 						on_esc="currentMenu = 'main_menu'; satnavGotoMainMenu();"
@@ -1483,7 +1482,6 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>	<!-- "satnav_show_programmed_destination" -->
 
-					<!-- TODO - Might need the full screen width for long city / street names -->
 					<div id="satnav_show_last_destination"
 						style="display:none;">
 
@@ -2557,8 +2555,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- Small area in the top right of the screen which triggers changing to full-screen mode -->
 		<div onclick="toggleFullScreen();"
-			style="display:block; position:absolute; left:800px; top:0px; width:550px; height:250px; text-align:right; opacity:50%">
-			<i id="full_screen_button" class="fas fa-expand"></i>
+			style="position:absolute; left:800px; width:900px; height:250px; opacity:50%">
+			<i id="full_screen_button" class="fas fa-expand" style="position:relative; left:500px;"></i>
 		</div>
 
 		<!-- Full-screen popups -->
