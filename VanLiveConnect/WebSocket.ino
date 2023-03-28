@@ -11,23 +11,25 @@
 
   #warning "Please compile the WebSockets library for TCP asynchronous mode! To do this, define"
   #warning "WEBSOCKETS_NETWORK_TYPE to be NETWORK_ESP8266_ASYNC in the header file"
-  #warning "...\Arduino\libraries\WebSockets\src\WebSockets.h, around line 118."
-
-  // Note: if not using TCP asynchronous mode, the following #define must be changed from:
-  //   #define WEBSOCKETS_TCP_TIMEOUT (5000)
-  // to:
-  //   #define WEBSOCKETS_TCP_TIMEOUT (1000)
-  // as defined in the file
-  //    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h, around line 100
-  // This is to prevent the VAN bus receiver queue from overrunning when the web socket disconnects
-  //
-  // #if WEBSOCKETS_TCP_TIMEOUT > 1000
-  // #error "...\Arduino\libraries\WebSockets\src\WebSockets.h:"
-  // #error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set to 1000!"
-  // #endif
+  #warning "'...\Arduino\libraries\WebSockets\src\WebSockets.h', around line 118."
 
   #endif  // WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
 #endif  // STRICT_COMPILATION
+
+// Note: the following #define must be changed from:
+//   #define WEBSOCKETS_TCP_TIMEOUT (5000)
+// to:
+//   #define WEBSOCKETS_TCP_TIMEOUT (1000)
+// as defined around line 100 of the file:
+//    ...\Documents\Arduino\libraries\WebSockets\src\WebSockets.h
+//
+// This is to prevent enormous time delays that cause the VAN bus receiver queue to overrun, and/or software
+// watchdog timeout crashes of the ESP.
+//
+#if WEBSOCKETS_TCP_TIMEOUT > 1000
+#error "In file: '...\Arduino\libraries\WebSockets\src\WebSockets.h', around line 100:"
+#error "Value for '#define WEBSOCKETS_TCP_TIMEOUT' is too large; advised to set it to 1000!"
+#endif
 
 #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 #include <TimeLib.h>
@@ -56,13 +58,13 @@ bool SetTime(uint32_t epoch, uint32_t msec);
 
 WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket server on port 81
 
-#define WEBSOCKET_INVALID_NUM (0xFF)
+static const int WEBSOCKET_INVALID_NUM = 0xFF;
 uint8_t prevWebsocketNum = WEBSOCKET_INVALID_NUM;
-uint8_t websocketNum = WEBSOCKET_INVALID_NUM;
+volatile uint8_t websocketNum = WEBSOCKET_INVALID_NUM;
 bool inMenu = false;  // true if user is browsing the menus
 bool irButtonFasterRepeat = false;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
-#define N_SAVED_JSON 3
+static const int N_SAVED_JSON = 3;
 int savedJsonNextFreeSlot = 0;
 char* savedJson[N_SAVED_JSON];
 
@@ -97,7 +99,7 @@ void SendSavedJson()
         if (savedJson[i] != NULL)
         {
             Serial.printf_P(PSTR("==> WebSocket: sending saved JSON data packet no. '%d'\n"), i);
-            if (webSocket.sendTXT(websocketNum, savedJson[i]))
+            if (webSocket.clientIsConnected(websocketNum) && webSocket.sendTXT(websocketNum, savedJson[i]))
             {
                 free(savedJson[i]);
                 savedJson[i] = NULL;
@@ -130,41 +132,32 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     if (strlen(json) <= 0) return;
     if (websocketNum == WEBSOCKET_INVALID_NUM)
     {
-        if (! savePacketForLater) return;
-
-        SaveJsonForLater(json);
+        if (savePacketForLater) SaveJsonForLater(json);
         return;
     } // if
+
+  #ifdef DEBUG_WEBSOCKET
+    Serial.printf_P(
+        PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT' attempt no.: %d\n"),
+        TimeStamp(),
+        websocketNum,
+        strlen(json),
+        attempt + 1
+    );
+  #endif // DEBUG_WEBSOCKET
+
+    digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
 
     bool result = false;
     unsigned long start = millis();
 
-    digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
-
-    for (int attempt = 0; attempt < 3; attempt++)
-    {
-      #ifdef DEBUG_WEBSOCKET
-        if (attempt != 0)
-        {
-            Serial.printf_P(
-                PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT' attempt no.: %d\n"),
-                TimeStamp(),
-                websocketNum,
-                strlen(json),
-                attempt + 1
-            );
-        } // if
-      #endif // DEBUG_WEBSOCKET
-
-        // Don't broadcast (webSocket.broadcastTXT(json)); serve only the last one connected
-        // (the others are probably already dead)
-        result = webSocket.sendTXT(websocketNum, json);
-        if (result) break;
-    } // for
-
-    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+    // Don't broadcast (webSocket.broadcastTXT(json)); serve only the last one connected
+    // (the others are probably already dead)
+    result = webSocket.clientIsConnected(websocketNum) && webSocket.sendTXT(websocketNum, json);
 
     unsigned long duration = millis() - start;
+
+    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
     if (! result)
     {
@@ -172,17 +165,25 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
             PSTR("%s[webSocket %u] FAILED to send %zu JSON bytes via 'webSocket.sendTXT'\n"),
             TimeStamp(),
             websocketNum,
-            strlen(json));
+            strlen(json)
+        );
+
+        // Switch back to the previous websocketNum (if any)
+        websocketNum = prevWebsocketNum;
+        prevWebsocketNum = WEBSOCKET_INVALID_NUM;
+
+      #ifdef DEBUG_WEBSOCKET
+        if (websocketNum != WEBSOCKET_INVALID_NUM)
+        {
+            Serial.printf_P(PSTR("==> Falling back to webSocket %u\n"), websocketNum);
+        } // if
+      #endif // DEBUG_WEBSOCKET
     } // if
 
     if (! result || duration > 100)
     {
         // High possibility that this packet did in fact not come through
         if (savePacketForLater) SaveJsonForLater(json);
-    }
-    else
-    {
-        SendSavedJson();
     } // if
 
     // Print a message if the WebSocket transmission took outrageously long (normally it takes around 1-2 msec).
@@ -191,13 +192,13 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     if (duration > 100)
     {
         Serial.printf_P(
-            PSTR("Sending %zu JSON bytes via 'webSocket.sendTXT' took: %lu msec; result = %S\n"),
+            PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT' took: %lu msec; result = %S\n"),
+            TimeStamp(),
+            websocketNum,
             strlen(json),
             duration,
-            result ? PSTR("OK") : PSTR("FAIL"));
-
-        Serial.print(F("JSON object:\n"));
-        PrintJsonText(json);
+            result ? PSTR("OK") : PSTR("FAIL")
+        );
     } // if
 } // SendJsonOnWebSocket
 
@@ -223,8 +224,6 @@ void ProcessWebSocketClientMessage(const char* payload)
         if (clientMessage.endsWith(":NO")) NoPopup();
         else NotificationPopupShowing(millis(), clientMessage.substring(18).toInt());
     }
-
-    // TODO - keep this?
     else if (clientMessage.startsWith("mfd_language:"))
     {
         String value = clientMessage.substring(13);
@@ -315,8 +314,16 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             Serial.printf_P(PSTR("%s[webSocket %u] Disconnected!\n"), TimeStamp(), num);
             if (num == websocketNum)
             {
+                // Switch back to the previous websocketNum (if any)
                 websocketNum = prevWebsocketNum;
                 prevWebsocketNum = WEBSOCKET_INVALID_NUM;
+
+                if (num == websocketNum) websocketNum = WEBSOCKET_INVALID_NUM;
+
+                if (websocketNum != WEBSOCKET_INVALID_NUM)
+                {
+                    Serial.printf_P(PSTR("==> Falling back to webSocket %u\n"), websocketNum);
+                } // if
             } // if
 
             if (num == prevWebsocketNum)
@@ -338,6 +345,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             if (num != websocketNum)
             {
                 // Serve only the last one connected
+                if (websocketNum != WEBSOCKET_INVALID_NUM) webSocket.disconnect(websocketNum);
                 prevWebsocketNum = websocketNum;
                 websocketNum = num;
             } // if
