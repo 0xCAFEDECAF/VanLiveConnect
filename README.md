@@ -163,7 +163,15 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    [here](https://webshop.domoticx.nl/can-bus-transceiver-module-5v-mcp2551) or
    [here](https://nl.aliexpress.com/item/1005004475976642.html).
 
-![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
+   Two variants are possible:
+
+    * Using +12 Volt switched line:
+      ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
+    * Using +12 Volt permanent line. To prevent battery drain, the ESP board will go to sleep after 5 minutes
+      ([configurable in `Config.h`](VanLiveConnect/Config.h#L100)). This setup requires
+      [GPIO line D1](VanLiveConnect/Config.h#L133) to be connected, so that the ESP board wakes up as soon as any
+      activity occurs on the VAN bus.
+      ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
 > 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
@@ -175,7 +183,9 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    A board with the SN65HVD230 transceiver can be ordered e.g.
    [here](https://webshop.domoticx.nl/index.php?route=product/product&product_id=3935).
 
-![schema](extras/Schematics/Schematic%20using%20SN65HVD230_bb.png)
+   ![schema](extras/Schematics/Schematic%20using%20SN65HVD230_bb.png)
+
+   The "+12 Volt permanent" variant as described above is possible for this setup too.
 
 > 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
@@ -324,7 +334,7 @@ Below are screenshots that show two macros which perform all the necessary actio
 
 Upon connection to the Wi-Fi SSID "PSA display AP", performs the following actions:
 * Set the screen timeout value to 500 minutes, to prevent the screen from going black while driving
-* Browse to the main screen
+* Browse to the main screen (http://192.168.244.1/MFD.html)
 * Set the screen brightness to 100%
 * Go "full-screen"
 
