@@ -4,8 +4,9 @@
 #include "Config.h"
 
 // Defined in WebSocket.ino
+extern WebSocketsServer webSocket;
 extern uint8_t prevWebsocketNum;
-extern uint8_t websocketNum;
+extern volatile uint8_t websocketNum;
 
 const char* GetHostname()
 {
@@ -23,25 +24,29 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 {
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
-    Serial.print("Wi-Fi client connected: ");
+    Serial.printf_P(PSTR("%sWi-Fi client connected: "), TimeStamp());
     Serial.println(macToString(evt.mac));
 
-    websocketNum = 0xFF;
-    prevWebsocketNum = 0xFF;
+    websocketNum = WEBSOCKET_INVALID_NUM;
+    prevWebsocketNum = WEBSOCKET_INVALID_NUM;
+
+    //webSocket.disconnect();
 } // onStationConnected
 
 void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 {
-    Serial.print("Wi-Fi client disconnected: ");
+    Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
     Serial.println(macToString(evt.mac));
 
-    websocketNum = 0xFF;
-    prevWebsocketNum = 0xFF;
+    websocketNum = WEBSOCKET_INVALID_NUM;
+    prevWebsocketNum = WEBSOCKET_INVALID_NUM;
+
+    //webSocket.disconnect();
 } // onStationDisconnected
 
 void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
 {
-    Serial.print("Probe request from: ");
+    Serial.printf_P(PSTR("%sProbe request from: "), TimeStamp());
     Serial.print(macToString(evt.mac));
     Serial.print(" RSSI: ");
     Serial.println(evt.rssi);
