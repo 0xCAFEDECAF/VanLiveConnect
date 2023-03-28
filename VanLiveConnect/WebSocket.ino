@@ -130,7 +130,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 {
     if (json == 0) return;
     if (strlen(json) <= 0) return;
-    if (websocketNum == WEBSOCKET_INVALID_NUM)
+    if (websocketNum == WEBSOCKET_INVALID_NUM || ! webSocket.clientIsConnected(websocketNum))
     {
         if (savePacketForLater) SaveJsonForLater(json);
         return;
@@ -138,11 +138,10 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
   #ifdef DEBUG_WEBSOCKET
     Serial.printf_P(
-        PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT' attempt no.: %d\n"),
+        PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT'\n"),
         TimeStamp(),
         websocketNum,
-        strlen(json),
-        attempt + 1
+        strlen(json)
     );
   #endif // DEBUG_WEBSOCKET
 
@@ -153,7 +152,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
     // Don't broadcast (webSocket.broadcastTXT(json)); serve only the last one connected
     // (the others are probably already dead)
-    result = webSocket.clientIsConnected(websocketNum) && webSocket.sendTXT(websocketNum, json);
+    result = webSocket.sendTXT(websocketNum, json);
 
     unsigned long duration = millis() - start;
 
