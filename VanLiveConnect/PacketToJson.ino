@@ -805,7 +805,7 @@ PGM_P ContactKeyPositionStr(int data)
         notApplicable3Str;
 } // TunerBandStr
 
-int contactKeyPosition = CKP_OFF;
+int contactKeyPosition = CKP_UNKNOWN;
 bool economyMode = false;
 
 VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -5178,6 +5178,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"contact_key_position\": \"%S\",\n"
             "\"door_open\": \"%S\",\n"
             "\"small_screen\": \"%S\",\n"
             "\"trip_computer_screen_tab\": \"%S\",\n"
@@ -5188,6 +5189,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             "\"satnav_guidance_preference\": \"%S\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
+        ContactKeyPositionStr(contactKeyPosition),
         doorOpen ? yesStr : noStr,
         SmallScreenStr(),  // Small screen (left hand side of the display) to start with
         TripComputerStr(),

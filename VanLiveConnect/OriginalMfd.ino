@@ -127,7 +127,9 @@ enum ContactKeyPosition_t
     CKP_OFF = 0x00,
     CKP_ACC = 0x01,
     CKP_START = 0x02,
-    CKP_ON = 0x03
+    CKP_ON = 0x03,
+
+    CKP_UNKNOWN = 0xFF
 }; // enum ContactKeyPosition_t
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
