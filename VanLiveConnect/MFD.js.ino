@@ -2920,7 +2920,8 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Show this popup only if the current location is known (to emulate behaviour of MFD).
 	// This seems to be the criterion used by the original MFD.
 	if (satnavCurrentStreet === "") return false;
-	if ($("#satnav_not_on_map_icon").is(':visible')) return false;
+	if (! satnavCurrentStreet.match(/\(.*\)/)) return false;  // Just a city name (no street name)?
+	//if ($("#satnav_not_on_map_icon").is(':visible')) return false;
 
 	// Show popup only once at start of guidance or after recalculation
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
