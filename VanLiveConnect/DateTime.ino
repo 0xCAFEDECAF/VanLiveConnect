@@ -71,10 +71,16 @@ bool SetTime(uint32_t epoch, uint32_t msec)
 {
     if (! IsTimeValid(epoch)) return false;
 
+    _millis_at_setTime = millis();
+
     msec += 30;  // Typical latency
+    if (msec > 1000)
+    {
+        epoch++;
+        msec -= 1000;
+    } // if
 
     _msec = msec;
-    _millis_at_setTime = millis();
 
     epoch += _timeZoneOffset * 60;
     setTime(epoch);  // function from TimeLib.h
