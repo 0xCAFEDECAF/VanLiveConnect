@@ -805,7 +805,7 @@ PGM_P ContactKeyPositionStr(int data)
         notApplicable3Str;
 } // TunerBandStr
 
-int contactKeyPosition = CKP_UNKNOWN;
+int contactKeyPosition = CKP_OFF;
 bool economyMode = false;
 
 VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
