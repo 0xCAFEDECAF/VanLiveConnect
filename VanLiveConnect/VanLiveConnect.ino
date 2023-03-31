@@ -209,6 +209,9 @@ inline bool IsImportantPacket(const TVanPacketRxDesc& pkt)
         );
 } // IsImportantPacket
 
+// After a few minutes of VAN bus inactivity, go to sleep to save power
+unsigned long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
+
 void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -267,6 +270,27 @@ void setup()
     SetupVanReceiver();
 
     IrSetup();
+
+    sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
+  #ifdef ON_DESK_MFD_ESP_MAC
+    // On the desk test setup, we want to go to sleep much quicker
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
+  #endif // ON_DESK_MFD_ESP_MAC
+
+    if (sleepAfter != -1)
+    {
+        Serial.printf_P
+        (
+            PSTR
+            (
+                "ESP will enter light sleep mode after %lu:%02lu minutes of inactivity; "
+                "listening on pin %s (GPIO%u) for VAN bus activity to wake up from sleep.\n"
+            ),
+            sleepAfter / 1000 / 60, sleepAfter / 1000 % 60,
+            XSTR(LIGHT_SLEEP_WAKE_PIN),
+            LIGHT_SLEEP_WAKE_PIN
+        );
+    } // if
 } // setup
 
 void loop()
@@ -296,19 +320,15 @@ void loop()
 
     LoopWebSocket(); // TODO - necessary?
 
-    // After a few minutes of VAN bus inactivity, go to sleep to save power
-    unsigned long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
-  #ifdef ON_DESK_MFD_ESP_MAC
-    // On the desk test setup, we want to go to sleep much quicker
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
-  #endif // ON_DESK_MFD_ESP_MAC
-
     static unsigned long lastPacketAt = 0;
-    if (millis() - lastPacketAt >= sleepAfter)
+    if (sleepAfter != -1)
     {
-        GoToSleep();
-        lastPacketAt = millis();
-        return;
+        if (millis() - lastPacketAt >= sleepAfter)
+        {
+            GoToSleep();
+            lastPacketAt = millis();
+            return;
+        } // if
     } // if
 
     // VAN bus receiver
