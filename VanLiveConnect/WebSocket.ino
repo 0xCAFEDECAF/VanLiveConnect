@@ -311,6 +311,10 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case WStype_DISCONNECTED:
         {
             Serial.printf_P(PSTR("%s[webSocket %u] Disconnected!\n"), TimeStamp(), num);
+
+            // Try to prevent memory leak
+            webSocket.disconnect();
+
             if (num == websocketNum)
             {
                 // Switch back to the previous websocketNum (if any)
@@ -343,10 +347,8 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 
             if (num != websocketNum)
             {
-                // Serve only the last one connected
-                if (websocketNum != WEBSOCKET_INVALID_NUM) webSocket.disconnect(websocketNum);
                 prevWebsocketNum = websocketNum;
-                websocketNum = num;
+                websocketNum = num;  // Serve only the last one connected
             } // if
 
             // Send ESP system data to client
@@ -382,7 +384,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
                     // Just keep on serving the last one that connected
 
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR(" --> ignoring (listening only to webSocket %u)\n"), websocketNum);
+                    Serial.printf_P(PSTR(" --> ignoring (listening only to webSocket %u)"), websocketNum);
                   #endif // DEBUG_WEBSOCKET
 
                     break;
