@@ -62,7 +62,7 @@ static const int WEBSOCKET_INVALID_NUM = 0xFF;
 uint8_t prevWebsocketNum = WEBSOCKET_INVALID_NUM;
 volatile uint8_t websocketNum = WEBSOCKET_INVALID_NUM;
 bool inMenu = false;  // true if user is browsing the menus
-bool irButtonFasterRepeat = false;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
+int irButtonFasterRepeat = 0;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
 static const int N_SAVED_JSON = 3;
 int savedJsonNextFreeSlot = 0;
@@ -214,7 +214,8 @@ void ProcessWebSocketClientMessage(const char* payload)
     }
     else if (clientMessage.startsWith("ir_button_faster_repeat:"))
     {
-        irButtonFasterRepeat = clientMessage.endsWith(":YES");
+        irButtonFasterRepeat = clientMessage.substring(24).toInt();
+        Serial.printf_P(PSTR("==> irButtonFasterRepeat = %d\n"), irButtonFasterRepeat);
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {

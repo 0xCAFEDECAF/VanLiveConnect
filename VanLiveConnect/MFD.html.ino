@@ -1003,7 +1003,7 @@ char mfd_html[] PROGMEM = R"=====(
 						on_click="satnavSetDirectoryAddressScreenMode('SELECT');"
 						goto_id="satnav_select_from_memory_menu">Select destination from memory</div>
 
-					<div class="button" 
+					<div class="button"
 						goto_id="satnav_navigation_options_menu">Navigation options</div>
 
 				</div>	<!-- "satnav_main_menu" -->
@@ -1230,12 +1230,12 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<!-- TODO - id="satnav_software_modules_list": show this? -->
 
-						<div id="satnav_choice_list" class="buttonSelected" 
+						<div id="satnav_choice_list" class="buttonSelected"
 							on_up_button="highlightPreviousLine();"
 							on_down_button="highlightNextLine();"
 							on_click="satnavListItemClicked();"
 							style="position:absolute; font-size:33px; line-height:1.000000;
-								left:20px; top:180px; width:923px; height:360px;
+								left:20px; top:180px; width:923px; height:346px;
 								overflow:hidden; white-space:nowrap;
 								background:none; color:var(--main-color); border-style:none;">
 						</div>
@@ -1302,7 +1302,9 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Showing an address (entry) -->
 				<div id="satnav_show_address" style="display:none;">
 
-					<div id="satnav_show_personal_address" style="display:none;">
+					<div id="satnav_show_personal_address"
+						on_esc="mfdToSatnavRequest = 'personal_address_list';"
+						style="display:none;">
 
 						<div id="satnav_personal_address_entry" class="dots satNavAddressEntry"></div>
 
@@ -1340,7 +1342,9 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>	<!-- "satnav_show_personal_address" -->
 
-					<div id="satnav_show_professional_address" style="display:none;">
+					<div id="satnav_show_professional_address"
+						on_esc="mfdToSatnavRequest = 'professional_address_list';"
+						style="display:none;">
 
 						<div id="satnav_professional_address_entry" class="dots satNavAddressEntry"></div>
 
@@ -1380,6 +1384,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_show_service_address"
 						style="display:none;"
+						on_esc="mfdToSatnavRequest = 'service';"
 						on_enter="satnavEnterShowServiceAddress();">
 
 						<div id="satnav_service_address_entry" class="dots satNavAddressEntry"></div>
@@ -2303,7 +2308,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Audio settings popup -->
 
-			<div id="audio_settings_popup" class="icon notificationPopup" 
+			<div id="audio_settings_popup" class="icon notificationPopup"
 				style="left:50px; top:80px; width:830px; height:430px;">
 
 				<div class="tag" style="left:50px; top:30px; width:200px;">Source</div>

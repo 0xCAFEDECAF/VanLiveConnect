@@ -609,6 +609,7 @@ function setVisibilityOfElementAndParents(id, value)
 
 var currentLargeScreenId = "clock";  // Currently shown large screen. Initialize to the first screen visible.
 var lastScreenChangedAt = 0;  // Last time the large screen changed
+var mfdToSatnavRequest;
 
 // Switch to a specific large screen
 function changeLargeScreenTo(id)
@@ -617,15 +618,21 @@ function changeLargeScreenTo(id)
 
 	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
 
-	// Notify ESP so that it can use a slightly quicker repeat rate for the IR controller buttons
-	var irFastRepeat =
-		id === "satnav_choose_from_list" &&
-		(
-			handleItemChange.mfdToSatnavRequest === "service"
-			|| handleItemChange.mfdToSatnavRequest === "personal_address_list"
-			|| handleItemChange.mfdToSatnavRequest === "professional_address_list"
-		);
-	webSocket.send("ir_button_faster_repeat:" + (irFastRepeat ? "YES" : "NO"));
+	var irFastRepeatValue = 0;
+	if (id === "satnav_choose_from_list")
+	{
+		// Notify ESP so that it can use a slightly quicker repeat rate for the IR controller buttons
+
+		irFastRepeatValue = 1;
+
+		if (mfdToSatnavRequest === "service"
+			|| mfdToSatnavRequest === "personal_address_list"
+			|| mfdToSatnavRequest === "professional_address_list")
+		{
+			irFastRepeatValue = 2;
+		} // if
+	} // if
+	webSocket.send("ir_button_faster_repeat:" + irFastRepeatValue);
 
 	hidePopup("audio_popup");
 
@@ -749,7 +756,7 @@ function preventTemporaryScreenChange(msec)
 }
 
 // Vehicle data
-var contactKeyPosition;
+var contactKeyPosition = "OFF";
 var engineRpm = -1;
 var engineRunning;
 
@@ -1201,7 +1208,8 @@ function resizeButton(id)
 		buttonOriginalWidths[id] = button.width();  // Save original width of button
 
 		// Move left a bit if necessary
-		let right = button.position().left + widthAtLeast;
+		var scale = $(":root").css("--scale-factor");
+		let right = button.position().left / scale + widthAtLeast;
 		let moveLeft = right - 910;
 		if (moveLeft > 0) button.css({ 'marginLeft': '-=' + moveLeft + 'px' });
 
@@ -1442,20 +1450,6 @@ function highlightLine(id)
 	lines[highlightIndexes[id]] = "<span class='invertedText'>" + lines[highlightIndexes[id]] + "</span>";
 
 	$("#" + id).html(lines.join('<br />'));
-
-	// A highlighted line is a little bit higher than a normal line. If necessary, shrink the box a bit such that the
-	// bottom line is not shown partially.
-	var heightOfHighlightedLine = $("#" + id + " .invertedText").height();
-	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
-
-	// Sometimes 'heightOfHighlightedLine' is 0 ??
-	if (heightOfHighlightedLine < heightOfUnhighlightedLine) return;
-
-	var heightOfBox = $("#" + id).height();
-	var nVisibleLines = (heightOfBox - heightOfHighlightedLine) / heightOfUnhighlightedLine + 1;
-	var wantNVisibleLines = Math.floor(nVisibleLines);
-	var tooManyPixels = (nVisibleLines - wantNVisibleLines) * heightOfUnhighlightedLine;
-	if (tooManyPixels > 0) $("#" + id).height($("#" + id).height() - tooManyPixels);  // Shrink a bit
 }
 
 // Remove any highlight from element with lines
@@ -1502,7 +1496,8 @@ function highlightNextLine(id)
 
 	// Scroll along if necessary
 
-	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top);
+	var scale = $(":root").css("--scale-factor");
+	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top / scale);
 	var heightOfHighlightedLine = $("#" + id + " .invertedText").height();
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
 	var heightOfBox = $("#" + id).height();
@@ -1530,7 +1525,8 @@ function highlightPreviousLine(id)
 
 	// Scroll along if necessary
 
-	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top);
+	var scale = $(":root").css("--scale-factor");
+	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top / scale);
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
 
 	if (topOfHighlightedLine < heightOfUnhighlightedLine - 1)
@@ -2014,7 +2010,7 @@ function satnavCutoffBottomLines(selector)
 	else
 	{
 		// Back to original formatting
-		var styleObject = selector.prop('style'); 
+		var styleObject = selector.prop('style');
 		styleObject.removeProperty('top');
 		styleObject.removeProperty('transform');
 	} // if
@@ -2061,7 +2057,7 @@ function satnavGotoListScreen()
 	var reqType = handleItemChange.mfdToSatnavRequestType;
 	if (reqType === "REQ_ITEMS" || reqType === "REQ_N_ITEMS")
 	{
-		switch(handleItemChange.mfdToSatnavRequest)
+		switch(mfdToSatnavRequest)
 		{
 			// Pre-fill with what we previously received
 
@@ -2109,7 +2105,7 @@ function satnavGotoListScreenEmpty()
 function satnavGotoListScreenServiceList()
 {
 	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
-	handleItemChange.mfdToSatnavRequest = "service";
+	mfdToSatnavRequest = "service";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
 }
@@ -2117,7 +2113,7 @@ function satnavGotoListScreenServiceList()
 function satnavGotoListScreenPersonalAddressList()
 {
 	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
-	handleItemChange.mfdToSatnavRequest = "personal_address_list";
+	mfdToSatnavRequest = "personal_address_list";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
 }
@@ -2125,7 +2121,7 @@ function satnavGotoListScreenPersonalAddressList()
 function satnavGotoListScreenProfessionalAddressList()
 {
 	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
-	handleItemChange.mfdToSatnavRequest = "professional_address_list";
+	mfdToSatnavRequest = "professional_address_list";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
 }
@@ -2429,7 +2425,7 @@ function satnavCheckIfCityCenterMustBeAdded()
 	// then add "City centre" at the top of the choice list
 	if (
 		$("#satnav_choose_from_list").is(":visible")
-		&& handleItemChange.mfdToSatnavRequest === "enter_street"
+		&& mfdToSatnavRequest === "enter_street"
 		//&& $("#satnav_entered_string").text() === ""
 		&& ! userHadOpportunityToEnterStreet
 		)
@@ -2445,7 +2441,7 @@ function satnavListItemClicked()
 
 	// When choosing a city from the list, hide the current destination street, so that the entry format ("") will
 	// be shown.
-	if (handleItemChange.mfdToSatnavRequest === "enter_city") $("#satnav_current_destination_street").empty();
+	if (mfdToSatnavRequest === "enter_city") $("#satnav_current_destination_street").empty();
 
 	// When choosing a city or street from the list, hide the current destination house number, so that the
 	// entry format ("_ _ _") will be shown.
@@ -4027,7 +4023,7 @@ function handleItemChange(item, value)
 		{
 			let temp = parseFloat(value);
 
-			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit") 
+			if (localStorage.mfdTemperatureUnit === "set_units_deg_fahrenheit")
 			{
 				// Apply hysteresis
 				if (! icyConditions && temp >= 26 && temp <= 38) icyConditions = true;
@@ -4817,7 +4813,7 @@ function handleItemChange(item, value)
 
 		case "mfd_to_satnav_request":
 		{
-			handleItemChange.mfdToSatnavRequest = value;
+			mfdToSatnavRequest = value;
 
 			// Show or hide the appropriate tag
 			$("#satnav_tag_city_list").toggle(value === "enter_city");
@@ -4834,7 +4830,7 @@ function handleItemChange(item, value)
 
 			if (value !== "REQ_N_ITEMS") break;
 
-			switch (handleItemChange.mfdToSatnavRequest)
+			switch (mfdToSatnavRequest)
 			{
 				case "enter_city":
 				case "enter_street":
@@ -4861,7 +4857,7 @@ function handleItemChange(item, value)
 
 		case "mfd_to_satnav_selection":
 		{
-			if (handleItemChange.mfdToSatnavRequest === "enter_street"
+			if (mfdToSatnavRequest === "enter_street"
 				&& handleItemChange.mfdToSatnavRequestType === "SELECT")
 			{
 				// Already copy the selected street into the "satnav_show_current_destination" screen, in case the
@@ -4904,7 +4900,7 @@ function handleItemChange(item, value)
 
 			if ($("#satnav_choose_from_list").is(":visible") && value == 0)
 			{
-				if (handleItemChange.mfdToSatnavRequest.match(/^service/))
+				if (mfdToSatnavRequest.match(/^service/))
 				{
 					// User selected a service which has no address entries for the specified location
 
@@ -4922,7 +4918,7 @@ function handleItemChange(item, value)
 
 					showStatusPopup(content, 8000);
 				}
-				else if (handleItemChange.mfdToSatnavRequest === "personal_address_list")
+				else if (mfdToSatnavRequest === "personal_address_list")
 				{
 					exitMenu();
 
@@ -4939,7 +4935,7 @@ function handleItemChange(item, value)
 
 					showStatusPopup(content, 8000);
 				}
-				else if (handleItemChange.mfdToSatnavRequest === "professional_address_list")
+				else if (mfdToSatnavRequest === "professional_address_list")
 				{
 					exitMenu();
 
@@ -4979,7 +4975,7 @@ function handleItemChange(item, value)
 			clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
 			$("#satnav_choose_from_list_spinning_disc").hide();
 
-			switch(handleItemChange.mfdToSatnavRequest)
+			switch(mfdToSatnavRequest)
 			{
 				case "enter_city":
 				case "enter_street":
@@ -5013,14 +5009,14 @@ function handleItemChange(item, value)
 			// Highlight the current line (or the first, if no line is currently highlighted)
 			highlightLine("satnav_choice_list");
 
-			if (handleItemChange.mfdToSatnavRequest === "service")
+			if (mfdToSatnavRequest === "service")
 			{
 				satnavServices = value;
 
 				// Save in local (persistent) store
 				localStorage.satnavServices = JSON.stringify(satnavServices);
 			}
-			else if (handleItemChange.mfdToSatnavRequest === "personal_address_list")
+			else if (mfdToSatnavRequest === "personal_address_list")
 			{
 				// Store the list of entries. When the user tries to create an entry with an existing name,
 				// the "Validate" button must be disabled.
@@ -5038,7 +5034,7 @@ function handleItemChange(item, value)
 				// Save in local (persistent) store
 				localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
 			}
-			else if (handleItemChange.mfdToSatnavRequest === "professional_address_list")
+			else if (mfdToSatnavRequest === "professional_address_list")
 			{
 				// Store the list of entries. When the user tries to create an entry with an existing name,
 				// the "Validate" button must be disabled.
@@ -5410,13 +5406,13 @@ function handleItemChange(item, value)
 
 		case "mfd_remote_control":
 		{
+			let parts = value.split(" ");
+			let button = parts[0];
+
 			// Ignore remote control buttons if contact key is off
 			if ($("#contact_key_position").text() === "OFF") break;
 
 			if (economyMode === "ON") break;  // Ignore also when in power-save mode
-
-			let parts = value.split(" ");
-			let button = parts[0];
 
 			if (button === "MENU_BUTTON")
 			{
@@ -5442,7 +5438,7 @@ function handleItemChange(item, value)
 				// Very special situation... Escaping out of list of services after entering a new "Select a Service"
 				// address means escaping back all the way to the to the "Select a Service" address screen.
 				if (currentMenu === "satnav_choose_from_list"
-					&& handleItemChange.mfdToSatnavRequest === "service"
+					&& mfdToSatnavRequest === "service"
 					&& menuStack.indexOf("satnav_show_last_destination") >= 0
 					&& menuStack[menuStack.length - 1] !== "satnav_show_last_destination")
 				{

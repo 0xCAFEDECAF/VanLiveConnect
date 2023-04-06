@@ -37,7 +37,7 @@ typedef struct
 
 // Defined in WebSocket.ino
 extern bool inMenu;
-extern bool irButtonFasterRepeat;
+extern int irButtonFasterRepeat;
 
 // Defined in PacketToJson.ino
 extern const char emptyStr[];
@@ -415,7 +415,7 @@ bool IrReceive(TIrPacket& irPacket)
             countDown += 2;
             firstTime = false;
         } // if
-        if (irButtonFasterRepeat) countDown--;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
+        if (irButtonFasterRepeat >= 2) countDown--;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
         nFirings = 1;
 
@@ -464,21 +464,26 @@ bool IrReceive(TIrPacket& irPacket)
         } // if
 
         countDown += IR_REPEAT_N_INTERVALS;
-        if (irButtonFasterRepeat) countDown--;  // Some sat nav "list" screen have a slightly quicker IR repeat timing
+        if (irButtonFasterRepeat >= 2) countDown--;  // Some sat nav "list" screen have a slightly quicker IR repeat timing
 
         nFirings++;
 
         // Some magic to keep pace with the original MFD: speed things up a bit every now and then
-        if (nFirings % (irButtonFasterRepeat ? 4 : 2) == 0) countDown--;
+        if (nFirings % (irButtonFasterRepeat > 0 ? 4 : 2) == 0) countDown--;
 
         // Subtle extra speed adjustments (found by trial and error)
-        if (irButtonFasterRepeat)
+        if (irButtonFasterRepeat >= 2)
         {
             if (nFirings == 8) countDown++;
         }
-        else
+        else if (irButtonFasterRepeat == 1)
         {
-            if ((nFirings + 1) % 10 == 0) countDown--;
+            if (nFirings % 14 == 0) countDown--;  // 14, 28, ...
+        }
+        else if (irButtonFasterRepeat == 0)
+        {
+            if ((nFirings + 1) % 10 == 0) countDown--;  // 9, 19, 29, ...
+            if (nFirings % 12 == 0) countDown++;  // 12, 24, ...
         } // if
     } // if
 
