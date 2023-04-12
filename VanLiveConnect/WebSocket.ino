@@ -214,6 +214,10 @@ void ProcessWebSocketClientMessage(const char* payload)
     }
     else if (clientMessage.startsWith("ir_button_faster_repeat:"))
     {
+        // Possible values:
+        // - Rate 0 (slow): menus
+        // - Rate 1 (faster): sat nav lists of cities and streets
+        // - Rate 2 (fastest): sat nav list of services, personal addresses and professional addresses
         irButtonFasterRepeat = clientMessage.substring(24).toInt();
         Serial.printf_P(PSTR("==> irButtonFasterRepeat = %d\n"), irButtonFasterRepeat);
     }
