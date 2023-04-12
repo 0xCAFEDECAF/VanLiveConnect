@@ -91,6 +91,8 @@ void IrSetup();
 const char* ParseIrPacketToJson(const TIrPacket& pkt);
 bool IrReceive(TIrPacket& irPacket);
 
+#include <WebSockets.h>  // For #define WEBSOCKETS_NETWORK_TYPE, used below
+
 void SetupVanReceiver()
 {
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
@@ -272,10 +274,12 @@ void setup()
     IrSetup();
 
     sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
+  #if 0
   #ifdef ON_DESK_MFD_ESP_MAC
     // On the desk test setup, we want to go to sleep much quicker
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
   #endif // ON_DESK_MFD_ESP_MAC
+  #endif // 0
 
     if (sleepAfter != -1)
     {
