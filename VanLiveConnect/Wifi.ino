@@ -58,6 +58,19 @@ void onProbeRequestBlink(const WiFiEventSoftAPModeProbeRequestReceived&)
     digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN) == LOW ? HIGH : LOW);
 } // onProbeRequestBlink
 
+#ifndef WIFI_AP_MODE // Wi-Fi access point mode
+void WifiConfig()
+{
+  #ifndef USE_DHCP
+    // Fixed IP configuration, e.g. when using Android / Windows ICS Wi-Fi hotspot
+    IPAddress ip; ip.fromString(IP_ADDR);
+    IPAddress gateway; gateway.fromString(IP_GATEWAY);
+    IPAddress subnet; subnet.fromString(IP_SUBNET);
+    WiFi.config(ip, gateway, subnet);
+  #endif // ifndef USE_DHCP
+} // WifiConfig
+#endif // ifdef WIFI_AP_MODE
+
 WiFiEventHandler stationConnectedHandler;
 WiFiEventHandler stationDisconnectedHandler;
 WiFiEventHandler probeRequestHandler;

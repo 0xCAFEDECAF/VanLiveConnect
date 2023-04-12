@@ -77,17 +77,6 @@
 
   #endif // ifdef USE_DHCP
 
-  inline void WifiConfig()
-  {
-  #ifndef USE_DHCP
-      // Fixed IP configuration, e.g. when using Android / Windows ICS Wi-Fi hotspot
-      IPAddress ip; ip.fromString(IP_ADDR);
-      IPAddress gateway; gateway.fromString(IP_GATEWAY);
-      IPAddress subnet; subnet.fromString(IP_SUBNET);
-      WiFi.config(ip, gateway, subnet);
-  #endif // ifndef USE_DHCP
-  } // WifiConfig
-
 #endif // ifdef WIFI_AP_MODE
 
 // Define to use the mDNS responder
@@ -125,7 +114,7 @@
 //                   |
 //      GND ---|>|---+---|>|--- +3.3V on ESP board
 //
-//     GND ---|>|--- +5V
+//      GND ---|>|--- +5V
 //
 // - In the test setup on the desk, best not to power off using the main power switch; this sometimes causes
 //   the ESP to become completely unresponsive (caused by ground loop??). Instead, just disconnect the +12V line
@@ -279,7 +268,7 @@
 
 //#define PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
 
-// Define to prepend a time stamp to debug output
+// Define to prepend a time stamp to debug output.
 // When not defined, output looks like this:
 //   Starting VAN bus "Live Connect" server
 // When defined, output looks like this:
