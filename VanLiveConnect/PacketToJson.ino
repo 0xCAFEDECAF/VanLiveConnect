@@ -5405,6 +5405,9 @@ const IdenHandler_t* const handlers_end = handlers + sizeof(handlers) / sizeof(h
 
 const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
 {
+    int dataLen = pkt.DataLen();
+    if (dataLen < 0 || dataLen > VAN_MAX_DATA_BYTES) return ""; // Unexpected packet length
+
   #ifdef ON_DESK_MFD_ESP_MAC
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
@@ -5452,9 +5455,6 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
   #ifdef ON_DESK_MFD_ESP_MAC
     } // if
   #endif // ON_DESK_MFD_ESP_MAC
-
-    int dataLen = pkt.DataLen();
-    if (dataLen < 0 || dataLen > VAN_MAX_DATA_BYTES) return ""; // Unexpected packet length
 
     uint16_t iden = pkt.Iden();
     IdenHandler_t* handler = handlers;
