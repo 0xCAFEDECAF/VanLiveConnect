@@ -25,7 +25,7 @@ void CommitEeprom()
 {
     if (! _eepromDirty) return;
 
-    Serial.println("==> Committing all values written to EEPROM");
+    Serial.print("==> Committing all values written to EEPROM\n");
     VanBusRx.Disable();
     EEPROM.commit();  // Will only write to flash if any data was actually changed
     VanBusRx.Enable();

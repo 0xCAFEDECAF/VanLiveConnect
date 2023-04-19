@@ -59,7 +59,7 @@ void SetupStore()
         if (! SPIFFS.format())
         {
             VanBusRx.Enable();
-            Serial.println(F("\nFailed to format file system, no persistent storage available!"));
+            Serial.print(F("\nFailed to format file system, no persistent storage available!\n"));
             return;
         } // if
     } // if
@@ -99,7 +99,7 @@ void SetupStore()
         fileMd5[fileMd5Last].md5 = md5.toString();
         if (++fileMd5Last >= MAX_FILE_MD5)
         {
-            Serial.println("====> Too many files found: please increase MAX_FILE_MD5");
+            Serial.print("====> Too many files found: please increase MAX_FILE_MD5\n");
             break;
         } // if
     } // while
@@ -142,7 +142,7 @@ void printHttpRequest()
         if (i < webServer.args() - 1) Serial.print('&');
     } // for
 
-    Serial.println(F("'"));
+    Serial.print(F("'\n"));
   #endif // DEBUG_WEBSERVER
 } // printHttpRequest
 
@@ -154,8 +154,8 @@ bool checkETag(const String& etag)
 
     for (int i = 0; i < webServer.headers(); i++)
     {
-        // Serial.println(
-            // String(F("[webServer] ")) + webServer.headerName(i) + F(": \"") + webServer.header(i) + F("\""));
+        // Serial.print(
+            // String(F("[webServer] ")) + webServer.headerName(i) + F(": \"") + webServer.header(i) + F("\"\n"));
         if (webServer.headerName(i).compareTo(F("If-None-Match")) == 0)
         {
             String read = webServer.header(i);
@@ -168,8 +168,8 @@ bool checkETag(const String& etag)
 
                 webServer.send(304, "text/plain", F("Not Modified"));
               #ifdef DEBUG_WEBSERVER
-                Serial.println(
-                    String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified"));
+                Serial.print(
+                    String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified\n"));
               #endif // DEBUG_WEBSERVER
                 return true;
             } // if

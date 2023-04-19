@@ -18,12 +18,12 @@ void SetupOta()
 
     ArduinoOTA.onStart([]()
     {
-        Serial.println(F("Start"));
+        Serial.print(F("Start\n"));
     });
     ArduinoOTA.onEnd([]()
     {
         digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
-        Serial.println(F("\nEnd"));
+        Serial.print(F("\nEnd\n"));
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
     {
@@ -39,14 +39,14 @@ void SetupOta()
         char buffer[20];
         sprintf_P(buffer, PSTR("Error[%u]: "), error);
         Serial.print(buffer);
-        if (error == OTA_AUTH_ERROR) Serial.println(F("Auth Failed"));
-        else if (error == OTA_BEGIN_ERROR) Serial.println(F("Begin Failed"));
-        else if (error == OTA_CONNECT_ERROR) Serial.println(F("Connect Failed"));
-        else if (error == OTA_RECEIVE_ERROR) Serial.println(F("Receive Failed"));
-        else if (error == OTA_END_ERROR) Serial.println(F("End Failed"));
+        if (error == OTA_AUTH_ERROR) Serial.print(F("Auth Failed\n"));
+        else if (error == OTA_BEGIN_ERROR) Serial.print(F("Begin Failed\n"));
+        else if (error == OTA_CONNECT_ERROR) Serial.print(F("Connect Failed\n"));
+        else if (error == OTA_RECEIVE_ERROR) Serial.print(F("Receive Failed\n"));
+        else if (error == OTA_END_ERROR) Serial.print(F("End Failed\n"));
     });
     ArduinoOTA.begin();
-    Serial.println(F(" OK"));
+    Serial.print(F(" OK\n"));
 } // SetupOta
 
 void LoopOta()

@@ -25,7 +25,8 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
     Serial.printf_P(PSTR("%sWi-Fi client connected: "), TimeStamp());
-    Serial.println(macToString(evt.mac));
+    Serial.print(macToString(evt.mac));
+    Serial.print(F("\n"));
 
     websocketNum = WEBSOCKET_INVALID_NUM;
     prevWebsocketNum = WEBSOCKET_INVALID_NUM;
@@ -36,7 +37,8 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 {
     Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
-    Serial.println(macToString(evt.mac));
+    Serial.print(macToString(evt.mac));
+    Serial.print(F("\n"));
 
     websocketNum = WEBSOCKET_INVALID_NUM;
     prevWebsocketNum = WEBSOCKET_INVALID_NUM;
@@ -49,7 +51,8 @@ void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
     Serial.printf_P(PSTR("%sProbe request from: "), TimeStamp());
     Serial.print(macToString(evt.mac));
     Serial.print(" RSSI: ");
-    Serial.println(evt.rssi);
+    Serial.print(evt.rssi);
+    Serial.print(F("\n"));
 } // onProbeRequestPrint
 
 void onProbeRequestBlink(const WiFiEventSoftAPModeProbeRequestReceived&)
@@ -176,11 +179,11 @@ void WifiCheckStatus()
 
         Serial.print(F("Please surf to: http://"));
         Serial.print(WiFi.localIP());
-        Serial.println(F("/MFD.html"));
+        Serial.print(F("/MFD.html\n"));
     }
     else
     {
-        Serial.println(F("Wi-Fi DISconnected!"));
+        Serial.print(F("Wi-Fi DISconnected!\n"));
     } // if
 #endif // WIFI_AP_MODE
 } // WifiCheckStatus

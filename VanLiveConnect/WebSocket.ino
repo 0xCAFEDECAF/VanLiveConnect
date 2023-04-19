@@ -132,7 +132,13 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     if (strlen(json) <= 0) return;
     if (websocketNum == WEBSOCKET_INVALID_NUM || ! webSocket.clientIsConnected(websocketNum))
     {
-        if (savePacketForLater) SaveJsonForLater(json);
+        if (savePacketForLater)
+        {
+            // Print reason
+            Serial.printf_P(PSTR("%s[webSocket %u] Client is not connected\n"), TimeStamp(), websocketNum);
+
+            SaveJsonForLater(json);
+        } // if
         return;
     } // if
 
@@ -219,7 +225,10 @@ void ProcessWebSocketClientMessage(const char* payload)
         // - Rate 1 (faster): sat nav lists of cities and streets
         // - Rate 2 (fastest): sat nav list of services, personal addresses and professional addresses
         irButtonFasterRepeat = clientMessage.substring(24).toInt();
+
+      #ifdef DEBUG_IR_RECV
         Serial.printf_P(PSTR("==> irButtonFasterRepeat = %d\n"), irButtonFasterRepeat);
+      #endif // DEBUG_IR_RECV
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
@@ -299,8 +308,8 @@ void ProcessWebSocketClientMessage(const char* payload)
         if (SetTime(epoch, msec))
         {
             Serial.printf_P(
-                PSTR("==> Current date-time received from WebSocket client: %02d-%02d-%04d %02d:%02d:%02d.%03u UTC\n"),
-                day(epoch), month(epoch), year(epoch), hour(epoch), minute(epoch), second(epoch), msec
+                PSTR("==> Current date-time received from WebSocket client: %04d-%02d-%02d %02d:%02d:%02d.%03u UTC\n"),
+                year(epoch), month(epoch), day(epoch), hour(epoch), minute(epoch), second(epoch), msec
             );
         } // if
     } // if
@@ -397,7 +406,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
             } // if
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.println();
+            Serial.print(F("\n"));
           #endif // DEBUG_WEBSOCKET
 
             ProcessWebSocketClientMessage((char*)payload);  // Process the message

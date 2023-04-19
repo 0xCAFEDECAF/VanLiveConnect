@@ -285,7 +285,7 @@ IRrecv* irrecv;
 
 void IrSetup()
 {
-    Serial.println(F("Setting up IR receiver"));
+    Serial.print(F("Setting up IR receiver\n"));
 
   #ifdef ON_DESK_MFD_ESP_MAC
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
@@ -298,7 +298,7 @@ void IrSetup()
         irrecv = new IRrecv(TEST_IR_RECV_PIN);
         irrecv->enableIRIn(); // Start the receiver
 
-        Serial.println(F("On-desk IR receiver has been set up"));
+        Serial.print(F("On-desk IR receiver has been set up\n"));
 
         return;
     } // if
@@ -382,7 +382,7 @@ bool IrReceive(TIrPacket& irPacket)
     if (irPacket.held && (irPacket.value == IB_MENU || irPacket.value == IB_MODE))
     {
       #ifdef DEBUG_IR_RECV
-        Serial.println();
+        Serial.print(F("\n"));
       #endif // DEBUG_IR_RECV
         return false;
     } // if
@@ -445,7 +445,7 @@ bool IrReceive(TIrPacket& irPacket)
         if (countDown > 0)
         {
           #ifdef DEBUG_IR_RECV
-            Serial.println();
+            Serial.print(F("\n"));
           #endif // DEBUG_IR_RECV
             return false;
         } // if
@@ -459,7 +459,7 @@ bool IrReceive(TIrPacket& irPacket)
         if (countDown > 0)
         {
           #ifdef DEBUG_IR_RECV
-            Serial.println();
+            Serial.print(F("\n"));
           #endif // DEBUG_IR_RECV
             return false;
         } // if

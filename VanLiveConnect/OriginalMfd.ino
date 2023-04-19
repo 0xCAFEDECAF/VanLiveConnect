@@ -231,7 +231,7 @@ bool IsNotificationPopupShowing(bool beVerbose)
                 millis() - NotificationPopupShowingSince
             );
         } // if
-        Serial.println(F(")"));
+        Serial.print(F(")\n"));
     } // if
   #endif // DEBUG_ORIGINAL_MFD
 

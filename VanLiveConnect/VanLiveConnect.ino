@@ -211,6 +211,43 @@ inline bool IsImportantPacket(const TVanPacketRxDesc& pkt)
         );
 } // IsImportantPacket
 
+void PrintDebugDefines()
+{
+    Serial.print(F("Compiled with following debug #define's (see file 'Config.h'):\n"));
+  #if defined DEBUG_IR_RECV || defined DEBUG_WEBSERVER || defined DEBUG_WEBSOCKET \
+    || defined DEBUG_ORIGINAL_MFD || defined SHOW_VAN_RX_STATS || defined PRINT_RAW_PACKET_DATA \
+    || defined PRINT_JSON_BUFFERS_ON_SERIAL || defined PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
+
+  #ifdef DEBUG_IR_RECV
+    Serial.print(F("- DEBUG_IR_RECV\n"));
+  #endif // DEBUG_IR_RECV
+  #ifdef DEBUG_WEBSERVER
+    Serial.print(F("- DEBUG_WEBSERVER\n"));
+  #endif // DEBUG_WEBSERVER
+  #ifdef DEBUG_WEBSOCKET
+    Serial.print(F("- DEBUG_WEBSOCKET\n"));
+  #endif // DEBUG_WEBSOCKET
+  #ifdef DEBUG_ORIGINAL_MFD
+    Serial.print(F("- DEBUG_ORIGINAL_MFD\n"));
+  #endif // DEBUG_ORIGINAL_MFD
+  #ifdef SHOW_VAN_RX_STATS
+    Serial.print(F("- SHOW_VAN_RX_STATS\n"));
+  #endif // SHOW_VAN_RX_STATS
+  #ifdef PRINT_RAW_PACKET_DATA
+    Serial.print(F("- PRINT_RAW_PACKET_DATA\n"));
+  #endif // PRINT_RAW_PACKET_DATA
+  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
+    Serial.print(F("- PRINT_JSON_BUFFERS_ON_SERIAL\n"));
+  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
+  #ifdef PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
+    Serial.print(F("- PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL\n"));
+  #endif // PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
+
+  #else
+    Serial.print(F("<none>\n"));
+  #endif // defined ...
+} // PrintDebugDefines
+
 // After a few minutes of VAN bus inactivity, go to sleep to save power
 unsigned long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
 
@@ -228,11 +265,12 @@ void setup()
 
     delay(1000);
     Serial.begin(115200);
-    Serial.println(F("\nStarting VAN bus \"Live Connect\" server"));
+    Serial.print(F("\nStarting VAN bus \"Live Connect\" server\n"));
 
+    PrintDebugDefines();
     PrintSystemSpecs();
 
-    Serial.println(F("Initializing EEPROM"));
+    Serial.print(F("Initializing EEPROM\n"));
     EEPROM.begin(64);
 
   #ifdef SERVE_FROM_SPIFFS
@@ -256,8 +294,8 @@ void setup()
 
   #ifdef USE_MDNS
     // Start the mDNS responder
-    if (MDNS.begin(GetHostname())) Serial.println("mDNS responder started");
-    else Serial.println("Error setting up MDNS responder!");
+    if (MDNS.begin(GetHostname())) Serial.print("mDNS responder started\n");
+    else Serial.print("Error setting up MDNS responder!\n");
   #endif // USE_MDNS
 
     SetupWebServer();
@@ -266,7 +304,7 @@ void setup()
   #ifdef WIFI_AP_MODE
     Serial.printf_P(PSTR("Please connect to Wi-Fi network '%s', then surf to: http://"), wifiSsid);
     Serial.print(apIP);
-    Serial.println(F("/MFD.html"));
+    Serial.print(F("/MFD.html\n"));
   #endif // WIFI_AP_MODE
 
     SetupVanReceiver();

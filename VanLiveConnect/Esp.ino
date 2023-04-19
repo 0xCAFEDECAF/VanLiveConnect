@@ -53,11 +53,11 @@ void PrintSystemSpecs()
   #ifdef ON_DESK_MFD_ESP_MAC
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
-        Serial.println(F(" == ON_DESK_MFD_ESP_MAC, i.e., this is the on-desk test setup, so:"));
+        Serial.print(F(" == ON_DESK_MFD_ESP_MAC, i.e., this is the on-desk test setup, so:\n"));
         Serial.print(F("==> Will print detailed debug info when a VAN bus packet with CRC error is received."));
     }
   #endif // ON_DESK_MFD_ESP_MAC
-    Serial.println();
+    Serial.print(F("\n"));
 } // PrintSystemSpecs
 
 String EspGetResetInfo()
