@@ -23,6 +23,8 @@ the VAN bus.</p>
 
 Don't bore us, give us the screenshots!
 
+> 👉 See some exciting live videos and pics at https://drive.google.com/drive/folders/1PScPrWulKUc7Rnl3Ug-_TO_tbdkDwQCP !
+
 **Main entry screen:**
 
 ![screen](extras/Screenshots/Clock.png)
