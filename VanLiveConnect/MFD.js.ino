@@ -2916,7 +2916,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Show this popup only if the current location is known (to emulate behaviour of MFD).
 	// This seems to be the criterion used by the original MFD.
 	if (satnavCurrentStreet === "") return false;
-	if (! satnavCurrentStreet.match(/\(.*\)/)) return false;  // Just a city name (no street name)?
+	//if (! satnavCurrentStreet.match(/\(.*\)/)) return false;  // Just a city name (no street name)?
 	//if ($("#satnav_not_on_map_icon").is(':visible')) return false;
 
 	// Show popup only once at start of guidance or after recalculation
@@ -2998,7 +2998,7 @@ function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
 
-	//if (showDestinationNotAccessiblePopupIfApplicable()) return;
+	if (showDestinationNotAccessiblePopupIfApplicable()) return;
 
 	if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
 }
@@ -4616,6 +4616,9 @@ function handleItemChange(item, value)
 
 		case "satnav_curr_street":
 		{
+			satnavInitialized = true;
+			hidePopup("satnav_initializing_popup");
+
 			satnavCurrentStreet = value;
 
 			if (satnavMode === "IN_GUIDANCE_MODE")
@@ -5081,8 +5084,6 @@ function handleItemChange(item, value)
 		{
 			// As soon as any value is received for "satnav_system_id", the sat nav is considered "initialized"
 			satnavInitialized = true;
-
-			// Hide any popup "Navigation system being initialized" (if shown)
 			hidePopup("satnav_initializing_popup");
 
 			// Show "Continue guidance to destination?" popup if applicable
