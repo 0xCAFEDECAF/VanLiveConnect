@@ -3702,8 +3702,8 @@ function handleItemChange(item, value)
 						$("#satnav_guidance").is(":visible") ? 5000 : 10000);
 
 				// In case the "NO" packet is missed
-				clearTimeout(infoTrafficOffTimer);
-				infoTrafficOffTimer = setTimeout
+				clearTimeout(handleItemChange.infoTrafficOffTimer);
+				handleItemChange.infoTrafficOffTimer = setTimeout
 				(
 					function () { infoTraffic = "NO"; },
 					300000
