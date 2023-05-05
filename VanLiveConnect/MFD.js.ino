@@ -1586,6 +1586,9 @@ var audioSettingsPopupShowTimer;
 var cdChangerCurrentDisc = "";
 var tunerSearchMode = "";
 
+var infoTraffic = "NO";
+var infoTrafficPopupTimer;
+
 function hideAudioSettingsPopup()
 {
 	clearTimeout(audioSettingsPopupShowTimer);
@@ -1647,6 +1650,8 @@ function hideTunerPresetsPopup()
 // Show the audio volume popup
 function showAudioVolumePopup()
 {
+	hideNotificationPopup(infoTrafficPopupTimer);
+
 	// Audio popup already visible due to display of audio settings?
 	if (isAudioMenuVisible) return hideAudioSettingsPopupAfter(11500);
 
@@ -1685,6 +1690,8 @@ function showAudioVolumePopup()
 // Show the audio settings popup
 function showAudioSettingsPopup(button)
 {
+	hideNotificationPopup(infoTrafficPopupTimer);
+
 	if (button === "AUDIO")
 	{
 		// If the tuner presets popup is visible, hide it
@@ -3674,13 +3681,11 @@ function handleItemChange(item, value)
 
 		case "info_traffic":
 		{
-			if (handleItemChange.infoTraffic === undefined) handleItemChange.infoTraffic = "NO";
-
 			if (inMenu() || $("#audio_settings_popup").is(":visible")) break;
 
 			// Has anything changed?
-			if (value === handleItemChange.infoTraffic) break;
-			handleItemChange.infoTraffic = value;
+			if (value === infoTraffic) break;
+			infoTraffic = value;
 
 			if (value === "YES")
 			{
@@ -3692,21 +3697,21 @@ function handleItemChange(item, value)
 					"set_language_italian": "Informazioni sul traffico",
 					"set_language_dutch": "Verkeersinformatie"
 				};
-				handleItemChange.infoTrafficPopupTimer =
+				infoTrafficPopupTimer =
 					showNotificationPopup(translations[localStorage.mfdLanguage] || "Traffic information",
 						$("#satnav_guidance").is(":visible") ? 5000 : 10000);
 
 				// In case the "NO" packet is missed
-				clearTimeout(handleItemChange.infoTrafficOffTimer);
-				handleItemChange.infoTrafficOffTimer = setTimeout
+				clearTimeout(infoTrafficOffTimer);
+				infoTrafficOffTimer = setTimeout
 				(
-					function () { handleItemChange.infoTraffic = "NO"; },
+					function () { infoTraffic = "NO"; },
 					300000
 				);
 			}
 			else
 			{
-				hideNotificationPopup(handleItemChange.infoTrafficPopupTimer);
+				hideNotificationPopup(infoTrafficPopupTimer);
 			} // if
 		} // case
 		break;
