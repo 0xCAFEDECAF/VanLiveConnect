@@ -267,25 +267,25 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="tag" style="left:50px; top:218px; width:200px;">Side</div>
 						<div gid="tape_side" class="dseg7" style="font-size:120px; left:280px; top:145px; width:140px;">-</div>
 
-						<div gid="tape_status_stopped" class="mediaStatus">
+						<div gid="tape_status_stopped" class="icon mediaStatus">
 							<div class="centerAligned fas fa-stop"></div>
 						</div>
-						<div gid="tape_status_loading" class="mediaStatus">
+						<div gid="tape_status_loading" class="icon mediaStatus">
 							<div class="centerAligned fas fa-sign-in-alt"></div>
 						</div>
-						<div gid="tape_status_play" class="mediaStatus">
+						<div gid="tape_status_play" class="icon mediaStatus">
 							<div class="centerAligned fas fa-play"></div>
 						</div>
-						<div gid="tape_status_fast_forward" class="mediaStatus">
+						<div gid="tape_status_fast_forward" class="icon mediaStatus">
 							<div class="centerAligned fas fa-forward"></div>
 						</div>
-						<div gid="tape_status_next_track" class="mediaStatus">
+						<div gid="tape_status_next_track" class="icon mediaStatus">
 							<div class="centerAligned fas fa-fast-forward"></div>
 						</div>
-						<div gid="tape_status_rewind" class="mediaStatus">
+						<div gid="tape_status_rewind" class="icon mediaStatus">
 							<div class="centerAligned fas fa-backward"></div>
 						</div>
-						<div gid="tape_status_previous_track" class="mediaStatus">
+						<div gid="tape_status_previous_track" class="icon mediaStatus">
 							<div class="centerAligned fas fa-fast-backward"></div>
 						</div>
 
@@ -298,25 +298,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div gid="cd_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-						<div gid="cd_status_pause" class="mediaStatus">
+						<div gid="cd_status_pause" class="icon mediaStatus">
 							<div class="centerAligned fas fa-pause"></div>
 						</div>
-						<div gid="cd_status_play" class="mediaStatus">
+						<div gid="cd_status_play" class="icon mediaStatus">
 							<div class="centerAligned fas fa-play"></div>
 						</div>
-						<div gid="cd_status_fast_forward" class="mediaStatus">
+						<div gid="cd_status_fast_forward" class="icon mediaStatus">
 							<div class="centerAligned fas fa-forward"></div>
 						</div>
-						<div gid="cd_status_rewind" class="mediaStatus">
+						<div gid="cd_status_rewind" class="icon mediaStatus">
 							<div class="centerAligned fas fa-backward"></div>
 						</div>
-						<div gid="cd_status_searching" class="mediaStatus">
+						<div gid="cd_status_searching" class="icon mediaStatus">
 							<div class="centerAligned fas fa-compact-disc"></div>
 						</div>
-						<div gid="cd_status_loading" class="mediaStatus">
+						<div gid="cd_status_loading" class="icon mediaStatus">
 							<div class="centerAligned fas fa-sign-in-alt"></div>
 						</div>
-						<div gid="cd_status_eject" class="mediaStatus">
+						<div gid="cd_status_eject" class="icon mediaStatus">
 							<div class="centerAligned fas fa-eject"></div>
 						</div>
 
@@ -343,25 +343,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
 
-						<div gid="cd_changer_status_pause" class="mediaStatus">
+						<div gid="cd_changer_status_pause" class="icon mediaStatus">
 							<div class="centerAligned fas fa-pause"></div>
 						</div>
-						<div gid="cd_changer_status_play" class="mediaStatus">
+						<div gid="cd_changer_status_play" class="icon mediaStatus">
 							<div class="centerAligned fas fa-play"></div>
 						</div>
-						<div gid="cd_changer_status_searching" class="mediaStatus">
+						<div gid="cd_changer_status_searching" class="icon mediaStatus">
 							<div class="centerAligned fas fa-compact-disc"></div>
 						</div>
-						<div gid="cd_changer_status_fast_forward" class="mediaStatus">
+						<div gid="cd_changer_status_fast_forward" class="icon mediaStatus">
 							<div class="centerAligned fas fa-forward"></div>
 						</div>
-						<div gid="cd_changer_status_rewind" class="mediaStatus">
+						<div gid="cd_changer_status_rewind" class="icon mediaStatus">
 							<div class="centerAligned fas fa-backward"></div>
 						</div>
-						<div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="mediaStatus">
+						<div id="cd_changer_status_loading" gid="cd_changer_status_loading" class="icon mediaStatus">
 							<div class="centerAligned fas fa-sign-in-alt"></div>
 						</div>
-						<div gid="cd_changer_status_eject" class="mediaStatus">
+						<div gid="cd_changer_status_eject" class="icon mediaStatus">
 							<div class="centerAligned fas fa-eject"></div>
 						</div>
 
@@ -2081,25 +2081,25 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="left:180px; top:113px; width:200px;">Side</div>
 					<div gid="tape_side" class="dseg7" style="font-size:120px; left:380px; top:40px; width:140px;">-</div>
 
-					<div gid="tape_status_stopped" class="mediaStatusInPopup">
+					<div gid="tape_status_stopped" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-stop"></div>
 					</div>
-					<div gid="tape_status_loading" class="mediaStatusInPopup">
+					<div gid="tape_status_loading" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-sign-in-alt"></div>
 					</div>
-					<div gid="tape_status_play" class="mediaStatusInPopup">
+					<div gid="tape_status_play" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-play"></div>
 					</div>
-					<div gid="tape_status_fast_forward" class="mediaStatusInPopup">
+					<div gid="tape_status_fast_forward" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-forward"></div>
 					</div>
-					<div gid="tape_status_next_track" class="mediaStatusInPopup">
+					<div gid="tape_status_next_track" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-fast-forward"></div>
 					</div>
-					<div gid="tape_status_rewind" class="mediaStatusInPopup">
+					<div gid="tape_status_rewind" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-backward"></div>
 					</div>
-					<div gid="tape_status_previous_track" class="mediaStatusInPopup">
+					<div gid="tape_status_previous_track" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-fast-backward"></div>
 					</div>
 
@@ -2113,25 +2113,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div gid="cd_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
-					<div gid="cd_status_pause" class="mediaStatusInPopup">
+					<div gid="cd_status_pause" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-pause"></div>
 					</div>
-					<div gid="cd_status_play" class="mediaStatusInPopup">
+					<div gid="cd_status_play" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-play"></div>
 					</div>
-					<div gid="cd_status_fast_forward" class="mediaStatusInPopup">
+					<div gid="cd_status_fast_forward" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-forward"></div>
 					</div>
-					<div gid="cd_status_rewind" class="mediaStatusInPopup">
+					<div gid="cd_status_rewind" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-backward"></div>
 					</div>
-					<div gid="cd_status_searching" class="mediaStatusInPopup">
+					<div gid="cd_status_searching" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-compact-disc"></div>
 					</div>
-					<div gid="cd_status_loading" class="mediaStatusInPopup">
+					<div gid="cd_status_loading" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-sign-in-alt"></div>
 					</div>
-					<div gid="cd_status_eject" class="mediaStatusInPopup">
+					<div gid="cd_status_eject" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-eject"></div>
 					</div>
 
@@ -2156,25 +2156,25 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
-					<div gid="cd_changer_status_pause" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_pause" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-pause"></div>
 					</div>
-					<div gid="cd_changer_status_play" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_play" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-play"></div>
 					</div>
-					<div gid="cd_changer_status_searching" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_searching" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-compact-disc"></div>
 					</div>
-					<div gid="cd_changer_status_fast_forward" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_fast_forward" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-forward"></div>
 					</div>
-					<div gid="cd_changer_status_rewind" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_rewind" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-backward"></div>
 					</div>
-					<div gid="cd_changer_status_loading" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_loading" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-sign-in-alt"></div>
 					</div>
-					<div gid="cd_changer_status_eject" class="mediaStatusInPopup">
+					<div gid="cd_changer_status_eject" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-eject"></div>
 					</div>
 
