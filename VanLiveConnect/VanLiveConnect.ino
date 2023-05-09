@@ -93,6 +93,25 @@ bool IrReceive(TIrPacket& irPacket);
 
 #include <WebSockets.h>  // For #define WEBSOCKETS_NETWORK_TYPE, used below
 
+// The following VAN bus packets are considered important, and should not be skipped when the RX queue
+// is overrunning
+bool IsImportantPacket(const TVanPacketRxDesc& pkt)
+{
+    return
+        pkt.DataLen() >= 3 &&
+        (
+            (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x07) // mfd_to_satnav_...
+            || pkt.Iden() == SATNAV_STATUS_1_IDEN
+            || pkt.Iden() == SATNAV_GUIDANCE_IDEN
+            || pkt.Iden() == SATNAV_REPORT_IDEN
+            || pkt.Iden() == SATNAV_TO_MFD_IDEN
+
+            || pkt.Iden() == CAR_STATUS1_IDEN  // Right-hand stalk button press
+
+            || (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x8A)  // head_unit_report, head_unit_button_pressed
+        );
+} // IsImportantPacket
+
 void SetupVanReceiver()
 {
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
@@ -131,6 +150,11 @@ void SetupVanReceiver()
         );
       #endif // VAN_BUS_VERSION
     } // if
+
+  #if VAN_BUS_VERSION_INT >= 000003003
+    // When queue fills above 80%, start dropping non-essential packets
+    VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsImportantPacket);
+  #endif
 
   #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
     Serial.printf_P(PSTR("==> VanBusRx: DEBUGGING MODE IS ON!\n"));
@@ -195,21 +219,6 @@ const char* VanBusStatsToJson(char* buf, const int n)
 } // VanBusStatsToJson
 
 #endif // SHOW_VAN_RX_STATS
-
-inline bool IsImportantPacket(const TVanPacketRxDesc& pkt)
-{
-    return
-        pkt.DataLen() >= 3 && 
-        (
-            (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x07)
-            || pkt.Iden() == SATNAV_STATUS_1_IDEN
-            || pkt.Iden() == SATNAV_GUIDANCE_IDEN
-            || pkt.Iden() == SATNAV_REPORT_IDEN
-            || pkt.Iden() == SATNAV_TO_MFD_IDEN
-
-            || pkt.Iden() == CAR_STATUS1_IDEN  // Right-hand stalk button press
-        );
-} // IsImportantPacket
 
 void PrintDebugDefines()
 {
@@ -423,7 +432,7 @@ void loop()
     {
         Serial.print(F("VAN PACKET QUEUE OVERRUN!\n"));
 
-      #ifdef DEBUG_WEBSOCKET
+      #ifdef SHOW_VAN_RX_STATS
         const static char jsonFormatter[] PROGMEM =
         "{\n"
             "\"event\": \"display\",\n"
@@ -435,7 +444,7 @@ void loop()
 
         snprintf_P(jsonBuffer, JSON_BUFFER_SIZE, jsonFormatter);
         SendJsonOnWebSocket(jsonBuffer);
-      #endif // DEBUG_WEBSOCKET
+      #endif // SHOW_VAN_RX_STATS
     } // if
 
     LoopWebSocket(); // TODO - necessary?
