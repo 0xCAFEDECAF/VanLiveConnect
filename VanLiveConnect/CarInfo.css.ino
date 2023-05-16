@@ -111,6 +111,10 @@ body
 {
   background-color:var(--led-off-color);
 }
+.ledOnOrange
+{
+  background-color:rgb(255,144,1);
+}
 .ledOnRed
 {
   background-color:red;

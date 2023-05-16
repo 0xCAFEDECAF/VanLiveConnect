@@ -1726,7 +1726,16 @@ function showTunerPresetsPopup()
 // -----
 // Color theme and dimming
 
+var dashlightDimmed = false;
 var headlightStatus = "";
+
+function setDippedBeamIcon()
+{
+	let dippedBeam = headlightStatus.match(/DIPPED_BEAM/) !== null;
+	$("#dipped_beam").toggleClass("ledOnGreen", dippedBeam);
+	$("#dipped_beam").css("color", ! dippedBeam && dashlightDimmed ? "rgb(119,217,64)" : "");
+	$("#dipped_beam").toggleClass("ledOff", ! dippedBeam && ! dashlightDimmed);
+}
 
 function setColorTheme(theme)
 {
@@ -4112,6 +4121,13 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "dash_light":
+		{
+			dashlightDimmed = value !== "FULL";
+			setDippedBeamIcon();
+		} // case
+		break;
+
 		case "lights":
 		{
 			headlightStatus = value;
@@ -4131,11 +4147,16 @@ function handleItemChange(item, value)
 				1000
 			);
 
-			let dippedBeam = value.match(/DIPPED_BEAM/) !== null;
-			$("#dipped_beam").toggleClass("ledOnGreen", dippedBeam).toggleClass("ledOff", ! dippedBeam);
+			setDippedBeamIcon();
 
 			let highBeam = value.match(/HIGH_BEAM/) !== null;
 			$("#high_beam").toggleClass("ledOnBlue", highBeam).toggleClass("ledOff", ! highBeam);
+
+			let fogRear = value.match(/FOG_REAR/) !== null;
+			$("#fog_rear").toggleClass("ledOnOrange", fogRear).toggleClass("ledOff", ! fogRear);
+
+			let fogFront = value.match(/FOG_FRONT/) !== null;
+			$("#fog_front").toggleClass("ledOnGreen", fogFront).toggleClass("ledOff", ! fogFront);
 		} // case
 		break;
 

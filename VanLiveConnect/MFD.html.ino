@@ -523,23 +523,31 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="instruments" style="display:none;">
 
+					<div id="doors_locked" class="iconSmall led ledOff" style="left:440px; top:110px;">
+						<div class="centerAligned fas fa-lock"></div>
+					</div>
+
 					<div id="left_indicator" class="iconSmall led ledOff" style="left:70px; top:400px;">
 						<div class="centerAligned fas fa-angle-double-left"></div>
 					</div>
 
-					<div id="doors_locked" class="iconSmall led ledOff" style="left:200px; top:400px;">
-						<div class="centerAligned fas fa-lock"></div>
-					</div>
-
-					<div id="dipped_beam" class="iconSmall led ledOff" style="left:330px; top:400px;">
+					<div id="fog_rear" class="iconSmall led ledOff" style="left:220px; top:400px;transform: scaleX(-1);">
 						<div class="centerAligned fas fa-volume-down"></div>
 					</div>
 
-					<div id="high_beam" class="iconSmall led ledOff" style="left:410px; top:400px;">
+					<div id="dipped_beam" class="iconSmall led ledOff" style="left:300px; top:400px;">
+						<div class="centerAligned fas fa-volume-down"></div>
+					</div>
+
+					<div id="high_beam" class="iconSmall led ledOff" style="left:380px; top:400px;">
 						<div class="centerAligned fas fa-volume-up"></div>
 					</div>
 
-					<div id="right_indicator" class="iconSmall led ledOff" style="left:540px; top:400px;">
+					<div id="fog_front" class="iconSmall led ledOff" style="left:460px; top:400px;">
+						<div class="centerAligned fas fa-volume-up"></div>
+					</div>
+
+					<div id="right_indicator" class="iconSmall led ledOff" style="left:610px; top:400px;">
 						<div class="centerAligned fas fa-angle-double-right"></div>
 					</div>
 
