@@ -1732,9 +1732,9 @@ var headlightStatus = "";
 function setDippedBeamIcon()
 {
 	let dippedBeam = headlightStatus.match(/DIPPED_BEAM/) !== null;
-	$("#dipped_beam").toggleClass("ledOnGreen", dippedBeam);
-	$("#dipped_beam").css("color", ! dippedBeam && dashlightDimmed ? "rgb(119,217,64)" : "");
-	$("#dipped_beam").toggleClass("ledOff", ! dippedBeam && ! dashlightDimmed);
+	$("#dipped_beam").toggle(dippedBeam || ! dashlightDimmed);
+	$("#dipped_beam").toggleClass("ledOnGreen", dippedBeam).toggleClass("ledOff", ! dippedBeam);
+	$("#parking_light").toggle(! dippedBeam && dashlightDimmed);
 }
 
 function setColorTheme(theme)
@@ -3223,7 +3223,7 @@ function satnavNoAudioIcon()
 {
 	clearTimeout(handleItemChange.audioSourceTimer);
 	handleItemChange.audioSourceTimer = undefined;
-	if (handleItemChange.headUnitLastSwitchedTo === "NAVIGATION") 
+	if (handleItemChange.headUnitLastSwitchedTo === "NAVIGATION")
 	{
 		$("#satnav_no_audio_icon").toggle($("#volume").text() === "0");
 	} // if

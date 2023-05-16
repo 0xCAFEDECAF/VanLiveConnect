@@ -535,8 +535,13 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="centerAligned fas fa-volume-down"></div>
 					</div>
 
+					<div id="parking_light" class="iconSmall led ledOff" style="left:300px; top:400px; color:rgb(119, 217, 64);">
+						<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:5px;"></div>
+						<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:20px;"></div>
+					</div>
+
 					<div id="dipped_beam" class="iconSmall led ledOff" style="left:300px; top:400px;">
-						<div class="centerAligned fas fa-volume-down"></div>
+						<div class="centerAligned fas fa-volume-down" style="transform:rotate(15deg); transform-origin:105px;"></div>
 					</div>
 
 					<div id="high_beam" class="iconSmall led ledOff" style="left:380px; top:400px;">
