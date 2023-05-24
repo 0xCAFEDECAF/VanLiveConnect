@@ -390,7 +390,7 @@ void loop()
     {
         lastPacketAt = millis();
 
-      #if VAN_BUS_VERSION_INT >= 000003001
+      #if VAN_BUS_VERSION_INT >= 000003001 && VAN_BUS_VERSION_INT < 000003003
 
         // If RX queue is starting to overrun, keep only important (sat nav, stalk button press) packets
         #if WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
