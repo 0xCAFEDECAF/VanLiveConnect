@@ -182,7 +182,7 @@ const char* EspSystemDataToJson(char* buf, const int n)
     if (at >= n) return "";
 
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    Serial.print(F("Parsed to JSON object:\n"));
+    Serial.printf_P(PSTR("%sESP system data as JSON object:\n"), TimeStamp());
     PrintJsonText(buf);
   #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
@@ -210,7 +210,7 @@ const char* EspRuntimeDataToJson(char* buf, const int n)
     if (at >= n) return "";
 
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    Serial.print(F("Parsed to JSON object:\n"));
+    Serial.printf_P(PSTR("%sESP runtime data as JSON object:\n"), TimeStamp());
     PrintJsonText(buf);
   #endif  // PRINT_JSON_BUFFERS_ON_SERIAL
 

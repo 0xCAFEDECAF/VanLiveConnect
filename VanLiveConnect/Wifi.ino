@@ -205,10 +205,8 @@ const char* WifiDataToJson(const IPAddress& client, char* buf, const int n)
     if (at >= n) return "";
 
   #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-
-    Serial.print(F("Wi-Fi data as JSON object:\n"));
+    Serial.printf_P(PSTR("%sWi-Fi data as JSON object:\n"), TimeStamp());
     PrintJsonText(buf);
-
   #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
     return buf;
