@@ -523,10 +523,6 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="instruments" style="display:none;">
 
-					<div id="doors_locked" class="iconSmall led ledOff" style="left:440px; top:110px;">
-						<div class="centerAligned fas fa-lock"></div>
-					</div>
-
 					<div id="left_indicator" class="iconSmall led ledOff" style="left:70px; top:400px;">
 						<div class="centerAligned fas fa-angle-double-left"></div>
 					</div>
@@ -1707,11 +1703,11 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>
 
+					<div id="satnav_no_audio_icon" class="icon iconSmall led ledOn fas fa-volume-mute" style="left:20px; top:40px; height:45px; width:60px;"></div>
+
 					<!-- Area with guidance icon(s) -->
 
-					<div style="border: 5px solid var(--main-color); border-radius:15px; position:absolute; left:20px; top:120px; width:300px; height:390px;">
-
-						<div id="satnav_no_audio_icon" class="icon iconSmall led ledOn fas fa-volume-mute" style="left:5px; top:5px; height:45px; width:60px;"></div>
+					<div style="position:absolute; top:120px; width:300px; height:390px;">
 
 						<!-- "Turn at" indication -->
 						<div id="satnav_turn_at_indication" style="display:block;">
@@ -2567,10 +2563,6 @@ char mfd_html[] PROGMEM = R"=====(
 
 		</div>	<!-- "Large" information panel -->
 
-		<!-- Separator line -->
-
-		<div class="verticalLine" style="left:390px; top:0px; height:550px;"></div>
-
 		<!-- Small area in the top right of the screen which triggers changing to full-screen mode -->
 		<div onclick="toggleFullScreen();"
 			style="position:absolute; left:800px; width:900px; height:250px; opacity:50%">
@@ -2754,28 +2746,33 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- "Status" line: fixed element in each screen -->
 
+		<div style="position:absolute; top:550px; width:1350px; height:80px;
+			background:linear-gradient(to right, var(--background-color), var(--gradient-high-color), var(--background-color));">
+		</div>
+
+		<div id="doors_locked" class="iconSmall led ledOff" style="left:20px; top:560px;">
+			<div class="centerAligned fas fa-lock"></div>
+		</div>
+
+		<div style="left:80px; top:560px; width:230px; position:absolute;">
+			<div gid="inst_consumption" style="width:140px; font-size:60px; text-align:right; position:absolute;">--.-</div>
+			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
+		</div>
+
+		<div style="left:315px; top:560px; width:220px; position:absolute; height:80px;">
+			<div gid="distance_to_empty" style="width:150px; font-size:60px; text-align:right;">---</div>
+			<div class="icon iconSmall" style="top:10px; left:145px;">
+				<div class="fas fa-gas-pump"></div>
+			</div>
+		</div>
+
+		<div gid="exterior_temp_shown" style="left:560px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:60px;">-- &deg;C</div>
+		<div id="date_time_small" style="left:810px; top:568px; width:500px; position:absolute; text-align:center; font-size:45px;">---  - --:--</div>
 )====="
 
 COMMS_LED
 
 R"=====(
-		<div class="tab tabBottom" style="left:150px; top:550px; width:230px;">
-			<div gid="inst_consumption" class="dots" style="top:15px; width:140px; font-size:50px; text-align:right;">--.-</div>
-			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
-		</div>
-
-		<div class="tab tabBottom" style="left:385px; top:550px; width:220px;">
-			<div class="icon iconSmall" style="top:5px;">
-				<div class="fas fa-gas-pump"></div>
-			</div>
-			<div gid="distance_to_empty" class="dots" style="left:60px; top:15px; width:150px; font-size:50px; text-align:right;">---</div>
-		</div>
-
-		<div gid="exterior_temp_shown" class="tab tabBottom" style="left:610px; top:550px; width:200px;">-- &deg;C</div>
-		<div id="date_small" class="tab tabBottom" style="left:815px; top:550px; width:320px;">---</div>
-		<div id="time_small" class="tab tabBottom" style="left:1140px; top:550px; width:180px;">--:--</div>
-
-		<div class="horizontalLine" style="left:0px; top:550px; width:1350px;"></div>
 
 	</body>
 </html>

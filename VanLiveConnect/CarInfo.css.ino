@@ -29,6 +29,7 @@ char carInfo_css[] PROGMEM = R"=====(
 {
   --main-color:hsl(215,42%,91%);
   --background-color:rgb(8,7,19);
+  --gradient-high-color:hsl(194,83%,40%);
   --led-off-color:rgb(25,31,40);
   --notification-color:rgba(15,19,23,0.95);
   --highlight-color:rgba(223,231,242,0.4);
@@ -395,7 +396,7 @@ body
   overflow:hidden;
   border:5px solid;
   border-radius:15px;
-  border-style:dotted;
+  border-color:var(--disabled-element-color);
   text-align:center;
   font-size:44px;
   line-height:0.85;

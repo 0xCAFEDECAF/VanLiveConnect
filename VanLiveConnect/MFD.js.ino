@@ -51,17 +51,16 @@ function updateDateTime()
 	};
 	var locale = locales[localStorage.mfdLanguage] || "en-GB";
 
-	var date = new Date().toLocaleDateString(locale, {weekday: 'short', day: 'numeric', month: 'short'});
-	date = date.replace(/0(\d)/, "$1");  // No leading "0"
-	date = date.replace(/,/, "");
-	$("#date_small").text(CapFirstLetter(date));
-
-	date = new Date().toLocaleDateString(locale, {weekday: 'long'});
+	var date = new Date().toLocaleDateString(locale, {weekday: 'long'});
 	$("#date_weekday").text(CapFirstLetter(date) + ",");
 
 	date = new Date().toLocaleDateString(locale, {day: 'numeric', month: 'long', year: 'numeric'});
 	date = date.replace(/0(\d )/, "$1");  // No leading "0"
 	$("#date").text(date);
+
+	date = new Date().toLocaleDateString(locale, {weekday: 'short', day: 'numeric', month: 'short'});
+	date = date.replace(/0(\d)/, "$1");  // No leading "0"
+	date = date.replace(/,/, "");
 
 	var time = new Date().toLocaleTimeString(
 		[],  // When 12-hour time unit is chosen, 'a.m.' / 'p.m.' will be with dots, and in lower case
@@ -73,7 +72,8 @@ function updateDateTime()
 	);
 	if (locale === "nl" || locale === "es-ES") time = time.replace(/0(\d:)/, "$1");  // No leading "0"
 	$("#time").text(time);
-	$("#time_small").text(time.replace(/.m.$/, ""));  // No trailing '.m.'
+
+	$("#date_time_small").text(CapFirstLetter(date) + " - " + time.replace(/.m.$/, ""));  // No trailing '.m.'
 }
 
 // -----
@@ -1741,6 +1741,7 @@ function setColorTheme(theme)
 {
 	$(":root").css("--main-color", theme === "set_light_theme" ? "rgb(39,27,66)" : "hsl(215,42%,91%)");
 	$(":root").css("--background-color", theme === "set_light_theme" ? "hsl(240,6%,91%)" : "rgb(8,7,19)");
+	$(":root").css("--gradient-high-color", theme === "set_light_theme" ? "hsl(194,83%,40%)" : "hsl(194,83%,40%)");
 	$(":root").css("--led-off-color", theme === "set_light_theme" ? "rgb(189,189,189)" : "rgb(25,31,40)");
 	$(":root").css("--notification-color", theme === "set_light_theme" ? "rgba(205,209,213,0.95)" : "rgba(15,19,23,0.95)");
 	$(":root").css("--highlight-color", theme === "set_light_theme" ? "rgba(84,101,125,0.4)" : "rgba(223,231,242,0.4)");
@@ -1779,8 +1780,15 @@ function setLuminosity(luminosity, theme)
 		if ($("#set_screen_brightness").is(":visible")) theme = getTickedId("set_screen_brightness");
 	} // if
 
-	if (theme === "set_light_theme") $(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
-	else $(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
+	if (theme === "set_light_theme")
+	{
+		$(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
+	}
+	else
+	{
+		$(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
+		$(":root").css("--gradient-high-color", "hsl(194,83%," + ((luminosity - 63) / 2 + 26) + "%)");
+	} // if
 
 	return luminosity;
 }
