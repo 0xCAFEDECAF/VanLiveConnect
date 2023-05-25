@@ -381,7 +381,7 @@ body
 {
   display:none;
   left:20px;
-  top:140px;
+  top:130px;
   width:920px;
   height:410px;
   font-size:60px;

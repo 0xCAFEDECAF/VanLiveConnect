@@ -145,7 +145,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Large clock (nothing better to show) -->
 
-			<div id="clock" style="display:block;">
+			<div id="clock" style="display:block;"
+				on_enter="$('#exterior_temp_shown').hide(); $('#date_time_small').hide();"
+				on_exit="$('#exterior_temp_shown').show(); $('#date_time_small').show();">
 				<div id="date_weekday" class="tag" style="font-size:80px; top:50px; width:960px; text-align:center;">---</div>
 				<div id="date" class="tag" style="font-size:70px; top:140px; width:960px; text-align:center;">---</div>
 				<div id="time" class="tag" style="font-size:80px; top:250px; width:960px; text-align:center;">--:--</div>
@@ -2754,20 +2756,20 @@ char mfd_html[] PROGMEM = R"=====(
 			<div class="centerAligned fas fa-lock"></div>
 		</div>
 
-		<div style="left:80px; top:560px; width:230px; position:absolute;">
+		<div style="left:100px; top:560px; width:230px; position:absolute;">
 			<div gid="inst_consumption" style="width:140px; font-size:60px; text-align:right; position:absolute;">--.-</div>
 			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
 		</div>
 
-		<div style="left:315px; top:560px; width:220px; position:absolute; height:80px;">
+		<div style="left:335px; top:560px; width:220px; position:absolute; height:80px;">
 			<div gid="distance_to_empty" style="width:150px; font-size:60px; text-align:right;">---</div>
 			<div class="icon iconSmall" style="top:10px; left:145px;">
 				<div class="fas fa-gas-pump"></div>
 			</div>
 		</div>
 
-		<div gid="exterior_temp_shown" style="left:560px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:60px;">-- &deg;C</div>
-		<div id="date_time_small" style="left:810px; top:568px; width:500px; position:absolute; text-align:center; font-size:45px;">---  - --:--</div>
+		<div id="exterior_temp_shown" gid="exterior_temp_shown" style="display:none;left:580px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:60px;">-- &deg;C</div>
+		<div id="date_time_small" style="display:none; left:830px; top:568px; width:480px; position:absolute; text-align:center; font-size:45px;">---  - --:--</div>
 )====="
 
 COMMS_LED
