@@ -5484,6 +5484,8 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
             VanPacketParseResultStr(result)
         );
 
+        pkt.DumpRaw(Serial);
+
         // No use to return the JSON buffer; it is invalid
         return "";
     } // if

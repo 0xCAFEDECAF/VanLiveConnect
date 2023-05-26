@@ -2748,7 +2748,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- "Status" line: fixed element in each screen -->
 
-		<div style="position:absolute; top:550px; width:1350px; height:80px;
+		<div style="position:absolute; top:550px; width:1350px; height:90px;
 			background:linear-gradient(to right, var(--background-color), var(--gradient-high-color), var(--background-color));">
 		</div>
 
@@ -2761,15 +2761,15 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
 		</div>
 
-		<div style="left:335px; top:560px; width:220px; position:absolute; height:80px;">
+		<div style="left:345px; top:560px; width:220px; position:absolute; height:80px;">
 			<div gid="distance_to_empty" style="width:150px; font-size:60px; text-align:right;">---</div>
 			<div class="icon iconSmall" style="top:10px; left:145px;">
 				<div class="fas fa-gas-pump"></div>
 			</div>
 		</div>
 
-		<div id="exterior_temp_shown" gid="exterior_temp_shown" style="display:none;left:580px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:60px;">-- &deg;C</div>
-		<div id="date_time_small" style="display:none; left:830px; top:568px; width:480px; position:absolute; text-align:center; font-size:45px;">---  - --:--</div>
+		<div id="exterior_temp_shown" gid="exterior_temp_shown" style="display:none; left:590px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:60px;">-- &deg;C</div>
+		<div id="date_time_small" style="display:none; left:840px; top:568px; width:480px; position:absolute; text-align:center; font-size:45px;">---  - --:--</div>
 )====="
 
 COMMS_LED

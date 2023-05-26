@@ -971,8 +971,8 @@ function inMenu()
 		"satnav_guidance", "satnav_curr_turn_icon"
 	];
 
-	return currentMenu !== undefined
-		&& mainScreenIds.indexOf(currentLargeScreenId) < 0;  // And not in one of the "main" screens?
+	// Not in one of the "main" screens?
+	return mainScreenIds.indexOf(currentLargeScreenId) < 0;
 }
 
 // Select the first menu item (even if disabled)
@@ -999,7 +999,6 @@ function gotoMenu(menu)
 	if (buttons.length === 0) return;
 
 	// Move the "buttonSelected" class to the first enabled button in the list
-
 	var selectedButton = $("#" + currentMenu).find(".buttonSelected");
 	var currIdx = buttons.index(selectedButton);  // will be -1 if no buttons are selected
 	var nextIdx = 0;
