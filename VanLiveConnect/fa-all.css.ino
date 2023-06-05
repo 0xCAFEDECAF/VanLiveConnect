@@ -15,8 +15,7 @@ char faAll_css[] PROGMEM = R"=====(
   display: inline-block;
   font-style: normal;
   font-variant: normal;
-  text-rendering: auto;
-  line-height: 1; }
+  text-rendering: auto; }
 
 .fa-lg {
   font-size: 1.33333em;

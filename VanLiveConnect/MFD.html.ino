@@ -112,7 +112,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="satnav_curr_street_small"
 					on_enter="satnavCutoffBottomLines($('#satnav_curr_street_small [gid=\'satnav_curr_street_shown\']'));"
 					class="icon" style="word-wrap:break-word; top:270px; height:280px; width:390px;">
-					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:50px;"></div>
+					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:40px;"></div>
 				</div>
 
 			</div>
@@ -128,13 +128,13 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Engine rpm -->
 				<div gid="engine_rpm" class="dseg7" style="font-size:70px; left:10px; top:213px; width:260px;">0</div>
-				<div class="tag" style="text-align:left; left:280px; top:235px;">rpm</div>
+				<div class="tag" style="text-align:left; left:280px; top:238px;">rpm</div>
 
 				<!-- Fuel level -->
-				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:348px;"></div>
+				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:345px;"></div>
 
 				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
-				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:345px;">lt</div>
+				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:348px;">lt</div>
 
 			</div>
 		</div>	<!-- "Small" information panel -->
@@ -145,21 +145,22 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<!-- Large clock (nothing better to show) -->
 
-			<div id="clock" style="display:block;"
+			<div id="clock" style="display:block; font-size:70px;"
 				on_enter="$('#exterior_temp_shown').hide(); $('#date_time_small').hide();"
 				on_exit="$('#exterior_temp_shown').show(); $('#date_time_small').show();">
-				<div id="date_weekday" class="tag" style="font-size:80px; top:50px; width:960px; text-align:center;">---</div>
-				<div id="date" class="tag" style="font-size:70px; top:140px; width:960px; text-align:center;">---</div>
-				<div id="time" class="tag" style="font-size:80px; top:250px; width:960px; text-align:center;">--:--</div>
+				<div id="date_weekday" class="tag" style="top:50px; width:960px; text-align:center;">---</div>
+				<div id="date" class="tag" style="font-size:60px; top:140px; width:960px; text-align:center;">---</div>
+				<div id="time" class="tag" style="top:250px; width:960px; text-align:center;">--:--</div>
 
 				<div id="splash_text" class="tag"
-					style="font-size:70px; top:330px; width:960px; height:220px; line-height:3; text-align:center; text-shadow:5px 5px 30px white;">
+					style="top:330px; width:960px; height:220px; line-height:3; text-align:center; text-shadow:5px 5px 30px white;">
 					PSA Live Display
 				</div>
 
 				<!-- Also show exterior temperature -->
 				<div gid="exterior_temp_shown" class="tag"
-					style="font-size:120px; top:330px; width:960px; height:220px; line-height:1.8; text-align:center;"></div>
+					style="font-size:100px; top:330px; width:960px; height:220px; line-height:1.8; text-align:center;"></div>
+
 
 				<!--
 					"Gear" icon in the bottom right corner
@@ -189,7 +190,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="centerAligned fas fa-archive"></div>
 				</div>
 
-				<div id="info_traffic" class="led ledOff" style="left:30px; top:490px; width:140px;">INFO</div>
+				<div gid="info_traffic" class="led ledOff" style="left:30px; top:490px; width:140px;">INFO</div>
 				<div gid="ext_mute" class="led ledOff" style="left:210px; top:490px; width:110px;">EXT</div>
 				<div gid="mute" class="led ledOff" style="left:330px; top:490px; width:150px;">MUTE</div>
 
@@ -233,14 +234,14 @@ char mfd_html[] PROGMEM = R"=====(
 					<div gid="fm_tuner_data" style="display:block;">
 						<div id="rds_text" gid="rds_text" class="dseg14" style="font-size:120px; left:10px; top:150px; width:815px; text-align:right;"></div>
 
-						<div class="tag" style="left:20px; top:360px; width:150px;">PTY</div>
-						<div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:60px; left:20px; top:360px; width:150px; height: 55px;">PTY</div>
-						<div id="pty_selection_menu" class="led ledOn" style="display:none; font-size:60px; left:20px; top:360px; width:150px; height: 55px;">SEL</div>
-						<div id="pty_16" class="dots" style="left:190px; top:357px; width:750px;"></div>
+						<div class="tag" style="left:20px; top:365px; width:150px;">PTY</div>
+						<div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:53px; left:20px; top:360px; width:150px; height: 55px;">PTY</div>
+						<div id="pty_selection_menu" class="led ledOn" style="display:none; font-size:53px; left:20px; top:360px; width:150px; height: 55px;">SEL</div>
+						<div id="pty_16" class="dots" style="left:190px; top:353px; width:750px;"></div>
 						<div id="selected_pty_16" class="dots" style="display:none; left:190px; top:357px; width:750px;"></div>
 
-						<div class="tag" style="left:20px; top:420px; width:150px;">PI</div>
-						<div gid="pi_country" class="dots" style="left:190px; top:420px; width:150px;">--</div>
+						<div class="tag" style="left:20px; top:425px; width:150px;">PI</div>
+						<div gid="pi_country" class="dots" style="left:190px; top:413px; width:150px;">--</div>
 
 						<div id="regional" class="led ledOn" style="left:510px; top:490px; width:140px;">REG</div>
 						<div gid="rds_selected" class="led ledOff" style="left:795px; top:490px; width:140px;">RDS</div>
@@ -251,8 +252,8 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>
 
-					<div class="tag" style="left:690px; top:420px; width:160px;">Signal</div>
-					<div id="signal_strength" class="dots" style=" left:870px; top:420px;">--</div>
+					<div class="tag" style="left:690px; top:425px; width:160px;">Signal</div>
+					<div id="signal_strength" class="dots" style=" left:870px; top:413px;">--</div>
 
 				</div>	<!-- "tuner" -->
 
@@ -260,14 +261,14 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="media" style="display:none;">
 
-					<div class="tag" style="left:50px; top:50px; width:200px;">Source</div>
+					<div class="tag" style="left:50px; top:60px; width:200px;">Source</div>
 
 					<div id="tape" style="display:none;">
 
-						<div class="dots" style="left:270px; top:45px; width:450px;">Tape</div>
+						<div class="dots" style="left:270px; top:48px; width:450px;">Tape</div>
 
 						<div class="tag" style="left:50px; top:218px; width:200px;">Side</div>
-						<div gid="tape_side" class="dseg7" style="font-size:120px; left:280px; top:145px; width:140px;">-</div>
+						<div gid="tape_side" class="dseg7" style="font-size:123px; left:280px; top:145px; width:140px;">-</div>
 
 						<div gid="tape_status_stopped" class="icon mediaStatus">
 							<div class="centerAligned fas fa-stop"></div>
@@ -296,9 +297,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="cd_player" style="display:none;">
 
-						<div class="dots" style="left:270px; top:45px; width:450px;">CD</div>
+						<div class="dots" style="left:270px; top:48px; width:450px;">CD</div>
 
-						<div gid="cd_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
+						<div gid="cd_track_time" class="dseg7" style="font-size:123px; left:100px; top:145px; width:420px;">-:--</div>
 
 						<div gid="cd_status_pause" class="icon mediaStatus">
 							<div class="centerAligned fas fa-pause"></div>
@@ -325,9 +326,9 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="cd_total_time_tag" class="tag" style="display:none; top:320px; width:180px;">Total</div>
 						<div id="cd_total_time" class="dots" style="display:none; left:180px; top:315px; width:200px; text-align:right;">--:--</div>
 
-						<div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
+						<div class="tag" style="left:365px; top:327px; width:200px;">Track</div>
 						<div gid="cd_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
-						<div class="tag" style="left:625px; top:320px; width:50px;">/</div>
+						<div class="tag" style="left:640px; top:320px; width:50px;">/</div>
 						<div gid="cd_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
 
 						<div id="cd_status_error" class="tag" style="display:none; left:60px; top:400px; width:700px; text-align:left;">DISC ERROR</div>
@@ -341,9 +342,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="cd_changer" style="display:none;">
 
-						<div class="dots" style="left:270px; top:45px; width:450px;">CD Changer</div>
+						<div class="dots" style="left:270px; top:48px; width:450px;">CD Changer</div>
 
-						<div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:100px; top:145px; width:420px;">-:--</div>
+						<div gid="cd_changer_track_time" class="dseg7" style="font-size:123px; left:100px; top:145px; width:420px;">-:--</div>
 
 						<div gid="cd_changer_status_pause" class="icon mediaStatus">
 							<div class="centerAligned fas fa-pause"></div>
@@ -368,12 +369,12 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 
 						<div id="cd_changer_disc_not_present" class="tag" style="display:none; top:320px; width:205px;">No</div>
-						<div class="tag" style="left:65px; top:320px; width:235px;">CD</div>
+						<div class="tag" style="left:65px; top:330px; width:235px;">CD</div>
 						<div id="cd_changer_selected_disc" class="dots" style="display:none; left:300px; top:315px; width:90px; text-align:right;">-</div>
 						<div id="cd_changer_current_disc" gid="cd_changer_current_disc" class="dots" style="left:300px; top:315px; width:90px; text-align:right;">-</div>
-						<div class="tag" style="left:365px; top:320px; width:200px;">Track</div>
+						<div class="tag" style="left:365px; top:327px; width:200px;">Track</div>
 						<div gid="cd_changer_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
-						<div class="tag" style="left:625px; top:320px; width:50px;">/</div>
+						<div class="tag" style="left:640px; top:320px; width:50px;">/</div>
 						<div gid="cd_changer_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
 
 						<div id="cd_changer_status_error" class="tag" style="display:none; top:320px; width:205px;">ERROR</div>
@@ -400,10 +401,10 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Fuel level, both as number and as linear gauge -->
 
-				<div class="icon iconMedium fas fa-gas-pump" style="left:20px; top:40px;"></div>
+				<div class="icon iconMedium fas fa-gas-pump" style="left:20px; top:55px;"></div>
 
-				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:70px; top:65px; width:240px;">--.-</div>
-				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:320px; top:70px; width:140px;">lt</div>
+				<div gid="fuel_level" class="dseg7" style="font-size:55px; left:80px; top:65px; width:240px;">--.-</div>
+				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:330px; top:80px; width:140px;">lt</div>
 
 				<div style="position:absolute; left:20px; top:130px; width:350px; height:60px;">
 					<div style="position:absolute; left:8px; width:332px; height:60px;">
@@ -429,10 +430,10 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Engine coolant temperature, both as number (in degrees) and as linear gauge -->
 
-				<div class="icon iconMedium fas fa-thermometer-half" style="left:580px; top:40px;"></div>
+				<div class="icon iconMedium fas fa-thermometer-half" style="left:580px; top:55px;"></div>
 
-				<div id="coolant_temp" class="dseg7" style="font-size:50px; left:620px; top:65px; width:240px;">--.-</div>
-				<div id="coolant_temp_unit" class="tag" style="text-align:left; left:880px; top:70px; width:60px;">&deg;C</div>
+				<div id="coolant_temp" class="dseg7" style="font-size:55px; left:630px; top:65px; width:240px;">--.-</div>
+				<div id="coolant_temp_unit" class="tag" style="text-align:left; left:890px; top:80px; width:60px;">&deg;C</div>
 
 				<div style="position:absolute; left:590px; top:130px; width:350px; height:60px;">
 					<div class="gaugeInnerBoxDiv">
@@ -462,9 +463,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Oil level, both as number and as linear gauge -->
 
-					<div class="icon iconMedium fas fa-oil-can" style="left:20px; top:205px;"></div>
+					<div class="icon iconMedium fas fa-oil-can" style="left:20px; top:220px;"></div>
 
-					<div id="oil_level_raw" class="dseg7" style="font-size:50px; left:125px; top:215px; width:240px;">--</div>
+					<div id="oil_level_raw" class="dseg7" style="font-size:50px; left:125px; top:225px; width:240px;">--</div>
 
 					<div style="position:absolute; left:20px; top:280px; width:350px; height:60px;">
 						<div id="oil_level_raw_perc" class="gauge">
@@ -481,11 +482,11 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Service interval, both as number (in km) and as linear gauge -->
 
-					<div class="icon iconMedium" style="left:440px; top:195px;">...</div>
-					<div class="icon iconMedium fas fa-tools" style="left:520px; top:195px;"></div>
+					<div class="icon iconMedium" style="left:440px; top:210px;">...</div>
+					<div class="icon iconMedium fas fa-tools" style="left:520px; top:210px;"></div>
 
-					<div id="distance_to_service" class="dseg7" style="font-size:50px; left:620px; top:215px; width:230px;">---</div>
-					<div gid="distance_unit" class="tag" style="text-align:left; left:870px; top:220px; width:80px;">km</div>
+					<div id="distance_to_service" class="dseg7" style="font-size:50px; left:630px; top:225px; width:230px;">---</div>
+					<div gid="distance_unit" class="tag" style="text-align:left; left:870px; top:233px; width:80px;">km</div>
 
 					<div style="position:absolute; left:590px; top:280px; width:350px; height:60px;">
 						<div id="distance_to_service_perc" class="gauge">
@@ -514,7 +515,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- Dashboard illumination level -->
 					<div class="icon iconSmall fas fa-tachometer-alt" style="left:710px; top:373px;"></div>
 					<div class="icon iconSmall fas fa-sun" style="left:770px; top:370px;"></div>
-					<div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:365px; width:130px;">--</div>
+					<div id="dashboard_programmed_brightness" class="dseg7" style="font-size:50px; left:810px; top:370px; width:130px;">--</div>
 
 					<!-- VIN number (very small) -->
 					<div id="vin" class="tag" style="font-size:30px; left:480px; top:477px; width:460px;"></div>
@@ -565,20 +566,21 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- Odometer -->
 					<div class="icon iconSmall" style="left:10px; top:480px; width:90px;">...</div>
 					<div class="icon iconSmall fas fa-car-side" style="left:70px; top:480px;"></div>
-					<div id="odometer_1" class="dseg7" style="font-size:40px; left:120px; top:480px; width:280px;">--.-</div>
-					<div gid="distance_unit" class="tag" style="font-size:40px; text-align:left; left:415px; top:482px;">km</div>
+					<div id="odometer_1" class="dseg7" style="font-size:45px; left:120px; top:480px; width:280px;">--.-</div>
+					<div gid="distance_unit" class="tag" style="font-size:30px; text-align:left; left:415px; top:490px;">km</div>
 
 					<!-- Chosen gear -->
-					<div id="chosen_gear" class="dseg7" style="font-size:40px; left:370px; top:480px; width:200px;">-</div>
-					<div class="tag" style="font-size:40px; left:580px; top:482px;">Gear</div>
+					<div id="chosen_gear" class="dseg7" style="font-size:45px; left:470px; top:480px; width:100px;">-</div>
+					<div class="tag" style="font-size:30px; left:580px; top:490px;">Gear</div>
+
 
 					<!-- Delivered power (estimation) -->
-					<div id="delivered_power" class="dseg7" style="font-size:40px; left:630px; top:415px; width:200px;">--.-</div>
-					<div class="tag" style="font-size:40px; left:840px; top:417px;">HP</div>
+					<div id="delivered_power" class="dseg7" style="font-size:45px; left:630px; top:415px; width:200px;">--.-</div>
+					<div class="tag" style="font-size:30px; left:840px; top:425px;">HP</div>
 
 					<!-- Delivered torque (estimation) -->
-					<div id="delivered_torque" class="dseg7" style="font-size:40px; left:630px; top:480px; width:200px;">--.-</div>
-					<div class="tag" style="font-size:40px; left:840px; top:482px;">Nm</div>
+					<div id="delivered_torque" class="dseg7" style="font-size:45px; left:630px; top:480px; width:200px;">--.-</div>
+					<div class="tag" style="font-size:30px; left:840px; top:490px;">Nm</div>
 
 				</div>	<!-- Instrument cluster -->
 			</div>
@@ -612,25 +614,25 @@ char mfd_html[] PROGMEM = R"=====(
 				on_exit="acceptingHeldValButton = false;">
 				<div class="menuTitleLine">Set brightness<br /></div>
 
-				<div style="position:absolute; font-size:46px; text-align:left;">
+				<div style="position:absolute; font-size:40px; text-align:left;">
 					<span id="set_dark_theme"
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						UP_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
-						class="tickBox button">
+						class="tickBox button buttonSelected">
 					</span> <span id="set_dark_theme_tag">Dark theme</span><br style="line-height:120px;" />
 					<span id="set_light_theme"
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						DOWN_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
-						class="tickBox button buttonSelected">
+						class="tickBox button">
 					</span> <span id="set_light_theme_tag">Light theme</span>
 				</div>
 
 				<div class="tag"
-					style="left:600px; width:290px; text-align:center; font-size:46px;">
+					style="left:600px; width:290px; text-align:center; font-size:40px;">
 					Brightness
 				</div>
 
@@ -656,17 +658,17 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<div id="display_brightness_level"
-					class="dseg7" style="left:600px; top:280px; width:290px; text-align:center;">
+					class="dseg7" style="left:600px; top:180px; width:290px; text-align:center;">
 					14
 				</div>
 
 				<div id="display_reduced_brightness_level"
-					class="dseg7" style="left:600px; top:280px; width:290px; text-align:center;">
+					class="dseg7" style="left:600px; top:180px; width:290px; text-align:center;">
 					0
 				</div>
 
 				<div id="set_brightness_validate_button"
-					class="button validateButton" style="top:340px;"
+					class="button validateButton" style="top:330px;"
 					UP_BUTTON="set_light_theme"
 					DOWN_BUTTON="set_dark_theme"
 					on_click="setBrightnessValidate();">
@@ -687,7 +689,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div style="position:absolute; left:390px;">2000</div>
 					<div style="position:absolute; left:650px;">0</div>
 					<div style="position:absolute; left:750px;">:</div>
-					<div style="position:absolute; left:820px;">00</div>
+					<div style="position:absolute; left:800px;">00</div>
 				</div>
 
 				<div style="position:absolute; top:270px;">
@@ -747,7 +749,7 @@ char mfd_html[] PROGMEM = R"=====(
 							DOWN_BUTTON="set_date_time_validate_button"
 							>&ndash;</span>
 					</div>
-					<div style="position:absolute; left:800px;">
+					<div style="position:absolute; left:780px;">
 						<span id="set_date_time_increase_minute"
 							class="button"
 							LEFT_BUTTON="set_date_time_decrease_hour"
@@ -767,7 +769,7 @@ char mfd_html[] PROGMEM = R"=====(
 					UP_BUTTON="set_date_time_increase_day"
 					on_click="upMenu(); upMenu(); upMenu();"
 					class="button validateButton"
-					style="top:390px;">Validate</div>
+					style="top:380px;">Validate</div>
 			</div>	<!-- "set_date_time" -->
 
 			<div id="set_language" class="tag menuScreen"
@@ -775,7 +777,7 @@ char mfd_html[] PROGMEM = R"=====(
 				on_goto="setLanguageSelectTickedButton();">
 				<div class="menuTitleLine">Select a language<br /></div>
 
-				<div style="font-size:46px; text-align:left;">
+				<div style="font-size:37px; text-align:left;">
 					<div style="position:absolute;">
 						<span id="set_language_german"
 							LEFT_BUTTON="set_language_dutch"
@@ -843,7 +845,7 @@ char mfd_html[] PROGMEM = R"=====(
 				class="tag menuScreen">
 				<div class="menuTitleLine">Set format and units<br /></div>
 
-				<div style="font-size:46px; text-align:left;">
+				<div style="font-size:40px; text-align:left;">
 					<div id="set_distance_unit">
 						<div style="position:absolute;">
 							<span id="set_units_km_h"
@@ -923,19 +925,19 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Status LEDs -->
 
-				<div id="satnav_disc_recognized" class="iconSmall led ledOff" style="left:350px; top:30px;">
+				<div id="satnav_disc_recognized" class="iconSmall led ledOff" style="left:370px; top:30px;">
 					<div class="centerAligned fas fa-compact-disc"></div>
 				</div>
 
-				<div id="satnav_gps_scanning" class="iconSmall led ledOff" style="left:450px; top:30px;">
+				<div id="satnav_gps_scanning" class="iconSmall led ledOff" style="left:465px; top:30px;">
 					<div class="centerAligned fas fa-search-location"></div>
 				</div>
 
-				<div gid="satnav_gps_fix" class="iconSmall led ledOff" style="left:550px; top:30px;">
+				<div gid="satnav_gps_fix" class="iconSmall led ledOff" style="left:560px; top:30px;">
 					<div class="centerAligned fas fa-satellite-dish"></div>
 				</div>
 
-				<div id="satnav_gps_fix_lost" class="iconSmall led ledOff" style="display:block; left:650px; top:30px;">
+				<div id="satnav_gps_fix_lost" class="iconSmall led ledOff" style="display:block; left:655px; top:30px;">
 					<div class="centerAligned fas fa-smog"></div>
 				</div>
 
@@ -958,8 +960,9 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<!-- Current GPS speed -->
-				<div id="satnav_gps_speed" class="dots" style="left:40px; top:36px; width:160px; text-align:right;">--</div>
-				<div class="tag" style="left:210px; top:40px;">km/h</div>
+				<div id="satnav_gps_speed" class="dots" style="left:75px; top:34px; width:160px; text-align:right;">--</div>
+				<div class="tag" style="left:245px; top:52px; font-size:30px;">km/h</div>
+
 
 				<!-- Current location -->
 				<div id="satnav_current_location"
@@ -976,7 +979,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Sat nav disclaimer screen -->
 				<div id="satnav_disclaimer" style="display:none;">
-					<div class="tag" style="font-size:45px; left:20px; top:150px; width:920px; height:400px; text-align:center;">
+					<div class="tag" style="font-size:35px; left:20px; top:150px; width:920px; height:400px; text-align:center;">
 						<div id="satnav_disclaimer_text">
 							Navigation is an electronic help system. It<br />
 							cannot replace the driver's decisions. All<br />
@@ -1077,7 +1080,7 @@ char mfd_html[] PROGMEM = R"=====(
 					on_goto="satnavGuidancePreferenceSelectTickedButton();"
 					on_exit="showDestinationNotAccessiblePopupIfApplicable();"
 					on_esc="satnavGuidancePreferenceEscape();"
-					style="position:absolute; display:none; left:20px; top:140px; width:920px; height:410px;">
+					style="position:absolute; display:none; left:20px; top:130px; width:920px; height:410px;">
 
 					<!-- As long we don't know the "satnav_guidance_preference" value, "Fastest route" will be ticked -->
 					<span id="satnav_guidance_preference_fastest" class="tickBox button buttonSelected"
@@ -1108,7 +1111,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="left:10px; top:148px; width:300px;">Level</div>
 
 					<!-- TODO - also show the volume as a linear gauge -->
-					<div gid="volume" class="dseg7" style="font-size:90px; left:270px; top:115px; width:200px;">-</div>
+					<div gid="volume" class="dseg7" style="font-size:100px; left:270px; top:115px; width:200px;">-</div>
 
 					<div
 						class="button buttonSelected validateButton"
@@ -1245,7 +1248,7 @@ char mfd_html[] PROGMEM = R"=====(
 							on_up_button="highlightPreviousLine();"
 							on_down_button="highlightNextLine();"
 							on_click="satnavListItemClicked();"
-							style="position:absolute; font-size:33px; line-height:1.000000;
+							style="position:absolute; font-size:33px; line-height:1.3;
 								left:20px; top:180px; width:923px; height:346px;
 								overflow:hidden; white-space:nowrap;
 								background:none; color:var(--main-color); border-style:none;">
@@ -1413,7 +1416,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<!-- Show also the entry number and the total number of entries found -->
 						<div id="satnav_service_address_entry_number" class="dots" style=" left:600px; top:376px; width:160px; text-align:right;">-</div>
-						<div class="tag" style="left:733px; top:376px; width:50px;">/</div>
+						<div class="tag" style="left:736px; top:380px; width:50px;">/</div>
 						<div id="satnav_to_mfd_list_size" class="dots" style=" left:800px; top:376px; width:160px; text-align:left;">-</div>
 
 						<div button_orientation="horizontal" class="buttonBar">
@@ -1533,11 +1536,11 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div class="tag satNavEntryExistsTag">This entry already exists</div>
 
-					<div class="tag satNavEntryNameTag">Name</div>
+					<div class="tag satNavEntryNameTag" style="width:310px;">Name</div>
 					<div id="satnav_archive_in_directory_entry"
 						on_enter="satnavEnterArchiveInDirectoryScreen();"
 						on_esc="satnavLastEnteredChar = null; upMenu();"
-						class="dots satNavShowAddressCity" style="font-size:60px;">----------------</div>
+						class="dots satNavShowAddressCity" style="font-size:60px; left:350px;">----------------</div>
 
 					<div id="satnav_archive_in_directory_characters_line_1"
 						UP_BUTTON="satnav_archive_in_directory_characters_line_1"
@@ -1651,7 +1654,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Distance to destination -->
 
-					<div class="icon iconSmall" style="left:610px; top:467px; width:80px;">...</div>
+					<div class="icon iconSmall" style="left:610px; top:459px; width:80px;">...</div>
 					<div class="icon iconSmall fas fa-sign-in-alt" style="left:660px; top:470px;"></div>
 
 					<div id="satnav_distance_to_dest_via_road_visible">
@@ -1697,11 +1700,11 @@ char mfd_html[] PROGMEM = R"=====(
 					<!-- Current and next street name -->
 
 					<div style="border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:570px; height:140px; padding:0px 10px">
-						<div id="satnav_guidance_next_street" class="centerAligned" style="font-size:40px; white-space:normal;">
+						<div id="satnav_guidance_next_street" class="centerAligned" style="font-size:33px; white-space:normal;">
 						</div>
 					</div>
 					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:570px; height:140px; padding:0px 10px">
-						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:40px;">
+						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:33px;">
 						</div>
 					</div>
 
@@ -2026,11 +2029,11 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<!-- Data -->
-				<div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:10px; width:100px;">-</div>
-				<div id="condenser_temp" class="tag" style="font-size:60px; left:100px; top:120px; width:160px;">--</div>
-				<div class="tag" style="font-size:60px; left:270px; top:120px; width:90px; text-align:left;">&deg;C</div>
-				<div id="evaporator_temp" class="tag" style="font-size:60px; left:380px; top:120px; width:230px;">-.-</div>
-				<div class="tag" style="font-size:60px; left:620px; top:120px; width:90px; text-align:left;">&deg;C</div>
+				<div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:20px; width:100px;">-</div>
+				<div id="condenser_temp" class="tag" style="font-size:50px; left:100px; top:125px; width:160px;">--</div>
+				<div class="tag" style="font-size:50px; left:270px; top:125px; width:90px; text-align:left;">&deg;C</div>
+				<div id="evaporator_temp" class="tag" style="font-size:50px; left:380px; top:125px; width:230px;">-.-</div>
+				<div class="tag" style="font-size:50px; left:620px; top:125px; width:90px; text-align:left;">&deg;C</div>
 			</div>
 
 			<!-- Audio popup -->
@@ -2122,7 +2125,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div class="icon fas fa-compact-disc" style="left:20px; top:25px; font-size:160px; color:#576171;"></div>
 
-					<div gid="cd_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
+					<div gid="cd_track_time" class="dseg7" style="font-size:123px; left:140px; top:40px; width:420px;">-:--</div>
 
 					<div gid="cd_status_pause" class="icon mediaStatusInPopup">
 						<div class="centerAligned fas fa-pause"></div>
@@ -2146,9 +2149,9 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="centerAligned fas fa-eject"></div>
 					</div>
 
-					<div class="tag" style="left:365px; top:200px; width:200px;">Track</div>
+					<div class="tag" style="left:365px; top:207px; width:200px;">Track</div>
 					<div gid="cd_current_track" class="dots" style="left:565px; top:195px; width:90px; text-align:right;">--</div>
-					<div class="tag" style="left:625px; top:200px; width:50px;">/</div>
+					<div class="tag" style="left:640px; top:200px; width:50px;">/</div>
 					<div gid="cd_total_tracks" class="dots" style="left:685px; top:195px; width:90px; text-align:right;">--</div>
 
 					<div gid="cd_random" class="iconSmall led ledOff" style="left:350px; top:280px;">
@@ -2189,11 +2192,11 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="centerAligned fas fa-eject"></div>
 					</div>
 
-					<div class="tag" style="left:65px; top:200px; width:235px;">CD</div>
+					<div class="tag" style="left:65px; top:207px; width:235px;">CD</div>
 					<div gid="cd_changer_current_disc" class="dots" style="left:300px; top:195px; width:90px; text-align:right;">-</div>
-					<div class="tag" style="left:365px; top:200px; width:200px;">Track</div>
+					<div class="tag" style="left:365px; top:207px; width:200px;">Track</div>
 					<div gid="cd_changer_current_track" class="dots" style="left:565px; top:195px; width:90px; text-align:right;">--</div>
-					<div class="tag" style="left:625px; top:200px; width:50px;">/</div>
+					<div class="tag" style="left:640px; top:200px; width:50px;">/</div>
 					<div gid="cd_changer_total_tracks" class="dots" style="left:685px; top:195px; width:90px; text-align:right;">--</div>
 
 					<div gid="cd_changer_random" class="iconSmall led ledOff" style="left:350px; top:280px;">
@@ -2248,13 +2251,13 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 
 						<div gid="inst_consumption" class="dots" style="left:100px; top:100px; width:220px; text-align:center;">--.-</div>
-						<div gid="fuel_consumption_unit" class="tag" style="left:100px; top:170px; width:220px; text-align:center;">l/100 km</div>
+						<div gid="fuel_consumption_unit" class="tag tripComputerPopupTag" style="left:100px;">l/100 km</div>
 
 						<div class="icon iconSmall" style="left:500px; top:20px;">
 							<div class="fas fa-gas-pump"></div>
 						</div>
 						<div gid="distance_to_empty" class="dots" style="left:430px; top:100px; width:220px; text-align:center;">---</div>
-						<div gid="distance_unit" class="tag" style="left:430px; top:170px; width:220px; text-align:center;">km</div>
+						<div gid="distance_unit" class="tag tripComputerPopupTag" style="left:430px;">km</div>
 					</div>
 
 					<div id="trip_computer_popup_trip_1" class="tabContent"
@@ -2267,7 +2270,7 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="fas fa-fire-alt"></div>
 						</div>
 						<div gid="avg_consumption_1" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
-						<div gid="fuel_consumption_unit" class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100 km</div>
+						<div gid="fuel_consumption_unit" class="tag tripComputerPopupTag" style="left:30px;">l/100 km</div>
 
 						<div class="icon iconSmall" style="left:290px; top:20px;">
 							<div class="fas fa-angle-double-right"></div>
@@ -2276,14 +2279,14 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="fas fa-tachometer-alt"></div>
 						</div>
 						<div gid="avg_speed_1" class="dots" style="left:250px; top:100px; width:220px; text-align:center;">--</div>
-						<div gid="speed_unit" class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
+						<div gid="speed_unit" class="tag tripComputerPopupTag" style="left:250px;">km/h</div>
 
 						<div class="icon iconSmall" style="left:510px; top:20px; width:70px;">...</div>
 						<div class="icon iconSmall" style="left:560px; top:20px;">
 							<div class="fas fa-car-side"></div>
 						</div>
 						<div gid="distance_1" class="dots" style="left:465px; top:100px; width:230px; text-align:center;">--</div>
-						<div gid="distance_unit" class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
+						<div gid="distance_unit" class="tag tripComputerPopupTag" style="left:470px;">km</div>
 					</div>
 
 					<div id="trip_computer_popup_trip_2" class="tabContent"
@@ -2296,7 +2299,7 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="fas fa-fire-alt"></div>
 						</div>
 						<div gid="avg_consumption_2" class="dots" style="left:30px; top:100px; width:220px; text-align:center;">--.-</div>
-						<div gid="fuel_consumption_unit" class="tag" style="left:30px; top:170px; width:220px; text-align:center;">l/100 km</div>
+						<div gid="fuel_consumption_unit" class="tag tripComputerPopupTag" style="left:30px;">l/100 km</div>
 
 						<div class="icon iconSmall" style="left:290px; top:20px;">
 							<div class="fas fa-angle-double-right"></div>
@@ -2305,14 +2308,14 @@ char mfd_html[] PROGMEM = R"=====(
 							<div class="fas fa-tachometer-alt"></div>
 						</div>
 						<div gid="avg_speed_2" class="dots" style="left:250px; top:100px; width:220px; text-align:center;">--</div>
-						<div gid="speed_unit" class="tag" style="left:250px; top:170px; width:220px; text-align:center;">km/h</div>
+						<div gid="speed_unit" class="tag tripComputerPopupTag" style="left:250px;">km/h</div>
 
 						<div class="icon iconSmall" style="left:510px; top:20px; width:70px;">...</div>
 						<div class="icon iconSmall" style="left:560px; top:20px;">
 							<div class="fas fa-car-side"></div>
 						</div>
 						<div gid="distance_2" class="dots" style="left:465px; top:100px; width:230px; text-align:center;">--</div>
-						<div gid="distance_unit" class="tag" style="left:470px; top:170px; width:220px; text-align:center;">km</div>
+						<div gid="distance_unit" class="tag tripComputerPopupTag" style="left:470px;">km</div>
 					</div>
 				</div>
 			</div>	<!-- "trip_computer_popup" -->
@@ -2322,33 +2325,35 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="audio_settings_popup" class="icon notificationPopup"
 				style="left:50px; top:80px; width:830px; height:430px;">
 
-				<div class="tag" style="left:50px; top:30px; width:200px;">Source</div>
-				<div id="audio_source" class="dots" style="left:270px; top:25px; width:500px; text-align:left;"></div>
+				<div class="tag" style="left:50px; top:40px; width:200px;">Source</div>
+				<div id="audio_source" class="dots" style="left:270px; top:33px; width:500px; text-align:left;"></div>
 
 				<div class="tag" style="left:50px; top:142px; width:200px;">Volume</div>
-				<div id="volume" gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:200px;">-</div>
+				<div id="volume" gid="volume" class="dseg7" style="font-size:90px; left:270px; top:100px; width:150px; text-align: left;">-</div>
 
-				<div class="tag" style="left:50px; top:215px; width:200px;">Bass</div>
-				<div id="bass" class="dots" style="left:260px; top:215px; width:100px; text-align:right;">-</div>
-				<div class="tag" style="left:50px; top:285px; width:200px;">Treble</div>
-				<div id="treble" class="dots" style="left:260px; top:285px; width:100px; text-align:right;">-</div>
+				<div gid="info_traffic" class="led ledOff" style="left:645px; top:150px; width:140px;">INFO</div>
 
-				<div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:150px;">LOUD</div>
+				<div class="tag" style="left:50px; top:220px; width:200px;">Bass</div>
+				<div id="bass" class="dots" style="left:260px; top:211px; width:100px; text-align:right;">-</div>
+				<div class="tag" style="left:50px; top:290px; width:200px;">Treble</div>
+				<div id="treble" class="dots" style="left:260px; top:281px; width:100px; text-align:right;">-</div>
 
-				<div class="tag" style="left:410px; top:215px; width:200px;">Fader</div>
-				<div id="fader" class="dots" style="left:640px; top:215px; width:150px; text-align:right;">-</div>
-				<div class="tag" style="left:410px; top:285px; width:200px;">Balance</div>
-				<div id="balance" class="dots" style="left:640px; top:285px; width:150px; text-align:right;">-</div>
+				<div gid="loudness" class="led ledOn" style="left:200px; top:360px; width:160px;">LOUD</div>
+
+				<div class="tag" style="left:410px; top:220px; width:200px;">Fader</div>
+				<div id="fader" class="dots" style="left:640px; top:211px; width:150px; text-align:right;">-</div>
+				<div class="tag" style="left:410px; top:290px; width:200px;">Balance</div>
+				<div id="balance" class="dots" style="left:640px; top:281px; width:150px; text-align:right;">-</div>
 
 				<div id="auto_volume" class="led ledOff" style="left:525px; top:360px; width:260px;">AUTO-VOL</div>
 
 				<!-- Highlight boxes -->
-				<div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:200px; width:320px; height:60px;"></div>
-				<div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:270px; width:320px; height:60px;"></div>
-				<div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:348px; width:147px; height:37px;"></div>
-				<div id="fader_select" class="highlight icon iconBorder" style="left:400px; top:200px; width:390px; height:60px;"></div>
-				<div id="balance_select" class="highlight icon iconBorder" style="left:400px; top:270px; width:390px; height:60px;"></div>
-				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:515px; top:348px; width:257px; height:37px;"></div>
+				<div id="bass_select" class="highlight icon iconBorder" style="left:30px; top:198px; width:320px; height:60px;"></div>
+				<div id="treble_select" class="highlight icon iconBorder" style="left:30px; top:268px; width:320px; height:60px;"></div>
+				<div id="loudness_select" class="highlight icon iconBorder" style="left:190px; top:349px; width:147px; height:34px;"></div>
+				<div id="fader_select" class="highlight icon iconBorder" style="left:400px; top:198px; width:390px; height:60px;"></div>
+				<div id="balance_select" class="highlight icon iconBorder" style="left:400px; top:268px; width:390px; height:60px;"></div>
+				<div id="auto_volume_select" class="highlight icon iconBorder" style="left:515px; top:349px; width:257px; height:34px;"></div>
 			</div>	<!-- "audio_settings_popup" -->
 
 			<!-- Door open popup -->
@@ -2425,7 +2430,7 @@ char mfd_html[] PROGMEM = R"=====(
 				on_enter="selectButton('satnav_delete_item_popup_no_button');"
 				class="icon notificationPopup" style="top:120px; height:350px;">
 				<div class="centerAligned yesNoPopupArea" style="height:300px;">
-					<div id="satnav_delete_item_popup_title">Delete item ?<br /></div>
+					<div id="satnav_delete_item_popup_title">Delete item ?<br/ ><br /></div>
 
 					<span style="font-size:60px;" id="satnav_delete_directory_entry_in_popup"></span>
 
@@ -2539,7 +2544,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="screen_brightness_popup" class="icon notificationPopup">
 				<div class="icon iconLarge fas fa-sun" style="left:70px; top:50px;"></div>
-				<div id="screen_brightness_popup_value" class="dseg7" style="left:580px; top:60px; width:150px; text-align:right; font-size:90px">14</div>
+				<div id="screen_brightness_popup_value" class="dseg7" style="left:580px; top:55px; width:150px; text-align:right; font-size:90px">14</div>
 
 				<div style="position:absolute; left:240px; top:60px; width:350px; height:80px;">
 					<div id="screen_brightness_perc" class="gauge" style="transform: scaleX(1.0);">
@@ -2578,12 +2583,12 @@ char mfd_html[] PROGMEM = R"=====(
 		<div id="tuner_presets_popup" class="icon notificationPopup" style="left:150px; top:140px; width:1040px; height:310px; text-align:left;">
 
 			<!-- Highlight boxes -->
-			<div id="presets_memory_1_select" class="highlight icon iconBorder" style="left:20px; top:15px; width:470px; height:75px;"></div>
-			<div id="presets_memory_2_select" class="highlight icon iconBorder" style="left:20px; top:105px; width:470px; height:75px;"></div>
-			<div id="presets_memory_3_select" class="highlight icon iconBorder" style="left:20px; top:195px; width:470px; height:75px;"></div>
-			<div id="presets_memory_4_select" class="highlight icon iconBorder" style="left:530px; top:15px; width:470px; height:75px;"></div>
-			<div id="presets_memory_5_select" class="highlight icon iconBorder" style="left:530px; top:105px; width:470px; height:75px;"></div>
-			<div id="presets_memory_6_select" class="highlight icon iconBorder" style="left:530px; top:195px; width:470px; height:75px;"></div>
+			<div id="presets_memory_1_select" class="highlight icon iconBorder" style="left:20px; top:10px; width:470px; height:75px;"></div>
+			<div id="presets_memory_2_select" class="highlight icon iconBorder" style="left:20px; top:100px; width:470px; height:75px;"></div>
+			<div id="presets_memory_3_select" class="highlight icon iconBorder" style="left:20px; top:190px; width:470px; height:75px;"></div>
+			<div id="presets_memory_4_select" class="highlight icon iconBorder" style="left:530px; top:10px; width:470px; height:75px;"></div>
+			<div id="presets_memory_5_select" class="highlight icon iconBorder" style="left:530px; top:100px; width:470px; height:75px;"></div>
+			<div id="presets_memory_6_select" class="highlight icon iconBorder" style="left:530px; top:190px; width:470px; height:75px;"></div>
 
 			<div id="presets_fm_1" style="display:none;">
 					<div class="tag" style="left:10px; top:40px; width:60px; text-align:right;">1</div>
@@ -2670,12 +2675,13 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- System -->
 
-		<div id="system" style="position:absolute; font-size:25px; background-color:var(--selected-element-color); display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
+		<div id="system" style="position:absolute; font-size:22px; background-color:var(--selected-element-color);
+			display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
 			on_enter="$('#web_socket_server_host').text(webSocketServerHost);">
 
 			<div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
 
-			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:30px; top:60px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
+			<div class="tabTop tabActive" style="position:absolute; font-size:35px; left:30px; top:60px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
 			<div class="iconBorder" style="display:block; position:absolute; left:20px; top:110px; width:380px; height:270px;">
 				<div class="tag" style="left:130px; top:10px; width:120px;">Width</div>
 				<div class="tag" style="left:240px; top:10px; width:120px;">Height</div>
@@ -2693,9 +2699,9 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="web_socket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
 			</div>
 
-			<div class="tabTop tabActive" style="position:absolute; font-size:40px; left:430px; top:60px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
+			<div class="tabTop tabActive" style="position:absolute; font-size:35px; left:430px; top:60px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
 			<div class="iconBorder" style="display:block; position:absolute; left:420px; top:110px; width:910px; height:360px;">
-				<div style="font-size:20px;">
+				<div style="font-size:20px; line-height: 1.2;">
 					<div class="tag" style="top:10px; width:230px;">Boot Version</div>
 					<div class="tag" style="top:40px; width:230px;">Flash ID</div>
 					<div class="tag" style="top:70px; width:230px;">Flash size (real)</div>
@@ -2757,19 +2763,19 @@ char mfd_html[] PROGMEM = R"=====(
 		</div>
 
 		<div style="left:100px; top:560px; width:230px; position:absolute;">
-			<div gid="inst_consumption" style="width:140px; font-size:60px; text-align:right; position:absolute;">--.-</div>
-			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:20px; width:80px; font-size:35px; text-align:left;">/100</div>
+			<div gid="inst_consumption" style="width:140px; font-size:55px; text-align:right; position:absolute;">--.-</div>
+			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:24px; width:90px; font-size:31px; text-align:left;">/100</div>
 		</div>
 
 		<div style="left:345px; top:560px; width:220px; position:absolute; height:80px;">
-			<div gid="distance_to_empty" style="width:150px; font-size:60px; text-align:right;">---</div>
+			<div gid="distance_to_empty" style="width:150px; font-size:55px; text-align:right;">---</div>
 			<div class="icon iconSmall" style="top:10px; left:145px;">
 				<div class="fas fa-gas-pump"></div>
 			</div>
 		</div>
 
-		<div id="exterior_temp_shown" gid="exterior_temp_shown" style="display:none; left:590px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:60px;">-- &deg;C</div>
-		<div id="date_time_small" style="display:none; left:840px; top:568px; width:480px; position:absolute; text-align:center; font-size:45px;">---  - --:--</div>
+		<div id="exterior_temp_shown" gid="exterior_temp_shown" style="display:none; left:590px; top:560px; width:240px; height:70px; position:absolute; text-align:center; font-size:55px;">-- &deg;C</div>
+		<div id="date_time_small" style="display:none; left:840px; top:568px; width:480px; position:absolute; text-align:center; font-size:40px;">---  - --:--</div>
 )====="
 
 COMMS_LED

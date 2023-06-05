@@ -456,6 +456,7 @@ void SetupWebServer()
 
   #ifdef SERVE_FONTS_FROM_SPIFFS
 
+    webServer.on(F("/PeugeotNewRegular.woff"), [](){ ServeFontFromFile("/PeugeotNewRegular.woff"); });
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){ ServeFontFromFile("/ArialRoundedMTbold.woff"); });
     webServer.on(F("/DotsAllForNow.woff"), [](){ ServeFontFromFile("/DotsAllForNow.woff"); });
     webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG7Classic-BoldItalic.woff"); });
@@ -464,6 +465,10 @@ void SetupWebServer()
 
   #else
 
+    webServer.on(F("/PeugeotNewRegular.woff"), [](){
+        ServeFont(PeugeotNewRegular_woff, PeugeotNewRegular_woff_len);
+    });
+  #if 0
     webServer.on(F("/ArialRoundedMTbold.woff"), [](){
         ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
     });
@@ -476,6 +481,7 @@ void SetupWebServer()
     webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){
         ServeFont(DSEG14Classic_BoldItalic_woff, DSEG14Classic_BoldItalic_woff_len);
     });
+  #endif
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
         ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });

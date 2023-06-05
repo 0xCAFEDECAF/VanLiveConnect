@@ -8,22 +8,11 @@ char carInfo_css[] PROGMEM = R"=====(
 }
 @font-face
 {
-  /* For the "frequency" items in the display */
-  font-family:DSEG7_Classic_BoldItalic;
-  src:url(DSEG7Classic-BoldItalic.woff) format('woff');
+  /* New 'Peugot' font */
+  font-family:Peugeot-New;
+  src: url(PeugeotNewRegular.woff) format('woff');
 }
-@font-face
-{
-  /* For the "RDS" item in the display */
-  font-family:DSEG14_Classic_BoldItalic;
-  src:url(DSEG14Classic-BoldItalic.woff) format('woff');
-}
-@font-face
-{
-  /* For the "dotted" items in the display */
-  font-family:Dots-All-For-Now;
-  src:url(DotsAllForNow.woff) format('woff');
-}
+
 /* Default: "dark-theme" background with light-blue text */
 :root
 {
@@ -42,9 +31,9 @@ body
   overflow: hidden; /* No scrollbars */
 
   background-color:var(--background-color);
-  font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
+  font-family:Peugeot-New,Arial,Helvetica,Sans-Serif;
   color:var(--main-color);
-  font-size:50px;
+  font-size:33px;
   white-space:nowrap;
 
   background-image: url('background.jpg');
@@ -75,22 +64,21 @@ body
 {
   position:absolute;
   text-align:right;
-  font-family:DSEG7_Classic_BoldItalic;
+  font-family:Peugeot-New;
   line-height:1.000000;
 }
 .dseg14
 {
   position:absolute;
-  font-family:DSEG14_Classic_BoldItalic;
+  font-family:Peugeot-New;
   line-height:1.000000;
 }
 .dots
 {
   position:absolute;
-  overflow:hidden;
-  font-family:Dots-All-For-Now;
+  font-family:Peugeot-New;
   line-height:1.000000;
-  font-size:60px;
+  font-size:55px;
 }
 
 /* Style the "LED" elements */
@@ -101,8 +89,9 @@ body
   color:var(--selected-element-color);
   border-radius:5px;
   text-align:center;
-  font-size:44px;
-  line-height:0.85;
+  font-size:30px;
+  font-weight:bold;
+  line-height:1.2;
 }
 .ledOn
 {
@@ -194,7 +183,7 @@ body
 }
 .iconMedium
 {
-  font-size:80px;
+  font-size:60px;
   width:100px;
   height:104px;
 }
@@ -247,7 +236,7 @@ body
   border-bottom:5px solid var(--main-color);
   border-top-left-radius:15px;
   border-bottom-left-radius:15px;
-  line-height:1.15;
+  line-height:1.8;
 }
 
 /* Style of the buttons inside the tab */
@@ -255,7 +244,6 @@ body
 {
   position:absolute;
   background:none;
-  font-family:Arial-Rounded-MT-bold,Arial,Helvetica,Sans-Serif;
   color:var(--main-color);
   font-size:50px;
   line-height:1.0;
@@ -318,12 +306,14 @@ body
   width:850px;
   height:200px;
   display:none;
+  font-size:40px;
 }
 .messagePopupArea
 {
   position:absolute;
   left:100px;
   width:610px;
+  font-size:40px;
 }
 .yesNoPopupArea
 {
@@ -384,7 +374,7 @@ body
   top:130px;
   width:920px;
   height:410px;
-  font-size:60px;
+  font-size:55px;
   text-align:center;
 }
 .menuTitleLine br
@@ -398,8 +388,8 @@ body
   border-radius:15px;
   border-color:var(--disabled-element-color);
   text-align:center;
-  font-size:44px;
-  line-height:0.85;
+  font-size:37px;
+  line-height:1.1;
   margin:auto;
   width:700px; /* Default, e.g. for items in a menu */
   padding:10px;
@@ -429,13 +419,14 @@ body
   top:0px;
   width:260px;
   height:40px;
+  font-weight:bold;
 }
 .correctionButton
 {
   left:210px;
   top:0px;
   width:230px;
-  height:40px
+  height:40px;
 }
 .invertedText
 {
@@ -456,7 +447,7 @@ body
   width:50px;
   height:50px;
   margin-bottom:-10px;
-  font-size:60px;
+  font-size:50px;
 }
 .tickBoxLabel br
 {
@@ -500,7 +491,15 @@ body
 {
   left:180px;
   width:140px;
-  font-size:35px;
+  font-size:28px;
+  line-height:1.5;
+}
+.tripComputerPopupTag
+{
+  width:220px;
+  top:170px;
+  font-size:28px;
+  text-align:center;
 }
 
 /* Sat nav menu and screen element styles */
@@ -553,7 +552,7 @@ body
 {
   left:25px;
   width:940px;
-  font-size:50px;
+  font-size:44px;
   line-height:1.5;
   display:inline-block;
   background:none;
@@ -572,7 +571,8 @@ body
   top:190px;
   width:190px;
   text-align:left;
-  font-size:40px;
+  font-size:32px;
+  line-height:1.7;
 }
 .satNavStreetTag
 {
@@ -580,7 +580,8 @@ body
   top:280px;
   width:190px;
   text-align:left;
-  font-size:40px;
+  font-size:32px;
+  line-height:1.7;
 }
 .satNavNumberTag
 {
@@ -588,7 +589,8 @@ body
   top:370px;
   width:190px;
   text-align:left;
-  font-size:40px;
+  font-size:32px;
+  line-height:1.7;
 }
 .satNavCompassNeedle
 {
@@ -639,7 +641,8 @@ body
   top:205px;
   width:190px;
   text-align:left;
-  font-size:40px;
+  font-size:35px;
+  line-height:1.5;
 }
 .satNavEntryExistsTag
 {
@@ -647,6 +650,7 @@ body
   left:210px;
   top:255px;
   text-align:left;
-  font-size:40px;
+  font-size:35px;
+  line-height:1.5;
 }
 )=====";

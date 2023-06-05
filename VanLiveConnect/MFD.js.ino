@@ -1649,7 +1649,7 @@ function hideTunerPresetsPopup()
 // Show the audio volume popup
 function showAudioVolumePopup()
 {
-	hideNotificationPopup(infoTrafficPopupTimer);
+	hidePopup("notification_popup");
 
 	// Audio popup already visible due to display of audio settings?
 	if (isAudioMenuVisible) return hideAudioSettingsPopupAfter(11500);
@@ -1689,7 +1689,7 @@ function showAudioVolumePopup()
 // Show the audio settings popup
 function showAudioSettingsPopup(button)
 {
-	hideNotificationPopup(infoTrafficPopupTimer);
+	hidePopup("notification_popup");
 
 	if (button === "AUDIO")
 	{
@@ -1714,6 +1714,8 @@ function showAudioSettingsPopup(button)
 // Show the tuner presets popup
 function showTunerPresetsPopup()
 {
+	hidePopup("notification_popup");
+
 	$("#tuner_presets_popup").show();
 	NotifyServerAboutPopup("tuner_presets_popup", 8500);
 
@@ -3697,7 +3699,8 @@ function handleItemChange(item, value)
 
 		case "info_traffic":
 		{
-			if (inMenu() || $("#audio_settings_popup").is(":visible")) break;
+			if (inMenu()) break;
+			if ($("#audio_settings_popup").is(":visible") || $("#tuner_presets_popup").is(":visible")) break;
 
 			// Has anything changed?
 			if (value === infoTraffic) break;
@@ -5810,7 +5813,7 @@ function setLanguage(language)
 			$(id + " .button:eq(1)").html("Correction");
 
 			$("#satnav_reached_destination_popup_title").html("Destination reached");
-			$("#satnav_delete_item_popup_title").html("Delete item ?<br />");
+			$("#satnav_delete_item_popup_title").html("Delete item ?<br /><br />");
 			$("#satnav_guidance_preference_popup_title").html("Keep criteria");
 			$("#satnav_delete_directory_data_popup_title").html("This will delete all data in directories");
 			$("#satnav_continue_guidance_popup_title").html("Continue guidance to destination ?");
@@ -6365,7 +6368,7 @@ function setLanguage(language)
 			$(id + " .button:eq(1)").html("Corregir");
 
 			$("#satnav_reached_destination_popup_title").html("Destino alcanzado");  // TODO - check
-			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?");
+			$("#satnav_delete_item_popup_title").html("&iquest;Desea suprimir<br />la ficha?<br />");
 			$("#satnav_guidance_preference_popup_title").html("&iquest;Mantener criterios");  // TODO - check
 			$("#satnav_delete_directory_data_popup_title").html("Se borrar&aacute;n todos los<br />catos de los directorios");
 			$("#satnav_continue_guidance_popup_title").html("&iquest; Desea proseguire el guiado para el destino ?");
@@ -6549,7 +6552,7 @@ function setLanguage(language)
 			$(id + " .button:eq(1)").html("Correggere");
 
 			$("#satnav_reached_destination_popup_title").html("Destinazione raggiunta");  // TODO - check
-			$("#satnav_delete_item_popup_title").html("Cancellare la scheda?<br />");
+			$("#satnav_delete_item_popup_title").html("Cancellare la scheda?<br /><br />");
 			$("#satnav_guidance_preference_popup_title").html("Conservare il criterio");
 			$("#satnav_delete_directory_data_popup_title").html("I dati delle rubrica<br />verranno cancellati");
 			$("#satnav_continue_guidance_popup_title").html("Continuare la guida verso la meta prescelta?");
