@@ -3179,6 +3179,9 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     isSatnavGuidanceActive = satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE;
     satnavDiscRecognized = (data[2] & 0x70) == 0x30;
 
+    // 0xE0 as boundary for "reverse": just guessing. Do we ever drive faster than 224 km/h?
+    uint16_t gpsSpeedAbs = data[16] < 0xE0 ? data[16] : 0xFF - data[16] + 1;
+
     const static char jsonFormatter[] PROGMEM =
     "{\n"
         "\"event\": \"display\",\n"
@@ -3194,8 +3197,9 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"satnav_gps_fix_lost\": \"%S\",\n"
             "\"satnav_gps_scanning\": \"%S\",\n"
             "\"satnav_language\": \"%S\",\n"
-            "\"satnav_gps_speed\": \"%S%u\"";
+            "\"satnav_gps_speed\": \"%S%s\"";
 
+    char floatBuf[MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
 
         data[1] & 0x20 ? noStr : yesStr,
@@ -3222,9 +3226,10 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         data[5] == 0x06 ? PSTR("DUTCH") :
         notApplicable3Str,
 
-        // 0xE0 as boundary for "reverse": just guessing. Do we ever drive faster than 224 km/h?
         data[16] >= 0xE0 ? dashStr : emptyStr,
-        data[16] < 0xE0 ? data[16] : 0xFF - data[16] + 1
+        mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+            ToFloatStr(floatBuf, gpsSpeedAbs, 0) :
+            ToFloatStr(floatBuf, ToMiles(gpsSpeedAbs), 0)
     );
 
     // TODO - what is this?

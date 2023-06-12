@@ -122,19 +122,44 @@ char mfd_html[] PROGMEM = R"=====(
 			<div id="instrument_small" style="display:none;">
 
 				<!-- Vehicle speed -->
-				<div gid="vehicle_speed" class="dseg7" style="font-size:90px; left:10px; top:63px; width:260px;">0</div>
-				<div gid="distance_unit" class="tag" style="text-align:left; left:280px; top:60px;">km</div>
-				<div class="tag" style="text-align:left; left:280px; top:105px;">/h</div>
+				<div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:33px; width:260px;">0</div>
+				<div gid="distance_unit" class="tag" style="text-align:left; left:280px; top:75px; font-size:30px;">km</div>
+				<div class="tag" style="text-align:left; left:280px; top:110px; font-size:30px;">/h</div>
 
 				<!-- Engine rpm -->
-				<div gid="engine_rpm" class="dseg7" style="font-size:70px; left:10px; top:213px; width:260px;">0</div>
-				<div class="tag" style="text-align:left; left:280px; top:238px;">rpm</div>
+				<div gid="engine_rpm" class="dseg7" style="font-size:70px; left:10px; top:173px; width:260px;">0</div>
+				<div class="tag" style="text-align:left; left:280px; top:203px; font-size:30px;">rpm</div>
+
+				<div gid="fog_rear" class="iconSmall led ledOff" style="left:40px; top:280px;transform: scaleX(-1);">
+					<div class="centerAligned fas fa-volume-down"></div>
+				</div>
+
+				<div gid="parking_light" class="iconSmall led ledOff" style="left:120px; top:280px; color:rgb(119, 217, 64);">
+					<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:-3px;"></div>
+					<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:15px;"></div>
+				</div>
+
+				<div gid="dipped_beam" class="iconSmall led ledOff" style="left:120px; top:280px;">
+					<div class="centerAligned fas fa-volume-down" style="transform:rotate(15deg); transform-origin:120px;"></div>
+				</div>
+
+				<div gid="high_beam" class="iconSmall led ledOff" style="left:200px; top:280px;">
+					<div class="centerAligned fas fa-volume-up"></div>
+				</div>
+
+				<div gid="fog_front" class="iconSmall led ledOff" style="left:280px; top:280px;">
+					<div class="centerAligned fas fa-volume-up"></div>
+				</div>
 
 				<!-- Fuel level -->
-				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:345px;"></div>
+				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:375px;"></div>
+				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:100px; top:372px; width:170px;">--.-</div>
+				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:385px; font-size:30px;">lt</div>
 
-				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:100px; top:342px; width:170px;">--.-</div>
-				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:348px;">lt</div>
+				<!-- Engine coolant temperature -->
+				<div class="icon iconSmall fas fa-thermometer-half" style="left:30px; top:445px;"></div>
+				<div gid="coolant_temp" class="dseg7" style="font-size:50px; left:100px; top:442px; width:170px;">--.-</div>
+				<div gid="coolant_temp_unit" class="tag" style="text-align:left; left:280px; top:455px; font-size:30px;">&deg;C</div>
 
 			</div>
 		</div>	<!-- "Small" information panel -->
@@ -432,8 +457,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div class="icon iconMedium fas fa-thermometer-half" style="left:580px; top:55px;"></div>
 
-				<div id="coolant_temp" class="dseg7" style="font-size:55px; left:630px; top:65px; width:240px;">--.-</div>
-				<div id="coolant_temp_unit" class="tag" style="text-align:left; left:890px; top:80px; width:60px;">&deg;C</div>
+				<div gid="coolant_temp" class="dseg7" style="font-size:55px; left:630px; top:65px; width:240px;">--.-</div>
+				<div gid="coolant_temp_unit" class="tag" style="text-align:left; left:890px; top:80px; width:60px;">&deg;C</div>
 
 				<div style="position:absolute; left:590px; top:130px; width:350px; height:60px;">
 					<div class="gaugeInnerBoxDiv">
@@ -530,24 +555,24 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="centerAligned fas fa-angle-double-left"></div>
 					</div>
 
-					<div id="fog_rear" class="iconSmall led ledOff" style="left:220px; top:400px;transform: scaleX(-1);">
+					<div gid="fog_rear" class="iconSmall led ledOff" style="left:220px; top:400px;transform: scaleX(-1);">
 						<div class="centerAligned fas fa-volume-down"></div>
 					</div>
 
-					<div id="parking_light" class="iconSmall led ledOff" style="left:300px; top:400px; color:rgb(119, 217, 64);">
-						<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:5px;"></div>
-						<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:20px;"></div>
+					<div gid="parking_light" class="iconSmall led ledOff" style="left:300px; top:400px; color:rgb(119, 217, 64);">
+						<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:-3px;"></div>
+						<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:15px;"></div>
 					</div>
 
-					<div id="dipped_beam" class="iconSmall led ledOff" style="left:300px; top:400px;">
-						<div class="centerAligned fas fa-volume-down" style="transform:rotate(15deg); transform-origin:105px;"></div>
+					<div gid="dipped_beam" class="iconSmall led ledOff" style="left:300px; top:400px;">
+						<div class="centerAligned fas fa-volume-down" style="transform:rotate(15deg); transform-origin:120px;"></div>
 					</div>
 
-					<div id="high_beam" class="iconSmall led ledOff" style="left:380px; top:400px;">
+					<div gid="high_beam" class="iconSmall led ledOff" style="left:380px; top:400px;">
 						<div class="centerAligned fas fa-volume-up"></div>
 					</div>
 
-					<div id="fog_front" class="iconSmall led ledOff" style="left:460px; top:400px;">
+					<div gid="fog_front" class="iconSmall led ledOff" style="left:460px; top:400px;">
 						<div class="centerAligned fas fa-volume-up"></div>
 					</div>
 
@@ -564,8 +589,8 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="left:840px; top:310px;">rpm</div>
 
 					<!-- Odometer -->
-					<div class="icon iconSmall" style="left:10px; top:480px; width:90px;">...</div>
-					<div class="icon iconSmall fas fa-car-side" style="left:70px; top:480px;"></div>
+					<div class="icon iconSmall" style="top:475px; width:90px;">...</div>
+					<div class="icon iconSmall fas fa-car-side" style="left:55px; top:480px;"></div>
 					<div id="odometer_1" class="dseg7" style="font-size:45px; left:120px; top:480px; width:280px;">--.-</div>
 					<div gid="distance_unit" class="tag" style="font-size:30px; text-align:left; left:415px; top:490px;">km</div>
 
@@ -961,8 +986,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Current GPS speed -->
 				<div id="satnav_gps_speed" class="dots" style="left:75px; top:34px; width:160px; text-align:right;">--</div>
-				<div class="tag" style="left:245px; top:52px; font-size:30px;">km/h</div>
-
+				<div class="tag" style="left:245px; top:30px; font-size:25px;">GPS</div>
+				<div gid="speed_unit" class="tag" style="left:245px; top:57px; font-size:25px;">km/h</div>
 
 				<!-- Current location -->
 				<div id="satnav_current_location"
@@ -1269,7 +1294,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="tag satNavEnterDestinationTag">Enter number</div>
 
 						<!-- The number that has been entered thus far -->
-						<div id="satnav_entered_number" class="dots" style="left:25px; top:180px; width:930px;"></div>
+						<div id="satnav_entered_number" class="dots" style="left:20px; top:180px; width:930px;"></div>
 
 						<!--
 							The following div will disappear as soon as the user starts choosing numbers, which will
@@ -1540,7 +1565,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="satnav_archive_in_directory_entry"
 						on_enter="satnavEnterArchiveInDirectoryScreen();"
 						on_esc="satnavLastEnteredChar = null; upMenu();"
-						class="dots satNavShowAddressCity" style="font-size:60px; left:350px;">----------------</div>
+						class="dots satNavShowAddressCity" style="left:350px; top:210px;">----------------</div>
 
 					<div id="satnav_archive_in_directory_characters_line_1"
 						UP_BUTTON="satnav_archive_in_directory_characters_line_1"
@@ -1584,7 +1609,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_archive_in_directory_professional_button"
 							UP_BUTTON="satnav_archive_in_directory_characters_line_2"
 							on_click="satnavArchiveInDirectoryCreateProfessionalEntry();"
-							class="icon button" style="left:560px; width:300px; height:40px;">
+							class="icon button" style="left:560px; width:350px; height:40px;">
 							Professional dir
 						</div>
 					</div>
@@ -1603,7 +1628,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="satnav_rename_entry_in_directory_entry"
 						on_enter="satnavEnterRenameDirectoryEntryScreen();"
 						on_esc="satnavLastEnteredChar = null; upMenu();"
-						class="dots satNavShowAddressCity" style="font-size:60px; left:350px;">----------------</div>
+						class="dots satNavShowAddressCity" style="left:350px; top:210px;">----------------</div>
 
 					<div id="satnav_rename_entry_in_directory_characters_line_1"
 						UP_BUTTON="satnav_rename_entry_in_directory_characters_line_1"
@@ -1699,11 +1724,11 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Current and next street name -->
 
-					<div style="border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:570px; height:140px; padding:0px 10px">
+					<div style="border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:570px; height:120px; padding:10px 10px">
 						<div id="satnav_guidance_next_street" class="centerAligned" style="font-size:33px; white-space:normal;">
 						</div>
 					</div>
-					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:570px; height:140px; padding:0px 10px">
+					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:570px; height:120px; padding:10px 10px">
 						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:33px;">
 						</div>
 					</div>
@@ -1785,8 +1810,8 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_fork_icon_keep_right" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
 							<svg style="width:200px;height:200px">
 								<g id="fork_icon_keep_right">
-									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 140 80 M140 80 140 10 M140 10 120 30 M140 10 160 30"/>
-									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 60 80 M60 80 60 20"/>
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 140 80 M140 80 140 10 M140 10 120 30 M140 10 160 30"></path>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 60 80 M60 80 60 20"></path>
 								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_keep_right" -->
@@ -1802,8 +1827,8 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_fork_icon_keep_left" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
 							<svg style="width:200px;height:200px">
 								<g id="fork_icon_keep_left">
-									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 60 80 M60 80 60 20 M60 10 40 30 M60 10 80 30"/>
-									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 140 80 M140 80 140 10"/>
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 60 80 M60 80 60 20 M60 10 40 30 M60 10 80 30"></path>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 140 80 M140 80 140 10"></path>
 								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_keep_left" -->
@@ -1821,8 +1846,8 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_fork_icon_take_right_exit" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
 							<svg style="width:200px;height:200px">
 								<g id="fork_icon_take_right_exit">
-									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 140 80 M140 80 140 10 M140 10 120 30 M140 10 160 30"/>
-									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 100 20"/>
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 140 80 M140 80 140 10 M140 10 120 30 M140 10 160 30"></path>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 100 20"></path>
 								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_take_right_exit" -->
@@ -1838,8 +1863,8 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_fork_icon_take_left_exit" class="icon" style="display:none; position:absolute; left:50px; top:50px; width:200px; height:200px;">
 							<svg style="width:200px;height:200px">
 								<g id="fork_icon_take_left_exit">
-									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 60 80 M60 80 60 10 M60 10 40 30 M60 10 80 30"/>
-									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 100 20"/>
+									<path class="satNavInstructionIcon" d="M100 120 100 190 M100 120 60 80 M60 80 60 10 M60 10 40 30 M60 10 80 30"></path>
+									<path class="satNavInstructionIcon satNavInstructionIconLeg" d="M100 120 100 20"></path>
 								</g>
 							</svg>
 						</div>	<!-- "satnav_fork_icon_take_left_exit" -->
@@ -2253,7 +2278,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div gid="inst_consumption" class="dots" style="left:100px; top:100px; width:220px; text-align:center;">--.-</div>
 						<div gid="fuel_consumption_unit" class="tag tripComputerPopupTag" style="left:100px;">l/100 km</div>
 
-						<div class="icon iconSmall" style="left:500px; top:20px;">
+						<div class="icon iconSmall" style="left:500px; top:15px;">
 							<div class="fas fa-gas-pump"></div>
 						</div>
 						<div gid="distance_to_empty" class="dots" style="left:430px; top:100px; width:220px; text-align:center;">---</div>
@@ -2430,7 +2455,7 @@ char mfd_html[] PROGMEM = R"=====(
 				on_enter="selectButton('satnav_delete_item_popup_no_button');"
 				class="icon notificationPopup" style="top:120px; height:350px;">
 				<div class="centerAligned yesNoPopupArea" style="height:300px;">
-					<div id="satnav_delete_item_popup_title">Delete item ?<br/ ><br /></div>
+					<div id="satnav_delete_item_popup_title">Delete item ?<br /><br /></div>
 
 					<span style="font-size:60px;" id="satnav_delete_directory_entry_in_popup"></span>
 

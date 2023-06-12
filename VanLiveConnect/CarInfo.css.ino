@@ -236,7 +236,7 @@ body
   border-bottom:5px solid var(--main-color);
   border-top-left-radius:15px;
   border-bottom-left-radius:15px;
-  line-height:1.8;
+  line-height:1.4;
 }
 
 /* Style of the buttons inside the tab */
@@ -291,7 +291,7 @@ body
   top:50%;
   transform:translateY(-50%);
   white-space:normal;
-  line-height:1.2;
+  line-height:1.25;
   text-align:center;
 }
 
@@ -536,7 +536,7 @@ body
 }
 .satNavEnterDestination
 {
-  left:25px;
+  left:20px;
   top:180px;
   width:925px;
   font-size:50px;

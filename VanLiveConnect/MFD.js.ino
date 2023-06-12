@@ -81,7 +81,8 @@ function updateDateTime()
 
 document.addEventListener("visibilitychange", function()
 {
-	if (document.visibilityState === 'visible') connectToWebSocket(); else webSocket.close("browser tab no longer active");
+	if (document.visibilityState === 'visible') connectToWebSocket();
+	else if (webSocket) webSocket.close("browser tab no longer active");
 });
 
 function showViewportSizes()
@@ -632,7 +633,7 @@ function changeLargeScreenTo(id)
 			irFastRepeatValue = 2;
 		} // if
 	} // if
-	webSocket.send("ir_button_faster_repeat:" + irFastRepeatValue);
+	if (webSocket) webSocket.send("ir_button_faster_repeat:" + irFastRepeatValue);
 
 	hidePopup("audio_popup");
 
@@ -1733,9 +1734,9 @@ var headlightStatus = "";
 function setDippedBeamIcon()
 {
 	let dippedBeam = headlightStatus.match(/DIPPED_BEAM/) !== null;
-	$("#dipped_beam").toggle(dippedBeam || ! dashlightDimmed);
-	$("#dipped_beam").toggleClass("ledOnGreen", dippedBeam).toggleClass("ledOff", ! dippedBeam);
-	$("#parking_light").toggle(! dippedBeam && dashlightDimmed);
+	$('[gid="dipped_beam"]').toggle(dippedBeam || ! dashlightDimmed);
+	$('[gid="dipped_beam"]').toggleClass("ledOnGreen", dippedBeam).toggleClass("ledOff", ! dippedBeam);
+	$('[gid="parking_light"]').toggle(! dippedBeam && dashlightDimmed);
 }
 
 function setColorTheme(theme)
@@ -2019,8 +2020,8 @@ var mfdDisableNavigationMenuWhileDriving = false;
 
 function satnavVehicleMoving()
 {
-	var gpsSpeed = parseInt($("#satnav_gps_speed").text() || 0);  // Always reported in km/h
-	return gpsSpeed >= 2;
+	var gpsSpeed = parseInt($("#satnav_gps_speed").text() || 0);  // Reported in km/h or in mph
+	return gpsSpeed >= 2;  // 2 km/h or 2 mph, unit is not really relevant
 }
 
 function satnavCutoffBottomLines(selector)
@@ -4021,15 +4022,15 @@ function handleItemChange(item, value)
 			{
 				engineCoolantTemperature = (temp - 32) * 5 / 9;  // convert deg F to deg C
 
-				$("#coolant_temp").toggleClass("glow", temp > 240);  // If high, add glow effect
-				$("#coolant_temp").toggleClass("glowIce", temp < 160);  // If low, add "ice glow" effect
+				$('[gid="coolant_temp"]').toggleClass("glow", temp > 240);  // If high, add glow effect
+				$('[gid="coolant_temp"]').toggleClass("glowIce", temp < 160);  // If low, add "ice glow" effect
 			}
 			else
 			{
 				engineCoolantTemperature = temp;
 
-				$("#coolant_temp").toggleClass("glow", temp > 115);  // If high, add glow effect
-				$("#coolant_temp").toggleClass("glowIce", temp < 70); // If low, add "ice glow" effect
+				$('[gid="coolant_temp"]').toggleClass("glow", temp > 115);  // If high, add glow effect
+				$('[gid="coolant_temp"]').toggleClass("glowIce", temp < 70); // If low, add "ice glow" effect
 			} // if
 		} // case
 		break;
@@ -4160,13 +4161,13 @@ function handleItemChange(item, value)
 			setDippedBeamIcon();
 
 			let highBeam = value.match(/HIGH_BEAM/) !== null;
-			$("#high_beam").toggleClass("ledOnBlue", highBeam).toggleClass("ledOff", ! highBeam);
+			$('[gid="high_beam"]').toggleClass("ledOnBlue", highBeam).toggleClass("ledOff", ! highBeam);
 
 			let fogRear = value.match(/FOG_REAR/) !== null;
-			$("#fog_rear").toggleClass("ledOnOrange", fogRear).toggleClass("ledOff", ! fogRear);
+			$('[gid="fog_rear"]').toggleClass("ledOnOrange", fogRear).toggleClass("ledOff", ! fogRear);
 
 			let fogFront = value.match(/FOG_FRONT/) !== null;
-			$("#fog_front").toggleClass("ledOnGreen", fogFront).toggleClass("ledOff", ! fogFront);
+			$('[gid="fog_front"]').toggleClass("ledOnGreen", fogFront).toggleClass("ledOff", ! fogFront);
 		} // case
 		break;
 
@@ -5426,6 +5427,9 @@ function handleItemChange(item, value)
 				value === "TRIP_INFO_1" ? 1 :
 				value === "TRIP_INFO_2" ? 2 : 0;
 			selectTabInTripComputerPopup(tabIndex);
+
+			// Experiment
+			gotoSmallScreen(value);
 		} // case
 		break;
 
@@ -6802,13 +6806,13 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 
 	if (temperatureUnit === "set_units_deg_fahrenheit")
 	{
-		$("#coolant_temp_unit").html("&deg;F");
+		$('[gid="coolant_temp_unit"]').html("&deg;F");
 		$("#climate_control_popup .tag:eq(1)").html("&deg;F");
 		$("#climate_control_popup .tag:eq(3)").html("&deg;F");
 	}
 	else
 	{
-		$("#coolant_temp_unit").html("&deg;C");
+		$('[gid="coolant_temp_unit"]').html("&deg;C");
 		$("#climate_control_popup .tag:eq(1)").html("&deg;C");
 		$("#climate_control_popup .tag:eq(3)").html("&deg;C");
 	} // if
