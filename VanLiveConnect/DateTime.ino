@@ -96,7 +96,7 @@ const char* TimeStamp()
     unsigned long diff = (m - _millis_at_setTime) % 1000UL;
     unsigned long msec = _msec + diff;
 
-    if (msec > 1000)
+    if (msec >= 1000)
     {
         t++;
         msec -= 1000;

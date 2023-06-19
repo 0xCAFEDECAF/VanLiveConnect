@@ -140,7 +140,7 @@ is supported.
 
 The application will host a HTML web page on standard port 80. It will also host a WebSocket server on
 standard port 81. The served web page comes with some JavaScript that connects to this WebSocket server
-in order to stream the live data to be visualised.
+in order to stream the live data to be visualized.
 
 The web page itself, as served by this sketch, uses and self-hosts the following open-source bundles:
 * jQuery v3.5.1 - compressed, production version - original download
