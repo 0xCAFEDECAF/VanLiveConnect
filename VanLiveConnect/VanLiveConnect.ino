@@ -132,10 +132,13 @@ void SetupVanReceiver()
     #endif
   #endif
 
-    // GPIO pin connected to VAN bus transceiver output
-    #define RX_PIN D2
+    const int TX_PIN = D3; // GPIO pin connected to VAN bus transceiver input
+    const int RX_PIN = D2; // GPIO pin connected to VAN bus transceiver output
 
     Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%u)\n"), XSTR(RX_PIN), RX_PIN);
+
+    pinMode(TX_PIN, OUTPUT);
+    digitalWrite(TX_PIN, VAN_BIT_RECESSIVE);  // Set bus state to 'recessive' (CANH and CANL: not driven)
 
     if (VanBusRx.Setup(RX_PIN, VAN_PACKET_QUEUE_SIZE))
     {
