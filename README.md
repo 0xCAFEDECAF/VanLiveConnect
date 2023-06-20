@@ -175,8 +175,11 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
-> 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
+> 👉 Notes:
+>  * CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
+>  * The clamping circuit (D1, D2, R1) seems to (somehow) help in reducing the amount of bit errors
+     (packet CRC errors).
 
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    The SN65HVD230 transceiver already has 3.3V logic, so it is possible to directly connect the CRX / RXD / R pin of
@@ -189,8 +192,11 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
    The "+12 Volt permanent" variant as described above is possible for this setup too.
 
-> 👉 Note: CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
+> 👉 Notes:
+>  * CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
+>  * The clamping circuit (D1, D2, R1) seems to (somehow) help in reducing the amount of bit errors
+     (packet CRC errors).
    
 3. The simplest schematic is not to use a transceiver at all, but connect the VAN DATA line to GrouND using
    two 4.7 kOhm resistors. Connect the GPIO pin of your ESP8266 board to the 1:2 [voltage divider] that is thus
