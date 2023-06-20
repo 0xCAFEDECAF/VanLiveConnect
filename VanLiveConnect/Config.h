@@ -50,7 +50,7 @@
 
 #else  // Wi-Fi station (client) mode
   #define WIFI_SSID "WiFiHotspot"  // Choose yours
-  //#define WIFI_PASSWORD "WiFiPass"  // Leave commented out for none, or uncomment out and fill in
+  #define WIFI_PASSWORD "WiFiPass"  // Fill in yours
 
   #ifdef USE_DHCP
 
