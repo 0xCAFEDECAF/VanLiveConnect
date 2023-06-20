@@ -132,8 +132,8 @@ void SetupVanReceiver()
     #endif
   #endif
 
-    const int TX_PIN = D3; // GPIO pin connected to VAN bus transceiver input
-    const int RX_PIN = D2; // GPIO pin connected to VAN bus transceiver output
+    #define TX_PIN D3  // GPIO pin connected to VAN bus transceiver input
+    #define RX_PIN D2  // GPIO pin connected to VAN bus transceiver output
 
     Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%u)\n"), XSTR(RX_PIN), RX_PIN);
 
