@@ -6,6 +6,6 @@ used to create the patch from, and a short description of each fix.
 
 Copy the patched files into their corresponding directory/ies inside:
 
-- Windows: %USERPROFILE%\Documents\Arduino\libraries\
+- Windows: `%USERPROFILE%\Documents\Arduino\libraries\`
 
-- Linux: $HOME/Arduino/libraries/
+- Linux: `$HOME/Arduino/libraries/`

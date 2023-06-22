@@ -257,10 +257,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 
   For this to compile, you will also need the _ESPAsyncTCP_ library:
 * (Optional, when using the above WebSockets Library in "A-synchronous mode")
-  [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) - Tested with version 1.2.2 . This library seems to
-  require manual downloading of the [Zip file](https://github.com/me-no-dev/ESPAsyncTCP/archive/refs/heads/master.zip)
-  and unpacking it into your `...\Arduino\libraries\` folder. More explanation about installing libraries manually can
-  be [found on this page](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/how-to-install-a-library).
+  [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP) - Tested with version 1.2.4 .
 
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
