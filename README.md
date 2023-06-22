@@ -368,7 +368,7 @@ In the Arduino IDE, the following libraries are used:
 * [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
   version 2.3.3 ... 2.3.6 .
 * (Optional, when using the above WebSockets Library in "A-synchronous mode")
-  [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) - Tested with version 1.2.2 .
+  [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP) - Tested with version 1.2.4 .
 
 ### Attributions
 
