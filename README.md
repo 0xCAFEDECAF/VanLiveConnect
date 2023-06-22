@@ -384,14 +384,9 @@ The application itself embeds:
   - Fonts: [SIL OFL 1.1 License](https://scripts.sil.org/OFL)
   - Code: [MIT License](https://opensource.org/licenses/MIT)
 
-* Font [DSEG version 0.46](https://github.com/keshikan/DSEG/releases/download/v0.46/fonts-DSEG_v046.zip)
-  by Keshikan (Twitter:@keshinomi_88pro).<br />
-  License: Copyright (c) 2018, keshikan (http://www.keshikan.net), with Reserved Font Name "DSEG".<br />
-  This Font Software is licensed under the [SIL Open Font License, Version 1.1](https://scripts.sil.org/OFL).
-
-* Font [Dots All For Now JL. 1.00 - 7/16/01](https://fonts2u.com/download/dots-all-for-now-jl.font)
-  (c) 2001 by Jeffrey N. Levine.
-  License: Freeware for commercial or non-commercial use.
+* Font [Peugeot New](https://www.cdnfonts.com/peugeot-new.font)
+  by Emmanuel Benoist for Peugeot Design Lab (http://www.peugeotdesignlab.com)<br />
+  License: unknown
 
 ## 👷 Work to be Done<a name = "todo"></a>
 
