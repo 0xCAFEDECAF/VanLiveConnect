@@ -170,7 +170,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
     * Using +12 Volt switched line:
       ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
     * Using +12 Volt permanent line. To prevent battery drain, the ESP board will go to sleep after 5 minutes
-      ([configurable in `Config.h`](VanLiveConnect/Config.h#L100)). This setup requires
+      ([configurable in `Config.h`](VanLiveConnect/Config.h#L90)). This setup requires
       [GPIO line D1](VanLiveConnect/Config.h#L133) to be connected, so that the ESP board wakes up as soon as any
       activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
@@ -265,6 +265,11 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
 * this [explanation from Adafruit](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager)
+
+> 👉 Note: for best performance and stability, make sure to copy all the patched files inside and under the 
+[VanLiveConnect/Patches/ directory](https://github.com/0xCAFEDECAF/VanLiveConnect/tree/main/VanLiveConnect/Patches) to
+the indicated directories in your system. In my experience, these patched files significantly improve the stability
+of the WebSocket (TCP/IP over Wi-Fi) communication.
 
 #### 3. Board settings
 
