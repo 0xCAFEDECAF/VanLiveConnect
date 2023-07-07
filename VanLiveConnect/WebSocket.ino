@@ -58,7 +58,7 @@ bool SetTime(uint32_t epoch, uint32_t msec);
 
 WebSocketsServer webSocket = WebSocketsServer(81);  // Create a web socket server on port 81
 
-static const int WEBSOCKET_INVALID_NUM = 0xFF;
+const int WEBSOCKET_INVALID_NUM = 0xFF;
 uint8_t prevWebsocketNum = WEBSOCKET_INVALID_NUM;
 volatile uint8_t websocketNum = WEBSOCKET_INVALID_NUM;
 bool inMenu = false;  // true if user is browsing the menus
@@ -130,13 +130,20 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 {
     if (json == 0) return;
     if (strlen(json) <= 0) return;
-    if (websocketNum == WEBSOCKET_INVALID_NUM || ! webSocket.clientIsConnected(websocketNum))
+    //if (websocketNum == WEBSOCKET_INVALID_NUM || ! webSocket.clientIsConnected(websocketNum))
+    if (websocketNum == WEBSOCKET_INVALID_NUM)
     {
+      #ifdef DEBUG_WEBSOCKET
+        // Print reason
+        Serial.printf_P(
+            PSTR("%s[webSocket] Unable to send %zu JSON bytes: no client connected\n"),
+            TimeStamp(),
+            strlen(json)
+        );
+      #endif // DEBUG_WEBSOCKET
+
         if (savePacketForLater)
         {
-            // Print reason
-            Serial.printf_P(PSTR("%s[webSocket %u] Client is not connected\n"), TimeStamp(), websocketNum);
-
             SaveJsonForLater(json);
         } // if
         return;
@@ -144,7 +151,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
 
   #ifdef DEBUG_WEBSOCKET
     Serial.printf_P(
-        PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT'\n"),
+        PSTR("%s[webSocket %u] Sending %zu JSON bytes\n"),
         TimeStamp(),
         websocketNum,
         strlen(json)
@@ -167,12 +174,13 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     if (! result)
     {
         Serial.printf_P(
-            PSTR("%s[webSocket %u] FAILED to send %zu JSON bytes via 'webSocket.sendTXT'\n"),
+            PSTR("%s[webSocket %u] FAILED to send %zu JSON bytes\n"),
             TimeStamp(),
             websocketNum,
             strlen(json)
         );
 
+      #if 0  // Not sure if a failure should trigger a fall-back, commenting out for now
         // Switch back to the previous websocketNum (if any)
         websocketNum = prevWebsocketNum;
         prevWebsocketNum = WEBSOCKET_INVALID_NUM;
@@ -183,6 +191,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
             Serial.printf_P(PSTR("==> Falling back to webSocket %u\n"), websocketNum);
         } // if
       #endif // DEBUG_WEBSOCKET
+      #endif // 0
     } // if
 
     if (! result || duration > 100)
@@ -197,7 +206,7 @@ void SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     if (duration > 100)
     {
         Serial.printf_P(
-            PSTR("%s[webSocket %u] Sending %zu JSON bytes via 'webSocket.sendTXT' took: %lu msec; result = %S\n"),
+            PSTR("%s[webSocket %u] Sending %zu JSON bytes took: %lu msec; result = %S\n"),
             TimeStamp(),
             websocketNum,
             strlen(json),

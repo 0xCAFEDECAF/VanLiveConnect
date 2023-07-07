@@ -79,11 +79,11 @@ function updateDateTime()
 // -----
 // System
 
-document.addEventListener("visibilitychange", function()
-{
-	if (document.visibilityState === 'visible') connectToWebSocket();
-	else if (webSocket) webSocket.close("browser tab no longer active");
-});
+// document.addEventListener("visibilitychange", function()
+// {
+	// if (document.visibilityState === 'visible') connectToWebSocket();
+	// else if (webSocket) webSocket.close("browser tab no longer active");
+// });
 
 function showViewportSizes()
 {

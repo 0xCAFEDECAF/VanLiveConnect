@@ -1,5 +1,6 @@
 
 #include <ESP8266WebServer.h>
+#include <WebSocketsServer.h>
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -20,10 +21,19 @@
 
 #endif // SERVE_FROM_SPIFFS
 
+#ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+#include <TimeLib.h>
+#endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
+
 ESP8266WebServer webServer;
 
 // Defined in Esp.ino
 extern const String md5Checksum;
+
+// Defined in WebSocket.ino
+extern const int WEBSOCKET_INVALID_NUM;
+extern volatile uint8_t websocketNum;
+extern WebSocketsServer webSocket;
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -126,7 +136,7 @@ String getMd5(const String& path)
 void printHttpRequest()
 {
   #ifdef DEBUG_WEBSERVER
-    Serial.print(F("[webServer] Received request from "));
+    Serial.printf_P(PSTR("%s[webServer] Received request from "), TimeStamp());
     String ip = webServer.client().remoteIP().toString();
     Serial.print(ip);
     Serial.print(webServer.method() == HTTP_GET ? F(": GET - '") : F(": POST - '"));
@@ -168,6 +178,7 @@ bool checkETag(const String& etag)
 
                 webServer.send(304, "text/plain", F("Not Modified"));
               #ifdef DEBUG_WEBSERVER
+                Serial.printf_P(PSTR("%s"), TimeStamp());
                 Serial.print(
                     String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified\n"));
               #endif // DEBUG_WEBSERVER
@@ -188,14 +199,33 @@ bool checkETag(const String& etag)
 void HandleAndroidConnectivityCheck()
 {
     printHttpRequest();
-    //return; // TODO - keep this? Or respond to connectivity check?
 
+    // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
+    // the browser will use this network connection to load the '/MFD.html' page from, and subsequently
+    // connect via the WebSocket.
+    //if (websocketNum != WEBSOCKET_INVALID_NUM && webSocket.clientIsConnected(websocketNum)) return;
+    if (websocketNum != WEBSOCKET_INVALID_NUM) return;
+
+    // After the WebSocket connection is established, no longer respond to connectivity check. In that way,
+    // Android knows (after no longer getting responses on '/generate_204') that this Wi-Fi is not providing
+    // an internet connection and will try to re-establish internet connection via mobile data.
+    //
+    // Notes:
+    // - In Android, go to Settings --> Network & Internet --> Wi-Fi --> Wi-Fi preferences --> Advanced -->
+    //   then turn on "Switch to mobile data automatically"; see the screen shot at:
+    //   https://wmstatic.global.ssl.fastly.net/ml/7090822-f-91188da7-6fcb-4c48-9052-0b2b108e7f54.png
+    //   (TODO - check if is this really needed?)
+    // - In Android, setting "Mobile data always active" inside "Developer Options" is not necessary
+    //   (and even undesired to save battery).
+    // - The WebSocket connection will persist, even if Android switches from Wi-Fi to mobile data.
+    //
     unsigned long start = millis();
 
     webServer.send(204, "");
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("[webServer] Serving '%S' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] Serving '%S' took: %lu msec\n"),
+        TimeStamp(),
         webServer.uri().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
@@ -256,7 +286,7 @@ void HandleNotFound()
     printHttpRequest();
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), webServer.uri().c_str());
+    Serial.printf_P(PSTR("%s[webServer] File '%s' not found\n"), TimeStamp(), webServer.uri().c_str());
   #endif // DEBUG_WEBSERVER
 
     if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
@@ -311,7 +341,8 @@ void ServeFont(PGM_P content, unsigned int content_len)
     webServer.send_P(200, fontWoffStr, content, content_len);
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("[webServer] Serving font '%S' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] Serving font '%S' took: %lu msec\n"),
+        TimeStamp(),
         webServer.uri().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
@@ -339,7 +370,8 @@ void ServeFontFromFile(const char* path)
     VanBusRx.Enable();
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("[webServer] Serving font '%s' from file system took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] Serving font '%s' from file system took: %lu msec\n"),
+        TimeStamp(),
         webServer.uri().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
@@ -351,6 +383,9 @@ void ServeFontFromFile(const char* path)
 void ServeDocument(PGM_P mimeType, PGM_P content)
 {
     printHttpRequest();
+
+    //if (webServer.method() != HTTP_GET) return;
+
     unsigned long start = millis();
     bool eTagMatches = checkETag(md5Checksum);
     if (! eTagMatches)
@@ -360,7 +395,8 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("[webServer] %S '%s' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] %S '%s' took: %lu msec\n"),
+        TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         webServer.uri().c_str(),
         millis() - start);
@@ -385,6 +421,8 @@ const char* getContentType(const String& path)
 // Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
 void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 {
+    //if (webServer.method() != HTTP_GET) return;
+
     String path(urlPath == 0 ? webServer.uri() : urlPath);
     String fsPath = path;
     String md5 = getMd5(path);
@@ -394,13 +432,7 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 
         // Try the ".gz" file
         md5 = getMd5(path + ".gz");
-        if (md5.length() == 0)
-        {
-          // #ifdef DEBUG_WEBSERVER
-            // Serial.printf_P(PSTR("[webServer] File '%s' not found\n"), path.c_str());
-          // #endif // DEBUG_WEBSERVER
-            return HandleNotFound();
-        } // if
+        if (md5.length() == 0) return HandleNotFound();
 
         fsPath += ".gz";
     } // if
@@ -424,7 +456,8 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("[webServer] %S '%S' from file system took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] %S '%S' from file system took: %lu msec\n"),
+        TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         path.c_str(),
         millis() - start);
