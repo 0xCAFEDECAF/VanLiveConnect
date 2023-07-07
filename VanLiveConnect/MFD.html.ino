@@ -136,7 +136,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div gid="parking_light" class="iconSmall led ledOff" style="left:120px; top:280px; color:rgb(119, 217, 64);">
 					<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:-3px;"></div>
-					<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:15px;"></div>
+					<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:16px;"></div>
 				</div>
 
 				<div gid="dipped_beam" class="iconSmall led ledOff" style="left:120px; top:280px;">
@@ -561,7 +561,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div gid="parking_light" class="iconSmall led ledOff" style="left:300px; top:400px; color:rgb(119, 217, 64);">
 						<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:-3px;"></div>
-						<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:15px;"></div>
+						<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:16px;"></div>
 					</div>
 
 					<div gid="dipped_beam" class="iconSmall led ledOff" style="left:300px; top:400px;">
