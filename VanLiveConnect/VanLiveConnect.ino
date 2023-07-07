@@ -117,19 +117,25 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
-  #if defined VAN_RX_IFS_DEBUGGING
-    #define VAN_PACKET_QUEUE_SIZE 50
-  #elif defined VAN_RX_ISR_DEBUGGING
-    #define VAN_PACKET_QUEUE_SIZE 60
-  #else
-    #if WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
-      // Async TCP mode causes a lot less hiccups, so we can do with a much smaller RX queue
-      #define VAN_PACKET_QUEUE_SIZE 60
-    #else
-      // Sync TCP mode can cause hiccups of several seconds, even a value of 150 is not enough... But more
-      // than this uses too much RAM :-(
+  #define VAN_PACKET_QUEUE_SIZE 60
+
+  #if VAN_BUS_VERSION_INT < 000003003
+    #if WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
+
+      // Old versions of VanBus library do not support drop policy setting, so need a larger RX queue when
+      // using WebSockets "synchronous TCP" mode.
+      // Note that synchronous TCP mode can cause hiccups of several seconds, even a value of 150 is not enough...
+      // But more than this uses too much RAM :-(
       #define VAN_PACKET_QUEUE_SIZE 150
     #endif
+  #else
+
+    // When queue fills above 80%, start dropping non-essential packets
+    VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsImportantPacket);
+  #endif
+
+  #if defined VAN_RX_IFS_DEBUGGING
+    #define VAN_PACKET_QUEUE_SIZE 50
   #endif
 
     #define TX_PIN D3  // GPIO pin connected to VAN bus transceiver input
@@ -154,10 +160,6 @@ void SetupVanReceiver()
       #endif // VAN_BUS_VERSION
     } // if
 
-  #if VAN_BUS_VERSION_INT >= 000003003
-    // When queue fills above 80%, start dropping non-essential packets
-    VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsImportantPacket);
-  #endif
 
   #if defined VAN_RX_ISR_DEBUGGING || defined VAN_RX_IFS_DEBUGGING
     Serial.printf_P(PSTR("==> VanBusRx: DEBUGGING MODE IS ON!\n"));
