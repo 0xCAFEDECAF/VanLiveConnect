@@ -197,7 +197,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
      but in practice it turns out this works best.
 >  * The clamping circuit (D1, D2, R1) seems to (somehow) help in reducing the amount of bit errors
      (packet CRC errors).
-   
+
 3. The simplest schematic is not to use a transceiver at all, but connect the VAN DATA line to GrouND using
    two 4.7 kOhm resistors. Connect the GPIO pin of your ESP8266 board to the 1:2 [voltage divider] that is thus
    formed by the two resistors. Results may vary.
@@ -263,7 +263,7 @@ For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
 * this [explanation from Adafruit](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager)
 
-> 👉 Note: for best performance and stability, make sure to copy all the patched files inside and under the 
+> 👉 Note: for best performance and stability, make sure to copy all the patched files inside and under the
 [VanLiveConnect/Patches/ directory](https://github.com/0xCAFEDECAF/VanLiveConnect/tree/main/VanLiveConnect/Patches) to
 the indicated directories in your system. In my experience, these patched files significantly improve the stability
 of the WebSocket (TCP/IP over Wi-Fi) communication.
