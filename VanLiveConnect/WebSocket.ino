@@ -407,7 +407,7 @@ void WebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
                     // Just keep on serving the last one that connected
 
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR(" --> ignoring (listening only to webSocket %u)"), websocketNum);
+                    Serial.printf_P(PSTR(" --> ignoring (listening only to webSocket %u)\n"), websocketNum);
                   #endif // DEBUG_WEBSOCKET
 
                     break;

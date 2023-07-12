@@ -74,7 +74,7 @@ bool SetTime(uint32_t epoch, uint32_t msec)
     _millis_at_setTime = millis();
 
     msec += 30;  // Typical latency
-    if (msec > 1000)
+    if (msec >= 1000)
     {
         epoch++;
         msec -= 1000;
