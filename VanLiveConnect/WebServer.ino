@@ -203,8 +203,13 @@ void HandleAndroidConnectivityCheck()
     // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
     // the browser will use this network connection to load the '/MFD.html' page from, and subsequently
     // connect via the WebSocket.
-    //if (websocketNum != WEBSOCKET_INVALID_NUM && webSocket.clientIsConnected(websocketNum)) return;
-    if (websocketNum != WEBSOCKET_INVALID_NUM) return;
+    //if (websocketNum != WEBSOCKET_INVALID_NUM && webSocket.clientIsConnected(websocketNum))
+    if (websocketNum != WEBSOCKET_INVALID_NUM)
+    {
+        IPAddress webSocketClientIp = webSocket.remoteIP(websocketNum);
+        IPAddress clientIp = webServer.client().remoteIP();
+        if (webSocketClientIp == clientIp) return;
+    } // if
 
     // After the WebSocket connection is established, no longer respond to connectivity check. In that way,
     // Android knows (after no longer getting responses on '/generate_204') that this Wi-Fi is not providing
