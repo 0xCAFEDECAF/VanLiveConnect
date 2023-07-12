@@ -5065,7 +5065,7 @@ function handleItemChange(item, value)
 				// Remove invalid characters
 				satnavPersonalDirectoryEntries = satnavPersonalDirectoryEntries.map(function(entry)
 				{
-					entry = entry.replace(/&.*?;/g, "");
+					entry = entry.replace(/&#x.*?;/g, "");
 					entry = entry.replace(/\?/g, "");
 					entry = entry.trim();
 					return entry;
@@ -5083,7 +5083,7 @@ function handleItemChange(item, value)
 				// Remove invalid characters
 				satnavProfessionalDirectoryEntries = satnavProfessionalDirectoryEntries.map(function(entry)
 				{
-					entry = entry.replace(/&.*?;/g, "");
+					entry = entry.replace(/&#x.*?;/g, "");
 					entry = entry.replace(/\?/g, "");
 					entry = entry.trim();
 					return entry;

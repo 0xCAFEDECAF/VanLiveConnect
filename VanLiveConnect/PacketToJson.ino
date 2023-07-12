@@ -3893,6 +3893,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // Copy the current string buffer into the array of Strings
         records[i] = buffer;
 
+        records[i].replace(" ", "&nbsp;");
+
         // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
         records[i].replace("#", "&shy;");
 
