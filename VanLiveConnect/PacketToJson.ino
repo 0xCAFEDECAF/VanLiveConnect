@@ -3893,19 +3893,22 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         // Copy the current string buffer into the array of Strings
         records[i] = buffer;
 
-        records[i].replace(" ", "&nbsp;");
-
         // Fix a bug in the original MFD: '#' is used to indicate a "soft hyphen"
         records[i].replace("#", "&shy;");
 
-        // The last character can be:
-        // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
-        //   read. This is shown as a "?".
-        // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
-        //   different country/region. This is shown on the original MFD as an circle with a bar "(-)"; here we
-        //   use a circle with a cross "(X)".
-        records[i].replace("\x80", "?");
-        records[i].replace("\x81", "&#x24E7;");
+        if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST)
+        {
+            records[i].replace(" ", "&nbsp;");
+
+            // The last character can be:
+            // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
+            //   read. This is shown as a "?".
+            // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
+            //   different country/region. This is shown on the original MFD as an circle with a bar "(-)"; here we
+            //   use a circle with a cross "(X)".
+            records[i].replace("\x80", "?");
+            records[i].replace("\x81", "&#x24E7;");
+        } // if
 
         // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
         AsciiToHtml(records[i]);
