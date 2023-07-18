@@ -7,7 +7,7 @@ the VAN bus.</p>
 
 ## 📝 Table of Contents
 
-- [Screen Shots](#screenshots)
+- [Screenshots](#screenshots)
 - [Description](#description)
 - [Technical Details](#details)
 - [Schematics](#schematics)
@@ -19,7 +19,7 @@ the VAN bus.</p>
 - [References](#extref)
 - [License](#license)
 
-## 📟 Screen Shots<a name = "screenshots"></a>
+## 📟 Screenshots<a name = "screenshots"></a>
 
 Don't bore us, give us the screenshots!
 
