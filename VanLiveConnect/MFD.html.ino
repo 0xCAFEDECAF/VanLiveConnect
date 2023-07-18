@@ -230,17 +230,17 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div gid="tuner_memory" class="dseg7" style="font-size:80px; left:40px; top:40px;">-</div>
 
-					<div id="fm_band" class="led ledOn" style="left:110px; top:40px; width:80px;">FM</div>
-					<div id="am_band" class="led ledOff" style="left:200px; top:40px; width:160px;">AM/LW</div>
-					<div id="fm_band_1" class="led ledOn" style="left:110px; top:83px; width:60px;">1</div>
-					<div id="fm_band_2" class="led ledOff" style="left:180px; top:83px; width:60px;">2</div>
-					<div id="fm_band_ast" class="led ledOff" style="left:250px; top:83px; width:110px;">AST</div>
+					<div id="fm_band" class="led ledOn" style="left:110px; top:35px; width:80px;">FM</div>
+					<div id="am_band" class="led ledOff" style="left:200px; top:35px; width:160px;">AM/LW</div>
+					<div id="fm_band_1" class="led ledOn" style="left:110px; top:78px; width:60px;">1</div>
+					<div id="fm_band_2" class="led ledOff" style="left:180px; top:78px; width:60px;">2</div>
+					<div id="fm_band_ast" class="led ledOff" style="left:250px; top:78px; width:110px;">AST</div>
 
 					<div gid="frequency_data_small" style="display:block;">
 						<div gid="frequency" class="dseg7" style="font-size:80px; left:385px; top:40px; width:260px;"></div>
 						<div gid="frequency_h" class="dseg7" style="font-size:50px; left:630px; top:40px; width:60px;"></div>
-						<div gid="frequency_khz" class="led ledOff" style="left:700px; top:40px; width:120px;">KHz</div>
-						<div gid="frequency_mhz" class="led ledOff" style="left:700px; top:83px; width:120px;">MHz</div>
+						<div gid="frequency_khz" class="led ledOff" style="left:700px; top:35px; width:120px;">KHz</div>
+						<div gid="frequency_mhz" class="led ledOff" style="left:700px; top:78px; width:120px;">MHz</div>
 					</div>
 
 					<div gid="frequency_data_large" style="display:none;">
@@ -259,13 +259,13 @@ char mfd_html[] PROGMEM = R"=====(
 					<div gid="fm_tuner_data" style="display:block;">
 						<div id="rds_text" gid="rds_text" class="dseg14" style="font-size:120px; left:10px; top:150px; width:815px; text-align:right;"></div>
 
-						<div class="tag" style="left:20px; top:365px; width:150px;">PTY</div>
+						<div class="tag" style="left:20px; top:368px; width:150px;">PTY</div>
 						<div id="pty_standby_mode" class="led ledOn" style="display:none; font-size:53px; left:20px; top:360px; width:150px; height: 55px;">PTY</div>
 						<div id="pty_selection_menu" class="led ledOn" style="display:none; font-size:53px; left:20px; top:360px; width:150px; height: 55px;">SEL</div>
 						<div id="pty_16" class="dots" style="left:190px; top:353px; width:750px;"></div>
 						<div id="selected_pty_16" class="dots" style="display:none; left:190px; top:357px; width:750px;"></div>
 
-						<div class="tag" style="left:20px; top:425px; width:150px;">PI</div>
+						<div class="tag" style="left:20px; top:428px; width:150px;">PI</div>
 						<div gid="pi_country" class="dots" style="left:190px; top:413px; width:150px;">--</div>
 
 						<div id="regional" class="led ledOn" style="left:510px; top:490px; width:140px;">REG</div>
@@ -277,7 +277,7 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>
 
-					<div class="tag" style="left:690px; top:425px; width:160px;">Signal</div>
+					<div class="tag" style="left:690px; top:428px; width:160px;">Signal</div>
 					<div id="signal_strength" class="dots" style=" left:870px; top:413px;">--</div>
 
 				</div>	<!-- "tuner" -->
@@ -286,13 +286,13 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<div id="media" style="display:none;">
 
-					<div class="tag" style="left:50px; top:60px; width:200px;">Source</div>
+					<div class="tag" style="left:50px; top:63px; width:200px;">Source</div>
 
 					<div id="tape" style="display:none;">
 
 						<div class="dots" style="left:270px; top:48px; width:450px;">Tape</div>
 
-						<div class="tag" style="left:50px; top:218px; width:200px;">Side</div>
+						<div class="tag" style="left:50px; top:221px; width:200px;">Side</div>
 						<div gid="tape_side" class="dseg7" style="font-size:123px; left:280px; top:145px; width:140px;">-</div>
 
 						<div gid="tape_status_stopped" class="icon mediaStatus">
@@ -397,7 +397,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="tag" style="left:65px; top:330px; width:235px;">CD</div>
 						<div id="cd_changer_selected_disc" class="dots" style="display:none; left:300px; top:315px; width:90px; text-align:right;">-</div>
 						<div id="cd_changer_current_disc" gid="cd_changer_current_disc" class="dots" style="left:300px; top:315px; width:90px; text-align:right;">-</div>
-						<div class="tag" style="left:365px; top:327px; width:200px;">Track</div>
+						<div class="tag" style="left:365px; top:330px; width:200px;">Track</div>
 						<div gid="cd_changer_current_track" class="dots" style="left:565px; top:315px; width:90px; text-align:right;">--</div>
 						<div class="tag" style="left:640px; top:320px; width:50px;">/</div>
 						<div gid="cd_changer_total_tracks" class="dots" style="left:685px; top:315px; width:90px; text-align:right;">--</div>
@@ -2794,7 +2794,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<div style="left:345px; top:560px; width:220px; position:absolute; height:80px;">
 			<div gid="distance_to_empty" style="width:150px; font-size:55px; text-align:right;">---</div>
-			<div class="icon iconSmall" style="top:10px; left:145px;">
+			<div class="icon iconSmall" style="top:8px; left:145px;">
 				<div class="fas fa-gas-pump"></div>
 			</div>
 		</div>
