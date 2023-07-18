@@ -27,16 +27,12 @@
 
 #ifdef WIFI_AP_MODE // Wi-Fi access point mode
   #define WIFI_SSID "PSA display AP"
-
-  // Set to (1) to have a hidden SSID
-  #define WIFI_SSID_HIDDEN (0)
+  #define WIFI_SSID_HIDDEN (0)  // Set to (1) to have a hidden SSID
 
   // Define to set password on access point
   //
   // Notes:
-  //
   // - Many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
-  //
   // - ESP requires more memory when WIFI_PASSWORD is defined, so it may be necessary to undefine this when
   //   setting one or more debug #defines.
   //

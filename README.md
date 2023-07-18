@@ -98,7 +98,7 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 * The SSID of the Wi-Fi access point is: "PSA display AP" (with the spaces, without the quotes)
 * No password is needed.
 
-Of course you can modify the SSID and choose your own password by editing the [`Config.h`](VanLiveConnect/Config.h)
+Of course you can modify the SSID and choose your own password by editing the [`Config.h`](VanLiveConnect/Config.h#L29)
 file.
 
 ## 🕹️ MFD functions supported
@@ -171,7 +171,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
     * Using +12 Volt permanent line. To prevent battery drain, the ESP board will go to sleep after 5 minutes
       ([configurable in `Config.h`](VanLiveConnect/Config.h#L90)). This setup requires
-      [GPIO line D1](VanLiveConnect/Config.h#L133) to be connected, so that the ESP board wakes up as soon as any
+      [GPIO line D1](VanLiveConnect/Config.h#L124) to be connected, so that the ESP board wakes up as soon as any
       activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
@@ -325,7 +325,7 @@ To add the route:
   - Untick 'Use default route'
   - Tap 'Excluded Networks'
   - Enter `192.168.244.0/24` (note: the `"192.168.244."` part must match with the IP address as specified in
-    [`Config.h`](VanLiveConnect/Config.h#L49)).
+    [`Config.h`](VanLiveConnect/Config.h#L45)).
   - Tap 'OK'
 
 ### Automating your smartphone or tablet
