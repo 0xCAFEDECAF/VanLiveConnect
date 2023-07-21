@@ -79,12 +79,6 @@ function updateDateTime()
 // -----
 // System
 
-// document.addEventListener("visibilitychange", function()
-// {
-	// if (document.visibilityState === 'visible') connectToWebSocket();
-	// else if (webSocket) webSocket.close("browser tab no longer active");
-// });
-
 function showViewportSizes()
 {
 	$("#viewport_width").text($(window).width());  // width of browser viewport
@@ -1028,15 +1022,15 @@ function gotoMenu(menu)
 function gotoTopLevelMenu(menu)
 {
 	hidePopup();
-	menuStack = [];
 	if (menu === undefined) menu = "main_menu";
 
 	// Report back to server (ESP) that user is browsing the menus
 	if (webSocket !== undefined) webSocket.send("in_menu:YES");
 
 	// This is the screen we want to go back to when pressing "Esc" on the remote control inside the top level menu
-	currentMenu = currentLargeScreenId;
+	currentMenu = inMenu() ? menuStack[0] : currentLargeScreenId;
 
+	menuStack = [];
 	gotoMenu(menu);
 }
 
@@ -1708,7 +1702,7 @@ function showAudioSettingsPopup(button)
 		highlightAudioSetting(! isAudioMenuVisible);
 	} // if
 
-	// (Re-)start the popup visibility timer.
+	// (Re-)start the popup visibility timer
 	if (isAudioMenuVisible) hideAudioSettingsPopupAfter(7500);
 }
 
@@ -1720,7 +1714,7 @@ function showTunerPresetsPopup()
 	$("#tuner_presets_popup").show();
 	NotifyServerAboutPopup("tuner_presets_popup", 8500);
 
-	// Hide the popup after 9 seconds
+	// Hide the popup after 8.5 seconds
 	clearTimeout(handleItemChange.tunerPresetsPopupTimer);
 	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, 8500);
 }
@@ -3518,6 +3512,20 @@ function handleItemChange(item, value)
 
 			// Ignore if audio menu is visible (the head unit ignores the button press in that case)
 			if (isAudioMenuVisible) break;
+
+			showTunerPresetsPopup();
+		} // case
+		break;
+
+		case "head_unit_stalk_wheel":
+		{
+			// Has anything changed?
+			if (value === handleItemChange.headUnitStalkWheel) break;
+			handleItemChange.headUnitStalkWheel = value;
+
+			if (value === "0") break;
+			if ($("#audio_source").text() !== "TUNER") break;
+			if (inMenu()) break;
 
 			showTunerPresetsPopup();
 		} // case
