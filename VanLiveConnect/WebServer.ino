@@ -32,8 +32,9 @@ extern const String md5Checksum;
 
 // Defined in WebSocket.ino
 extern const int WEBSOCKET_INVALID_NUM;
-extern volatile uint8_t websocketNum;
+extern uint8_t websocketNum;
 extern WebSocketsServer webSocket;
+extern unsigned long lastWebSocketCommunication;
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -200,20 +201,9 @@ void HandleAndroidConnectivityCheck()
 {
     printHttpRequest();
 
-    // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
-    // the browser will use this network connection to load the '/MFD.html' page from, and subsequently
-    // connect via the WebSocket.
-    //if (websocketNum != WEBSOCKET_INVALID_NUM && webSocket.clientIsConnected(websocketNum))
-    if (websocketNum != WEBSOCKET_INVALID_NUM)
-    {
-        IPAddress webSocketClientIp = webSocket.remoteIP(websocketNum);
-        IPAddress clientIp = webServer.client().remoteIP();
-        if (webSocketClientIp == clientIp) return;
-    } // if
-
     // After the WebSocket connection is established, no longer respond to connectivity check. In that way,
     // Android knows (after no longer getting responses on '/generate_204') that this Wi-Fi is not providing
-    // an internet connection and will try to re-establish internet connection via mobile data.
+    // an Internet connection and will try to re-establish Internet connection via mobile data.
     //
     // Notes:
     // - In Android, go to Settings --> Network & Internet --> Wi-Fi --> Wi-Fi preferences --> Advanced -->
@@ -223,7 +213,21 @@ void HandleAndroidConnectivityCheck()
     // - In Android, setting "Mobile data always active" inside "Developer Options" is not necessary
     //   (and even undesired to save battery).
     // - The WebSocket connection will persist, even if Android switches from Wi-Fi to mobile data.
-    //
+
+    if (websocketNum != WEBSOCKET_INVALID_NUM
+        && millis() - lastWebSocketCommunication < 10000  // Arithmetic has safe roll-over
+        //&& webSocket.clientIsConnected(websocketNum)
+       )
+    {
+        IPAddress webSocketClientIp = webSocket.remoteIP(websocketNum);
+        IPAddress clientIp = webServer.client().remoteIP();
+        if (webSocketClientIp == clientIp) return;
+    } // if
+
+    // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
+    // the browser will use this network connection to load the '/MFD.html' page from, and subsequently
+    // connect via the WebSocket.
+
     unsigned long start = millis();
 
     webServer.send(204, "");

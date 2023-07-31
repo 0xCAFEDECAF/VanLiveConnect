@@ -48,7 +48,7 @@ void SetupWebServer();
 void LoopWebServer();
 
 // Defined in WebSocket.ino
-void SendJsonOnWebSocket(const char* json, bool savePacketForLater = false);
+bool SendJsonOnWebSocket(const char* json, bool savePacketForLater = false);
 void SetupWebSocket();
 void LoopWebSocket();
 
@@ -126,6 +126,7 @@ void SetupVanReceiver()
       // using WebSockets "synchronous TCP" mode.
       // Note that synchronous TCP mode can cause hiccups of several seconds, even a value of 150 is not enough...
       // But more than this uses too much RAM :-(
+      #undef VAN_PACKET_QUEUE_SIZE
       #define VAN_PACKET_QUEUE_SIZE 150
     #endif
   #else
@@ -135,6 +136,7 @@ void SetupVanReceiver()
   #endif
 
   #if defined VAN_RX_IFS_DEBUGGING
+    #undef VAN_PACKET_QUEUE_SIZE
     #define VAN_PACKET_QUEUE_SIZE 50
   #endif
 
