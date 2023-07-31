@@ -305,7 +305,7 @@ window.onbeforeunload = function() { websocketPreventConnect = true; };
 
 function connectToWebSocket()
 {
-	if (websocketPreventConnect || document.hidden) return;
+	if (websocketPreventConnect) return;
 
 	var wsUrl = "ws://" + webSocketServerHost + ":81/";
 	console.log("// Connecting to WebSocket '" + wsUrl + "'");
@@ -508,12 +508,12 @@ function initTripComputerPopup()
 
 	// No tab selected
 
-	var mapping =
+	var map =
 	{
 		"TRIP_INFO_1": "trip_computer_popup_trip_1",
 		"TRIP_INFO_2": "trip_computer_popup_trip_2"
 	};
-	var selectedId = mapping[localStorage.smallScreen] || "trip_computer_popup_fuel_data";
+	var selectedId = map[localStorage.smallScreen] || "trip_computer_popup_fuel_data";
 	$("#" + selectedId).show();
 	$("#" + selectedId + "_button").addClass("tabActive");
 }
@@ -768,7 +768,7 @@ function selectDefaultScreen(audioSource)
 	menuStack = [];
 	currentMenu = undefined;
 
-	var mapping =
+	var map =
 	{
 		"TUNER": "tuner",
 		"TAPE": "tape",
@@ -780,14 +780,14 @@ function selectDefaultScreen(audioSource)
 	var selectedScreenId = "";
 
 	// Explicitly passed a value for 'audioSource'?
-	if (audioSource !== undefined) selectedScreenId = mapping[audioSource] || "";
+	if (audioSource !== undefined) selectedScreenId = map[audioSource] || "";
 
 	if (! selectedScreenId && satnavMode === "IN_GUIDANCE_MODE") selectedScreenId = "satnav_guidance";
 
 	if (! selectedScreenId)
 	{
 		audioSource = $("#audio_source").text();
-		selectedScreenId = mapping[audioSource] || "";
+		selectedScreenId = map[audioSource] || "";
 	} // if
 
 	// Show instrument screen if engine is running
@@ -905,14 +905,14 @@ function changeToTripCounter(id)
 // Only for debugging
 function tripComputerShortStr(tripComputerStr)
 {
-	var mapping =
+	var map =
 	{
 		"TRIP_INFO_1": "TR1",
 		"TRIP_INFO_2": "TR2",
 		"GPS_INFO": "GPS",
 		"FUEL_CONSUMPTION": "FUE"
 	};
-	return mapping[tripComputerStr] || "??";
+	return map[tripComputerStr] || "??";
 }
 
 // Change to the correct screen and trip counter, given the reported value of "trip_computer_screen_tab"
@@ -1724,6 +1724,7 @@ function showTunerPresetsPopup()
 
 var dashlightDimmed = false;
 var headlightStatus = "";
+var chosenColorPalette = localStorage.colorPalette;
 
 function setDippedBeamIcon()
 {
@@ -1733,19 +1734,96 @@ function setDippedBeamIcon()
 	$('[gid="parking_light"]').toggle(! dippedBeam && dashlightDimmed);
 }
 
-function setColorTheme(theme)
+function cycleColorTheme()
 {
-	$(":root").css("--main-color", theme === "set_light_theme" ? "rgb(39,27,66)" : "hsl(215,42%,91%)");
-	$(":root").css("--background-color", theme === "set_light_theme" ? "hsl(240,6%,91%)" : "rgb(8,7,19)");
-	$(":root").css("--gradient-high-color", theme === "set_light_theme" ? "hsl(194,83%,40%)" : "hsl(194,83%,40%)");
-	$(":root").css("--led-off-color", theme === "set_light_theme" ? "rgb(189,189,189)" : "rgb(25,31,40)");
-	$(":root").css("--notification-color", theme === "set_light_theme" ? "rgba(205,209,213,0.95)" : "rgba(15,19,23,0.95)");
-	$(":root").css("--highlight-color", theme === "set_light_theme" ? "rgba(84,101,125,0.4)" : "rgba(223,231,242,0.4)");
-	$(":root").css("--selected-element-color", theme === "set_light_theme" ? "rgb(207,205,217)" : "rgb(41,55,74)");
-	$(":root").css("--disabled-element-color", theme === "set_light_theme" ? "rgb(172,183,202)" : "rgb(67,82,105)");
+	chosenColorPalette =
+		chosenColorPalette === "orange_palette" ? "gold_palette"
+		: chosenColorPalette === "gold_palette" ? "blue_palette"
+		: "orange_palette";
+	setColorTheme(getTickedId("set_screen_brightness"), chosenColorPalette);
+	setDimLevel(headlightStatus);
+}
 
-	// Different background image (if available) for light theme
-	$("body").css("background-image", theme === "set_light_theme" ? "url('background_light.jpg')" : "url('background.jpg')");
+function setColorTheme(theme, palette)
+{
+	var colorPalettes = {
+		"gold_palette": {
+			"set_light_theme": {
+				"--main-color": "hsl(38,100%,30%)",
+				"--background-color": "hsl(35,100%,85%)",
+				"--gradient-high-color": "hsl(39,100%,50%)",
+				"--led-off-color": "rgb(189,189,189)",
+				"--notification-color": "rgba(234,216,175,0.95)",
+				"--highlight-color": "rgba(193,155,133,0.4)",
+				"--selected-element-color": "rgb(225,201,180)",
+				"--disabled-element-color": "hsl(38,86%,76%)"
+			},
+			"set_dark_theme": {
+				"--main-color": "hsl(38,100%,91%)",
+				"--background-color": "hsl(39,100%,12%)",
+				"--gradient-high-color": "hsl(39,100%,50%)",
+				"--led-off-color": "rgb(87,56,0)",
+				"--notification-color": "rgba(89,58,0,0.95)",
+				"--highlight-color": "rgba(255,246,229,0.4)",
+				"--selected-element-color": "rgb(123,80,0)",
+				"--disabled-element-color": "hsl(38,96%,30%)"
+			}
+		},
+		"orange_palette": {
+			"set_light_theme": {
+				"--main-color": "hsl(25,80%,30%)",
+				"--background-color": "hsl(25,100%,91%)",
+				"--gradient-high-color": "hsl(25,100%,60%)",
+				"--led-off-color": "rgb(189,189,189)",
+				"--notification-color": "rgba(242,209,192,0.95)",
+				"--highlight-color": "rgba(193,155,133,0.4)",
+				"--selected-element-color": "rgb(225,201,180)",
+				"--disabled-element-color": "hsl(20,86%,76%)"
+			},
+			"set_dark_theme": {
+				"--main-color": "hsl(25,80%,85%)",
+				"--background-color": "hsl(20,82%,14%)",
+				"--gradient-high-color": "hsl(25,100%,60%)",
+				"--led-off-color": "rgb(62,31,9)",
+				"--notification-color": "rgba(115,38,0,0.95)",
+				"--highlight-color": "rgba(255,206,154,0.4)",
+				"--selected-element-color": "rgb(128,66,0)",
+				"--disabled-element-color": "hsl(25,86%,42%)"
+			}
+		},
+		"blue_palette": {
+			"set_light_theme": {
+				"--main-color": "rgb(39,27,66)",
+				"--background-color": "hsl(240,6%,91%)",
+				"--gradient-high-color": "hsl(194,83%,40%)",
+				"--led-off-color": "rgb(189,189,189)",
+				"--notification-color": "rgba(205,209,213,0.95)",
+				"--highlight-color": "rgba(84,101,125,0.4)",
+				"--selected-element-color": "rgb(207,205,217)",
+				"--disabled-element-color": "rgb(172,183,202)"
+			},
+			"set_dark_theme": {
+				"--main-color": "hsl(215,42%,91%)",
+				"--background-color": "rgb(8,7,19)",
+				"--gradient-high-color": "hsl(194,83%,40%)",
+				"--led-off-color": "rgb(25,31,40)",
+				"--notification-color": "rgba(15,19,23,0.95)",
+				"--highlight-color": "rgba(223,231,242,0.4)",
+				"--selected-element-color": "rgb(41,55,74)",
+				"--disabled-element-color": "rgb(67,82,105)"
+			}
+		}
+	}
+
+	if (! theme) theme = "set_dark_theme";
+	if (! palette) palette = "blue_palette";
+	var selectedPalette = colorPalettes[palette][theme];
+	for (const key in selectedPalette) $(":root").css(key, selectedPalette[key]);
+
+	var bkImgNameThemeExtenders = { "set_light_theme": "_light", "set_dark_theme": "" }
+	var bkImgNamePaletteExtenders = { "gold_palette": "_gold", "orange_palette": "_orange", "blue_palette": "" }
+	var bkImgFileName = "background" + bkImgNamePaletteExtenders[palette] + bkImgNameThemeExtenders[theme] + ".jpg";
+	$("body").css("background-image", "url('" + bkImgFileName + "')");
 
 	setDimLevel(headlightStatus, theme);  // Will adjust main color (dark theme) or background color (light theme)
 }
@@ -1753,7 +1831,7 @@ function setColorTheme(theme)
 function colorThemeTickSet()
 {
 	toggleTick();
-	setColorTheme(getTickedId("set_screen_brightness"));
+	setColorTheme(getTickedId("set_screen_brightness"), chosenColorPalette);
 }
 
 function colorThemeSelectTickedButton()
@@ -1778,12 +1856,37 @@ function setLuminosity(luminosity, theme)
 
 	if (theme === "set_light_theme")
 	{
-		$(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
+		if (chosenColorPalette === "gold_palette")
+		{
+			$(":root").css("--background-color", "hsl(35,100%," + luminosity + "%)");
+		}
+		else if (chosenColorPalette === "orange_palette")
+		{
+			$(":root").css("--background-color", "hsl(25,72%," + luminosity + "%)");
+		}
+		else
+		{
+			$(":root").css("--background-color", "hsl(240,6%," + luminosity + "%)");
+		} // if
 	}
 	else
 	{
-		$(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
-		$(":root").css("--gradient-high-color", "hsl(194,83%," + ((luminosity - 63) / 2 + 26) + "%)");
+		if (chosenColorPalette === "gold_palette")
+		{
+			$(":root").css("--main-color", "hsl(38,100%," + luminosity + "%)");
+			$(":root").css("--gradient-high-color", "hsl(39,100%," + ((luminosity - 63) / 2 + 36) + "%)");
+		}
+		else if (chosenColorPalette === "orange_palette")
+		{
+			//$(":root").css("--main-color", "hsl(19,72%," + luminosity + "%)");
+			$(":root").css("--main-color", "hsl(25,80%," + (luminosity - 6) + "%)");
+			$(":root").css("--gradient-high-color", "hsl(25,100%," + ((luminosity - 63) / 2 + 46) + "%)");
+		}
+		else
+		{
+			$(":root").css("--main-color", "hsl(215,42%," + luminosity + "%)");
+			$(":root").css("--gradient-high-color", "hsl(194,83%," + ((luminosity - 63) / 2 + 26) + "%)");
+		} // if
 	} // if
 
 	return luminosity;
@@ -1830,7 +1933,9 @@ function setBrightnessEscape()
 {
 	// Go back to saved settings
 	initDimLevel();
-	setColorTheme(localStorage.colorTheme);
+	setColorTheme(localStorage.colorTheme, localStorage.colorPalette);
+	chosenColorPalette = localStorage.colorPalette;
+	setDimLevel(headlightStatus);
 
 	upMenu();
 }
@@ -1838,6 +1943,7 @@ function setBrightnessEscape()
 function setBrightnessValidate()
 {
 	localStorage.colorTheme = getTickedId("set_screen_brightness");
+	localStorage.colorPalette = chosenColorPalette;
 	localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
 	localStorage.dimLevel = $("#display_brightness_level").text();
 
@@ -5597,6 +5703,12 @@ function handleItemChange(item, value)
 			}
 			else if (button === "MODE_BUTTON")
 			{
+				if (currentLargeScreenId === "set_screen_brightness")
+				{
+					cycleColorTheme();  // "MODE" button cycles color palette (blue, orange, ...)
+					break;
+				} // if
+
 				if (inMenu()) break;  // Ignore when user is browsing the menus
 
 				nextLargeScreen();
@@ -5689,15 +5801,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Configure display<br />");
-			$(id + " .button:eq(0)").html("Set brightness");
+			$(id + " .button:eq(0)").html("Set color and brightness");
 			$(id + " .button:eq(1)").html("Set date and time");
 			$(id + " .button:eq(2)").html("Select a language " + languageSelections);
 			$(id + " .button:eq(3)").html("Set format and units");
 
-			$("#set_screen_brightness .menuTitleLine").html("Set brightness<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Set color and brightness<br />");
 			$("#set_dark_theme_tag").html("Dark theme");
 			$("#set_light_theme_tag").html("Light theme");
 			$("#set_screen_brightness div:eq(2)").html("Brightness");
+			$("#set_screen_brightness i:eq(0)").html("&rarr; Use MOD-button to cycle color palette")
 
 			$("#set_date_time .menuTitleLine").html("Set date and time<br />");
 			$("#set_language .menuTitleLine").html("Select a language<br />");
@@ -5874,15 +5987,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Configuration afficheur<br />");
-			$(id + " .button:eq(0)").html("R&eacute;glage luminosit&eacute;");
+			$(id + " .button:eq(0)").html("R&eacute;glage luminosit&eacute; et couleur");
 			$(id + " .button:eq(1)").html("R&eacute;glage de date et heure");
 			$(id + " .button:eq(2)").html("Choix de la langue " + languageSelections);
 			$(id + " .button:eq(3)").html("R&eacute;glage des formats et unit&eacute;s");
 
-			$("#set_screen_brightness .menuTitleLine").html("R&eacute;glage luminosit&eacute;<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Luminosit&eacute; et couleur<br />");
 			$("#set_dark_theme_tag").html("Th&egrave;me fonc&eacute;");
 			$("#set_light_theme_tag").html("Th&egrave;me clair");
 			$("#set_screen_brightness div:eq(2)").html("Luminosit&eacute;");
+			$("#set_screen_brightness i:eq(0)").html("&rarr; Bouton MOD bascule la palette de couleurs")
 
 			$("#set_date_time .menuTitleLine").html("R&eacute;glage de date et heure<br />");
 			$("#set_language .menuTitleLine").html("Choix de la langue<br />");
@@ -6058,15 +6172,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Display konfigurieren<br />");
-			$(id + " .button:eq(0)").html("Helligkeit einstellen");
+			$(id + " .button:eq(0)").html("Helligkeit und Farbe einstellen");
 			$(id + " .button:eq(1)").html("Datum und Uhrzeit einstellen");
 			$(id + " .button:eq(2)").html("Sprache w&auml;hlen " + languageSelections);
 			$(id + " .button:eq(3)").html("Einstellen der Einheiten");
 
-			$("#set_screen_brightness .menuTitleLine").html("Helligkeit einstellen<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Helligkeit & Farbe einstellen<br />");
 			$("#set_dark_theme_tag").html("Dunkles Thema");
 			$("#set_light_theme_tag").html("Helles Thema");
 			$("#set_screen_brightness div:eq(2)").html("Bildhelligkeit");
+			$("#set_screen_brightness i:eq(0)").html("&rarr; MOD-Taste schaltet die Farbpalette um")
 
 			$("#set_date_time .menuTitleLine").html("Datum und Uhrzeit einstellen<br />");
 			$("#set_language .menuTitleLine").html("Sprache w&auml;hlen<br />");
@@ -6242,15 +6357,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Configuraci&oacute;n de pantalla<br />");
-			$(id + " .button:eq(0)").html("Ajustar luminosidad");
+			$(id + " .button:eq(0)").html("Ajustar luminosidad y color");
 			$(id + " .button:eq(1)").html("Ajustar hora y fecha");
 			$(id + " .button:eq(2)").html("Seleccionar idioma " + languageSelections);
 			$(id + " .button:eq(3)").html("Ajustar formatos y unidades");
 
-			$("#set_screen_brightness .menuTitleLine").html("Ajustar luminosidad<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Ajustar luminosidad y color<br />");
 			$("#set_dark_theme_tag").html("Tema oscuro");
 			$("#set_light_theme_tag").html("Tema claro");
 			$("#set_screen_brightness div:eq(2)").html("Luminosidad");
+			$("#set_screen_brightness i:eq(0)").html("&rarr; Bot&oacute;n MOD cambia la paleta de colores")
 
 			$("#set_date_time .menuTitleLine").html("Ajustar hora y fecha<br />");
 			$("#set_language .menuTitleLine").html("Seleccionar idioma<br />");
@@ -6427,15 +6543,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Configurazione monitor<br />");
-			$(id + " .button:eq(0)").html("Regolazione luminosit&agrave;");
+			$(id + " .button:eq(0)").html("Regolazione luminosit&agrave; e colore");
 			$(id + " .button:eq(1)").html("Regolazione date e ora");
 			$(id + " .button:eq(2)").html("Scelta della lingua " + languageSelections);
 			$(id + " .button:eq(3)").html("Regolazione formato e unita");
 
-			$("#set_screen_brightness .menuTitleLine").html("Regolazione luminosit&agrave;<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Luminosit&agrave; e colore<br />");
 			$("#set_dark_theme_tag").html("Tema nero");
 			$("#set_light_theme_tag").html("Tema chiaro");
 			$("#set_screen_brightness div:eq(2)").html("Luminosit&agrave;");
+			$("#set_screen_brightness i:eq(0)").html("&rarr; Pulsante MOD alterna la tavolozza dei colori")
 
 			$("#set_date_time .menuTitleLine").html("Regolazione hora y fecha<br />");
 			$("#set_language .menuTitleLine").html("Scelta della lingua<br />");
@@ -6611,15 +6728,16 @@ function setLanguage(language)
 
 			let id = "#screen_configuration_menu";
 			$(id + " .menuTitleLine").html("Beeldschermconfiguratie<br />");
-			$(id + " .button:eq(0)").html("Instelling helderheid");
+			$(id + " .button:eq(0)").html("Instelling helderheid en kleur");
 			$(id + " .button:eq(1)").html("Instelling datum en tijd");
 			$(id + " .button:eq(2)").html("Taalkeuze " + languageSelections);
 			$(id + " .button:eq(3)").html("Instelling van eenheden");
 
-			$("#set_screen_brightness .menuTitleLine").html("Instelling helderheid<br />");
+			$("#set_screen_brightness .menuTitleLine").html("Helderheid en kleur<br />");
 			$("#set_dark_theme_tag").html("Donkere modus");
 			$("#set_light_theme_tag").html("Lichte modus");
 			$("#set_screen_brightness div:eq(2)").html("Helderheid");
+			$("#set_screen_brightness i:eq(0)").html("&rarr; MOD-knop wisselt kleurenpalet")
 
 			$("#set_date_time .menuTitleLine").html("Instelling datum en tijd<br />");
 			$("#set_language .menuTitleLine").html("Taalkeuze<br />");
@@ -6829,7 +6947,7 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 // To be called by the body "onload" event
 function htmlBodyOnLoad()
 {
-	setColorTheme(localStorage.colorTheme);
+	setColorTheme(localStorage.colorTheme, localStorage.colorPalette);
 	initDimLevel();
 	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
 	setLanguage(localStorage.mfdLanguage);

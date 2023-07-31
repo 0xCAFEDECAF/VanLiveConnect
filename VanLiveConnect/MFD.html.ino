@@ -627,7 +627,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="screen_configuration_menu" class="tag menuScreen">
 				<div class="menuTitleLine">Configure display<br /></div>
-				<div class="button buttonSelected" goto_id="set_screen_brightness">Set brightness</div>
+				<div class="button buttonSelected" goto_id="set_screen_brightness">Set color and brightness</div>
 				<div class="button" goto_id="set_date_time">Set date and time</div>
 				<div class="button" goto_id="set_language">Select a language</div>
 				<div class="button" goto_id="set_units">Set format and units</div>
@@ -637,7 +637,7 @@ char mfd_html[] PROGMEM = R"=====(
 				on_goto="colorThemeSelectTickedButton();"
 				on_esc="setBrightnessEscape();"
 				on_exit="acceptingHeldValButton = false;">
-				<div class="menuTitleLine">Set brightness<br /></div>
+				<div class="menuTitleLine">Set color and brightness<br /></div>
 
 				<div style="position:absolute; font-size:40px; text-align:left;">
 					<span id="set_dark_theme"
@@ -646,22 +646,23 @@ char mfd_html[] PROGMEM = R"=====(
 						UP_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
 						class="tickBox button buttonSelected">
-					</span> <span id="set_dark_theme_tag">Dark theme</span><br style="line-height:120px;" />
+					</span> <span id="set_dark_theme_tag">Dark theme</span><br style="line-height:80px;" />
 					<span id="set_light_theme"
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						DOWN_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
 						class="tickBox button">
-					</span> <span id="set_light_theme_tag">Light theme</span>
+					</span> <span id="set_light_theme_tag">Light theme</span><br style="line-height:80px;" />
+					<small><i>&rarr; Use MOD-button to cycle color palette</i></small>
 				</div>
 
 				<div class="tag"
-					style="left:600px; width:290px; text-align:center; font-size:40px;">
+					style="top:112px; left:590px; width:310px; text-align:center; font-size:40px;">
 					Brightness
 				</div>
 
-				<div style="position:absolute; left:600px; top:170px;">
+				<div style="position:absolute; left:600px; top:175px;">
 					<div id="set_brightness_lower"
 						class="button" style="width:60px"
 						LEFT_BUTTON="set_dark_theme"
@@ -683,7 +684,7 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 
 				<div id="display_brightness_level"
-					class="dseg7" style="left:600px; top:180px; width:290px; text-align:center;">
+					class="dseg7" style="left:600px; top:185px; width:290px; text-align:center;">
 					14
 				</div>
 
