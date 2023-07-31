@@ -36,7 +36,6 @@ typedef struct
 } TIrParams;
 
 // Defined in WebSocket.ino
-extern bool inMenu;
 extern int irButtonFasterRepeat;
 
 // Defined in PacketToJson.ino
@@ -246,8 +245,8 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     // "MOD" button pressed?
     if (pkt.value == IB_MODE)
     {
-        // Ignore when in menu or in economy mode, or as long as any popup is showing
-        if (inMenu || economyMode || IsNotificationPopupShowing(true) || IsTripComputerPopupShowing()) return 0;
+        // Ignore when in economy mode, or as long as any popup is showing
+        if (economyMode || IsNotificationPopupShowing(true) || IsTripComputerPopupShowing()) return 0;
 
         // May update 'LargeScreenStr()', 'TripComputerStr()' and 'PopupStr()'
         CycleLargeScreen();
