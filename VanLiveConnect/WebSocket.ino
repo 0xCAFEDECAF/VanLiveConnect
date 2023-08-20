@@ -177,7 +177,7 @@ bool SendJsonOnWebSocket(const char* json, bool savePacketForLater)
     } // if
 
     bool result = false;
-    unsigned long duration = 0;
+    unsigned long duration = ULONG_MAX;
     for (int i = 0; i < n; i++)
     {
         uint8_t num = nums[i];
@@ -194,16 +194,17 @@ bool SendJsonOnWebSocket(const char* json, bool savePacketForLater)
         digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
         unsigned long start = millis();
 
-        result = webSocket.sendTXT(num, json);
+        bool thisResult = webSocket.sendTXT(num, json);
 
-        duration = millis() - start;
+        unsigned long thisDuration = millis() - start;
         digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
-        if (result)
+        if (thisResult)
         {
             lastWebSocketCommunication = millis();
-            break;
-        }
+            result = thisResult;
+        } // if
+        if (thisDuration < duration) duration = thisDuration;
     } // for
 
     if (! result || duration > 100)
