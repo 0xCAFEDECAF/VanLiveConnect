@@ -94,9 +94,9 @@ const char* SetupWifi()
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
   #ifdef WIFI_PASSWORD
-    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
+    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
   #else
-    WiFi.softAP(wifiSsid, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 2);
+    WiFi.softAP(wifiSsid, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
   #endif
 
     // Register event handlers
