@@ -1575,6 +1575,7 @@ function describeArc(x, y, radius, startAngle, endAngle)
 
 var updatingAudioVolume = false;
 var isAudioMenuVisible = false;
+var tunerPresetsPopupWasVisible = false;
 var audioSettingsPopupHideTimer;
 var audioSettingsPopupShowTimer;
 var cdChangerCurrentDisc = "";
@@ -1589,6 +1590,13 @@ function hideAudioSettingsPopup()
 	clearTimeout(audioSettingsPopupHideTimer);
 	updatingAudioVolume = false;
 	isAudioMenuVisible = false;
+
+	// Emulate behavior of original MFD
+	if (tunerPresetsPopupWasVisible)
+	{
+		tunerPresetsPopupWasVisible = false;
+		showTunerPresetsPopup(7200);  // This time it is shown shorter
+	} // if
 
 	return hidePopup("audio_settings_popup");
 }
@@ -1644,24 +1652,30 @@ function hideTunerPresetsPopup()
 // Show the audio volume popup
 function showAudioVolumePopup()
 {
+	if (inMenu()) return;
+
 	hidePopup("notification_popup");
 
 	// Audio popup already visible due to display of audio settings?
 	if (isAudioMenuVisible) return hideAudioSettingsPopupAfter(11500);
 
-	hideTunerPresetsPopup();  // If the tuner presets popup is visible, hide it
+	// If the tuner presets popup is visible, hide it
+	if ($("#tuner_presets_popup").is(":visible"))
+	{
+		tunerPresetsPopupWasVisible = true;
+		hideTunerPresetsPopup();
+	} // if
+
 	hidePopup("trip_computer_popup");
 	hidePopup("audio_popup");
 
 	// In the audio settings popup, unhighlight any audio setting
 	$("#" + highlightIds[audioSettingHighlightIndex]).hide();
 
-	if (inMenu()) return;  // Don't pop up when user is browsing the menus
-
 	if ($("#contact_key_position").text() !== "OFF")
 	{
 		$("#audio_settings_popup").show();
-		NotifyServerAboutPopup("audio_settings_popup", 4000);
+		NotifyServerAboutPopup("audio_settings_popup", 3700);
 	}
 	else
 	{
@@ -1672,13 +1686,13 @@ function showAudioVolumePopup()
 		audioSettingsPopupShowTimer = setTimeout(function ()
 		{
 			$("#audio_settings_popup").show();
-			NotifyServerAboutPopup("audio_settings_popup", 4000);
+			NotifyServerAboutPopup("audio_settings_popup", 3700);
 		},
 		100);
 	} // if
 	updatingAudioVolume = true;
 
-	hideAudioSettingsPopupAfter(4000);  // Hide popup after 4 seconds
+	hideAudioSettingsPopupAfter(3700);
 }
 
 // Show the audio settings popup
@@ -1707,16 +1721,16 @@ function showAudioSettingsPopup(button)
 }
 
 // Show the tuner presets popup
-function showTunerPresetsPopup()
+function showTunerPresetsPopup(msec)
 {
 	hidePopup("notification_popup");
 
 	$("#tuner_presets_popup").show();
-	NotifyServerAboutPopup("tuner_presets_popup", 8500);
+	NotifyServerAboutPopup("tuner_presets_popup", msec ? msec : 8500);
 
 	// Hide the popup after 8.5 seconds
 	clearTimeout(handleItemChange.tunerPresetsPopupTimer);
-	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, 8500);
+	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, msec ? msec : 8500);
 }
 
 // -----
@@ -2060,11 +2074,12 @@ var suppressClimateControlPopup = null;
 
 function changeToInstrumentsScreen()
 {
+	if (currentLargeScreenId === "instruments") return;
+	if (inMenu()) return;
+
 	// Suppress climate control popup during the next 2 seconds
 	clearTimeout(suppressClimateControlPopup);
 	suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
-
-	if (inMenu()) return;  // No screen change while browsing the menus
 
 	changeLargeScreenTo("instruments");
 }
@@ -4066,7 +4081,7 @@ function handleItemChange(item, value)
 
 			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm > 0) || engineRpm > thresholdRpm);
 
-			if (contactKeyPosition === "START" && engineRpm > 150) changeToInstrumentsScreen();
+			if ((contactKeyPosition === "START" || contactKeyPosition === "ON") && engineRpm > 150) changeToInstrumentsScreen();
 
 			// Deduce the chosen gear
 			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 915)
@@ -5571,7 +5586,8 @@ function handleItemChange(item, value)
 
 			if (button === "MENU_BUTTON")
 			{
-				// Directly hide any visible audio popup
+				// Directly hide any visible audio popup or the system screen
+				if ($("#system").is(":visible")) changeLargeScreenTo("clock");
 				hideAudioSettingsPopup();
 				hideTunerPresetsPopup();
 
