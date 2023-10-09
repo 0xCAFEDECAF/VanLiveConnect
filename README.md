@@ -158,11 +158,11 @@ https://en.wikipedia.org/wiki/Connectors_for_car_audio and https://github.com/mo
 There are various possibilities to hook up a ESP8266 based board to your vehicle's VAN bus:
 
 1. Use a [MCP2551] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
-   As the MCP2551 has 5V logic, a 5V ↔️ 3.3V [level converter] is needed to connect the CRX / RXD / R pin of the
+   As the MCP2551 has 5V logic, a 5V ↔ 3.3V [level converter] is needed to connect the CRX / RXD / R pin of the
    transceiver, via the level converter, to a GPIO pin of your ESP8266 board.
 
    A board with the MCP2551 transceiver can be ordered e.g.
-   [here](https://webshop.domoticx.nl/can-bus-transceiver-module-5v-mcp2551) or
+   [here](https://domoticx.net/webshop/can-bus-transceiver-module-5v-mcp2551/) or
    [here](https://nl.aliexpress.com/item/1005004475976642.html).
 
    Two variants are possible:
@@ -176,6 +176,12 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
 > 👉 Notes:
+>  * <img src="extras/Schematics/MCP2551%20terminator%20resistors.jpg" align="right" width="200px"/>The two terminator
+     resistors R3 and R4 (2 x 100 Ohm, near the CANH and CANL pins) on this transceiver board
+     are meant for operating inside a CAN bus network, but are not necessary on a VAN bus. In fact, they may even
+     cause the other equipment on the bus to malfunction. If you experience problems in the vehicle equipment,
+     you may want to remove (unsolder) these terminator resistors.
+     See also [this issue](https://github.com/0xCAFEDECAF/VanBus/issues/9).
 >  * CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
 >  * The clamping circuit (D1, D2, R1) seems to (somehow) help in reducing the amount of bit errors
@@ -186,13 +192,19 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    the transceiver to a GPIO pin of your ESP8266 board.
 
    A board with the SN65HVD230 transceiver can be ordered e.g.
-   [here](https://webshop.domoticx.nl/index.php?route=product/product&product_id=3935).
+   [here](https://domoticx.net/webshop/can-bus-transceiver-module-3-3v-sn65hvd230-vp230/).
 
    ![schema](extras/Schematics/Schematic%20using%20SN65HVD230_bb.png)
 
    The "+12 Volt permanent" variant as described above is possible for this setup too.
 
 > 👉 Notes:
+>  * <img src="extras/Schematics/SN65HVD230%20terminator%20resistor.jpg" align="right" width="200px"/>The terminator
+     resistor R2 (120 Ohm, near the CANH and CANL pins) on this transceiver board is meant
+     for operating inside a CAN bus network, but is not necessary on a VAN bus. In fact, it may even cause the
+     other equipment on the bus to malfunction. If you experience problems in the vehicle equipment, you may
+     want to remove (unsolder) the R2 terminator resistor.
+     See also [this issue](https://github.com/0xCAFEDECAF/VanBus/issues/9).
 >  * CANH of the transceiver is connected to VAN BAR (DATA B), CANL to VAN (DATA). This may seem illogical
      but in practice it turns out this works best.
 >  * The clamping circuit (D1, D2, R1) seems to (somehow) help in reducing the amount of bit errors
