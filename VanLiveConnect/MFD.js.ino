@@ -4081,7 +4081,12 @@ function handleItemChange(item, value)
 
 			$('[gid="engine_rpm"]').toggleClass("glow", (engineRpm < 500 && engineRpm > 0) || engineRpm > thresholdRpm);
 
-			if ((contactKeyPosition === "START" || contactKeyPosition === "ON") && engineRpm > 150) changeToInstrumentsScreen();
+			if (currentLargeScreenId === "pre_flight"
+				&& (contactKeyPosition === "START" || contactKeyPosition === "ON")
+				&& engineRpm > 150)
+			{
+				changeToInstrumentsScreen();
+			} // if
 
 			// Deduce the chosen gear
 			if (vehicleSpeed === undefined || vehicleSpeed < 2 || engineRpm < 915)
@@ -5779,7 +5784,7 @@ function handleItemChange(item, value)
 
 		case "uptime_seconds":
 		{
-			$("#uptime").text(new Date(value * 1000).toLocaleTimeString([], { timeZone: "UTC" }));
+			$("#uptime").text(new Date(value * 1000).toLocaleTimeString([], { timeZone: "UTC", hour12: false }));
 		} // case
 		break;
 
