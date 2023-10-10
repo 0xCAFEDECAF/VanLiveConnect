@@ -253,21 +253,9 @@ static const char fontWoffStr[] = "application/font-woff";
 // -----
 // Fonts
 
-// Defined in ArialRoundedMTbold.woff.ino
-extern char ArialRoundedMTbold_woff[];
-extern unsigned int ArialRoundedMTbold_woff_len;
-
-// Defined in DotsAllForNow.woff.ino
-extern char DotsAllForNow_woff[];
-extern unsigned int DotsAllForNow_woff_len;
-
-// Defined in DSEG7Classic-BoldItalic.woff.ino
-extern char DSEG7Classic_BoldItalic_woff[];
-extern unsigned int DSEG7Classic_BoldItalic_woff_len;
-
-// Defined in DSEG14Classic-BoldItalic.woff.ino
-extern char DSEG14Classic_BoldItalic_woff[];
-extern unsigned int DSEG14Classic_BoldItalic_woff_len;
+// Defined in PeugeotNewRegular.woff.woff.ino
+extern char PeugeotNewRegular_woff[];
+extern unsigned int PeugeotNewRegular_woff_len;
 
 // Defined in fa-solid-900.woff.ino
 extern char webfonts_fa_solid_900_woff[];
@@ -373,6 +361,8 @@ void ServeFontFromFile(const char* path)
 
     printHttpRequest();
 
+    // Skip Etag checking; browsers don't seem to use that when requesting fonts
+
     File file = SPIFFS.open(path, "r");
     size_t sent = webServer.streamFile(file, fontWoffStr);
     file.close();
@@ -388,12 +378,25 @@ void ServeFontFromFile(const char* path)
 
 #endif // SERVE_FROM_SPIFFS
 
+// Convert the file extension to the MIME type
+const char* getContentType(const String& path)
+{
+    if (path.endsWith(".html")) return "text/html";
+    if (path.endsWith(".woff")) return fontWoffStr;
+    if (path.endsWith(".css")) return textCssStr;
+    if (path.endsWith(".js")) return textJavascriptStr;
+    if (path.endsWith(".ico")) return "image/x-icon";
+    if (path.endsWith(".jpg")) return "image/jpeg";
+    if (path.endsWith(".png")) return "image/png";
+    return "text/plain";
+} // getContentType
+
 // Serve a specified document (text, html, css, javascript, ...) from program memory
 void ServeDocument(PGM_P mimeType, PGM_P content)
 {
-    printHttpRequest();
-
     //if (webServer.method() != HTTP_GET) return;
+
+    printHttpRequest();
 
     unsigned long start = millis();
     bool eTagMatches = checkETag(md5Checksum);
@@ -411,19 +414,6 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeDocument
-
-// Convert the file extension to the MIME type
-const char* getContentType(const String& path)
-{
-    if (path.endsWith(".html")) return "text/html";
-    if (path.endsWith(".woff")) return fontWoffStr;
-    if (path.endsWith(".css")) return textCssStr;
-    if (path.endsWith(".js")) return textJavascriptStr;
-    if (path.endsWith(".ico")) return "image/x-icon";
-    if (path.endsWith(".jpg")) return "image/jpeg";
-    if (path.endsWith(".png")) return "image/png";
-    return "text/plain";
-} // getContentType
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -499,10 +489,6 @@ void SetupWebServer()
   #ifdef SERVE_FONTS_FROM_SPIFFS
 
     webServer.on(F("/PeugeotNewRegular.woff"), [](){ ServeFontFromFile("/PeugeotNewRegular.woff"); });
-    webServer.on(F("/ArialRoundedMTbold.woff"), [](){ ServeFontFromFile("/ArialRoundedMTbold.woff"); });
-    webServer.on(F("/DotsAllForNow.woff"), [](){ ServeFontFromFile("/DotsAllForNow.woff"); });
-    webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG7Classic-BoldItalic.woff"); });
-    webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){ ServeFontFromFile("/DSEG14Classic-BoldItalic.woff"); });
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){ ServeFontFromFile("/fa-solid-900.woff"); });
 
   #else
@@ -510,20 +496,6 @@ void SetupWebServer()
     webServer.on(F("/PeugeotNewRegular.woff"), [](){
         ServeFont(PeugeotNewRegular_woff, PeugeotNewRegular_woff_len);
     });
-  #if 0
-    webServer.on(F("/ArialRoundedMTbold.woff"), [](){
-        ServeFont(ArialRoundedMTbold_woff, ArialRoundedMTbold_woff_len);
-    });
-    webServer.on(F("/DotsAllForNow.woff"), [](){
-        ServeFont(DotsAllForNow_woff, DotsAllForNow_woff_len);
-    });
-    webServer.on(F("/DSEG7Classic-BoldItalic.woff"), [](){
-        ServeFont(DSEG7Classic_BoldItalic_woff, DSEG7Classic_BoldItalic_woff_len);
-    });
-    webServer.on(F("/DSEG14Classic-BoldItalic.woff"), [](){
-        ServeFont(DSEG14Classic_BoldItalic_woff, DSEG14Classic_BoldItalic_woff_len);
-    });
-  #endif
     webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
         ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
     });
