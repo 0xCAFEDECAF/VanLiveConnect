@@ -376,10 +376,7 @@ body
   height:410px;
   font-size:55px;
   text-align:center;
-}
-.menuTitleLine br
-{
-  line-height:100px;
+  line-height:150%;
 }
 .button
 {

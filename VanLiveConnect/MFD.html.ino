@@ -160,7 +160,6 @@ char mfd_html[] PROGMEM = R"=====(
 				<div class="icon iconSmall fas fa-thermometer-half" style="left:30px; top:445px;"></div>
 				<div gid="coolant_temp" class="dseg7" style="font-size:50px; left:100px; top:442px; width:170px;">--.-</div>
 				<div gid="coolant_temp_unit" class="tag" style="text-align:left; left:280px; top:455px; font-size:30px;">&deg;C</div>
-
 			</div>
 		</div>	<!-- "Small" information panel -->
 
@@ -646,19 +645,19 @@ char mfd_html[] PROGMEM = R"=====(
 						UP_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
 						class="tickBox button buttonSelected">
-					</span> <span id="set_dark_theme_tag">Dark theme</span><br style="line-height:80px;" />
+					</span> <span id="set_dark_theme_tag">Dark theme</span><br />
 					<span id="set_light_theme"
 						LEFT_BUTTON="set_brightness_higher"
 						RIGHT_BUTTON="set_brightness_lower"
 						DOWN_BUTTON="set_brightness_validate_button"
 						on_click="colorThemeTickSet();"
 						class="tickBox button">
-					</span> <span id="set_light_theme_tag">Light theme</span><br style="line-height:80px;" />
+					</span> <span id="set_light_theme_tag">Light theme</span><br />
 					<small><i>&rarr; Use MOD-button to cycle color palette</i></small>
 				</div>
 
 				<div class="tag"
-					style="top:112px; left:590px; width:310px; text-align:center; font-size:40px;">
+					style="top:82px; left:590px; width:310px; text-align:center; font-size:40px;">
 					Brightness
 				</div>
 
@@ -811,14 +810,14 @@ char mfd_html[] PROGMEM = R"=====(
 							UP_BUTTON="set_language_validate_button"
 							on_click="setLanguageTickSet(); keyPressed('UP_BUTTON');"
 							class="tickBox button">
-						</span> Deutsch<br style="line-height:70px;" />
+						</span> Deutsch<br />
 						<span id="set_language_english"
 							LEFT_BUTTON="set_language_italian"
 							RIGHT_BUTTON="set_language_french"
 							DOWN_BUTTON="set_language_validate_button"
 							on_click="setLanguageTickSet(); keyPressed('DOWN_BUTTON');"
 							class="tickBox button buttonSelected">
-						</span> English<br style="line-height:70px;" />
+						</span> English<br />
 					</div>
 
 					<div style="position:absolute; left:280px;">
@@ -828,14 +827,14 @@ char mfd_html[] PROGMEM = R"=====(
 							RIGHT_BUTTON="set_language_dutch"
 							on_click="setLanguageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('UP_BUTTON');"
 							class="tickBox button">
-						</span> Espa&ntilde;ol<br style="line-height:70px;" />
+						</span> Espa&ntilde;ol<br />
 						<span id="set_language_french"
 							LEFT_BUTTON="set_language_english"
 							RIGHT_BUTTON="set_language_italian"
 							DOWN_BUTTON="set_language_spanish"
 							on_click="setLanguageTickSet(); keyPressed('LEFT_BUTTON'); keyPressed('DOWN_BUTTON');"
 							class="tickBox button">
-					</span> Fran&ccedil;ais<br style="line-height:70px;" />
+					</span> Fran&ccedil;ais<br />
 					</div>
 
 					<div style="position:absolute; left:560px;">
@@ -845,14 +844,14 @@ char mfd_html[] PROGMEM = R"=====(
 							RIGHT_BUTTON="set_language_german"
 							on_click="setLanguageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('UP_BUTTON');"
 							class="tickBox button">
-						</span> Nederlands<br style="line-height:70px;" />
+						</span> Nederlands<br />
 						<span id="set_language_italian"
 							LEFT_BUTTON="set_language_french"
 							RIGHT_BUTTON="set_language_english"
 							DOWN_BUTTON="set_language_dutch"
 							on_click="setLanguageTickSet(); keyPressed('RIGHT_BUTTON'); keyPressed('DOWN_BUTTON');"
 							class="tickBox button">
-						</span> Italiano<br style="line-height:70px;" />
+						</span> Italiano<br />
 					</div>
 				</div>
 
@@ -880,14 +879,14 @@ char mfd_html[] PROGMEM = R"=====(
 								RIGHT_BUTTON="set_units_deg_celsius"
 								UP_BUTTON="set_units_validate_button"
 								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
-							</span> km/h - l/100<br style="line-height:70px;" />
+							</span> km/h - l/100<br />
 							<span id="set_units_mph"
 								class="tickBox button buttonSelected"
 								LEFT_BUTTON="set_units_12h"
 								RIGHT_BUTTON="set_units_deg_fahrenheit"
 								DOWN_BUTTON="set_units_validate_button"
 								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');">
-							</span> mph - mpg<br style="line-height:70px;" />
+							</span> mph - mpg<br />
 						</div>
 					</div>
 
@@ -899,14 +898,14 @@ char mfd_html[] PROGMEM = R"=====(
 								RIGHT_BUTTON="set_units_24h"
 								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
 								class="tickBox button">
-							</span> &deg; C<br style="line-height:70px;" />
+							</span> &deg; C<br />
 							<span id="set_units_deg_fahrenheit"
 								LEFT_BUTTON="set_units_mph"
 								RIGHT_BUTTON="set_units_12h"
 								DOWN_BUTTON="set_units_validate_button"
 								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
 								class="tickBox button">
-							</span> &deg; F<br style="line-height:70px;" />
+							</span> &deg; F<br />
 						</div>
 					</div>
 
@@ -918,14 +917,14 @@ char mfd_html[] PROGMEM = R"=====(
 								RIGHT_BUTTON="set_units_km_h"
 								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
 								class="tickBox button">
-							</span> 24H<br style="line-height:70px;" />
+							</span> 24H<br />
 							<span id="set_units_12h"
 								LEFT_BUTTON="set_units_deg_fahrenheit"
 								RIGHT_BUTTON="set_units_mph"
 								DOWN_BUTTON="set_units_validate_button"
 								on_click="toggleTick(); keyPressed('RIGHT_BUTTON');"
 								class="tickBox button">
-							</span> 12H<br style="line-height:70px;" />
+							</span> 12H<br />
 						</div>
 					</div>
 				</div>
