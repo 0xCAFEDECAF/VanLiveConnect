@@ -4,19 +4,8 @@ Patched from the latest (current) version, https://github.com/me-no-dev/ESPAsync
 
 The patches include the following fixes:
 
-- ESPAsyncTCPbuffer.h:
-  * Add public method `AsyncTCPbuffer::setNoDelay`
-
-```diff
-diff -r ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCPbuffer.h ./src/ESPAsyncTCPbuffer.h
-94a95,96
->         void setNoDelay(bool nodelay);
->
-```
-
 - ESPAsyncTCPbuffer.cpp:
   * Possible fix for issue causing soft watchdog timeout resets
-  * Implement method `AsyncTCPbuffer::setNoDelay`
   * Fix issue causing missing of response, possibly fix for hanging TCP connections
 
 ```diff
@@ -27,15 +16,6 @@ diff -r ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCPbuffer.cpp ./src/ESPAsync
 >
 >         // Seems to fix soft watchdog timeout resets
 >         if (_client->canSend()) _sendBuffer();
-269a272,279
-> void AsyncTCPbuffer::setNoDelay(bool nodelay)
-> {
->     if(!_client) {
->         return;
->     }
->     _client->setNoDelay(nodelay);
-> }
->
 389c399,400
 <     if(!_client || !_client->connected()) {
 ---

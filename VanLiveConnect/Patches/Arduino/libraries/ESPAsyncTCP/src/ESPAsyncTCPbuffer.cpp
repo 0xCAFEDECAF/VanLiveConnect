@@ -269,14 +269,6 @@ void AsyncTCPbuffer::close() {
     stop();
 }
 
-void AsyncTCPbuffer::setNoDelay(bool nodelay)
-{
-    if(!_client) {
-        return;
-    }
-    _client->setNoDelay(nodelay);
-}
-
 
 ///--------------------------------
 
