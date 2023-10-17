@@ -237,6 +237,8 @@
 //#define DEBUG_WEBSOCKET
 //#define DEBUG_ORIGINAL_MFD
 
+//#define WIFI_STRESS_TEST
+
 // Define to show the VAN bus statistics on the "system" screen
 // Requires installation of the 'PrintEx' library; see: https://github.com/Chris--A/PrintEx (tested with version 1.2.0)
 // Note that the 'PrintEx' library only compiles under ESP8266 Arduino release 2.7.4 or lower.
