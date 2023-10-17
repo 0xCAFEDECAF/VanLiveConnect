@@ -167,12 +167,12 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
    Two variants are possible:
 
-    * Using +12 Volt switched line:
+    * Using +12 Volt switched line (pin 4 of the "A" block of the ISO connector):
       ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
-    * Using +12 Volt permanent line. To prevent battery drain, the ESP board will go to sleep after 5 minutes
-      ([configurable in `Config.h`](VanLiveConnect/Config.h#L86)). This setup requires
-      [GPIO line D1](VanLiveConnect/Config.h#L124) to be connected, so that the ESP board wakes up as soon as any
-      activity occurs on the VAN bus.
+    * Using +12 Volt permanent line (pin 7 of the "A" block of the ISO connector). To prevent battery drain,
+      the ESP board will go to sleep after 5 minutes ([configurable in `Config.h`](VanLiveConnect/Config.h#L86)).
+      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L124) to be connected, so that the ESP board
+      wakes up as soon as any activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
 > 👉 Notes:
