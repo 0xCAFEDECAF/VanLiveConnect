@@ -4,9 +4,8 @@
 #include "Config.h"
 
 // Defined in WebSocket.ino
-extern WebSocketsServer webSocket;
-extern uint8_t websocketBackupNum;
-extern uint8_t websocketNum;
+extern uint32_t websocketBackupId;
+extern uint32_t websocketId;
 
 const char* GetHostname()
 {
@@ -35,10 +34,10 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     Serial.print(macToString(evt.mac));
     Serial.print(F("\n"));
 
-    websocketNum = WEBSOCKET_INVALID_NUM;
-    websocketBackupNum = WEBSOCKET_INVALID_NUM;
+    websocketId = WEBSOCKET_INVALID_ID;
+    websocketBackupId = WEBSOCKET_INVALID_ID;
 
-    //Serial.printf_P(PSTR("==> websocketBackupNum=%u, websocketNum=%u\n"), websocketBackupNum, websocketNum);
+    //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
 } // onStationDisconnected
 
 void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)

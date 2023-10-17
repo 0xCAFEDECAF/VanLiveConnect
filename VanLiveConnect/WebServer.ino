@@ -1,6 +1,6 @@
 
-#include <ESP8266WebServer.h>
-#include <WebSocketsServer.h>
+#include <map>
+#include <ESPAsyncWebSrv.h>
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -25,16 +25,18 @@
 #include <TimeLib.h>
 #endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 
-ESP8266WebServer webServer;
+// Create AsyncWebServer on port 80
+AsyncWebServer webServer(80);
 
 // Defined in Esp.ino
 extern const String md5Checksum;
 
 // Defined in WebSocket.ino
-extern const int WEBSOCKET_INVALID_NUM;
-extern uint8_t websocketNum;
-extern WebSocketsServer webSocket;
-extern unsigned long lastWebSocketCommunication;
+extern const int WEBSOCKET_INVALID_ID;
+extern uint32_t websocketId;
+extern uint32_t websocketBackupId;
+extern AsyncWebSocket webSocket;
+extern std::map<uint32_t, unsigned long> lastWebSocketCommunication;
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -134,23 +136,22 @@ String getMd5(const String& path)
 #endif // SERVE_FROM_SPIFFS
 
 // Print all HTTP request details on Serial
-void printHttpRequest()
+void printHttpRequest(class AsyncWebServerRequest* request)
 {
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] Received request from "), TimeStamp());
-    String ip = webServer.client().remoteIP().toString();
-    Serial.print(ip);
-    Serial.print(webServer.method() == HTTP_GET ? F(": GET - '") : F(": POST - '"));
-    Serial.print(webServer.uri());
+    Serial.print(request->client()->remoteIP());
+    Serial.printf_P(PSTR(": %s - '"), request->methodToString());
+    Serial.print(request->url());
 
-    if (webServer.args() > 0) Serial.print("?");
+    if (request->args() > 0) Serial.print("?");
 
-    for (uint8_t i = 0; i < webServer.args(); i++)
+    for (size_t i = 0; i < request->args(); i++)
     {
-        Serial.print(webServer.argName(i));
+        Serial.print(request->argName(i));
         Serial.print(F("="));
-        Serial.print(webServer.arg(i));
-        if (i < webServer.args() - 1) Serial.print('&');
+        Serial.print(request->arg(i));
+        if (i < request->args() - 1) Serial.print('&');
     } // for
 
     Serial.print(F("'\n"));
@@ -159,51 +160,63 @@ void printHttpRequest()
 
 // Returns true if the actual Etag is equal to the received Etag in an 'If-None-Match' header field.
 // Shameless copy from: https://werner.rothschopf.net/microcontroller/202011_arduino_webserver_caching_en.htm .
-bool checkETag(const String& etag)
+bool checkETag(class AsyncWebServerRequest* request, const String& etag)
 {
+  #ifdef DEBUG_WEBSERVER
+    Serial.printf_P(PSTR("%s[webServer] checkETag(%s)\n"), TimeStamp(), etag.c_str());
+  #endif // DEBUG_WEBSERVER
+
     if (etag == "") return false;
 
-    for (int i = 0; i < webServer.headers(); i++)
+  #ifdef DEBUG_WEBSERVER
+    Serial.printf_P(PSTR("%s[webServer] request->headers = %lu\n"), TimeStamp(), request->headers());
+
+    Serial.printf_P(PSTR("%s[webServer] all request headers:\n"), TimeStamp());
+    for (int i = 0; i < 100; i++)
     {
-        // Serial.print(
-            // String(F("[webServer] ")) + webServer.headerName(i) + F(": \"") + webServer.header(i) + F("\"\n"));
-        if (webServer.headerName(i).compareTo(F("If-None-Match")) == 0)
-        {
-            String read = webServer.header(i);
-            read.replace("\"", ""); // some browsers (i.e. Samsung) discard the double quotes
-            if (read == etag)
-            {
-                // Tells the client that it can cache the asset, but it cannot use the cached asset without
-                // revalidating with the server
-                webServer.sendHeader(F("Cache-Control"), F("no-cache"), true);
-
-                webServer.send(304, "text/plain", F("Not Modified"));
-              #ifdef DEBUG_WEBSERVER
-                Serial.printf_P(PSTR("%s"), TimeStamp());
-                Serial.print(
-                    String(F("[webServer] ")) + webServer.headerName(i) + F(": ") + webServer.header(i) + F(" - Not Modified\n"));
-              #endif // DEBUG_WEBSERVER
-                return true;
-            } // if
-        } // if
+        String headerName = request->headerName(i);
+        if (headerName.length() == 0) continue;
+        Serial.printf_P(PSTR("               - %s : %s\n"), headerName.c_str(), request->header(i).c_str());
     } // for
+  #endif // DEBUG_WEBSERVER
 
-    webServer.sendHeader(F("ETag"), String("\"") + etag + "\"");
+    if(request->hasHeader(F("If-None-Match")))
+    {
+        String read = request->header("If-None-Match");
 
-    // Tells the client that it can cache the asset, but it cannot use the cached asset without revalidating with
-    // the server
-    webServer.sendHeader(F("Cache-Control"), F("no-cache"), true);
+        read.replace("\"", ""); // some browsers (i.e. Samsung) discard the double quotes
+        if (read == etag)
+        {
+            AsyncWebServerResponse* response = request->beginResponse(304, F("text/plain"), F("Not Modified"));
+
+            // This needs to be repeated; see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match :
+            //   "Note that the server generating a 304 response MUST generate any of the following header fields
+            //   that would have been sent in a 200 (OK) response to the same request: Cache-Control, Content-Location,
+            //   Date, ETag, Expires, and Vary."
+            response->addHeader(F("Cache-Control"), F("no-cache"));
+            response->addHeader(F("ETag"), String("\"") + etag + "\"");
+            request->send(response);
+
+          #ifdef DEBUG_WEBSERVER
+            Serial.printf_P(PSTR("%s"), TimeStamp());
+            Serial.print(F("[webServer] If-None-Match: "));
+            Serial.print(etag);
+            Serial.print(F(" - Not Modified\n"));
+          #endif // DEBUG_WEBSERVER
+            return true;
+        } // if
+    } // if
 
     return false;
 } // checkETag
 
-void HandleAndroidConnectivityCheck()
+void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 {
-    printHttpRequest();
+    printHttpRequest(request);
 
     // After the WebSocket connection is established, no longer respond to connectivity check. In that way,
     // Android knows (after no longer getting responses on '/generate_204') that this Wi-Fi is not providing
-    // an Internet connection and will try to re-establish Internet connection via mobile data.
+    // an Internet connection and will try to re-establish Internet connectivity via mobile data.
     //
     // Notes:
     // - In Android, go to Settings --> Network & Internet --> Wi-Fi --> Wi-Fi preferences --> Advanced -->
@@ -212,16 +225,24 @@ void HandleAndroidConnectivityCheck()
     //   (TODO - check if is this really needed?)
     // - In Android, setting "Mobile data always active" inside "Developer Options" is not necessary
     //   (and even undesired to save battery).
-    // - The WebSocket connection will persist, even if Android switches from Wi-Fi to mobile data.
+    // - The WebSocket connection will persist, even after Android switches from Wi-Fi to mobile data.
 
-    if (websocketNum != WEBSOCKET_INVALID_NUM
-        && millis() - lastWebSocketCommunication < 10000  // Arithmetic has safe roll-over
-        //&& webSocket.clientIsConnected(websocketNum)
-       )
+    IPAddress clientIp = request->client()->remoteIP();
+
+    if (lastWebSocketCommunication.find(clientIp) != lastWebSocketCommunication.end())
     {
-        IPAddress webSocketClientIp = webSocket.remoteIP(websocketNum);
-        IPAddress clientIp = webServer.client().remoteIP();
-        if (webSocketClientIp == clientIp) return;
+        unsigned long since = millis() - lastWebSocketCommunication[clientIp];
+
+      #ifdef DEBUG_WEBSERVER
+        Serial.printf_P(PSTR("%s[webServer] Last websocket communication with %s was %lu msecs ago: %Sresponding\n"),
+            TimeStamp(),
+            clientIp.toString().c_str(),
+            since,
+            since < 7000 ? PSTR("NOT ") : emptyStr
+        );
+      #endif // DEBUG_WEBSERVER
+
+        if (since < 7000) return;  // Arithmetic has safe roll-over
     } // if
 
     // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
@@ -230,12 +251,12 @@ void HandleAndroidConnectivityCheck()
 
     unsigned long start = millis();
 
-    webServer.send(204, "");
+    request->send(204);
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] Serving '%S' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] Serving '%s' took: %lu msec\n"),
         TimeStamp(),
-        webServer.uri().c_str(),
+        request->url().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // HandleAndroidConnectivityCheck
@@ -278,15 +299,15 @@ extern char carInfo_css[];  // Defined in CarInfo.css.ino
 
 extern char mfd_html[];  // Defined in MFD.html.ino
 
-void HandleNotFound()
+void HandleNotFound(class AsyncWebServerRequest* request)
 {
-    printHttpRequest();
+    printHttpRequest(request);
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] File '%s' not found\n"), TimeStamp(), webServer.uri().c_str());
+    Serial.printf_P(PSTR("%s[webServer] File '%s' not found\n"), TimeStamp(), request->url().c_str());
   #endif // DEBUG_WEBSERVER
 
-    if (! webServer.client().remoteIP().isSet()) return;  // No use to reply if there is no IP to reply to
+    //if (! request->client()->remoteIP()) return;  // No use to reply if there is no IP to reply to
 
   #ifdef WIFI_AP_MODE
     // Redirect to the main HTML page ('/MFD.html').
@@ -295,52 +316,58 @@ void HandleNotFound()
 
     // TODO - commented out because this occasionally crashes the ESP due to out-of-memory condition
   #if 0
-    webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
-    //webServer.sendHeader(F("Cache-Control"), F("no-store"), true); // TODO - necessary?
-    //webServer.send(301, F("text/plain"), F("Redirect"));
-    webServer.send(302, F("text/plain"), F("Found"));
+        //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
+    AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
+    response->addHeader(F("Location"), F("http://" IP_ADDR "/MFD.html");
+    //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
+    request->send(response);
+
     return;
   #endif // 0
   #endif // WIFI_AP_MODE
 
-    if (webServer.uri() == "/")
+    if (request->url() == "/")
     {
-        webServer.sendHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"), true);
-        //webServer.sendHeader(F("Cache-Control"), F("no-store"), true); // TODO - necessary?
-        //webServer.send(301, F("text/plain"), F("Redirect"));
-        webServer.send(302, F("text/plain"), F("Found"));
+        //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
+        AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
+        response->addHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"));
+        //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
+        request->send(response);
+
         return;
     } // if
 
     // Gold-plated response
     String message = F("File Not Found\n\n");
     message += F("URI: ");
-    message += webServer.uri();
+    message += request->url();
     message += F("\nMethod: ");
-    message += (webServer.method() == HTTP_GET) ? F("GET") : F("POST");
+    message += request->methodToString();
     message += F("\nArguments: ");
-    message += webServer.args();
+    message += request->args();
     message += F("\n");
-    for (uint8_t i = 0; i < webServer.args(); i++)
+    for (size_t i = 0; i < request->args(); i++)
     {
-        message += " " + webServer.argName(i) + F(": ") + webServer.arg(i) + F("\n");
+        message += " " + request->argName(i) + F(": ") + request->arg(i) + F("\n");
     } // for
 
-    webServer.send(404, F("text/plain;charset=utf-8"), message);
+    request->send(404, F("text/plain;charset=utf-8"), message);
 } // HandleNotFound
 
 // Serve a specified font from program memory
-void ServeFont(PGM_P content, unsigned int content_len)
+void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t content_len)
 {
-    printHttpRequest();
-    unsigned long start = millis();
+    printHttpRequest(request);
 
-    webServer.send_P(200, fontWoffStr, content, content_len);
+    // Skip Etag checking; browsers don't seem to use that when requesting fonts
+
+    unsigned long start = millis();
+    request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] Serving font '%S' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] Serving font '%s' took: %lu msec\n"),
         TimeStamp(),
-        webServer.uri().c_str(),
+        request->url().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeFont
@@ -348,30 +375,28 @@ void ServeFont(PGM_P content, unsigned int content_len)
 #ifdef SERVE_FROM_SPIFFS
 
 // Serve a specified font from the SPI Flash File System (SPIFFS)
-void ServeFontFromFile(const char* path)
+void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
 {
-    unsigned long start = millis();
-
     VanBusRx.Disable();
     if (! SPIFFS.exists(path))
     {
         VanBusRx.Enable();
-        return HandleNotFound();
+        return HandleNotFound(request);
     } // if
 
-    printHttpRequest();
+    printHttpRequest(request);
 
     // Skip Etag checking; browsers don't seem to use that when requesting fonts
 
-    File file = SPIFFS.open(path, "r");
-    size_t sent = webServer.streamFile(file, fontWoffStr);
-    file.close();
+    unsigned long start = millis();
+    request->send(SPIFFS, fontWoffStr, path);
+
     VanBusRx.Enable();
 
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] Serving font '%s' from file system took: %lu msec\n"),
         TimeStamp(),
-        webServer.uri().c_str(),
+        path,
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeFontFromFile
@@ -392,25 +417,32 @@ const char* getContentType(const String& path)
 } // getContentType
 
 // Serve a specified document (text, html, css, javascript, ...) from program memory
-void ServeDocument(PGM_P mimeType, PGM_P content)
+void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P content)
 {
-    //if (webServer.method() != HTTP_GET) return;
+    printHttpRequest(request);
 
-    printHttpRequest();
+    if (request->method() != HTTP_GET) return;
 
     unsigned long start = millis();
-    bool eTagMatches = checkETag(md5Checksum);
+    bool eTagMatches = checkETag(request, md5Checksum);
     if (! eTagMatches)
     {
         // Serve the complete document
-        webServer.send_P(200, mimeType, content);
+        AsyncWebServerResponse* response = request->beginResponse(200, mimeType, content);
+        response->addHeader(F("ETag"), String("\"") + md5Checksum + "\"");
+
+        // Tells the client that it can cache the asset, but it cannot use the cached asset without
+        // re-validating with the server
+        response->addHeader(F("Cache-Control"), F("no-cache"));
+
+        request->send(response);
     } // if
 
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] %S '%s' took: %lu msec\n"),
         TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
-        webServer.uri().c_str(),
+        request->url().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeDocument
@@ -418,12 +450,10 @@ void ServeDocument(PGM_P mimeType, PGM_P content)
 #ifdef SERVE_FROM_SPIFFS
 
 // Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
-void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
+void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* urlPath = 0, const char* mimeType = 0)
 {
-    //if (webServer.method() != HTTP_GET) return;
+    String path(urlPath == 0 ? request->url().c_str() : urlPath);
 
-    String path(urlPath == 0 ? webServer.uri() : urlPath);
-    String fsPath = path;
     String md5 = getMd5(path);
     if (md5.length() == 0)
     {
@@ -431,34 +461,35 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 
         // Try the ".gz" file
         md5 = getMd5(path + ".gz");
-        if (md5.length() == 0) return HandleNotFound();
-
-        fsPath += ".gz";
+        if (md5.length() == 0) return HandleNotFound(request);
     } // if
 
-    printHttpRequest();
+    printHttpRequest(request);
+
+    if (request->method() != HTTP_GET) return;
 
     unsigned long start = millis();
-
-    bool eTagMatches = checkETag(md5);
+    bool eTagMatches = checkETag(request, md5);
     if (! eTagMatches)
     {
         // Get the MIME type, if necessary
         if (mimeType == 0) mimeType = getContentType(path);
 
         // Serve the complete document
+        AsyncWebServerResponse* response = request->beginResponse(SPIFFS, path, mimeType);
+        response->addHeader(F("ETag"), String("\"") + md5 + "\"");
+        response->addHeader(F("Cache-Control"), F("no-cache"));
+
         VanBusRx.Disable();
-        File file = SPIFFS.open(fsPath, "r");
-        size_t sent = webServer.streamFile(file, mimeType);
-        file.close();
+        request->send(response);
         VanBusRx.Enable();
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] %S '%S' from file system took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] %S '%s' from file system took: %lu msec\n"),
         TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
-        path.c_str(),
+        request->url().c_str(),
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeDocumentFromFile
@@ -466,17 +497,17 @@ void ServeDocumentFromFile(const char* urlPath = 0, const char* mimeType = 0)
 #endif // SERVE_FROM_SPIFFS
 
 // Serve the main HTML page
-void ServeMainHtml()
+void ServeMainHtml(class AsyncWebServerRequest* request)
 {
   #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
 
     // Serve from the SPI flash file system
-    ServeDocumentFromFile("/MFD.html");
+    ServeDocumentFromFile(request, "/MFD.html");
 
   #else
 
     // Serve from program memory, so updating is easy and does not need the SPI flash file system uploader
-    ServeDocument(PSTR("text/html"), mfd_html);
+    ServeDocument(request, PSTR("text/html"), mfd_html);
 
   #endif // SERVE_MAIN_FILES_FROM_SPIFFS
 } // ServeMainHtml
@@ -486,76 +517,84 @@ void SetupWebServer()
     // -----
     // Fonts
 
-  #ifdef SERVE_FONTS_FROM_SPIFFS
-
-    webServer.on(F("/PeugeotNewRegular.woff"), [](){ ServeFontFromFile("/PeugeotNewRegular.woff"); });
-    webServer.on(F("/webfonts/fa-solid-900.woff"), [](){ ServeFontFromFile("/fa-solid-900.woff"); });
-
-  #else
-
-    webServer.on(F("/PeugeotNewRegular.woff"), [](){
-        ServeFont(PeugeotNewRegular_woff, PeugeotNewRegular_woff_len);
+    webServer.on("/PeugeotNewRegular.woff", [](AsyncWebServerRequest *request)
+    {
+      #ifdef SERVE_FONTS_FROM_SPIFFS
+        ServeFontFromFile(request, "/PeugeotNewRegular.woff");
+      #else
+        ServeFont(request, PeugeotNewRegular_woff, PeugeotNewRegular_woff_len);
+      #endif // SERVE_FONTS_FROM_SPIFFS
     });
-    webServer.on(F("/webfonts/fa-solid-900.woff"), [](){
-        ServeFont(webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
+    webServer.on("/webfonts/fa-solid-900.woff", [](AsyncWebServerRequest *request)
+    {
+      #ifdef SERVE_FONTS_FROM_SPIFFS
+        ServeFontFromFile(request, "/fa-solid-900.woff");
+      #else
+        ServeFont(request, webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
+      #endif // SERVE_FONTS_FROM_SPIFFS
     });
-
-  #endif // SERVE_FONTS_FROM_SPIFFS
 
     // -----
     // Javascript files
 
-  #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
+    webServer.on("/jquery-3.5.1.min.js", [](AsyncWebServerRequest *request)
+    {
+      #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
+        ServeDocumentFromFile(request, "/jquery-3.5.1.min.js");
+      #else
+        ServeDocument(request, textJavascriptStr, jQuery_js);
+      #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
+    });
 
-    webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocumentFromFile(); });
-
-  #else
-
-    webServer.on(F("/jquery-3.5.1.min.js"), [](){ ServeDocument(textJavascriptStr, jQuery_js); });
-
-  #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
-
-  #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
-
-    webServer.on(F("/MFD.js"), [](){ ServeDocumentFromFile(); });
-
-  #else
-
-    webServer.on(F("/MFD.js"), [](){ ServeDocument(textJavascriptStr, mfd_js); });
-
-  #endif // SERVE_MAIN_FILES_FROM_SPIFFS
+    webServer.on("/MFD.js", [](AsyncWebServerRequest *request)
+    {
+      #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
+        ServeDocumentFromFile(request, "/MFD.js");
+      #else
+        ServeDocument(request, textJavascriptStr, mfd_js);
+      #endif // SERVE_MAIN_FILES_FROM_SPIFFS
+    });
 
     // -----
     // Cascading style sheet files
 
-  #ifdef SERVE_CSS_FROM_SPIFFS
+    webServer.on("/css/all.css", [](AsyncWebServerRequest *request)
+    {
+      #ifdef SERVE_CSS_FROM_SPIFFS
+        ServeDocumentFromFile(request, "/all.css");
+      #else
+        ServeDocument(request, textCssStr, faAll_css);
+      #endif // SERVE_CSS_FROM_SPIFFS
+    });
 
-    webServer.on(F("/css/all.css"), [](){ ServeDocumentFromFile("/all.css"); });
-    webServer.on(F("/CarInfo.css"), [](){ ServeDocumentFromFile(); });
-
-  #else
-
-    webServer.on(F("/css/all.css"), [](){ ServeDocument(textCssStr, faAll_css); });
-    webServer.on(F("/CarInfo.css"), [](){ ServeDocument(textCssStr, carInfo_css); });
-
-  #endif // SERVE_CSS_FROM_SPIFFS
+    webServer.on("/CarInfo.css", [](AsyncWebServerRequest *request)
+    {
+      #ifdef SERVE_CSS_FROM_SPIFFS
+        ServeDocumentFromFile(request, "/CarInfo.css");
+      #else
+        ServeDocument(request, textCssStr, carInfo_css);
+      #endif // SERVE_CSS_FROM_SPIFFS
+    });
 
     // -----
     // HTML files
 
-    webServer.on(F("/MFD.html"), ServeMainHtml);
+    webServer.on("/MFD.html", ServeMainHtml);
 
     // -----
     // Miscellaneous
 
     // Doing this will prevent the "login" popup on Android.
-    webServer.on(F("/generate_204"), HandleAndroidConnectivityCheck);
-    webServer.on(F("/gen_204"), HandleAndroidConnectivityCheck);
+    webServer.on("/generate_204", HandleAndroidConnectivityCheck);
+    webServer.on("/gen_204", HandleAndroidConnectivityCheck);
 
   #ifdef SERVE_FROM_SPIFFS
 
     // Try to serve any not further listed document from the SPI flash file system
-    webServer.onNotFound([](){ ServeDocumentFromFile(); });
+    webServer.onNotFound([](AsyncWebServerRequest *request)
+    {
+        ServeDocumentFromFile(request);
+    });
 
   #else
 
@@ -563,13 +602,9 @@ void SetupWebServer()
 
   #endif // SERVE_FROM_SPIFFS
 
-    const char* headers[] = { "If-None-Match" };
-    webServer.collectHeaders(headers, sizeof(headers)/ sizeof(headers[0]));
-
     webServer.begin();
 } // SetupWebServer
 
 void LoopWebServer()
 {
-    webServer.handleClient();
 } // LoopWebServer

@@ -307,7 +307,7 @@ function connectToWebSocket()
 {
 	if (websocketPreventConnect) return;
 
-	var wsUrl = "ws://" + webSocketServerHost + ":81/";
+	var wsUrl = "ws://" + webSocketServerHost + "/ws";
 	console.log("// Connecting to WebSocket '" + wsUrl + "'");
 
 	// Create WebSocket class instance
@@ -1591,14 +1591,14 @@ function hideAudioSettingsPopup()
 	updatingAudioVolume = false;
 	isAudioMenuVisible = false;
 
+	hidePopup("audio_settings_popup");
+
 	// Emulate behavior of original MFD
 	if (tunerPresetsPopupWasVisible)
 	{
 		tunerPresetsPopupWasVisible = false;
 		showTunerPresetsPopup(7200);  // This time it is shown shorter
 	} // if
-
-	return hidePopup("audio_settings_popup");
 }
 
 function hideAudioSettingsPopupAfter(msec)
@@ -4520,6 +4520,7 @@ function handleItemChange(item, value)
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
+			if (! satnavOnMap) break;
 
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
 			else changeBackLargeScreenAfter(2000);
@@ -4532,13 +4533,15 @@ function handleItemChange(item, value)
 
 			satnavDisplayCanBeDimmed = value === "YES";
 
-			if (value === "NO" && currentLargeScreenId !== "satnav_vocal_synthesis_level")
-			{
-				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
-			}
-			else if (value === "YES")
+			if (value === "YES")
 			{
 				changeBackLargeScreenAfter(2000);
+				break;
+			} // if
+
+			if (currentLargeScreenId !== "satnav_vocal_synthesis_level")
+			{
+				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
 			} // if
 		} // case
 		break;

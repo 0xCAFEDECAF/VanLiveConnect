@@ -48,7 +48,7 @@ void SetupWebServer();
 void LoopWebServer();
 
 // Defined in WebSocket.ino
-bool SendJsonOnWebSocket(const char* json, bool savePacketForLater = false);
+bool SendJsonOnWebSocket(const char* json, bool saveForLater = false);
 void SetupWebSocket();
 void LoopWebSocket();
 
@@ -91,8 +91,6 @@ void IrSetup();
 const char* ParseIrPacketToJson(const TIrPacket& pkt);
 bool IrReceive(TIrPacket& irPacket);
 
-#include <WebSockets.h>  // For #define WEBSOCKETS_NETWORK_TYPE, used below
-
 // The following VAN bus packets are considered important, and should not be skipped when the RX queue
 // is overrunning
 bool ICACHE_RAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
@@ -117,27 +115,16 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 100.
-  #define VAN_PACKET_QUEUE_SIZE 60
+  #define VAN_PACKET_QUEUE_SIZE 30
 
-  #if VAN_BUS_VERSION_INT < 000003003
-    #if WEBSOCKETS_NETWORK_TYPE != NETWORK_ESP8266_ASYNC
-
-      // Old versions of VanBus library do not support drop policy setting, so need a larger RX queue when
-      // using WebSockets "synchronous TCP" mode.
-      // Note that synchronous TCP mode can cause hiccups of several seconds, even a value of 150 is not enough...
-      // But more than this uses too much RAM :-(
-      #undef VAN_PACKET_QUEUE_SIZE
-      #define VAN_PACKET_QUEUE_SIZE 150
-    #endif
-  #else
-
+  #if VAN_BUS_VERSION_INT >= 000003003
     // When queue fills above 80%, start dropping non-essential packets
     VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsImportantPacket);
   #endif
 
   #if defined VAN_RX_IFS_DEBUGGING
     #undef VAN_PACKET_QUEUE_SIZE
-    #define VAN_PACKET_QUEUE_SIZE 50
+    #define VAN_PACKET_QUEUE_SIZE 25
   #endif
 
     #define TX_PIN D3  // GPIO pin connected to VAN bus transceiver input
