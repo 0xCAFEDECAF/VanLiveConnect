@@ -171,7 +171,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
     * Using +12 Volt permanent line (pin 7 of the "A" block of the ISO connector). To prevent battery drain,
       the ESP board will go to sleep after 5 minutes ([configurable in `Config.h`](VanLiveConnect/Config.h#L86)).
-      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L124) to be connected, so that the ESP board
+      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L121) to be connected, so that the ESP board
       wakes up as soon as any activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
@@ -265,7 +265,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
-  version 1.2.7 .
+  version 1.2.6 and 1.2.7 .
 
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
