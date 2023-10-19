@@ -6,6 +6,9 @@
 #include <TimeLib.h>
 #endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 
+// Useful Constants
+#define MINS_PER_HOUR (60)
+
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;
 extern uint8_t mfdTemperatureUnit;
@@ -105,7 +108,11 @@ void SendQueuedJson(uint32_t id)
         {
             if (TryToSendJsonOnWebSocket(id, queuedJsonPackets[i]))
             {
-                Serial.printf_P(PSTR("==> WebSocket: sending stored %zu-byte packet no. '%d'\n"), strlen(queuedJsonPackets[i]), i);
+                Serial.printf_P(
+                    PSTR("==> WebSocket: sending stored %zu-byte packet no. '%d'\n"),
+                    strlen(queuedJsonPackets[i]),
+                    i
+                );
                 free(queuedJsonPackets[i]);
                 queuedJsonPackets[i] = nullptr;
                 nQueuedJsonSlotsOccupied--;
@@ -179,24 +186,24 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater)
         } // if
     } // for
 
-    if (! result || duration > 100)
+    if (! result
+        || duration > 100)  // High possibility that this packet did in fact not come through
     {
-        // High possibility that this packet did in fact not come through
         if (saveForLater) QueueJson(json);
 
         Serial.printf_P(
-            PSTR("%s[webSocket] %SFailed to send %zu-byte packet, %S\n"),
+            PSTR("%s[webSocket] %Sailed to send %zu-byte packet%S\n"),
             TimeStamp(),
-            result ? PSTR("(Probably) ") : PSTR(""),
+            result ? PSTR("Possibly f") : PSTR("F"),
             strlen(json),
-            saveForLater ? PSTR("stored for later sending") : PSTR("discarding")
+            saveForLater ? PSTR(", stored for later sending") : result ? PSTR("") : PSTR(", discarding")
         );
     } // if
 
     // Print a message if the WebSocket transmission took outrageously long (normally it takes around 1-2 msec).
     // If that takes really long (seconds or more), the VAN bus Rx queue will overrun (remember, ESP8266 is
     // a single-thread system).
-    if (duration > 100 && duration != ULONG_MAX)
+    if (result && duration > 100)
     {
         Serial.printf_P(
             PSTR("%s[webSocket] Sending %zu-byte packet took: %lu msec; result = %S\n"),
@@ -309,8 +316,9 @@ void ProcessWebSocketClientMessage(const char* payload)
         SetTimeZoneOffset(offsetMinutes);
 
         Serial.printf_P(
-            PSTR("==> Time zone received from WebSocket client: %d minutes\n"),
-            offsetMinutes
+            PSTR("==> Time zone received from WebSocket client: UTC %+2d:%02d\n"),
+            offsetMinutes / MINS_PER_HOUR,
+            abs(offsetMinutes % MINS_PER_HOUR)
         );
     }
     else if (clientMessage.startsWith("date_time:"))
@@ -378,18 +386,19 @@ void WebSocketEvent(
             //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
 
             // Send ESP system data to client
-            //SendJsonOnWebSocket(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+            // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:
             QueueJson(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send Wi-Fi and IP data to client
-            //SendJsonOnWebSocket(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
+            // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:
             QueueJson(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send equipment status data, e.g. presence of sat nav and other peripherals
-            //SendJsonOnWebSocket(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
+            // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:
             QueueJson(EquipmentStatusDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send any JSON data that was stored for later sending
+            // Don't call here, causes out-of-memory or stack overflow crash
             //SendQueuedJson(websocketId);
         }
         break;
@@ -423,7 +432,7 @@ void WebSocketEvent(
                 ProcessWebSocketClientMessage((char*)data);  // Process the message
 
                 // Send any JSON data that was stored for later sending
-                // Don't, causes crash
+                // Don't call here, causes out-of-memory or stack overflow crash
                 //SendQueuedJson(websocketId);
             } // if
         }
@@ -476,24 +485,17 @@ void LoopWebSocket()
 {
     webSocket.cleanupClients();
 
-    // static unsigned long lastUpdateX = 0;
+  #ifdef WIFI_STRESS_TEST
     static uint32_t packetNo = 0;
 
-  #ifdef WIFI_STRESS_TEST
-    // Faster than this is problematic for some (slower) browsers
-    // if (millis() - lastUpdateX >= 200UL)  // Arithmetic has safe roll-over
-    // {
-        // lastUpdateX = millis();
-
-        // Don't let the test frames overflow the queue
-        if (webSocket.areAllQueuesEmpty())
+    // Don't let the test frames overflow the queue
+    if (webSocket.areAllQueuesEmpty())
+    {
+        if (SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer, JSON_BUFFER_SIZE)))
         {
-            if (SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer, JSON_BUFFER_SIZE)))
-            {
-                packetNo++;
-            } // if
+            packetNo++;
         } // if
-    // } // if
+    } // if
   #endif // WIFI_STRESS_TEST
 
   #ifdef DEBUG_WEBSOCKET
