@@ -344,26 +344,16 @@ void loop()
     dnsServer.processNextRequest();
   #endif // WIFI_AP_MODE
 
-    LoopWebSocket(); // TODO - necessary?
-
     WifiCheckStatus();
 
-    LoopWebSocket(); // TODO - necessary?
-
     LoopOta();
-
-    LoopWebSocket(); // TODO - necessary?
 
     LoopWebSocket();
     LoopWebServer();
 
-    LoopWebSocket(); // TODO - necessary?
-
     // IR receiver
     TIrPacket irPacket;
     if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket), true);
-
-    LoopWebSocket(); // TODO - necessary?
 
     static unsigned long lastPacketAt = 0;
     if (sleepAfter != -1)
@@ -387,12 +377,8 @@ void loop()
       #if VAN_BUS_VERSION_INT >= 000003001 && VAN_BUS_VERSION_INT < 000003003
 
         // If RX queue is starting to overrun, keep only important (sat nav, stalk button press) packets
-        #if WEBSOCKETS_NETWORK_TYPE == NETWORK_ESP8266_ASYNC
-          #define PANIC_AT_PERCENTAGE (60)
-        #else
-          // Sync TCP mode can cause hiccups of several seconds, so start throwing away packets very soon
-          #define PANIC_AT_PERCENTAGE (40)
-        #endif
+        #define PANIC_AT_PERCENTAGE (60)
+
         int nDiscarded = 0;
         while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsImportantPacket(pkt))
         {
@@ -409,18 +395,12 @@ void loop()
 
       #endif
 
-        LoopWebSocket(); // TODO - necessary?
-
       #ifdef VAN_RX_IFS_DEBUGGING
         if (pkt.getIfsDebugPacket().IsAbnormal()) pkt.getIfsDebugPacket().Dump(Serial);
       #endif // VAN_RX_IFS_DEBUGGING
 
-        LoopWebSocket(); // TODO - necessary?
-
         SendJsonOnWebSocket(ParseVanPacketToJson(pkt), IsImportantPacket(pkt));
     }
-
-    LoopWebSocket(); // TODO - necessary?
 
     if (isQueueOverrun)
     {
@@ -440,8 +420,6 @@ void loop()
         SendJsonOnWebSocket(jsonBuffer);
       #endif // SHOW_VAN_RX_STATS
     } // if
-
-    LoopWebSocket(); // TODO - necessary?
 
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
