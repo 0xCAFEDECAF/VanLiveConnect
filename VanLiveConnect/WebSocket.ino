@@ -69,16 +69,16 @@ char* queuedJsonPackets[N_QUEUED_JSON];
 void QueueJson(const char* json)
 {
     // Free a slot if necessary
-    if (queuedJsonPackets[nextJsonPacketIdx] != NULL)
+    if (queuedJsonPackets[nextJsonPacketIdx] != nullptr)
     {
         free(queuedJsonPackets[nextJsonPacketIdx]);
-        queuedJsonPackets[nextJsonPacketIdx] = NULL;
+        queuedJsonPackets[nextJsonPacketIdx] = nullptr;
         nQueuedJsonSlotsOccupied--;
     } // if
 
     // Try to allocate memory
     queuedJsonPackets[nextJsonPacketIdx] = (char*) malloc(strlen(json) + 1);
-    if (queuedJsonPackets[nextJsonPacketIdx] == NULL) return;  // Return if failed to allocate
+    if (queuedJsonPackets[nextJsonPacketIdx] == nullptr) return;  // Return if failed to allocate
 
     nQueuedJsonSlotsOccupied++;
     if (nQueuedJsonSlotsOccupied > maxQueuedJsonSlots) maxQueuedJsonSlots = nQueuedJsonSlotsOccupied;
@@ -101,13 +101,13 @@ void SendQueuedJson(uint32_t id)
     int i = nextJsonPacketIdx;
     do
     {
-        if (queuedJsonPackets[i] != NULL && IsIdConnected(id))
+        if (queuedJsonPackets[i] != nullptr && IsIdConnected(id))
         {
             if (TryToSendJsonOnWebSocket(id, queuedJsonPackets[i]))
             {
                 Serial.printf_P(PSTR("==> WebSocket: sending stored %zu-byte packet no. '%d'\n"), strlen(queuedJsonPackets[i]), i);
                 free(queuedJsonPackets[i]);
-                queuedJsonPackets[i] = NULL;
+                queuedJsonPackets[i] = nullptr;
                 nQueuedJsonSlotsOccupied--;
             } // if
         } // if

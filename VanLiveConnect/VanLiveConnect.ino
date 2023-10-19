@@ -187,7 +187,7 @@ const char* VanBusStatsToStr()
     // Replace '\n' by string terminator '\0'
     buffer[bufSize - 1] = '\0';
     char *p = strchr(buffer, '\n');
-    if (p != NULL) *p = '\0';
+    if (p != nullptr) *p = '\0';
 
     return buffer;
 } // VanBusStatsToStr

@@ -5299,7 +5299,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     // Relying on short-circuit boolean evaluation
     bool isDuplicate =
         handler->prevDataLen == dataLen  // handler->prevDataLen is initialized to -1
-        && handler->prevData != NULL
+        && handler->prevData != nullptr
         && memcmp(data, handler->prevData, dataLen) == 0;
 
     if (handler->ignoreDups && isDuplicate) return true;  // Duplicate packet, to be ignored
@@ -5315,7 +5315,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 
         // The first time, or after an call to ResetPacketPrevData, handler->prevDataLen will be -1, so only
         // the "FULL: " line will be printed
-        if (handler->prevData != NULL && handler->prevDataLen >= 0)
+        if (handler->prevData != nullptr && handler->prevDataLen >= 0)
         {
             // First line: print the new packet's data where it differs from the previous packet
             Serial.printf_P(PSTR("DIFF: %03X %1X (%s) "), iden, pkt.CommandFlags(), pkt.CommandFlagsStr());
@@ -5343,9 +5343,9 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     } // if
   #endif // PRINT_RAW_PACKET_DATA
 
-    if (handler->prevData == NULL) handler->prevData = (uint8_t*) malloc(VAN_MAX_DATA_BYTES);
+    if (handler->prevData == nullptr) handler->prevData = (uint8_t*) malloc(VAN_MAX_DATA_BYTES);
 
-    if (handler->prevData != NULL)
+    if (handler->prevData != nullptr)
     {
         // Save packet data to compare against at next packet reception
         memset(handler->prevData, 0, VAN_MAX_DATA_BYTES);
@@ -5527,7 +5527,7 @@ void ResetPacketPrevData()
 
     while (handler != handlers_end)
     {
-        if (handler->prevData != NULL)
+        if (handler->prevData != nullptr)
         {
             memset(handler->prevData, 0, VAN_MAX_DATA_BYTES);
             handler->prevDataLen = -1;  // Re-initialize

@@ -102,7 +102,7 @@ const char* SetupWifi()
   #ifdef WIFI_PASSWORD
     WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
   #else
-    WiFi.softAP(wifiSsid, NULL, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
+    WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
   #endif
 
     // Register event handlers

@@ -64,7 +64,7 @@ String EspGetResetInfo()
 {
     struct rst_info* espResetInfo = ESP.getResetInfoPtr();
 
-    if (espResetInfo == NULL) return String();
+    if (espResetInfo == nullptr) return String();
 
     static const int bufSize = 200;
     char buf[bufSize];
