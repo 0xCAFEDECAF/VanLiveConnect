@@ -176,7 +176,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
 > 👉 Notes:
->  * <img src="extras/Schematics/MCP2551%20terminator%20resistors.jpg" align="right" width="200px"/>The two terminator
+>  * <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Schematics/MCP2551%20terminator%20resistors.jpg" align="right" width="200px"/>The two terminator
      resistors R3 and R4 (2 x 100 Ohm, near the CANH and CANL pins) on this transceiver board
      are meant for operating inside a CAN bus network, but are not necessary on a VAN bus. In fact, they may even
      cause the other equipment on the bus to malfunction. If you experience problems in the vehicle equipment,
@@ -200,7 +200,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    The "+12 Volt permanent" variant as described above is possible for this setup too.
 
 > 👉 Notes:
->  * <img src="extras/Schematics/SN65HVD230%20terminator%20resistor.jpg" align="right" width="200px"/>The terminator
+>  * <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Schematics/MCP2551%20terminator%20resistors.jpg" align="right" width="200px"/>The terminator
      resistor R2 (120 Ohm, near the CANH and CANL pins) on this transceiver board is meant
      for operating inside a CAN bus network, but is not necessary on a VAN bus. In fact, it may even cause the
      other equipment on the bus to malfunction. If you experience problems in the vehicle equipment, you may
