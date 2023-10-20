@@ -248,7 +248,7 @@
 //#define SHOW_VAN_RX_STATS
 
 // Define to show the ESP RAM and Wi-Fi statistics on the "system" screen
-//#define SHOW_ESP_RUNTIME_STATS
+#define SHOW_ESP_RUNTIME_STATS
 
 // Prints each packet on serial port, highlighting the bytes that differ from the previous
 // packet with the same IDEN value

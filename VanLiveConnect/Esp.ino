@@ -196,15 +196,13 @@ const char* EspRuntimeDataToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"uptime_seconds\": \"%lu\",\n"
             "\"esp_wifi_rssi\": \"%d dB\",\n"
             "\"esp_free_ram\": \"%lu bytes\"\n"
         "}\n"
     "}\n";
 
-    int at = snprintf_P(buf, n, jsonFormatter,
-        WiFi.RSSI(),
-        system_get_free_heap_size()
-    );
+    int at = snprintf_P(buf, n, jsonFormatter, millis() / 1000, WiFi.RSSI(), system_get_free_heap_size());
 
     // JSON buffer overflow?
     if (at >= n) return "";

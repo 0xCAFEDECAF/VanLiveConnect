@@ -199,12 +199,11 @@ const char* VanBusStatsToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"van_bus_stats\": \"VAN Rx Stats: %s\",\n"
-            "\"uptime_seconds\": \"%lu\"\n"
+            "\"van_bus_stats\": \"VAN Rx Stats: %s\"\n"
         "}\n"
     "}\n";
 
-    int at = snprintf_P(buf, n, jsonFormatter, VanBusStatsToStr(), millis() / 1000);
+    int at = snprintf_P(buf, n, jsonFormatter, VanBusStatsToStr());
 
     // JSON buffer overflow?
     if (at >= n) return "";
