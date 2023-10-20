@@ -428,7 +428,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     if (! eTagMatches)
     {
         // Serve the complete document
-        AsyncWebServerResponse* response = request->beginResponse(200, mimeType, content);
+        AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
         response->addHeader(F("ETag"), String("\"") + md5Checksum + "\"");
 
         // Tells the client that it can cache the asset, but it cannot use the cached asset without
