@@ -100,16 +100,19 @@ void QueueJson(const char* json)
 void SendQueuedJson(uint32_t id)
 {
     if (id == WEBSOCKET_INVALID_ID) return;
+    if (! IsIdConnected(id)) return;
 
     int i = nextJsonPacketIdx;
     do
     {
-        if (queuedJsonPackets[i] != nullptr && IsIdConnected(id))
+        if (queuedJsonPackets[i] != nullptr)
         {
             if (TryToSendJsonOnWebSocket(id, queuedJsonPackets[i]))
             {
                 Serial.printf_P(
-                    PSTR("==> WebSocket: sending stored %zu-byte packet no. '%d'\n"),
+                    PSTR("%s[webSocket %lu] Sending stored %zu-byte packet no. '%d'\n"),
+                    TimeStamp(),
+                    id,
                     strlen(queuedJsonPackets[i]),
                     i
                 );
