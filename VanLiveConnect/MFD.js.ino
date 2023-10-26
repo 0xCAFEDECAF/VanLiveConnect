@@ -1,4 +1,16 @@
 
+// The following lines are compiled conditionally
+
+#ifdef DEBUG_WEBSOCKET
+
+// Flashing LED indicating web socket activity
+#define TOGGLE_COMMS_LED \
+"	$('#comms_led').toggleClass(handleItemChange.revertCommsLedColorTimer ? 'ledOnRed' : 'ledOn');"
+
+#else
+#define TOGGLE_COMMS_LED ""
+#endif // DEBUG_WEBSOCKET
+
 char mfd_js[] PROGMEM = R"=====(
 
 // Javascript functions to drive the browser-based Multi-Function Display (MFD)
@@ -170,6 +182,11 @@ function processJsonObject(item, jsonObject)
 
 function writeToDom(jsonObj)
 {
+)====="
+
+TOGGLE_COMMS_LED
+
+R"=====(
 	// The following log entries can be used to literally re-play a session; simply copy-paste these lines into the
 	// console area of the web-browser. Also it can be really useful to copy and save these lines into a text file
 	// for later re-playing at your desk.
