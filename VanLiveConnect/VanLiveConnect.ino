@@ -217,7 +217,8 @@ void PrintDebugDefines()
 {
     Serial.print(F("Compiled with following debug #define's (see file 'Config.h'):\n"));
   #if defined DEBUG_IR_RECV || defined DEBUG_WEBSERVER || defined DEBUG_WEBSOCKET \
-    || defined DEBUG_ORIGINAL_MFD || defined SHOW_VAN_RX_STATS || defined PRINT_RAW_PACKET_DATA \
+    || defined DEBUG_ORIGINAL_MFD || defined WIFI_STRESS_TEST \
+    || defined SHOW_VAN_RX_STATS || defined PRINT_RAW_PACKET_DATA \
     || defined PRINT_JSON_BUFFERS_ON_SERIAL || defined PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
 
   #ifdef DEBUG_IR_RECV
@@ -232,6 +233,9 @@ void PrintDebugDefines()
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.print(F("- DEBUG_ORIGINAL_MFD\n"));
   #endif // DEBUG_ORIGINAL_MFD
+  #ifdef WIFI_STRESS_TEST
+    Serial.print(F("- WIFI_STRESS_TEST\n"));
+  #endif // WIFI_STRESS_TEST
   #ifdef SHOW_VAN_RX_STATS
     Serial.print(F("- SHOW_VAN_RX_STATS\n"));
   #endif // SHOW_VAN_RX_STATS

@@ -20,7 +20,7 @@ const uint32_t flashSizeIde = ESP.getFlashChipSize();
 const FlashMode_t flashModeIde = ESP.getFlashChipMode();
 const uint32_t flashChipSpeed = ESP.getFlashChipSpeed();
 
-const char PROGMEM compileDate[] = __DATE__ " " __TIME__;
+const char PROGMEM compileDate[] = __DATE__ ", " __TIME__;
 
 void PrintSystemSpecs()
 {

@@ -457,7 +457,7 @@ void WebSocketEvent(
     } // switch
 } // WebSocketEvent
 
-const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf, const int n)
+const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
 {
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -468,10 +468,10 @@ const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf, cons
         "}\n"
     "}\n";
 
-    int at = snprintf_P(buf, n, jsonFormatter, packetNo);
+    int at = snprintf_P(buf, JSON_BUFFER_SIZE, jsonFormatter, packetNo);
 
     // JSON buffer overflow?
-    if (at >= n) return "";
+    if (at >= JSON_BUFFER_SIZE) return "";
 
     return buf;
 } // WebSocketPacketLossTestDataToJson
@@ -492,12 +492,10 @@ void LoopWebSocket()
     static uint32_t packetNo = 0;
 
     // Don't let the test frames overflow the queue
-    if (webSocket.areAllQueuesEmpty())
+    if (IsIdConnected(websocketId) && webSocket.areAllQueuesEmpty())
     {
-        if (SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer, JSON_BUFFER_SIZE)))
-        {
-            packetNo++;
-        } // if
+        bool result = SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer));
+        if (result) packetNo++;
     } // if
   #endif // WIFI_STRESS_TEST
 
@@ -507,7 +505,7 @@ void LoopWebSocket()
     {
         lastUpdate = millis();
 
-        Serial.printf_P(PSTR("%s[webSocket] %zu clients connected\n"), TimeStamp(), webSocket.count());
+        Serial.printf_P(PSTR("%s[webSocket] %zu clients are currently connected\n"), TimeStamp(), webSocket.count());
     } // if
   #endif // DEBUG_WEBSOCKET
 } // LoopWebSocket
