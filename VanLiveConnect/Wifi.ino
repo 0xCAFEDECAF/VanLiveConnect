@@ -78,6 +78,12 @@ const char* SetupWifi()
 
     // Seems to help in decreasing the jitter on the VAN bus bit timings
     wifi_set_sleep_type(NONE_SLEEP_T);
+    //WiFi.setOutputPower(20.5);  // Maximum
+    // Reducing the Wi-Fi power seems to work much better on the "in vehicle" setup: less Wi-Fi hiccups.
+    // The reason could be that there is less electromagnetic disturbance (due to reflection by the vehicle's
+    // metal parts). But the reason may also be simply that using less power causes less stress on the power
+    // supply of the ESP board.
+    WiFi.setOutputPower(0.0);
 
   #ifdef WIFI_AP_MODE
 
@@ -96,8 +102,7 @@ const char* SetupWifi()
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    //WiFi.setPhyMode(WIFI_PHY_MODE_11G);
-    WiFi.setOutputPower(17.5);
+    WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
 
   #ifdef WIFI_PASSWORD
     WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
@@ -123,8 +128,7 @@ const char* SetupWifi()
     WiFi.setAutoConnect(true);
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    //WiFi.setPhyMode(WIFI_PHY_MODE_11N);
-    WiFi.setOutputPower(17.5);
+    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
 
   #ifdef WIFI_PASSWORD
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
