@@ -48,7 +48,7 @@ void SetupWebServer();
 void LoopWebServer();
 
 // Defined in WebSocket.ino
-bool SendJsonOnWebSocket(const char* json, bool saveForLater = false);
+bool SendJsonOnWebSocket(const char* json, bool saveForLater = false, bool isTestMessage = false);
 void SetupWebSocket();
 void LoopWebSocket();
 

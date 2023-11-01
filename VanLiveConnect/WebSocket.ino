@@ -1,5 +1,6 @@
 
 #include <map>
+#include <limits.h>
 #include <ESPAsyncWebSrv.h>
 
 #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
@@ -53,10 +54,12 @@ bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
     if (! webSocket.availableForWrite(id)) return false;
 
     digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
+
+
+    IPAddress clientIp = webSocket.client(id)->remoteIP();
     webSocket.text(id, json);
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
-    IPAddress clientIp = webSocket.client(id)->remoteIP();
     lastWebSocketCommunication[clientIp] = millis();
 
     return true;
@@ -127,8 +130,9 @@ void SendQueuedJson(uint32_t id)
     while (i != nextJsonPacketIdx);
 } // SendQueuedJson
 
-// Send a (JSON) message to the WebSocket client
-bool SendJsonOnWebSocket(const char* json, bool saveForLater)
+// Send a (JSON) message to the WebSocket client.
+// If isTestMessage is true, the message will be sent only on websocketId, not on websocketBackupId.
+bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage)
 {
     if (json == 0) return true;
     if (strlen(json) <= 0) return true;
@@ -141,7 +145,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater)
         ids[n] = websocketId;
         n++;
     } // if
-    if (IsIdConnected(websocketBackupId))
+    if (! isTestMessage && IsIdConnected(websocketBackupId))
     {
         //Serial.printf_P(PSTR("==> Will try to send on %u\n"), websocketBackupId);
         ids[n] = websocketBackupId;
@@ -360,6 +364,18 @@ void WebSocketEvent(
         case WS_EVT_DISCONNECT:
         {
             Serial.printf_P(PSTR("%s[webSocket %lu] Disconnected!\n"), TimeStamp(), client->id());
+
+            if (client->id() == websocketId)
+            {
+                websocketId = websocketBackupId;
+                websocketBackupId = WEBSOCKET_INVALID_ID;
+            }
+            else if (client->id() == websocketBackupId)
+            {
+                websocketBackupId = WEBSOCKET_INVALID_ID;
+            } // if
+
+            //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
         }
         break;
 
@@ -414,7 +430,7 @@ void WebSocketEvent(
                 data[len] = '\0';  // TODO - not sure if this is safe
 
               #ifdef DEBUG_WEBSOCKET
-                Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'\n"), TimeStamp(), client->id(), data);
+                Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'"), TimeStamp(), client->id(), data);
               #endif // DEBUG_WEBSOCKET
 
                 IPAddress clientIp = client->remoteIP();
@@ -423,13 +439,19 @@ void WebSocketEvent(
                 if (client->id() != websocketId)
                 {
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR("==> Switching to %lu\n"), client->id());
+                    Serial.printf_P(PSTR(" --> Switching to %lu\n"), client->id());
                   #endif // DEBUG_WEBSOCKET
 
                     websocketBackupId = websocketId;
                     websocketId = client->id();  // When sending, try first on this client id
 
                     //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+                }
+                else
+                {
+                  #ifdef DEBUG_WEBSOCKET
+                    Serial.print(F("\n"));
+                  #endif // DEBUG_WEBSOCKET
                 } // if
 
                 ProcessWebSocketClientMessage((char*)data);  // Process the message
@@ -457,6 +479,7 @@ void WebSocketEvent(
     } // switch
 } // WebSocketEvent
 
+#ifdef WIFI_STRESS_TEST
 const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
 {
     const static char jsonFormatter[] PROGMEM =
@@ -464,7 +487,39 @@ const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
         "\"event\": \"test\",\n"
         "\"data\":\n"
         "{\n"
-            "\"packet_number\": \"%lu\"\n"
+            "\"packet_number\": \"%lu\",\n"
+            "\"filler_00\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_01\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_02\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_03\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_04\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_05\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_06\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_07\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_08\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_09\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_0A\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_0B\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_0C\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_0D\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_0E\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_0F\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_10\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_11\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_12\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_13\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_14\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_15\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_16\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_17\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_18\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_19\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_1A\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_1B\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_1C\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_1D\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_1E\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
+            "\"filler_1F\": \"1234567812345678123456781234567812345678123456781234567812345678\"\n"
         "}\n"
     "}\n";
 
@@ -475,6 +530,7 @@ const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
 
     return buf;
 } // WebSocketPacketLossTestDataToJson
+#endif // WIFI_STRESS_TEST
 
 void SetupWebSocket()
 {
@@ -494,7 +550,7 @@ void LoopWebSocket()
     // Don't let the test frames overflow the queue
     if (IsIdConnected(websocketId) && webSocket.areAllQueuesEmpty())
     {
-        bool result = SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer));
+        bool result = SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer), false, true);
         if (result) packetNo++;
     } // if
   #endif // WIFI_STRESS_TEST
@@ -506,6 +562,7 @@ void LoopWebSocket()
         lastUpdate = millis();
 
         Serial.printf_P(PSTR("%s[webSocket] %zu clients are currently connected\n"), TimeStamp(), webSocket.count());
+        //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
     } // if
   #endif // DEBUG_WEBSOCKET
 } // LoopWebSocket
