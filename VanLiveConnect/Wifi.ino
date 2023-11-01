@@ -1,9 +1,11 @@
 
 #include <ESP8266WiFi.h>
+#include <ESPAsyncWebSrv.h>
 
 #include "Config.h"
 
 // Defined in WebSocket.ino
+extern AsyncWebSocket webSocket;
 extern uint32_t websocketBackupId;
 extern uint32_t websocketId;
 
@@ -33,6 +35,9 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
     Serial.print(macToString(evt.mac));
     Serial.print(F("\n"));
+
+    if (websocketId != WEBSOCKET_INVALID_ID) webSocket.close(websocketId);
+    if (websocketBackupId != WEBSOCKET_INVALID_ID) webSocket.close(websocketBackupId);
 
     websocketId = WEBSOCKET_INVALID_ID;
     websocketBackupId = WEBSOCKET_INVALID_ID;
@@ -78,6 +83,7 @@ const char* SetupWifi()
 
     // Seems to help in decreasing the jitter on the VAN bus bit timings
     wifi_set_sleep_type(NONE_SLEEP_T);
+
     //WiFi.setOutputPower(20.5);  // Maximum
     // Reducing the Wi-Fi power seems to work much better on the "in vehicle" setup: less Wi-Fi hiccups.
     // The reason could be that there is less electromagnetic disturbance (due to reflection by the vehicle's
