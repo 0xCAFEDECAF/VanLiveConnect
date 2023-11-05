@@ -1,7 +1,7 @@
 
 #include <map>
 #include <limits.h>
-#include <ESPAsyncWebSrv.h>
+#include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
 
 #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 #include <TimeLib.h>
@@ -359,18 +359,20 @@ void WebSocketEvent(
     uint8_t* data,
     size_t len)
 {
+    uint32_t id = client->id();
+
     switch(type)
     {
         case WS_EVT_DISCONNECT:
         {
-            Serial.printf_P(PSTR("%s[webSocket %lu] Disconnected!\n"), TimeStamp(), client->id());
+            Serial.printf_P(PSTR("%s[webSocket %lu] Disconnected!\n"), TimeStamp(), id);
 
-            if (client->id() == websocketId)
+            if (id == websocketId)
             {
                 websocketId = websocketBackupId;
                 websocketBackupId = WEBSOCKET_INVALID_ID;
             }
-            else if (client->id() == websocketBackupId)
+            else if (id == websocketBackupId)
             {
                 websocketBackupId = WEBSOCKET_INVALID_ID;
             } // if
@@ -384,18 +386,21 @@ void WebSocketEvent(
             IPAddress clientIp = client->remoteIP();
             Serial.printf_P(PSTR("%s[webSocket %lu] Connection request from %s"),
                 TimeStamp(),
-                client->id(),
+                id,
                 clientIp.toString().c_str());
 
-            if (client->id() != websocketId)
+            // Tune some TCP parameters
+            client->client()->setNoDelay(true);
+
+            if (id != websocketId)
             {
                 Serial.printf_P(PSTR(" --> %S %lu\n"),
                     websocketId == WEBSOCKET_INVALID_ID ? PSTR("starting on") : PSTR("switching to"),
-                    client->id()
+                    id
                 );
 
                 websocketBackupId = websocketId;
-                websocketId = client->id();  // When sending, try first on this num
+                websocketId = id;  // When sending, try first on this num
             }
             else
             {
@@ -430,20 +435,20 @@ void WebSocketEvent(
                 data[len] = '\0';  // TODO - not sure if this is safe
 
               #ifdef DEBUG_WEBSOCKET
-                Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'"), TimeStamp(), client->id(), data);
+                Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'"), TimeStamp(), id, data);
               #endif // DEBUG_WEBSOCKET
 
                 IPAddress clientIp = client->remoteIP();
                 lastWebSocketCommunication[clientIp] = millis();
 
-                if (client->id() != websocketId)
+                if (id != websocketId)
                 {
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR(" --> Switching to %lu\n"), client->id());
+                    Serial.printf_P(PSTR(" --> Switching to %lu\n"), id);
                   #endif // DEBUG_WEBSOCKET
 
                     websocketBackupId = websocketId;
-                    websocketId = client->id();  // When sending, try first on this client id
+                    websocketId = id;  // When sending, try first on this client id
 
                     //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
                 }
@@ -472,7 +477,7 @@ void WebSocketEvent(
         case WS_EVT_ERROR:
         {
             uint16_t reasonCode = *(uint16_t*)arg;
-            Serial.printf_P(PSTR("%s[webSocket %lu]: error %d occurred: '%s'\n"), TimeStamp(), client->id(), reasonCode, data);
+            Serial.printf_P(PSTR("%s[webSocket %lu]: error %d occurred: '%s'\n"), TimeStamp(), id, reasonCode, data);
         }
         break;
 
