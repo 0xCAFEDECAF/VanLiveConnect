@@ -243,18 +243,18 @@ var fancyWebSocket = function(url)
 		callbacks[event_name] = callbacks[event_name] || [];
 		callbacks[event_name].push(callback);
 		return this;  // chainable
-	}; // function
+	}
 
 	this.close = function(msg)
 	{
 		console.log("// Closing websocket'" + url + (msg ? "', reason: " + msg : ""));
 		conn.close();
-	}; // function
+	}
 
 	this.send = function(data)
 	{
 		if (conn.readyState === 1) conn.send(data);
-	}; // function
+	}
 
 	// Dispatch to the right handlers
 	conn.onmessage = function(evt)
@@ -269,13 +269,13 @@ var fancyWebSocket = function(url)
 		}
 
 		dispatch(json.event, json.data);
-	}; // function
+	}
 
 	conn.onopen = function()
 	{
 		console.log("// Connected to WebSocket '" + url + "'!");
 		dispatch('open', null);
-	}; // function
+	}
 
 	conn.onclose = function(event)
 	{
@@ -288,22 +288,21 @@ var fancyWebSocket = function(url)
 		else
 		{
 			console.log("// WebSocket '" + url + "' connection error: " + event.code);
-			connectToWebSocket();
 		} // if
-	}; // function
+	}
 
 	conn.onerror = function(event)
 	{
 		if (conn.readyState == 1) console.log("// WebSocket '" + url + "' normal error: " + event.type);
-	}; // function
+	}
 
 	var dispatch = function(event_name, message)
 	{
 		var chain = callbacks[event_name];
 		if (chain === undefined) return;  // No callbacks for this event
 		for (let i = 0; i < chain.length; i++) chain[i](message);
-	}; // function
-}; // fancyWebSocket
+	}
+} // fancyWebSocket
 
 var webSocketServerHost = window.location.hostname;
 
@@ -311,9 +310,10 @@ var webSocket;
 
 // Send some data so that a webSocket event triggers when the connection has failed
 var keepAliveWebSocketTimer;
-function keepAliveWebSocket()
+function restartKeepAliveWebSocket()
 {
-	webSocket.send("keepalive");
+	clearInterval(keepAliveWebSocketTimer);
+	keepAliveWebSocketTimer = setInterval(function() { webSocket.send("keepalive"); }, 6000);
 }
 
 // Prevent double re-connecting when user reloads the page
@@ -322,6 +322,8 @@ window.onbeforeunload = function() { websocketPreventConnect = true; };
 
 function connectToWebSocket()
 {
+	clearInterval(keepAliveWebSocketTimer);
+
 	if (websocketPreventConnect) return;
 
 	var wsUrl = "ws://" + webSocketServerHost + "/ws";
@@ -355,18 +357,11 @@ function connectToWebSocket()
 			webSocket.send("time_offset:" + new Date().getTimezoneOffset() * -1);
 			webSocket.send("date_time:" + Date.now());  // Unix epoch, in milliseconds
 
-			// (Re-)start the "keep alive" timer
-			clearInterval(keepAliveWebSocketTimer);
-			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 6000);
+			restartKeepAliveWebSocket();
 		}
 	);
-	webSocket.bind
-	(
-		'close', function ()
-		{
-			clearInterval(keepAliveWebSocketTimer);
-		}
-	);
+	webSocket.bind('close', connectToWebSocket);
+
 }
 
 // -----
