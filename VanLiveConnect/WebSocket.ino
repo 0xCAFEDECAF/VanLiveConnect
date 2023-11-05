@@ -10,6 +10,11 @@
 // Useful Constants
 #define MINS_PER_HOUR (60)
 
+#ifdef WIFI_AP_MODE
+// Defined in Wifi.ino
+void WifiChangeChannel();
+#endif // WIFI_AP_MODE
+
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;
 extern uint8_t mfdTemperatureUnit;
@@ -378,6 +383,16 @@ void WebSocketEvent(
             } // if
 
             //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+
+          #ifdef WIFI_AP_MODE
+            static int countDisconnects = 0;
+            if (++countDisconnects == 3)
+            {
+                // Try another channel
+                WifiChangeChannel();
+                countDisconnects = 0;
+            } // if
+          #endif // WIFI_AP_MODE
         }
         break;
 

@@ -1,6 +1,6 @@
 
 #include <ESP8266WiFi.h>
-#include <ESPAsyncWebSrv.h>
+#include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
 
 #include "Config.h"
 
@@ -100,7 +100,7 @@ const char* SetupWifi()
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
   #endif // ON_DESK_MFD_ESP_MAC
 
-    Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s'\n"), wifiSsid);
+    Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s', channel %d\n"), wifiSsid, WIFI_CHANNEL);
 
     WiFi.softAPdisconnect (true);
 
@@ -148,6 +148,49 @@ const char* SetupWifi()
 
     return wifiSsid;
 } // SetupWifi
+
+#ifdef WIFI_AP_MODE
+int currentChannel = WIFI_CHANNEL;
+void WifiChangeChannel()
+{
+    const char* wifiSsid = WIFI_SSID;
+
+  #ifdef ON_DESK_MFD_ESP_MAC
+    // The test setup on the desk has a slightly different SSID
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
+  #endif // ON_DESK_MFD_ESP_MAC
+
+    // Extra test board for in car. TODO - remove
+    if (WiFi.macAddress() == "C8:C9:A3:5C:20:53" || WiFi.macAddress() == "2C:F4:32:2C:C6:DD") wifiSsid = WIFI_SSID" car_test";
+
+    int newChannel =
+        currentChannel == 6 ? 11 :
+        currentChannel == 11 ? 1 :
+        6;
+    // Or perhaps even this?
+  #if 0
+    int newChannel =
+        currentChannel == 6 ? 8 :
+        currentChannel == 8 ? 11 :
+        currentChannel == 11 ? 1 :
+        currentChannel == 1 ? 3 :
+        6;
+  #endif // 0
+
+    Serial.printf_P(PSTR("%s[wifi] Changing channel from %d to %d\n"), TimeStamp(), currentChannel, newChannel);
+
+    // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
+    WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
+
+  #ifdef WIFI_PASSWORD
+    WiFi.softAP(wifiSsid, WIFI_PASSWORD, newChannel, WIFI_SSID_HIDDEN, 4);
+  #else
+    WiFi.softAP(wifiSsid, nullptr, newChannel, WIFI_SSID_HIDDEN, 4);
+  #endif
+
+    currentChannel = newChannel;
+} // WifiChangeChannel
+#endif // WIFI_AP_MODE
 
 void WifiCheckStatus()
 {
