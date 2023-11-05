@@ -395,7 +395,10 @@ size_t AsyncClient::add(const char* data, size_t size, uint8_t apiflags) {
     return 0;
   size_t room = space();
   if(!room)
+  {
+    ASYNC_TCP_DEBUG("_add[%u]: space() returned 0\n", getConnectionId());
     return 0;
+  }
 #if ASYNC_TCP_SSL_ENABLED
   if(_pcb_secure){
     int sent = tcp_ssl_write(_pcb, (uint8_t*)data, size);
@@ -431,7 +434,7 @@ bool AsyncClient::send(){
     return true;
   }
 
-  ASYNC_TCP_DEBUG("send[%u]: tcp_output() returned err: %s(%ld)", getConnectionId(), errorToString(err), err);
+  ASYNC_TCP_DEBUG("send[%u]: tcp_output() returned err: %s(%ld)\n", getConnectionId(), errorToString(err), err);
   _tx_unsent_len = 0;
   return false;
 }
@@ -551,7 +554,8 @@ void AsyncClient::_sent(std::shared_ptr<ACErrorTracker>& errorTracker, tcp_pcb* 
   _rx_last_packet = millis();
   _tx_unacked_len -= len;
   _tx_acked_len += len;
-  ASYNC_TCP_DEBUG("_sent[%u]: %4u, unacked=%4u, acked=%4u, space=%4u\n", errorTracker->getConnectionId(), len, _tx_unacked_len, _tx_acked_len, space());
+  if (_tx_unacked_len > 0)
+    ASYNC_TCP_DEBUG("_sent[%u]: %4u, unacked=%4u, acked=%4u, space=%4u\n", errorTracker->getConnectionId(), len, _tx_unacked_len, _tx_acked_len, space());
   if(_tx_unacked_len == 0){
     _pcb_busy = false;
     errorTracker->setCloseError(ERR_OK);
