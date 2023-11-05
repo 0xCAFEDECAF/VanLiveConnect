@@ -160,9 +160,6 @@ void WifiChangeChannel()
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
   #endif // ON_DESK_MFD_ESP_MAC
 
-    // Extra test board for in car. TODO - remove
-    if (WiFi.macAddress() == "C8:C9:A3:5C:20:53" || WiFi.macAddress() == "2C:F4:32:2C:C6:DD") wifiSsid = WIFI_SSID" car_test";
-
     int newChannel =
         currentChannel == 6 ? 11 :
         currentChannel == 11 ? 1 :
