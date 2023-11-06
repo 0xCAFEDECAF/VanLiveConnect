@@ -84,12 +84,7 @@ const char* SetupWifi()
     // Seems to help in decreasing the jitter on the VAN bus bit timings
     wifi_set_sleep_type(NONE_SLEEP_T);
 
-    //WiFi.setOutputPower(20.5);  // Maximum
-    // Reducing the Wi-Fi power seems to work much better on the "in vehicle" setup: less Wi-Fi hiccups.
-    // The reason could be that there is less electromagnetic disturbance (due to reflection by the vehicle's
-    // metal parts). But the reason may also be simply that using less power causes less stress on the power
-    // supply of the ESP board.
-    WiFi.setOutputPower(0.0);
+    WiFi.setOutputPower(20.5);  // Maximum
 
   #ifdef WIFI_AP_MODE
 
