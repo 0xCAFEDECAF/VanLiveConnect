@@ -384,6 +384,7 @@ void WebSocketEvent(
 
             //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
 
+          #if 0
           #ifdef WIFI_AP_MODE
             static int countDisconnects = 0;
             if (++countDisconnects == 3)
@@ -393,6 +394,7 @@ void WebSocketEvent(
                 countDisconnects = 0;
             } // if
           #endif // WIFI_AP_MODE
+          #endif // 0
         }
         break;
 
