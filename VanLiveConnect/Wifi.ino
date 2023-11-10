@@ -155,19 +155,20 @@ void WifiChangeChannel()
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
   #endif // ON_DESK_MFD_ESP_MAC
 
+  #if 0
     int newChannel =
         currentChannel == 6 ? 11 :
         currentChannel == 11 ? 1 :
         6;
-    // Or perhaps even this?
-  #if 0
+  #endif // 0
+
+    // Let's not exclude in-between channels 3 and 8
     int newChannel =
         currentChannel == 6 ? 8 :
         currentChannel == 8 ? 11 :
         currentChannel == 11 ? 1 :
         currentChannel == 1 ? 3 :
         6;
-  #endif // 0
 
     Serial.printf_P(PSTR("%s[wifi] Changing channel from %d to %d\n"), TimeStamp(), currentChannel, newChannel);
 
