@@ -234,7 +234,7 @@ void PrintDebugDefines()
     Serial.print(F("- DEBUG_ORIGINAL_MFD\n"));
   #endif // DEBUG_ORIGINAL_MFD
   #ifdef WIFI_STRESS_TEST
-    Serial.print(F("- WIFI_STRESS_TEST\n"));
+    Serial.printf_P(PSTR("- WIFI_STRESS_TEST = %d\n"), WIFI_STRESS_TEST);
   #endif // WIFI_STRESS_TEST
   #ifdef SHOW_VAN_RX_STATS
     Serial.print(F("- SHOW_VAN_RX_STATS\n"));

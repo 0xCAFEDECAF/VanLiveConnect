@@ -62,6 +62,7 @@ bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
 
 
     IPAddress clientIp = webSocket.client(id)->remoteIP();
+
     webSocket.text(id, json);
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
@@ -232,15 +233,6 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
 // The client (javascript) is sending data back to the ESP
 void ProcessWebSocketClientMessage(const char* payload)
 {
-  #if 0
-    Serial.printf_P(
-        PSTR("%s[webSocket] ProcessWebSocketClientMessage('%s')\n"),
-        TimeStamp(),
-        payload
-    );
-    Serial.flush();
-  #endif // 0
-
     String clientMessage(payload);
 
     if (clientMessage == "") return;
@@ -509,7 +501,9 @@ const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
         "\"event\": \"test\",\n"
         "\"data\":\n"
         "{\n"
-            "\"packet_number\": \"%lu\",\n"
+            "\"packet_number\": \"%lu\""
+#if WIFI_STRESS_TEST >= 2
+            ",\n"
             "\"filler_00\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
             "\"filler_01\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
             "\"filler_02\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
@@ -541,7 +535,9 @@ const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
             "\"filler_1C\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
             "\"filler_1D\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
             "\"filler_1E\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"
-            "\"filler_1F\": \"1234567812345678123456781234567812345678123456781234567812345678\"\n"
+            "\"filler_1F\": \"1234567812345678123456781234567812345678123456781234567812345678\""
+#endif // WIFI_STRESS_TEST >= 2
+            "\n"
         "}\n"
     "}\n";
 
