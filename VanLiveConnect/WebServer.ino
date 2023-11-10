@@ -318,7 +318,7 @@ void HandleNotFound(class AsyncWebServerRequest* request)
   #if 0
         //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
     AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-    response->addHeader(F("Location"), F("http://" IP_ADDR "/MFD.html");
+    response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
     //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
     request->send(response);
 
@@ -330,7 +330,7 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     {
         //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
         AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-        response->addHeader(F("Location"), F("http://" IP_ADDR "/MFD.html"));
+        response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
         //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
         request->send(response);
 

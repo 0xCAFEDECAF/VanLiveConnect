@@ -86,9 +86,10 @@ const char* SetupWifi()
 
     WiFi.setOutputPower(20.5);  // Maximum
 
-  #ifdef WIFI_AP_MODE
 
     static const char* wifiSsid = WIFI_SSID;
+
+  #ifdef WIFI_AP_MODE
 
   #ifdef ON_DESK_MFD_ESP_MAC
     // The test setup on the desk has a slightly different SSID

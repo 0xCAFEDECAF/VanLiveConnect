@@ -17,14 +17,6 @@
 // Define to use Wi-Fi "access point" (AP) mode. Comment out to use Wi-Fi station (client) mode
 #define WIFI_AP_MODE
 
-// Define when using DHCP; comment out when using a static (fixed) IP address.
-// Note: only applicable in Wi-Fi station (client) mode.
-#define USE_DHCP
-
-// Define when using a Windows Internet Connection Sharing (ICS) Wi-Fi. Comment out when using Android Wi-Fi hotspot.
-// Note: only applicable when using a static (fixed) IP address, not when using DHCP.
-//#define WINDOWS_ICS
-
 #ifdef WIFI_AP_MODE // Wi-Fi access point mode
   #define WIFI_SSID "PSA display AP"
   #define WIFI_SSID_HIDDEN (0)  // Set to (1) to have a hidden SSID
@@ -48,16 +40,25 @@
   #define WIFI_SSID "WiFiHotspot"  // Choose yours
   #define WIFI_PASSWORD "WiFiPass"  // Fill in yours
 
+  // Define when using DHCP; comment out when using a static (fixed) IP address.
+  // Note: only applicable in Wi-Fi station (client) mode.
+  #define USE_DHCP
+
   #ifdef USE_DHCP
 
     // Using DHCP; ESP will register HOST_NAME via DHCP option 12.
     // Note: Neither Windows ICS nor Android Wi-Fi hotspot seem to support registering the host name on their
     // DHCP server implementation. Moreover, Windows ICS DHCP will NOT assign the previously assigned IP address to
-    // the same MAC address upon new connection.
+    // the same MAC address upon new connection, so it is always guessing what IP address the ESP will get.
 
   #else // ! USE_DHCP
 
     // Using static (fixed) IP configuration (not DHCP); hostname will not be registered.
+
+    // Define when using a Windows Internet Connection Sharing (ICS) Wi-Fi. Comment out when using Android
+    // Wi-Fi hotspot.
+    // Note: only applicable when using a static (fixed) IP address, not when using DHCP.
+    //#define WINDOWS_ICS
 
     #ifdef WINDOWS_ICS  // When using a Windows ICS hotspot
       #define IP_ADDR "192.168.137.2"
