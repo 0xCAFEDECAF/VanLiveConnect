@@ -337,10 +337,7 @@ function connectToWebSocket()
 	(
 		'display', function(data)
 		{
-			// Re-start the "keep alive" timer
-			clearInterval(keepAliveWebSocketTimer);
-			keepAliveWebSocketTimer = setInterval(keepAliveWebSocket, 6000);
-
+			restartKeepAliveWebSocket();
 			writeToDom(data);
 		}
 	);
