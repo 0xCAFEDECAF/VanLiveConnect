@@ -238,7 +238,7 @@
 //#define DEBUG_ORIGINAL_MFD
 
 // When set to 1, sends small test packets (~ 55 bytes). When set to 2, sends large test packets (~ 2.5 KByte).
-#define WIFI_STRESS_TEST 1
+//#define WIFI_STRESS_TEST 1
 
 // Define to show the VAN bus statistics on the "system" screen
 // Requires installation of the 'PrintEx' library; see: https://github.com/Chris--A/PrintEx (tested with version 1.2.0)
