@@ -80,6 +80,15 @@ char* queuedJsonPackets[N_QUEUED_JSON];
 // Save JSON data for later sending
 void QueueJson(const char* json)
 {
+    // Only queue new data if there is enough heap space
+    if (system_get_free_heap_size() < 5 * 1024)
+    {
+        Serial.printf_P(PSTR("==> WebSocket: not enough memory to store JSON data for later sending!\n"));
+        Serial.print(F("JSON object:\n"));
+        PrintJsonText(json);
+        return;
+    } // if
+
     // Free a slot if necessary
     if (queuedJsonPackets[nextJsonPacketIdx] != nullptr)
     {
@@ -565,7 +574,8 @@ void SetupWebSocket()
 
 void LoopWebSocket()
 {
-    webSocket.cleanupClients();
+    // Somehow, webSocket.cleanupClients() sometimes causes out of memory condition
+    if (system_get_free_heap_size() > 2 * 1024) webSocket.cleanupClients();
 
   #ifdef WIFI_STRESS_TEST
     static uint32_t packetNo = 0;
