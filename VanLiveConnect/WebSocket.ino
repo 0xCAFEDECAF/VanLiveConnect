@@ -163,7 +163,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
     {
         if (saveForLater) QueueJson(json);
 
-      #ifdef DEBUG_WEBSOCKET
+      #if DEBUG_WEBSOCKET >= 2
         // Print reason
         Serial.printf_P(
             PSTR("%s[webSocket] Unable to send %zu-byte packet: no client connected, %s\n"),
@@ -171,7 +171,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
             strlen(json),
             saveForLater ? PSTR("stored for later") : PSTR("discarding")
         );
-      #endif // DEBUG_WEBSOCKET
+      #endif // DEBUG_WEBSOCKET >= 2
 
         return false;
     } // if
@@ -185,9 +185,9 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
         // First try to send anything still stored
         SendQueuedJson(id);
 
-      #ifdef DEBUG_WEBSOCKET
+      #if DEBUG_WEBSOCKET >= 2
         Serial.printf_P(PSTR("%s[webSocket %lu] Sending %zu-byte packet\n"), TimeStamp(), id, strlen(json));
-      #endif // DEBUG_WEBSOCKET
+      #endif // DEBUG_WEBSOCKET >= 2
 
         unsigned long start = millis();
 
@@ -374,7 +374,9 @@ void WebSocketEvent(
                 websocketBackupId = WEBSOCKET_INVALID_ID;
             } // if
 
-            //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+          #ifdef DEBUG_WEBSOCKET
+            Serial.printf_P(PSTR("==> websocketId=%u, websocketBackupId=%u\n"), websocketId, websocketBackupId);
+          #endif // DEBUG_WEBSOCKET
 
           #if 0
           #ifdef WIFI_AP_MODE
@@ -416,7 +418,9 @@ void WebSocketEvent(
                 Serial.printf_P(PSTR(" --> ignoring (already on %lu)\n"), websocketId);
             } // if
 
-            //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+          #ifdef DEBUG_WEBSOCKET
+            Serial.printf_P(PSTR("==> websocketId=%u, websocketBackupId=%u\n"), websocketId, websocketBackupId);
+          #endif // DEBUG_WEBSOCKET
 
             // Send ESP system data to client
             // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:
@@ -443,29 +447,30 @@ void WebSocketEvent(
             {
                 data[len] = '\0';  // TODO - not sure if this is safe
 
-              #ifdef DEBUG_WEBSOCKET
-                Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'"), TimeStamp(), id, data);
-              #endif // DEBUG_WEBSOCKET
-
                 IPAddress clientIp = client->remoteIP();
                 lastWebSocketCommunication[clientIp] = millis();
 
                 if (id != websocketId)
                 {
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR(" --> Switching to %lu\n"), id);
+                    Serial.printf_P(
+                        PSTR("%s[webSocket %lu] received text: '%s' --> Switching to %lu\n"),
+                        TimeStamp(), id, data, id
+                    );
                   #endif // DEBUG_WEBSOCKET
 
                     websocketBackupId = websocketId;
                     websocketId = id;  // When sending, try first on this client id
 
-                    //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+                  #ifdef DEBUG_WEBSOCKET
+                    Serial.printf_P(PSTR("==> websocketId=%u, websocketBackupId=%u\n"), websocketId, websocketBackupId);
+                  #endif // DEBUG_WEBSOCKET
                 }
                 else
                 {
-                  #ifdef DEBUG_WEBSOCKET
-                    Serial.print(F("\n"));
-                  #endif // DEBUG_WEBSOCKET
+                  #if DEBUG_WEBSOCKET >= 2
+                    Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'\n"), TimeStamp(), id, data);
+                  #endif // DEBUG_WEBSOCKET >= 2
                 } // if
 
                 ProcessWebSocketClientMessage((char*)data);  // Process the message
@@ -579,8 +584,10 @@ void LoopWebSocket()
     {
         lastUpdate = millis();
 
-        Serial.printf_P(PSTR("%s[webSocket] %zu clients are currently connected\n"), TimeStamp(), webSocket.count());
-        //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+        Serial.printf_P(
+            PSTR("%s[webSocket] %zu clients are currently connected, websocketId=%u, websocketBackupId=%u\n"),
+            TimeStamp(), webSocket.count(), websocketId, websocketBackupId
+        );
     } // if
   #endif // DEBUG_WEBSOCKET
 } // LoopWebSocket

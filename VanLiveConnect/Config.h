@@ -234,7 +234,7 @@
 //#define DEBUG_IR_RECV
 
 //#define DEBUG_WEBSERVER
-//#define DEBUG_WEBSOCKET
+//#define DEBUG_WEBSOCKET 1  // Set to 2 for more output
 //#define DEBUG_ORIGINAL_MFD
 
 // When set to 1, sends small test packets (~ 55 bytes). When set to 2, sends large test packets (~ 2.5 KByte).

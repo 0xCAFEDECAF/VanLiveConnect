@@ -228,7 +228,7 @@ void PrintDebugDefines()
     Serial.print(F("- DEBUG_WEBSERVER\n"));
   #endif // DEBUG_WEBSERVER
   #ifdef DEBUG_WEBSOCKET
-    Serial.print(F("- DEBUG_WEBSOCKET\n"));
+    Serial.printf_P(PSTR("- DEBUG_WEBSOCKET = %d\n"), DEBUG_WEBSOCKET);
   #endif // DEBUG_WEBSOCKET
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.print(F("- DEBUG_ORIGINAL_MFD\n"));
