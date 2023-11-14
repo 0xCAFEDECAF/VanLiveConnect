@@ -229,6 +229,27 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 
     IPAddress clientIp = request->client()->remoteIP();
 
+    // 2023-11-14: commented out the following code.
+    //
+    // Reason: the ESP8266 Wi-Fi is (inside the vehicle) very, very unstable. Packet loss all over the
+    // place. On top of that, it seems that the lwIP stack is simply not capable of handling unstable
+    // connections. If a packet is lost inside a TCP session, the lwIP stack just sits there, waiting
+    // for nothing to happen (or maybe a re-transmission after 5 seconds, but that is way too long).
+    //
+    // But if that same, stalled TCP session is closed and a new one started, all starts working again.
+    // So, the way to work around this "hanging Wi-Fi communication" issue is, for now, to add the following
+    // line to WebSocket.ino :
+    //
+    //        client->client()->setAckTimeout(1000);
+    //
+    // This causes any hanging TCP session to close within 1 second, which in turn triggers the creation of
+    // a new TCP session by the client device, thus re-starting all communications.
+    //
+    // However, for a web browser to create a new TCP session on an Android client device, the Wi-Fi connection
+    // must be known as "connected to the Internet" to the Android device. Otherwise, Android will offer only
+    // the 4G data connection to the web browser, and the new TCP session setup will fail.
+    //
+  #if 0
     if (lastWebSocketCommunication.find(clientIp) != lastWebSocketCommunication.end())
     {
         unsigned long since = millis() - lastWebSocketCommunication[clientIp];
@@ -244,6 +265,7 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 
         if (since < 7000) return;  // Arithmetic has safe roll-over
     } // if
+  #endif // 0
 
     // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
     // the browser will use this network connection to load the '/MFD.html' page from, and subsequently

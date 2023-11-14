@@ -71,7 +71,7 @@ bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
     return true;
 } // TryToSendJsonOnWebSocket
 
-static const int N_QUEUED_JSON = 20;
+static const int N_QUEUED_JSON = 30;
 int nextJsonPacketIdx = 0;
 int nQueuedJsonSlotsOccupied = 0;
 int maxQueuedJsonSlots = 0;
@@ -411,6 +411,19 @@ void WebSocketEvent(
 
             // Tune some TCP parameters
             client->client()->setNoDelay(true);
+
+            // The ESP8266 Wi-Fi is (inside the vehicle) very, very unstable. Packet loss all over the
+            // place. On top of that, it seems that the lwIP stack is simply not capable of handling unstable
+            // connections. If a packet is lost inside a TCP session, the lwIP stack just sits there, waiting
+            // for nothing to happen (or maybe a re-transmission after 5 seconds, but that is way too long).
+            //
+            // But if that same, stalled TCP session is closed and a new one started, all starts working again.
+            // So, the way to work around this "hanging Wi-Fi communication" issue is, for now, to add the
+            // line below to WebSocket.ino.
+            //
+            // This causes any hanging TCP session to close within 1 second, which in turn triggers the creation of
+            // a new TCP session by the client device, thus re-starting all communications.
+            client->client()->setAckTimeout(1000);
 
             if (id != websocketId)
             {

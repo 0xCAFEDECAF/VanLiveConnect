@@ -358,7 +358,6 @@ function connectToWebSocket()
 		}
 	);
 	webSocket.bind('close', connectToWebSocket);
-
 }
 
 // -----

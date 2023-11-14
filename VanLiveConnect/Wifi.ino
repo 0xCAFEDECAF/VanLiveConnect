@@ -104,7 +104,9 @@ const char* SetupWifi()
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
+    // 2023-11-14 - It seems that the ESP Wi-Fi is more robust when not fixed to a specific mode, so
+    // commented out the following line:
+    //WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
 
   #ifdef WIFI_PASSWORD
     WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
@@ -130,7 +132,9 @@ const char* SetupWifi()
     WiFi.setAutoConnect(true);
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
+    // 2023-11-14 - It seems that the ESP Wi-Fi is more robust when not fixed to a specific mode, so
+    // commented out the following line:
+    //WiFi.setPhyMode(WIFI_PHY_MODE_11N);
 
   #ifdef WIFI_PASSWORD
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
