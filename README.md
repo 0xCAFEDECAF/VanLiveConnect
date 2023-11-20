@@ -260,8 +260,9 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Package:
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
-* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.4 .
-  Should that not work, you can always try [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Tested with versions
+  0.2.4 ... 0.3.4 . Should that not work, you can always try
+  [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
@@ -373,10 +374,10 @@ Of course, the above actions are just a suggestion. Customize as you like!
 In the Arduino IDE, the following libraries are used:
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.4 .
-* [WebSockets Library by Markus Sattler](https://github.com/Links2004/arduinoWebSockets) - Tested with
-  version 2.3.3 ... 2.3.6 .
-* (Optional, when using the above WebSockets Library in "A-synchronous mode")
-  [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP) - Tested with version 1.2.4 .
+* [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
+  version 1.2.4 .
+* [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
+  version 1.2.6 and 1.2.7 .
 
 ### Attributions
 
