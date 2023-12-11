@@ -32,11 +32,8 @@ AsyncWebServer webServer(80);
 extern const String md5Checksum;
 
 // Defined in WebSocket.ino
-extern const int WEBSOCKET_INVALID_ID;
-extern uint32_t websocketId;
-extern uint32_t websocketBackupId;
-extern AsyncWebSocket webSocket;
 extern std::map<uint32_t, unsigned long> lastWebSocketCommunication;
+void DeleteAllQueuedJsons();
 
 #ifdef SERVE_FROM_SPIFFS
 
@@ -229,27 +226,6 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 
     IPAddress clientIp = request->client()->remoteIP();
 
-    // 2023-11-14: commented out the following code.
-    //
-    // Reason: the ESP8266 Wi-Fi is (inside the vehicle) very, very unstable. Packet loss all over the
-    // place. On top of that, it seems that the lwIP stack is simply not capable of handling unstable
-    // connections. If a packet is lost inside a TCP session, the lwIP stack just sits there, waiting
-    // for nothing to happen (or maybe a re-transmission after 5 seconds, but that is way too long).
-    //
-    // But if that same, stalled TCP session is closed and a new one started, all starts working again.
-    // So, the way to work around this "hanging Wi-Fi communication" issue is, for now, to add the following
-    // line to WebSocket.ino :
-    //
-    //        client->client()->setAckTimeout(1000);
-    //
-    // This causes any hanging TCP session to close within 1 second, which in turn triggers the creation of
-    // a new TCP session by the client device, thus re-starting all communications.
-    //
-    // However, for a web browser to create a new TCP session on an Android client device, the Wi-Fi connection
-    // must be known as "connected to the Internet" to the Android device. Otherwise, Android will offer only
-    // the 4G data connection to the web browser, and the new TCP session setup will fail.
-    //
-  #if 0
     if (lastWebSocketCommunication.find(clientIp) != lastWebSocketCommunication.end())
     {
         unsigned long since = millis() - lastWebSocketCommunication[clientIp];
@@ -265,7 +241,6 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 
         if (since < 7000) return;  // Arithmetic has safe roll-over
     } // if
-  #endif // 0
 
     // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
     // the browser will use this network connection to load the '/MFD.html' page from, and subsequently
@@ -383,7 +358,12 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
 
     // Skip Etag checking; browsers don't seem to use that when requesting fonts
 
+    DeleteAllQueuedJsons();  // Maximize free heap space
+
+  #ifdef DEBUG_WEBSERVER
     unsigned long start = millis();
+  #endif // DEBUG_WEBSERVER
+
     request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
 
   #ifdef DEBUG_WEBSERVER
@@ -410,7 +390,12 @@ void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
 
     // Skip Etag checking; browsers don't seem to use that when requesting fonts
 
+    DeleteAllQueuedJsons();  // Maximize free heap space
+
+  #ifdef DEBUG_WEBSERVER
     unsigned long start = millis();
+  #endif // DEBUG_WEBSERVER
+
     request->send(SPIFFS, fontWoffStr, path);
 
     VanBusRx.Enable();
@@ -449,6 +434,8 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     bool eTagMatches = checkETag(request, md5Checksum);
     if (! eTagMatches)
     {
+        DeleteAllQueuedJsons();  // Maximize free heap space
+
         // Serve the complete document
         AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
         response->addHeader(F("ETag"), String("\"") + md5Checksum + "\"");
@@ -494,6 +481,8 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
     bool eTagMatches = checkETag(request, md5);
     if (! eTagMatches)
     {
+        DeleteAllQueuedJsons();  // Maximize free heap space
+
         // Get the MIME type, if necessary
         if (mimeType == 0) mimeType = getContentType(path);
 

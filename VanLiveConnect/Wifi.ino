@@ -6,8 +6,8 @@
 
 // Defined in WebSocket.ino
 extern AsyncWebSocket webSocket;
-extern uint32_t websocketBackupId;
-extern uint32_t websocketId;
+extern uint32_t websocketId_1;
+extern uint32_t websocketId_2;
 
 const char* GetHostname()
 {
@@ -36,13 +36,13 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     Serial.print(macToString(evt.mac));
     Serial.print(F("\n"));
 
-    if (websocketId != WEBSOCKET_INVALID_ID) webSocket.close(websocketId);
-    if (websocketBackupId != WEBSOCKET_INVALID_ID) webSocket.close(websocketBackupId);
+    if (websocketId_1 != WEBSOCKET_INVALID_ID) webSocket.close(websocketId_1);
+    if (websocketId_2 != WEBSOCKET_INVALID_ID) webSocket.close(websocketId_2);
 
-    websocketId = WEBSOCKET_INVALID_ID;
-    websocketBackupId = WEBSOCKET_INVALID_ID;
+    websocketId_1 = WEBSOCKET_INVALID_ID;
+    websocketId_2 = WEBSOCKET_INVALID_ID;
 
-    //Serial.printf_P(PSTR("==> websocketBackupId=%u, websocketId=%u\n"), websocketBackupId, websocketId);
+    //Serial.printf_P(PSTR("==> websocketId_1=%u, websocketId_2=%u\n"), websocketId_1, websocketId_2);
 } // onStationDisconnected
 
 void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
@@ -77,6 +77,43 @@ WiFiEventHandler stationConnectedHandler;
 WiFiEventHandler stationDisconnectedHandler;
 WiFiEventHandler probeRequestHandler;
 
+const char* const AUTH_MODE_NAMES[]{ "AUTH_OPEN", "AUTH_WEP", "AUTH_WPA_PSK", "AUTH_WPA2_PSK", "AUTH_WPA_WPA2_PSK", "AUTH_MAX" };
+
+void PrintSoftApConfig(softap_config const& config)
+{
+    Serial.println();
+    Serial.println(F("SoftAP Configuration"));
+    Serial.println(F("--------------------"));
+
+    Serial.print(F("ssid           : "));
+    Serial.println((char *) config.ssid);
+
+    Serial.print(F("password       : "));
+    Serial.println((char *) config.password);
+
+    Serial.print(F("ssid_len       : "));
+    Serial.println(config.ssid_len);
+
+    Serial.print(F("channel        : "));
+    Serial.println(config.channel);
+
+    Serial.print(F("authmode       : "));
+    Serial.println(AUTH_MODE_NAMES[config.authmode]);
+
+    Serial.print(F("ssid_hidden    : "));
+    Serial.println(config.ssid_hidden);
+
+    Serial.print(F("max_connection : "));
+    Serial.println(config.max_connection);
+
+    Serial.print(F("beacon_interval: "));
+    Serial.print(config.beacon_interval);
+    Serial.println("ms");
+
+    Serial.println(F("--------------------"));
+    Serial.println();
+} // PrintSoftApConfig
+
 const char* SetupWifi()
 {
     WiFi.hostname(GetHostname());
@@ -104,15 +141,19 @@ const char* SetupWifi()
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    // 2023-11-14 - It seems that the ESP Wi-Fi is more robust when not fixed to a specific mode, so
-    // commented out the following line:
-    //WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
+    WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
 
   #ifdef WIFI_PASSWORD
     WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
   #else
     WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
   #endif
+
+    softap_config config;
+    wifi_softap_get_config(&config);
+    config.beacon_interval = 1000;
+    wifi_softap_set_config(&config);
+    PrintSoftApConfig(config);
 
     // Register event handlers
     stationConnectedHandler = WiFi.onSoftAPModeStationConnected(&onStationConnected);
@@ -132,9 +173,7 @@ const char* SetupWifi()
     WiFi.setAutoConnect(true);
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    // 2023-11-14 - It seems that the ESP Wi-Fi is more robust when not fixed to a specific mode, so
-    // commented out the following line:
-    //WiFi.setPhyMode(WIFI_PHY_MODE_11N);
+    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
 
   #ifdef WIFI_PASSWORD
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
