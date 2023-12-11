@@ -184,6 +184,8 @@ bool checkETag(class AsyncWebServerRequest* request, const String& etag)
         read.replace("\"", ""); // some browsers (i.e. Samsung) discard the double quotes
         if (read == etag)
         {
+            DeleteAllQueuedJsons();  // Maximize free heap space
+
             AsyncWebServerResponse* response = request->beginResponse(304, F("text/plain"), F("Not Modified"));
 
             // This needs to be repeated; see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match :
@@ -313,7 +315,9 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 
     // TODO - commented out because this occasionally crashes the ESP due to out-of-memory condition
   #if 0
-        //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
+    DeleteAllQueuedJsons();  // Maximize free heap space
+
+    //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
     AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
     response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
     //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
@@ -325,6 +329,8 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 
     if (request->url() == "/")
     {
+        DeleteAllQueuedJsons();  // Maximize free heap space
+
         //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
         AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
         response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
