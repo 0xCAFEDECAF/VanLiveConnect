@@ -48,12 +48,15 @@ std::map<uint32_t, unsigned long> lastWebSocketCommunication;
 bool inMenu = false;  // true if user is browsing the menus
 int irButtonFasterRepeat = 0;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
+// Check if a webSocket on a specific ID is connected
 bool IsIdConnected(uint32_t id)
 {
     // Relying on short-circuit boolean evaluation
     return id != WEBSOCKET_INVALID_ID && webSocket.hasClient(id) && webSocket.client(id)->status() == WS_CONNECTED;
 } // IsIdConnected
 
+// Try to send a data packet on a specific webSocket. Fails if the webSocket is not connected or its queue is full
+// (not available for write).
 bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
 {
   #if DEBUG_WEBSOCKET >= 3
@@ -65,8 +68,6 @@ bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
     if (! webSocket.availableForWrite(id)) return false;
 
     digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
-
-
 
     webSocket.text(id, json);
     digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
@@ -521,7 +522,7 @@ void WebSocketEvent(
             if (id == webSocketIdJustConnected) webSocketIdJustConnected = 0;
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("==> websocketId_1=%lu, websocketId_2=%lu\n"), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
           #endif // DEBUG_WEBSOCKET
 
           #if 0
@@ -551,26 +552,37 @@ void WebSocketEvent(
             //client->client()->setAckTimeout(500);
             //client->client()->setRxTimeout(120);
 
-            if (id != websocketId_1)
+            lastWebSocketCommunication[clientIp] = millis();
+
+            // A completely new value for id?
+            if (id != websocketId_1 && id != websocketId_2)
             {
-                Serial.printf_P(PSTR(" --> %S %lu\n"),
-                    websocketId_1 == WEBSOCKET_INVALID_ID ? PSTR("starting on") : PSTR("switching to"),
-                    id
-                );
+                webSocketIdJustConnected = id;
+                Serial.printf_P(PSTR(" --> will start serving %lu\n"), id);
 
-                // A completely new value for id (not websocketId_1 and not websocketId_2)?
-                if (id != websocketId_2) webSocketIdJustConnected = id;
-
-                websocketId_2 = websocketId_1;
-                websocketId_1 = id;  // When sending, try first on this ID
+                // Use as much as possible an empty slot
+                if (websocketId_1 == WEBSOCKET_INVALID_ID || ! webSocket.hasClient(websocketId_1))
+                {
+                    websocketId_1 = id;
+                }
+                else if (websocketId_2 == WEBSOCKET_INVALID_ID || ! webSocket.hasClient(websocketId_2))
+                {
+                    websocketId_2 = id;
+                }
+                else
+                {
+                    // No empty slot: try to re-use the slot which served the same client (IP address)
+                    IPAddress clientIp_1 = webSocket.client(websocketId_1)->remoteIP();
+                    if (clientIp == clientIp_1) websocketId_1 = id; else websocketId_2 = id;
+                } // if
             }
             else
             {
-                Serial.printf_P(PSTR(" --> ignoring (already on %lu)\n"), websocketId_1);
+                Serial.printf_P(PSTR(" --> already serving %lu\n"), id);
             } // if
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("==> websocketId_1=%lu, websocketId_2=%lu\n"), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
           #endif // DEBUG_WEBSOCKET
 
             // Send ESP system data to client
@@ -601,20 +613,34 @@ void WebSocketEvent(
                 IPAddress clientIp = client->remoteIP();
                 lastWebSocketCommunication[clientIp] = millis();
 
-                if (id != websocketId_1)
+                // A completely new value for id?
+                if (id != websocketId_1 && id != websocketId_2)
                 {
                   #ifdef DEBUG_WEBSOCKET
                     Serial.printf_P(
-                        PSTR("%s[webSocket %lu] received text: '%s' --> Switching to %lu\n"),
+                        PSTR("%s[webSocket %lu] received text: '%s' --> switching to %lu\n"),
                         TimeStamp(), id, data, id
                     );
                   #endif // DEBUG_WEBSOCKET
 
-                    websocketId_2 = websocketId_1;
-                    websocketId_1 = id;  // When sending, try first on this client id
+                    // Use as much as possible an empty slot
+                    if (websocketId_1 == WEBSOCKET_INVALID_ID || ! webSocket.hasClient(websocketId_1))
+                    {
+                        websocketId_1 = id;
+                    }
+                    else if (websocketId_2 == WEBSOCKET_INVALID_ID || ! webSocket.hasClient(websocketId_2))
+                    {
+                        websocketId_2 = id;
+                    }
+                    else
+                    {
+                        // No empty slot: try to re-use the slot which served the same client (IP address)
+                        IPAddress clientIp_1 = webSocket.client(websocketId_1)->remoteIP();
+                        if (clientIp == clientIp_1) websocketId_1 = id; else websocketId_2 = id;
+                    } // if
 
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR("==> websocketId_1=%lu, websocketId_2=%lu\n"), websocketId_1, websocketId_2);
+                    Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
                   #endif // DEBUG_WEBSOCKET
                 }
                 else
@@ -748,7 +774,7 @@ void LoopWebSocket()
         CleanupQueuedJsons();
 
         Serial.printf_P(
-            PSTR("%s[webSocket] %zu clients are currently connected, queued_jsons=%d, websocketId_1=%lu, websocketId_2=%lu\n"),
+            PSTR("%s[webSocket] %zu clients are currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu\n"),
             TimeStamp(), webSocket.count(), countQueuedJsons(), websocketId_1, websocketId_2
         );
     } // if
