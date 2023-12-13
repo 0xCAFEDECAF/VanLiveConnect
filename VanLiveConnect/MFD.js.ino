@@ -242,7 +242,11 @@ var fancyWebSocket = function(url)
 	{
 		callbacks[event_name] = callbacks[event_name] || [];
 		callbacks[event_name].push(callback);
-		return this;  // chainable
+	}
+
+	this.unbind = function(event_name)
+	{
+		callbacks[event_name] = undefined;
 	}
 
 	this.close = function(msg)
@@ -279,16 +283,8 @@ var fancyWebSocket = function(url)
 
 	conn.onclose = function(event)
 	{
+		console.log("// WebSocket '" + url + "' connection error: " + event.code);
 		dispatch('close', null);
-
-		if (event.code == 3001)
-		{
-			console.log("// WebSocket '" + url + "' closed");
-		}
-		else
-		{
-			console.log("// WebSocket '" + url + "' connection error: " + event.code);
-		} // if
 	}
 
 	conn.onerror = function(event)
@@ -310,10 +306,24 @@ var webSocket;
 
 // Send some data so that a webSocket event triggers when the connection has failed
 var keepAliveWebSocketTimer;
+var countNoDataSeen;
 function restartKeepAliveWebSocket()
 {
 	clearInterval(keepAliveWebSocketTimer);
-	keepAliveWebSocketTimer = setInterval(function() { webSocket.send("keepalive"); }, 6000);
+	countNoDataSeen = 0;
+	keepAliveWebSocketTimer = setInterval(
+		function()
+		{
+			webSocket.send("keepalive");
+			if (++countNoDataSeen >= 2)
+			{
+				webSocket.unbind('close');
+				webSocket.close();
+				connectToWebSocket();
+			}
+		},
+		6000
+	);
 }
 
 // Prevent double re-connecting when user reloads the page
