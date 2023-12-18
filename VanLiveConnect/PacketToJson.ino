@@ -967,6 +967,10 @@ const char PROGMEM fuelLevelPercentageFormatter[] =
 
 bool doorOpen = false;
 
+// At most "DIPPED_BEAM HIGH_BEAM FOG_FRONT FOG_REAR "
+#define LIGHTS_STRING_LEN 50
+char lightsStr[LIGHTS_STRING_LEN] = "";
+
 VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4FC
@@ -985,6 +989,13 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
 
     sint32_t remainingKmToService = remainingKmToService20 * 20;
     if (remainingKmToServiceOverdue) remainingKmToService = - remainingKmToService;
+
+    snprintf_P(lightsStr, LIGHTS_STRING_LEN, PSTR("%S%S%S%S"),
+        data[5] & 0x80 ? PSTR("DIPPED_BEAM ") : emptyStr,
+        data[5] & 0x40 ? PSTR("HIGH_BEAM ") : emptyStr,
+        data[5] & 0x20 ? PSTR("FOG_FRONT ") : emptyStr,
+        data[5] & 0x10 ? PSTR("FOG_REAR ") : emptyStr
+    );
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -1005,7 +1016,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                     "\"transform\": \"scaleX(%S)\"\n"
                 "}\n"
             "},\n"
-            "\"lights\": \"%S%S%S%S%S%S\"";
+            "\"lights\": \"%S%S%S\"";
 
     char floatBuf[MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
@@ -1032,10 +1043,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
             remainingKmToService >= SERVICE_INTERVAL ? PSTR("1") :
                 ToFloatStr(floatBuf, (float)remainingKmToService / SERVICE_INTERVAL, 2, false),
 
-        data[5] & 0x80 ? PSTR("DIPPED_BEAM ") : emptyStr,
-        data[5] & 0x40 ? PSTR("HIGH_BEAM ") : emptyStr,
-        data[5] & 0x20 ? PSTR("FOG_FRONT ") : emptyStr,
-        data[5] & 0x10 ? PSTR("FOG_REAR ") : emptyStr,
+        lightsStr,
         data[5] & 0x08 ? PSTR("INDICATOR_RIGHT ") : emptyStr,
         data[5] & 0x04 ? PSTR("INDICATOR_LEFT ") : emptyStr
     );
@@ -5195,6 +5203,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "{\n"
             "\"contact_key_position\": \"%S\",\n"
             "\"door_open\": \"%S\",\n"
+            "\"lights\": \"%S\",\n"
             "\"small_screen\": \"%S\",\n"
             "\"trip_computer_screen_tab\": \"%S\",\n"
             "\"cd_changer_cartridge_present\": \"%S\",\n"
@@ -5206,6 +5215,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
     int at = snprintf_P(buf, n, jsonFormatter,
         ContactKeyPositionStr(contactKeyPosition),
         doorOpen ? yesStr : noStr,
+        lightsStr,
         SmallScreenStr(),  // Small screen (left hand side of the display) to start with
         TripComputerStr(),
         cdChangerCartridgePresent ? yesStr : noStr,
