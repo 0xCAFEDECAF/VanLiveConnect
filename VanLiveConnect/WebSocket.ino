@@ -19,8 +19,6 @@ void WifiChangeChannel();
 extern uint8_t mfdDistanceUnit;
 extern uint8_t mfdTemperatureUnit;
 extern uint8_t mfdTimeUnit;
-extern const char yesStr[];
-extern const char noStr[];
 void PrintJsonText(const char* jsonBuffer);
 void ResetPacketPrevData();
 
@@ -173,8 +171,6 @@ void QueueJson(const char* json, uint32_t lastSentOnId_1 = 0, uint32_t lastSentO
         lastSentOnId_1 == 0 && lastSentOnId_2 == 0 ? PSTR("later ") : PSTR("re-"),
         currentJsonPacketIdx
     );
-    //Serial.print(F("JSON object:\n"));
-    //PrintJsonText(json);
   #endif // DEBUG_WEBSOCKET >= 2
 
 } // QueueJson
@@ -187,8 +183,6 @@ void SendQueuedJson(uint32_t id)
     int i = nextJsonPacketIdx;
     do
     {
-        //Serial.printf_P(PSTR("==> WebSocket: SendQueuedJson(%d) %d\n"), id, i);
-
         JsonPacket_t* entry = queuedJsonPackets + i;
 
         if (entry->packet == nullptr) goto NEXT;
@@ -211,13 +205,9 @@ void SendQueuedJson(uint32_t id)
         // Don't reset the age
         if (entry->lastSent == 0) entry->lastSent = millis();
 
-        //Serial.printf_P(PSTR("QueuedJson(%d): lastSentOnId_1=%d, lastSentOnId_2=%d\n"), i, entry->lastSentOnId_1, entry->lastSentOnId_2);
-
         if (entry->lastSentOnId_1 == 0) entry->lastSentOnId_1 = id;
         else if (entry->lastSentOnId_2 == 0) entry->lastSentOnId_2 = id;
         else if (entry->lastSentOnId_1 != id && entry->lastSentOnId_2 != id) entry->lastSentOnId_1 = id;
-
-        //Serial.printf_P(PSTR("QueuedJson(%d): lastSentOnId_1=%d, lastSentOnId_2=%d\n"), i, entry->lastSentOnId_1, entry->lastSentOnId_2);
 
       NEXT:
         if (++i == N_QUEUED_JSON) i = 0;
@@ -229,8 +219,6 @@ void SendQueuedJson(uint32_t id)
 // Optionally, pass a WebSocket ID: JSON packets that were already sent to that ID will be cleaned up immediately.
 void CleanupQueuedJsons(uint32_t id = 0)
 {
-    // Serial.printf_P(PSTR("%s[webSocket]: CleanupQueuedJsons(%d)\n"), TimeStamp(), id);
-
     int i = nextJsonPacketIdx;
     do
     {
@@ -238,30 +226,30 @@ void CleanupQueuedJsons(uint32_t id = 0)
         unsigned long age = 0;
 
         if (entry->packet == nullptr) goto NEXT;
+        if (entry->lastSentOnId_1 == 0 && entry->lastSentOnId_2 == 0) goto NEXT;  // Keep packets that were not yet sent
 
-        // Keep packets that were not yet sent
-        //Serial.printf_P(PSTR("%s[webSocket]: i=%d entry->lastSentOnId=%d\n"), TimeStamp(), i, entry->lastSentOnId);
-        if (entry->lastSentOnId_1 == 0 && entry->lastSentOnId_2 == 0) goto NEXT;
+        age = millis() - entry->lastSent;  // Arithmetic has safe roll-over
 
-        age = millis() - entry->lastSent;  // Arithmetic has safe roll-over.
-
-        if (age >= 5000UL  // Remove old packets
+        if (age >= 5000UL  // Clean up old packets
             ||
-            (id != 0 // If an id was passed, remove packets already sent on that id
+            (id != 0 // If an id was passed, clean up packets already sent on that id
              &&
-                (entry->lastSentOnId_1 == id || entry->lastSentOnId_2 == id)
+             (entry->lastSentOnId_1 == id || entry->lastSentOnId_2 == id)
             )
            )
         {
-            // Serial.printf_P(
-                // PSTR("%s[webSocket] Cleaning up %zu-byte packet no. '%d', age=%lu, lastSentOn=%lu,%lu\n"),
-                // TimeStamp(),
-                // strlen(entry->packet),
-                // i,
-                // age,
-                // entry->lastSentOnId_1,
-                // entry->lastSentOnId_2
-            // );
+          #if DEBUG_WEBSOCKET >= 3
+            Serial.printf_P(
+                PSTR("%s[webSocket] Cleaning up %zu-byte packet no. '%d', age=%lu, lastSentOn=%lu,%lu\n"),
+                TimeStamp(),
+                strlen(entry->packet),
+                i,
+                age,
+                entry->lastSentOnId_1,
+                entry->lastSentOnId_2
+            );
+          #endif // DEBUG_WEBSOCKET >= 3
+
             FreeQueuedJson(entry);
         } // if
 
@@ -345,6 +333,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
 
     if (! result)
     {
+      #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
             PSTR("%s[webSocket] Failed to send %zu-byte packet%S\n"),
             TimeStamp(),
@@ -352,8 +341,12 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
             saveForLater ? PSTR(", stored for later sending") : PSTR(", discarding")
         );
 
+      #if DEBUG_WEBSOCKET >= 2
         Serial.print(F("JSON object:\n"));
         PrintJsonText(json);
+      #endif // DEBUG_WEBSOCKET >= 2
+
+      #endif // DEBUG_WEBSOCKET
     }
     else
     {
@@ -519,7 +512,11 @@ void WebSocketEvent(
                 websocketId_2 = WEBSOCKET_INVALID_ID;
             } // if
 
-            if (id == webSocketIdJustConnected) webSocketIdJustConnected = 0;
+            if (id == webSocketIdJustConnected)
+            {
+                CleanupQueuedJsons(webSocketIdJustConnected);
+                webSocketIdJustConnected = 0;
+            } // if
 
           #ifdef DEBUG_WEBSOCKET
             Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
@@ -616,12 +613,10 @@ void WebSocketEvent(
                 // A completely new value for id?
                 if (id != websocketId_1 && id != websocketId_2)
                 {
-                  #ifdef DEBUG_WEBSOCKET
                     Serial.printf_P(
                         PSTR("%s[webSocket %lu] received text: '%s' --> switching to %lu\n"),
                         TimeStamp(), id, data, id
                     );
-                  #endif // DEBUG_WEBSOCKET
 
                     // Use as much as possible an empty slot
                     if (websocketId_1 == WEBSOCKET_INVALID_ID || ! webSocket.hasClient(websocketId_1))
@@ -651,10 +646,6 @@ void WebSocketEvent(
                 } // if
 
                 ProcessWebSocketClientMessage((char*)data, id);  // Process the message
-
-                // Send any JSON data that was stored for later sending
-                // Don't call here, causes out-of-memory or stack overflow crash
-                //SendQueuedJson(websocketId_1);
             } // if
         }
         break;
