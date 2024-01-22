@@ -216,7 +216,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
    formed by the two resistors. Results may vary.
 
 ![schema](extras/Schematics/Schematic%20using%20voltage%20divider_bb.png)
-   
+
 > 👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
      cause your car to explode! (or anything less catastrophic)
 
@@ -481,8 +481,9 @@ The application itself embeds:
 
 <b>Answer:</b> I have only tested with one vehicle: a 406 from year 2003
 [DAM number / Build Code: 9586](http://www.406coupeclub.org/Apps_BuildCodeTranslator.php); see also
-[this page](http://www.kleinopslag.nl/damnr/) (in Dutch). My vehicle has a so-called ["type C" Multi-Functional
-Display (MFD)](https://github.com/0xCAFEDECAF/Peugeot406MfdTypecIrSendArduino#-description).
+[this page](https://web.archive.org/web/20200211061106/http://www.kleinopslag.nl/damnr/) (in Dutch).
+My vehicle has a so-called
+["type C" Multi-Functional Display (MFD)](https://github.com/0xCAFEDECAF/Peugeot406MfdTypecIrSendArduino#-description).
 
 It will work (at least to some extent) if you have a Peugeot of around 1996-2004, fitted with a VAN comfort bus.
 
