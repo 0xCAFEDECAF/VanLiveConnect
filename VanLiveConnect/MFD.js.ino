@@ -3759,14 +3759,8 @@ function handleItemChange(item, value)
 			// Switch to head unit display if applicable
 			if ($("#clock").is(":visible")) selectDefaultScreen();
 
-			// Has anything changed?
-			//if (value === handleItemChange.currentTunerPresetMemoryValue) break;
-
 			// Un-highlight any previous entry in the "tuner_presets_popup"
 			$('div[id^=presets_memory_][id$=_select]').hide();
-
-			// Make sure the audio settings popup is hidden
-			hideAudioSettingsPopup();
 
 			// Changed to a non-preset frequency? Or just changed audio source? Then suppress the tuner presets popup.
 			if (value === "-" || handleItemChange.hideHeadUnitPopupsTimer !== null)
@@ -3808,7 +3802,6 @@ function handleItemChange(item, value)
 			if (value === tunerSearchMode) break;
 			tunerSearchMode = value;
 
-			hideAudioSettingsPopup();
 			hideTunerPresetsPopup();
 
 			showAudioPopup();
