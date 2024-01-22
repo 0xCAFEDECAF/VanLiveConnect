@@ -224,7 +224,7 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
     //   (TODO - check if is this really needed?)
     // - In Android, setting "Mobile data always active" inside "Developer Options" is not necessary
     //   (and even undesired to save battery).
-    // - The WebSocket connection will persist, even after Android switches from Wi-Fi to mobile data.
+    // - The WebSocket (TCP/IP) connection will persist, even after Android switches from Wi-Fi to mobile data.
 
     IPAddress clientIp = request->client()->remoteIP();
 
@@ -248,7 +248,9 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
     // the browser will use this network connection to load the '/MFD.html' page from, and subsequently
     // connect via the WebSocket.
 
+  #ifdef DEBUG_WEBSERVER
     unsigned long start = millis();
+  #endif // DEBUG_WEBSERVER
 
     request->send(204);
 

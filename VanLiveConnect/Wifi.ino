@@ -36,6 +36,9 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     Serial.print(macToString(evt.mac));
     Serial.print(F("\n"));
 
+    // Note: even though the webSocket is closed here, the resources will be freed only after a re-connection.
+    // This is because the resources are associated to a TCP/IP connection, which can only be closed successfully
+    // when there is a connection.
     if (websocketId_1 != WEBSOCKET_INVALID_ID) webSocket.close(websocketId_1);
     if (websocketId_2 != WEBSOCKET_INVALID_ID) webSocket.close(websocketId_2);
 
