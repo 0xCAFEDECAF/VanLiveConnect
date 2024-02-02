@@ -91,6 +91,8 @@ function updateDateTime()
 // -----
 // System
 
+const isMobile = window.matchMedia("(any-pointer:coarse)").matches;
+
 function showViewportSizes()
 {
 	$("#viewport_width").text($(window).width());  // width of browser viewport
@@ -187,31 +189,6 @@ function writeToDom(jsonObj)
 TOGGLE_COMMS_LED
 
 R"=====(
-	// The following log entries can be used to literally re-play a session; simply copy-paste these lines into the
-	// console area of the web-browser. Also it can be really useful to copy and save these lines into a text file
-	// for later re-playing at your desk.
-
-	var now = Date.now();
-	if (writeToDom.lastInvoked === undefined)
-	{
-		// First time: print the sleep function for easy copy-pasting into the browser console.
-		// Intervals will be at most 300 milliseconds.
-		// Note: some events need a minimum amount of time between them, e.g. pressing a button on the remote control
-		// after changing to another screen.
-		console.log("function sleep(ms) { return new Promise(resolve => setTimeout(resolve, Math.min(ms, 300))); } //");
-
-		// Alternative, with actual intervals
-		//console.log("function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); } //");
-	}
-	else
-	{
-		let elapsed = now - writeToDom.lastInvoked;
-		if (elapsed > 20000) elapsed = 20000;  // During replay, don't wait longer than 20 seconds
-		console.log("await sleep(" + elapsed + "); //");
-	} // if
-	console.log("writeToDom(" + JSON.stringify(jsonObj) + "); //");
-
-	writeToDom.lastInvoked = now;
 
 	for (let item in jsonObj)
 	{
@@ -570,7 +547,6 @@ function resizeScreenToFit()
 {
 	const scale = Math.min((window.innerHeight - 5) / 640, (window.innerWidth - 15) / 1350);
 
-	const isMobile = window.matchMedia("(any-pointer:coarse)").matches;
 	if (! isMobile)
 	{
 		$(":root").css("--scale-factor", scale * window.devicePixelRatio);
