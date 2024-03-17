@@ -151,7 +151,7 @@ void printHttpRequest(class AsyncWebServerRequest* request)
         if (i < request->args() - 1) Serial.print('&');
     } // for
 
-    Serial.print(F("'\n"));
+    Serial.print("'\n");
   #endif // DEBUG_WEBSERVER
 } // printHttpRequest
 
@@ -350,10 +350,10 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     message += request->methodToString();
     message += F("\nArguments: ");
     message += request->args();
-    message += F("\n");
+    message += "\n";
     for (size_t i = 0; i < request->args(); i++)
     {
-        message += " " + request->argName(i) + F(": ") + request->arg(i) + F("\n");
+        message += " " + request->argName(i) + F(": ") + request->arg(i) + "\n";
     } // for
 
     request->send(404, F("text/plain;charset=utf-8"), message);

@@ -57,7 +57,7 @@ void PrintSystemSpecs()
         Serial.print(F("==> Will print detailed debug info when a VAN bus packet with CRC error is received."));
     }
   #endif // ON_DESK_MFD_ESP_MAC
-    Serial.print(F("\n"));
+    Serial.print("\n");
 } // PrintSystemSpecs
 
 String EspGetResetInfo()

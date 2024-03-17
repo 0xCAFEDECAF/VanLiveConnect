@@ -381,7 +381,7 @@ bool IrReceive(TIrPacket& irPacket)
     if (irPacket.held && (irPacket.value == IB_MENU || irPacket.value == IB_MODE))
     {
       #ifdef DEBUG_IR_RECV
-        Serial.print(F("\n"));
+        Serial.print("\n");
       #endif // DEBUG_IR_RECV
         return false;
     } // if
@@ -444,7 +444,7 @@ bool IrReceive(TIrPacket& irPacket)
         if (countDown > 0)
         {
           #ifdef DEBUG_IR_RECV
-            Serial.print(F("\n"));
+            Serial.print("\n");
           #endif // DEBUG_IR_RECV
             return false;
         } // if
@@ -458,7 +458,7 @@ bool IrReceive(TIrPacket& irPacket)
         if (countDown > 0)
         {
           #ifdef DEBUG_IR_RECV
-            Serial.print(F("\n"));
+            Serial.print("\n");
           #endif // DEBUG_IR_RECV
             return false;
         } // if

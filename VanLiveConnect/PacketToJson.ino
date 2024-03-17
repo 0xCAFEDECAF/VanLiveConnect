@@ -5343,7 +5343,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
                     } // if
                     Serial.printf_P(PSTR("%s%S"), diffByte, i < n - 1 ? dashStr : emptyStr);
                 } // for
-                Serial.print(F("\n"));
+                Serial.print("\n");
             }
             else
             {
@@ -5374,7 +5374,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
             {
                 Serial.printf_P(PSTR("%02X%S"), data[i], i < dataLen - 1 ? dashStr : emptyStr);
             } // for
-            Serial.print(F("\n"));
+            Serial.print("\n");
         }
         else
         {

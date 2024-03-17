@@ -27,14 +27,14 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 
     Serial.printf_P(PSTR("%sWi-Fi client connected: "), TimeStamp());
     Serial.print(macToString(evt.mac));
-    Serial.print(F("\n"));
+    Serial.print("\n");
 } // onStationConnected
 
 void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 {
     Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
     Serial.print(macToString(evt.mac));
-    Serial.print(F("\n"));
+    Serial.print("\n");
 
     // Note: even though the webSocket is closed here, the resources will be freed only after a re-connection.
     // This is because the resources are associated to a TCP/IP connection, which can only be closed successfully
@@ -54,7 +54,7 @@ void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
     Serial.print(macToString(evt.mac));
     Serial.print(F(" RSSI: "));
     Serial.print(evt.rssi);
-    Serial.print(F("\n"));
+    Serial.print("\n");
 } // onProbeRequestPrint
 
 void onProbeRequestBlink(const WiFiEventSoftAPModeProbeRequestReceived&)
@@ -84,37 +84,44 @@ const char* const AUTH_MODE_NAMES[]{ "AUTH_OPEN", "AUTH_WEP", "AUTH_WPA_PSK", "A
 
 void PrintSoftApConfig(softap_config const& config)
 {
-    Serial.println();
-    Serial.println(F("SoftAP Configuration"));
-    Serial.println(F("--------------------"));
+    Serial.print("\n");
+    Serial.print(F("SoftAP Configuration\n"));
+    Serial.print(F("--------------------\n"));
 
     Serial.print(F("ssid           : "));
-    Serial.println((char *) config.ssid);
+    Serial.print((char *) config.ssid);
+    Serial.print("\n");
 
     Serial.print(F("password       : "));
-    Serial.println((char *) config.password);
+    Serial.print((char *) config.password);
+    Serial.print("\n");
 
     Serial.print(F("ssid_len       : "));
-    Serial.println(config.ssid_len);
+    Serial.print(config.ssid_len);
+    Serial.print("\n");
 
     Serial.print(F("channel        : "));
-    Serial.println(config.channel);
+    Serial.print(config.channel);
+    Serial.print("\n");
 
     Serial.print(F("authmode       : "));
-    Serial.println(AUTH_MODE_NAMES[config.authmode]);
+    Serial.print(AUTH_MODE_NAMES[config.authmode]);
+    Serial.print("\n");
 
     Serial.print(F("ssid_hidden    : "));
-    Serial.println(config.ssid_hidden);
+    Serial.print(config.ssid_hidden);
+    Serial.print("\n");
 
     Serial.print(F("max_connection : "));
-    Serial.println(config.max_connection);
+    Serial.print(config.max_connection);
+    Serial.print("\n");
 
     Serial.print(F("beacon_interval: "));
     Serial.print(config.beacon_interval);
-    Serial.println("ms");
+    Serial.print(F("ms\n"));
 
-    Serial.println(F("--------------------"));
-    Serial.println();
+    Serial.print(F("--------------------\n"));
+    Serial.print("\n");
 } // PrintSoftApConfig
 
 const char* SetupWifi()

@@ -231,14 +231,14 @@ bool IsNotificationPopupShowing(bool beVerbose)
                 millis() - NotificationPopupShowingSince
             );
         } // if
-        Serial.print(F(")\n"));
+        Serial.print(")\n");
     } // if
   #endif // DEBUG_ORIGINAL_MFD
 
     return result;
 } // IsNotificationPopupShowing
 
-// Register the fact that the trip computer popup showing
+// Register the fact that the trip computer popup is showing
 void TripComputerPopupShowing(unsigned long since, long duration)
 {
     NotificationPopupShowingSince = 0;
