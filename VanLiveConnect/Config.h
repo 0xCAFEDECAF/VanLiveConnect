@@ -212,7 +212,7 @@
   // IR receiver data pin
   #define IR_RECV_PIN D7
 
-  // Using D7 as VCC and D6 as ground pin for the IR receiver. Should be possible with e.g. the
+  // Using D5 as VCC and D0 as ground pin for the IR receiver. Should be possible with e.g. the
   // TSOP31238 IR receiver as it typically uses only 0.35 mA.
   #define IR_VCC D5
   #define IR_GND D0
