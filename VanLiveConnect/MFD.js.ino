@@ -4511,6 +4511,8 @@ function handleItemChange(item, value)
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
+			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
+			if ($("#satnav_not_on_map_icon").is(':visible')) break;
 			if (! satnavOnMap) break;
 
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
@@ -4530,10 +4532,11 @@ function handleItemChange(item, value)
 				break;
 			} // if
 
-			if (currentLargeScreenId !== "satnav_vocal_synthesis_level")
-			{
-				temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
-			} // if
+			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
+			if ($("#satnav_not_on_map_icon").is(':visible')) break;
+			if (! satnavOnMap) break;
+
+			temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
 		} // case
 		break;
 
@@ -5465,31 +5468,29 @@ function handleItemChange(item, value)
 
 		case "satnav_not_on_map_icon":
 		{
-			if (value === "ON")
-			{
-				// Hide the "Computing route in progress" popup, if showing
-				hidePopup("satnav_computing_route_popup");
-
-				let translations =
-				{
-					"set_language_french": "Suivez le cap indiqu&eacute;",
-					"set_language_german": "Folgen Sie dem Pfeil",
-					"set_language_spanish": "Siga el rumbo indicado",
-					"set_language_italian": "Sequire la direzione",
-					"set_language_dutch": "Volg deze richting"
-				};
-				let content = translations[localStorage.mfdLanguage] || "Follow the heading";
-				$("#satnav_guidance_next_street").html(content);
-				satnavCutoffBottomLines($("#satnav_guidance_next_street"));
-
-				//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
-
-				// To replicate a bug in the original MFD; in fact the current street is usually known
-				$("#satnav_guidance_curr_street").html(notDigitizedAreaText);
-				satnavCutoffBottomLines($("#satnav_guidance_curr_street"));
-			} // if
-
 			$("#satnav_turn_at_indication").toggle(value !== "ON");
+			if (value !== "ON") break;
+
+			// Hide the "Computing route in progress" popup, if showing
+			hidePopup("satnav_computing_route_popup");
+
+			let translations =
+			{
+				"set_language_french": "Suivez le cap indiqu&eacute;",
+				"set_language_german": "Folgen Sie dem Pfeil",
+				"set_language_spanish": "Siga el rumbo indicado",
+				"set_language_italian": "Sequire la direzione",
+				"set_language_dutch": "Volg deze richting"
+			};
+			let content = translations[localStorage.mfdLanguage] || "Follow the heading";
+			$("#satnav_guidance_next_street").html(content);
+			satnavCutoffBottomLines($("#satnav_guidance_next_street"));
+
+			//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
+
+			// To replicate a bug in the original MFD; in fact the current street is usually known
+			$("#satnav_guidance_curr_street").html(notDigitizedAreaText);
+			satnavCutoffBottomLines($("#satnav_guidance_curr_street"));
 		} // case
 		break;
 
