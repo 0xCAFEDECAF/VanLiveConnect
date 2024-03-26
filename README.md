@@ -256,7 +256,7 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Package:
 
 * [Install ESP8266 Board in Arduino IDE (Windows, Mac OS X, Linux)](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
 
-#### 2. Installing Libraries
+#### 2. Install Libraries
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
@@ -277,7 +277,7 @@ For more explanation on using the Arduino library manager, you can browse to:
 the indicated directories in your system. In my experience, these patched files significantly improve the stability
 of the WebSocket (TCP/IP over Wi-Fi) communication.
 
-#### 3. Board settings
+#### 3. Board Settings
 
 In the Arduino IDE, go to the "Tools" menu, and choose:
 
