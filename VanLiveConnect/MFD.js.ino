@@ -3048,9 +3048,10 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
 
-	// Show this popup only if the current location is known (to emulate behaviour of MFD).
+	// Show this popup only if the route is currently not known (to emulate behaviour of MFD).
 	// This seems to be the criterion used by the original MFD.
-	if (satnavCurrentStreet === "") return false;
+	if (satnavRouteComputed === "YES") return false;
+	//if (satnavCurrentStreet === "") return false;
 	//if (! satnavCurrentStreet.match(/\(.*\)/)) return false;  // Just a city name (no street name)?
 	//if ($("#satnav_not_on_map_icon").is(':visible')) return false;
 
@@ -4536,7 +4537,7 @@ function handleItemChange(item, value)
 			if ($("#satnav_not_on_map_icon").is(':visible')) break;
 			if (! satnavOnMap) break;
 
-			temporarilyChangeLargeScreenTo("satnav_guidance", 300000);
+			temporarilyChangeLargeScreenTo("satnav_guidance", 120000);
 		} // case
 		break;
 
@@ -4695,6 +4696,7 @@ function handleItemChange(item, value)
 			{
 				satnavCurrentStreet = "";
 				$('[gid="satnav_curr_street_shown"]').html(notDigitizedAreaText);
+				changeBackLargeScreenAfter(15000);
 			} // if
 		} // case
 		break;
@@ -5491,6 +5493,8 @@ function handleItemChange(item, value)
 			// To replicate a bug in the original MFD; in fact the current street is usually known
 			$("#satnav_guidance_curr_street").html(notDigitizedAreaText);
 			satnavCutoffBottomLines($("#satnav_guidance_curr_street"));
+
+			changeBackLargeScreenAfter(15000);
 		} // case
 		break;
 
