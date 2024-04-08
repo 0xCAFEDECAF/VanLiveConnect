@@ -111,6 +111,8 @@ bool ICACHE_RAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
             || pkt.Iden() == HEAD_UNIT_IDEN
             || pkt.Iden() == AUDIO_SETTINGS_IDEN
             || pkt.Iden() == MFD_LANGUAGE_UNITS_IDEN
+
+            || pkt.Iden() == CAR_STATUS2_IDEN  // Info and alarm popups
         );
 } // IsImportantPacket
 
