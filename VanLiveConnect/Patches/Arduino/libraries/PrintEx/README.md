@@ -9,7 +9,7 @@ The patch includes the following fix:
     (https://github.com/esp8266/Arduino).
 
 ```diff
-diff -r ~/Arduino/libraries/PrintEx/src/lib/TypeTraits.h ./src/lib/TypeTraits.h
+diff ~/Arduino/libraries/PrintEx/src/lib/TypeTraits.h ./src/lib/TypeTraits.h
 74c74
 <         select template.
 ---

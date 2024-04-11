@@ -9,7 +9,7 @@ The patches include the following fixes:
   * Fix issue causing missing of response, possibly fix for hanging TCP connections
 
 ```diff
-diff -r ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCPbuffer.cpp ./src/ESPAsyncTCPbuffer.cpp
+diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCPbuffer.cpp ./src/ESPAsyncTCPbuffer.cpp
 113c113,115
 <         _sendBuffer();
 ---
@@ -32,7 +32,7 @@ diff -r ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCPbuffer.cpp ./src/ESPAsync
   * Possible fix for memory leak
 
 ```diff
-diff -r ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCP.cpp ./src/ESPAsyncTCP.cpp
+diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCP.cpp ./src/ESPAsyncTCP.cpp
 267a268,270
 >   if (err != ERR_OK){
 >     tcp_close(pcb);

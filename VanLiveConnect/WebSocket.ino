@@ -747,8 +747,11 @@ void LoopWebSocket()
   #ifdef WIFI_STRESS_TEST
     static uint32_t packetNo = 0;
 
-    // Don't let the test frames overflow the queue
-    if (IsIdConnected(websocketId_1) && webSocket.areAllQueuesEmpty())
+    if (IsIdConnected(websocketId_1)
+  #ifdef ASYNCWEBSOCKET_IMPLEMENTS_ALL_QUEUES_EMPTY_METHOD
+        && webSocket.areAllQueuesEmpty()  // Don't let the test frames overflow the queue
+  #endif // ASYNCWEBSOCKET_IMPLEMENTS_ALL_QUEUES_EMPTY_METHOD
+       )
     {
         bool result = SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer), false, true);
         if (result) packetNo++;
