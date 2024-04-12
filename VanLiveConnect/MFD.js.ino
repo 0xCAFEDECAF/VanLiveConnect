@@ -2093,7 +2093,7 @@ var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
 var satnavDestinationReachable = false;
 var satnavGpsFix = false;
-var satnavOnMap = false;
+var satnavOnMap = true;
 var satnavStatus1 = "";
 var satnavStatus3 = "";
 var satnavDestinationNotAccessible = false;
@@ -3047,13 +3047,6 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Don't show this popup while still in the guidance preference popup or menu
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
-
-	// Show this popup only if the route is currently not known (to emulate behaviour of MFD).
-	// This seems to be the criterion used by the original MFD.
-	if (satnavRouteComputed === "YES") return false;
-	//if (satnavCurrentStreet === "") return false;
-	//if (! satnavCurrentStreet.match(/\(.*\)/)) return false;  // Just a city name (no street name)?
-	//if ($("#satnav_not_on_map_icon").is(':visible')) return false;
 
 	// Show popup only once at start of guidance or after recalculation
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
