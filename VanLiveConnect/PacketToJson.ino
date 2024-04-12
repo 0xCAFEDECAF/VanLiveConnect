@@ -3907,16 +3907,16 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         if (report == SR_PERSONAL_ADDRESS_LIST || report == SR_PROFESSIONAL_ADDRESS_LIST)
         {
             records[i].replace(" ", "&nbsp;");
-
-            // The last character can be:
-            // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
-            //   read. This is shown as a "?".
-            // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
-            //   different country/region. This is shown on the original MFD as an circle with a bar "(-)"; here we
-            //   use a circle with a cross "(X)".
-            records[i].replace("\x80", "?");
-            records[i].replace("\x81", "&#x24E7;");
         } // if
+
+        // Special (last) characters:
+        // - 0x80: indicates that the entry cannot be selected because the current navigation disc cannot be
+        //   read. This is shown as a "?".
+        // - 0x81: indicates that the entry cannot be selected because the current navigation disc is for a
+        //   different country/region. This is shown on the original MFD as an circle with a bar "(-)"; here we
+        //   use a circle with a cross "(X)".
+        records[i].replace("\x80", "?");
+        records[i].replace("\x81", "&#x24E7;");
 
         // Replace special characters by HTML-safe ones, e.g. "\xEB" (ë) by "&euml;"
         AsciiToHtml(records[i]);
