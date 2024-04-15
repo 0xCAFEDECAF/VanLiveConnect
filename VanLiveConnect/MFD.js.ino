@@ -3235,6 +3235,7 @@ function satnavSetAudioLed(playingAudio)
 		// Don't let traffic info or any other popup eclipse the guidance screen at this moment
 		hidePopup("notification_popup");
 
+		$("#satnav_no_audio_icon").hide();
 		if (satnavMode === "IN_GUIDANCE_MODE" && ! inMenu())
 		{
 			temporarilyChangeLargeScreenTo("satnav_guidance", 5000);
@@ -3332,11 +3333,13 @@ function satnavPoweringOff(satnavMode)
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
 }
 
+var headUnitLastSwitchedTo = "NAVIGATION";
+
 function satnavNoAudioIcon()
 {
 	clearTimeout(handleItemChange.audioSourceTimer);
 	handleItemChange.audioSourceTimer = undefined;
-	if (handleItemChange.headUnitLastSwitchedTo === "NAVIGATION")
+	if (headUnitLastSwitchedTo === "NAVIGATION")
 	{
 		$("#satnav_no_audio_icon").toggle($("#volume").text() === "0");
 	} // if
@@ -3999,7 +4002,7 @@ function handleItemChange(item, value)
 
 		case "head_unit_update_switch_to":
 		{
-			handleItemChange.headUnitLastSwitchedTo = value;
+			headUnitLastSwitchedTo = value;
 			if ($("#audio_source").text() === "NAVIGATION")
 			{
 				clearTimeout(handleItemChange.audioSourceTimer);
@@ -4010,7 +4013,7 @@ function handleItemChange(item, value)
 
 		case "volume":
 		{
-			if (handleItemChange.headUnitLastSwitchedTo === "NAVIGATION")
+			if (headUnitLastSwitchedTo === "NAVIGATION")
 			{
 				// Wait for the audio source to stabilize
 				clearTimeout(handleItemChange.audioSourceTimer);
