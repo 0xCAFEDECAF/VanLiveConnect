@@ -5675,15 +5675,8 @@ function handleItemChange(item, value)
 				// If one of these popups is showing, hide it and break
 				if (hideTunerPresetsPopup()) break;
 				if (hideAudioSettingsPopup()) break;
-				if (hidePopup("status_popup")) break;
-				if (hidePopup("satnav_delete_directory_data_popup")) break;
-				if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
-				if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
-				if (hidePopup("satnav_initializing_popup")) break;
-				if (hidePopup("trip_computer_popup")) break;
-				if (hidePopup("satnav_reached_destination_popup")) break;
-				if (hidePopup("audio_popup")) break;
-				if (hidePopup("climate_control_popup")) break;
+
+				if (hidePopup()) break;
 
 				// In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
 				if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
