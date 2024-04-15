@@ -966,10 +966,6 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="centerAligned fas fa-smog"></div>
 				</div>
 
-				<div id="satnav_audio" class="iconSmall led ledOff" style="left:750px; top:30px;">
-					<div class="centerAligned fas fa-volume-up"></div>
-				</div>
-
 				<!-- Current heading, shown as compass needle -->
 				<div id="satnav_curr_heading_compass_needle" class="satNavCompassNeedle" style="transform:rotate(0deg);">
 					<svg>
@@ -1733,7 +1729,11 @@ char mfd_html[] PROGMEM = R"=====(
 						</div>
 					</div>
 
-					<div id="satnav_no_audio_icon" class="icon iconSmall led ledOn fas fa-volume-mute" style="left:20px; top:40px; height:45px; width:60px;"></div>
+					<div id="satnav_no_audio_icon" class="icon iconSmall led ledOn fas fa-volume-mute" style="display:none; left:20px; top:40px; height:45px; width:60px;"></div>
+
+					<div id="satnav_audio" class="iconSmall led ledOff" style="left:750px; top:30px;">
+						<div class="centerAligned fas fa-volume-up"></div>
+					</div>
 
 					<!-- Area with guidance icon(s) -->
 
