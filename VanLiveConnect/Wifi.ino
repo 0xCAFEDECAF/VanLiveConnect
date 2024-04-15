@@ -154,9 +154,9 @@ const char* SetupWifi()
     WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
 
   #ifdef WIFI_PASSWORD
-    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
+    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 8);
   #else
-    WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 4);
+    WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 8);
   #endif
 
     softap_config config;
