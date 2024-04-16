@@ -38,3 +38,14 @@ diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCP.cpp ./src/ESPAsyncTCP.cpp
 >     tcp_close(pcb);
 >   }
 ```
+
+- ESPAsyncTCP.h:
+  * Shorter time-out value for reception of ACK
+
+```diff
+diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCP.h ./src/ESPAsyncTCP.h
+40c40
+< #define ASYNC_MAX_ACK_TIME 5000
+---
+> #define ASYNC_MAX_ACK_TIME 2000
+```
