@@ -5573,7 +5573,22 @@ function handleItemChange(item, value)
 				value === "TRIP_INFO_2" ? 2 : 0;
 			selectTabInTripComputerPopup(tabIndex);
 
-			// Experiment
+			// Has anything changed?
+			if (value === localStorage.smallScreen) break;
+			localStorage.smallScreen = value;
+
+			gotoSmallScreen(value);
+		} // case
+		break;
+
+		case "small_screen":
+		{
+			if (satnavMode === "IN_GUIDANCE_MODE") break;
+
+			// Has anything changed?
+			if (value === localStorage.smallScreen) break;
+			localStorage.smallScreen = value;
+
 			gotoSmallScreen(value);
 		} // case
 		break;

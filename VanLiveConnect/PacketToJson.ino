@@ -81,8 +81,6 @@ bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter);
 // Defined in OriginalMfd.ino
 extern uint8_t largeScreen;
 extern uint8_t mfdLanguage;
-extern int tripComputerPopupTab;
-PGM_P TripComputerStr(uint8_t idx);
 PGM_P TripComputerStr();
 PGM_P SmallScreenStr();
 PGM_P LargeScreenStr();
@@ -90,6 +88,13 @@ void NotificationPopupShowing(unsigned long since, long duration);
 bool IsTripComputerPopupShowing();
 void InitSmallScreen();
 void ResetTripInfo(uint16_t mfdStatus);
+void UpdateSmallScreenAfterStoppingGuidance();
+void UpdateLargeScreenForCurrentStreetKnown();
+void UpdateLargeScreenForHeadUnitOn();
+void UpdateLargeScreenForHeadUnitOff();
+void UpdateLargeScreenForGuidanceModeOn();
+void UpdateLargeScreenForGuidanceModeOff();
+void UpdateLargeScreenForMfdOff();
 void CycleTripInfo();
 
 // Defined in Eeprom.ino
@@ -1341,9 +1346,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "\"mfd_to_satnav_guidance_data_request\": \"%S\",\n"
                 "\"mfd_to_satnav_report_request\": \"%S\",\n"
                 "\"mfd_to_satnav_response_request\": \"%S\",\n"
-                "\"mfd_to_satnav_user_selection\": \"%S\"\n"
-            "}\n"
-        "}\n";
+                "\"mfd_to_satnav_user_selection\": \"%S\"";
 
         uint16_t code = (uint16_t)data[1] << 8 | data[2];
 
@@ -1352,7 +1355,8 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // User clicks on "Accept" button (usually bottom left of dialog screen)
             code == 0x0001 ? PSTR("Accept") :
 
-            code == 0x0002 ? ToHexStr(code) :
+            code == 0x0002 ? PSTR("Stop_navigation") :  // User stops navigation via menu on MFD
+            code == 0x0003 ? PSTR("Change_destination") :  // User changes navigation destination via menu on MFD
 
             // Always follows 0x1000
             code == 0x0100 ? PSTR("End_of_button_press") :
@@ -1381,7 +1385,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // MFD asks for sat nav guidance data packet (IDEN 0x9CE) and satnav_status_2 (IDEN 0x7CE)
             code == 0x4400 ? PSTR("Request_sat_nav_guidance_data") :
 
-            code == 0x4700 ? ToHexStr(code) :  // Route computed?
+            code == 0x4700 ? PSTR("Route_computed") :
             code == 0x6000 ? ToHexStr(code) :  // ??
 
             ToHexStr(code),
@@ -1395,6 +1399,20 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             data[1] & 0x10 ? yesStr : noStr,
             data[2] & 0x01 ? yesStr : noStr
         );
+
+        if (code == 0x0002)
+        {
+            // In this specific situation, the small screen the original MFD is reverted to its value
+            // before the guidance started
+            UpdateSmallScreenAfterStoppingGuidance();
+
+            at += at >= n ? 0 :
+                snprintf_P(buf + at, n - at, PSTR(",\n\"small_screen\": \"%S\""),
+                    SmallScreenStr()
+                );
+        } // if
+
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
     }
     else if (data[0] == 0x52)
     {
@@ -1482,8 +1500,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         // Note: short-press = cycle screen; long-press = reset trip counter currently shown (if any)
         if (now - stalkLastPressed >= 1000) break;
 
-        // May update the value of 'tripComputerPopupTab' and the values as reported by 'TripComputerStr()',
-        // 'SmallScreenStr()' and 'PopupStr()' below
+        // May update the values as reported by 'TripComputerStr()', 'SmallScreenStr()' and 'PopupStr()' below
         CycleTripInfo();
 
         break;
@@ -1563,12 +1580,12 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
     int at = snprintf_P(buf, n, jsonFormatter1,
         stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
-        SmallScreenStr(),  // Possibly updated if the stalk was short-pressed
-        TripComputerStr(),  // Updated if the stalk was short-pressed
-        PopupStr()  // Possibly updated if the stalk was short-pressed
+        SmallScreenStr(),
+        TripComputerStr(),
+        PopupStr()
     );
 
-    if (IsTripComputerPopupShowing() && tripComputerPopupTab >= 0)
+    if (IsTripComputerPopupShowing())
     {
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at,
@@ -1576,7 +1593,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
                     ",\n"
                     "\"trip_computer_popup_tab\": \"%S\""
                 ),
-                TripComputerStr(tripComputerPopupTab)
+                TripComputerStr()
             );
     } // if
 
@@ -2589,7 +2606,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
                 TripComputerStr()
             );
 
-        if (IsTripComputerPopupShowing() && tripComputerPopupTab >= 0)
+        if (IsTripComputerPopupShowing())
         {
             at += at >= n ? 0 :
                 snprintf_P(buf + at, n - at,
@@ -2597,17 +2614,13 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
                         ",\n"
                         "\"trip_computer_popup_tab\": \"%S\""
                     ),
-                    TripComputerStr(tripComputerPopupTab)
+                    TripComputerStr()
                 );
         } // if
     } // if
 
     if (mfdStatus == MFD_SCREEN_OFF)
     {
-        // On the original MFD, the MFD_SCREEN_OFF event while in sat nav guidance mode causes 'smallScreen' to
-        // be updated to the tab currently selected in the trip computer popup.
-        if (isSatnavGuidanceActive) UpdateLargeScreenForGuidanceModeOff(true);
-
         // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
         // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
         // don't work well together.
@@ -3296,9 +3309,11 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
                 (
                     ",\n"
                     "\"small_screen\": \"%S\",\n"
+                    "\"trip_computer_screen_tab\": \"%S\",\n"
                     "\"large_screen\": \"%S\""
                 ),
                 SmallScreenStr(),
+                TripComputerStr(),
                 LargeScreenStr()
             );
     } // if
