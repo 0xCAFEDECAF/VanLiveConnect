@@ -76,6 +76,7 @@ body
 .dots
 {
   position:absolute;
+  overflow:hidden;
   font-family:Peugeot-New;
   line-height:1.000000;
   font-size:55px;
@@ -536,6 +537,7 @@ body
   left:20px;
   top:180px;
   width:925px;
+  height:60px;
   font-size:50px;
 }
 .satNavEnterDestinationTag
