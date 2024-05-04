@@ -2151,6 +2151,12 @@ function satnavCutoffBottomLines(selector)
 	} // if
 }
 
+function satnavShowStreet(selector, content)
+{
+	selector.html(content);
+	satnavCutoffBottomLines(selector);
+}
+
 function satnavGotoMainMenu()
 {
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
@@ -2433,12 +2439,8 @@ function satnavEnterNewCity()
 function satnavEnterNewCityForService()
 {
 	$("#satnav_current_destination_city").empty();
-
-	// Clear also the character-by-character entry string
-	$("#satnav_entered_string").empty();
-
+	$("#satnav_entered_string").empty();  // Clear also the character-by-character entry string
 	satnavLastEnteredChar = null;
-
 	satnavEnterNewCity();
 }
 
@@ -2504,6 +2506,12 @@ function satnavEnterCharacter()
 
 var showAvailableCharactersTimer = null;
 
+// State while entering sat nav destination in character-by-character mode
+// 0 = "mfd_to_satnav_instruction=Val" packet received
+// 1 = "satnav_to_mfd_show_characters" packet received
+// 2 = "mfd_to_satnav_enter_character" packet received
+var satnavEnterOrDeleteCharacterExpectedState = 2;
+
 // Handler for the "Correction" button in the "satnav_enter_characters" screen.
 // Removes the last entered character.
 function satnavRemoveEnteredCharacter(newState)
@@ -2537,12 +2545,6 @@ function satnavRemoveEnteredCharacter(newState)
 // Boolean to indicate if the user has pressed 'Esc' within a list of cities or streets; in that case the entered
 // characters are removed until there is more than one character to choose from.
 var satnavRollingBackEntryByCharacter = false;
-
-// State while entering sat nav destination in character-by-character mode
-// 0 = "mfd_to_satnav_instruction=Val" packet received
-// 1 = "satnav_to_mfd_show_characters" packet received
-// 2 = "mfd_to_satnav_enter_character" packet received
-var satnavEnterOrDeleteCharacterExpectedState = 2;
 
 function satnavEnterOrDeleteCharacter(newState)
 {
@@ -3033,9 +3035,10 @@ function satnavDeleteDirectories()
 function satnavSwitchToGuidanceScreen()
 {
 	hidePopup("satnav_computing_route_popup");
+	cancelChangeBackScreenTimer();
 	menuStack = [];
-	currentMenu = "satnav_guidance";
-	changeLargeScreenTo(currentMenu);
+	currentMenu = undefined;
+	changeLargeScreenTo("satnav_guidance");
 }
 
 // Show the "Destination is not accessible by road" popup, if applicable.
@@ -3075,14 +3078,18 @@ function satnavGuidanceSetPreference(value)
 {
 	if (value === undefined || value === "---") return;
 
+	const map =
+	{
+		"FASTEST_ROUTE": "0",
+		"SHORTEST_DISTANCE": "1",
+		"AVOID_HIGHWAY": "2",
+		"COMPROMISE_FAST_SHORT": "3"
+	};
+	const labelNo = map[value] || "?";
+
 	// Copy the correct text into the guidance preference popup
 	var menuId = "#satnav_guidance_preference_menu";
-	var preferenceText =
-		value === "FASTEST_ROUTE" ? $(menuId + " .tickBoxLabel:eq(0)").text() :
-		value === "SHORTEST_DISTANCE" ? $(menuId + " .tickBoxLabel:eq(1)").text() :
-		value === "AVOID_HIGHWAY" ? $(menuId + " .tickBoxLabel:eq(2)").text() :
-		value === "COMPROMISE_FAST_SHORT" ? $(menuId + " .tickBoxLabel:eq(3)").text() :
-		"??";
+	var preferenceText = labelNo === "?" ? "??" : $(menuId + " .tickBoxLabel:eq(" + labelNo + ")").text();
 	$("#satnav_guidance_current_preference_text").text(preferenceText.toLowerCase());
 
 	// Also set the correct tick box in the guidance preference menu
@@ -3126,9 +3133,7 @@ function satnavGuidancePreferenceSelectTickedButton()
 function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
-
 	if (showDestinationNotAccessiblePopupIfApplicable()) return;
-
 	if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
 }
 
@@ -3156,7 +3161,7 @@ function satnavGuidancePreferenceEscape()
 
 function satnavGuidancePreferenceValidate()
 {
-	if (currentMenu === "satnav_guidance")
+	if (currentLargeScreenId === "satnav_guidance")
 	{
 		// Return to the guidance screen
 		satnavSwitchToGuidanceScreen();
@@ -3177,6 +3182,8 @@ function satnavCalculatingRoute()
 
 	// No popups while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
 	if (satnavVehicleMoving()) return;
+
+	cancelChangeBackScreenTimer();
 
 	// If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
 	// start, but not any more during the guidance.
@@ -3357,8 +3364,7 @@ function satnavRetrievingInstruction()
 		"set_language_dutch": "Opzoeken instructie"
 	};
 	let content = translations[localStorage.mfdLanguage] || "Retrieving next instruction";
-	$("#satnav_guidance_next_street").html(content);
-	satnavCutoffBottomLines($("#satnav_guidance_next_street"));
+	satnavShowStreet($("#satnav_guidance_next_street"), content);
 }
 
 function showPowerSavePopup()
@@ -4513,7 +4519,7 @@ function handleItemChange(item, value)
 			if (! satnavOnMap) break;
 
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
-			else changeBackLargeScreenAfter(2000);
+			else changeBackLargeScreenAfter(4000);
 		} // case
 		break;
 
@@ -4525,7 +4531,7 @@ function handleItemChange(item, value)
 
 			if (value === "YES")
 			{
-				changeBackLargeScreenAfter(2000);
+				changeBackLargeScreenAfter(6000);
 				break;
 			} // if
 
@@ -4792,14 +4798,12 @@ function handleItemChange(item, value)
 				// Last received value empty ("")? Then copy current street into next street (if not empty)
 				if (satnavNextStreet === "" && value !== "")
 				{
-					$("#satnav_guidance_next_street").html(value);
-					satnavCutoffBottomLines($("#satnav_guidance_next_street"));
+					satnavShowStreet($("#satnav_guidance_next_street"), value);
 				} // if
 
 				// In the guidance screen, show "Street (City)", otherwise "Street not listed"
 				let selector = $("#satnav_guidance_curr_street");
-				selector.html(value.match(/\(.*\)/) ? value : streetNotListedText);
-				satnavCutoffBottomLines(selector);
+				satnavShowStreet(selector, value.match(/\(.*\)/) ? value : streetNotListedText);
 
 				showDestinationNotAccessiblePopupIfApplicable();
 			} // if
@@ -5346,6 +5350,15 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "mfd_to_satnav_guidance_request":
+		{
+			if (satnavMode === "IN_GUIDANCE_MODE") break;
+			if (value !== "YES") break;
+			if ($("#satnav_guidance_preference_menu").is(":visible")) break;
+			satnavSwitchToGuidanceScreen();
+		} // case
+		break;
+
 		case "satnav_to_mfd_show_characters":
 		{
 			// Hide the spinning disc
@@ -5481,14 +5494,12 @@ function handleItemChange(item, value)
 				"set_language_dutch": "Volg deze richting"
 			};
 			let content = translations[localStorage.mfdLanguage] || "Follow the heading";
-			$("#satnav_guidance_next_street").html(content);
-			satnavCutoffBottomLines($("#satnav_guidance_next_street"));
+			satnavShowStreet($("#satnav_guidance_next_street"), content);
 
 			//satnavCurrentStreet = ""; // Bug: original MFD clears currently known street in this situation...
 
 			// To replicate a bug in the original MFD; in fact the current street is usually known
-			$("#satnav_guidance_curr_street").html(notDigitizedAreaText);
-			satnavCutoffBottomLines($("#satnav_guidance_curr_street"));
+			satnavShowStreet($("#satnav_guidance_curr_street"), notDigitizedAreaText);
 
 			changeBackLargeScreenAfter(15000);
 		} // case
@@ -5531,6 +5542,7 @@ function handleItemChange(item, value)
 			if (value !== "PRESSED") break;
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (mfdLargeScreen === "TRIP_COMPUTER") break;
+			if (inMenu()) break;
 
 			// Will either start showing the popup, or restart its timer if it is already showing
 			showPopup("trip_computer_popup", 8000);
@@ -5539,6 +5551,8 @@ function handleItemChange(item, value)
 
 		case "trip_computer_screen_tab":
 		{
+			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+
 			// Has anything changed?
 			if (value === localStorage.smallScreen) break;
 			localStorage.smallScreen = value;
@@ -5551,6 +5565,8 @@ function handleItemChange(item, value)
 
 		case "trip_computer_popup_tab":
 		{
+			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+
 			// Apply mapping from string to index
 			let tabIndex =
 				value === "TRIP_INFO_1" ? 1 :
@@ -5598,7 +5614,6 @@ function handleItemChange(item, value)
 				// If a popup is showing, hide it and break
 				if (hideTunerPresetsPopup()) break;
 				if (hideAudioSettingsPopup()) break;
-
 				if (hidePopup()) break;
 
 				if (ignoringIrCommands) break;
