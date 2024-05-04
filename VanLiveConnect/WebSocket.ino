@@ -597,6 +597,9 @@ void WebSocketEvent(
             // Send any JSON data that was stored for later sending
             // Don't call here, causes out-of-memory or stack overflow crash
             //SendQueuedJson(websocketId_1);
+
+            // Trigger re-sending of otherwise unchanged data
+            ResetPacketPrevData();
         }
         break;
 
