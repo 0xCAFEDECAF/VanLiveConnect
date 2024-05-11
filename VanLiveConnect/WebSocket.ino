@@ -230,9 +230,9 @@ void CleanupQueuedJsons(uint32_t id = 0)
 
         age = millis() - entry->lastSent;  // Arithmetic has safe roll-over
 
-        if (age >= 5000UL  // Clean up old packets
+        if (age >= 10000UL  // Clean up old packets after 10 seconds
             ||
-            (id != 0 // If an id was passed, clean up packets already sent on that id
+            (id != 0 // If an id was passed, clean up all packets already sent on that id
              &&
              (entry->lastSentOnId_1 == id || entry->lastSentOnId_2 == id)
             )
@@ -761,19 +761,18 @@ void LoopWebSocket()
     } // if
   #endif // WIFI_STRESS_TEST
 
-  #ifdef DEBUG_WEBSOCKET
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
     {
         lastUpdate = millis();
 
-        //Serial.print(F("==> LoopWebSocket(): calling CleanupQueuedJsons()\n"));
         CleanupQueuedJsons();
 
+      #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
             PSTR("%s[webSocket] %zu clients are currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu\n"),
             TimeStamp(), webSocket.count(), countQueuedJsons(), websocketId_1, websocketId_2
         );
+      #endif // DEBUG_WEBSOCKET
     } // if
-  #endif // DEBUG_WEBSOCKET
 } // LoopWebSocket
