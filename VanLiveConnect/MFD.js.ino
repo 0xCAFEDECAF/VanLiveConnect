@@ -6992,6 +6992,8 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 // To be called by the body "onload" event
 function htmlBodyOnLoad()
 {
+	if (! localStorage.mfdLanguage) localStorage.mfdLanguage = "set_language_english";
+
 	setColorTheme(localStorage.colorTheme, localStorage.colorPalette);
 	initDimLevel();
 	setUnits(localStorage.mfdDistanceUnit, localStorage.mfdTemperatureUnit, localStorage.mfdTimeUnit);
