@@ -227,10 +227,20 @@ int IRrecv::compare(unsigned int oldval, unsigned int newval)
 
 const char* ParseIrPacketToJson(const TIrPacket& pkt)
 {
+    if (strlen_P(pkt.buttonStr) == 0) return "";
+
     #define IR_JSON_BUFFER_SIZE 256
     static char jsonBuffer[IR_JSON_BUFFER_SIZE];
 
-    if (strlen_P(pkt.buttonStr) == 0) return "";
+    static uint8_t sequenceNo = 0;
+    static uint8_t buttonCount = 0;
+
+    static unsigned long lastButton = pkt.value;
+    if (pkt.value != lastButton)
+    {
+        buttonCount = 0;
+        lastButton = pkt.value;
+    } // if
 
     PGM_P heldStr = pkt.held ? PSTR(" (held)") : emptyStr;
 
@@ -239,9 +249,11 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
+            "\"mfd_remote_control_pkt_seq\": \"%d\",\n"
+            "\"mfd_remote_control_btn_cnt\": \"%d\",\n"
             "\"mfd_remote_control\": \"%S%S\"";
 
-    int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, pkt.buttonStr, heldStr);
+    int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, sequenceNo++, buttonCount++, pkt.buttonStr, heldStr);
 
     // "MOD" button pressed?
     if (pkt.value == IB_MODE)
