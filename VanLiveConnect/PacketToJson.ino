@@ -566,9 +566,7 @@ enum SatNavRequest_t
     SR_ENTER_HOUSE_NUMBER_LETTER = 0x07,  // Never seen, just guessing
     SR_SERVICE_LIST = 0x08,
     SR_SERVICE_ADDRESS = 0x09,
-    // TODO - SR_ARCHIVE_IN_PERSONAL_DIRECTORY = 0x0A ? In that case, SR_ARCHIVE_IN_PROFESSIONAL_DIRECTORY = 0x0B
     SR_ARCHIVE_IN_DIRECTORY = 0x0B,
-    // TODO - SR_RENAME_PERSONAL_DIRECTORY_ENTRY = 0x0C ? In that case, SR_RENAME_PROFESSIONAL_DIRECTORY_ENTRY = 0x0D
     SR_RENAME_DIRECTORY_ENTRY = 0x0D,
     SR_LAST_DESTINATION = 0x0E,
     SR_NEXT_STREET = 0x0F,  // Shown during SatNav guidance in the (solid line) top box
@@ -638,14 +636,14 @@ enum SatNavGuidancePreference_t
     SGP_INVALID = 0x00
 }; // enum SatNavGuidancePreference_t
 
-bool IsSatNavGuidancePreferenceValueValid(uint8_t value)
+bool IsValidSatNavGuidancePreferenceValue(uint8_t value)
 {
     return
         value == SGP_FASTEST_ROUTE
         || value == SGP_SHORTEST_DISTANCE
         || value == SGP_AVOID_HIGHWAY
         || value == SGP_COMPROMISE_FAST_SHORT;
-} // IsSatNavGuidancePreferenceValueValid
+} // IsValidSatNavGuidancePreferenceValue
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
 PGM_P SatNavGuidancePreferenceStr(uint8_t data)
@@ -1511,9 +1509,9 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     uint16_t avgSpeedTrip1 = data[11];
     uint16_t avgSpeedTrip2 = data[12];
     uint16_t distanceTrip1 = (uint16_t)data[14] << 8 | data[15];
-    uint16_t avgConsumptionLt100Trip1 = (uint16_t)data[16] << 8 | data[17];
+    uint16_t avgConsumptionLt100Trip1_x10 = (uint16_t)data[16] << 8 | data[17];
     uint16_t distanceTrip2 = (uint16_t)data[18] << 8 | data[19];
-    uint16_t avgConsumptionLt100Trip2 = (uint16_t)data[20] << 8 | data[21];
+    uint16_t avgConsumptionLt100Trip2_x10 = (uint16_t)data[20] << 8 | data[21];
     uint16_t instConsumptionLt100_x10 = (uint16_t)data[22] << 8 | data[23];
     uint16_t distanceToEmpty = (uint16_t)data[24] << 8 | data[25];
 
@@ -1658,11 +1656,11 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
                     ToStr(ToMiles(distanceTrip1)),
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                avgConsumptionLt100Trip1 == 0xFFFF ? notApplicableFloatStr :
-                    ToFloatStr(floatBuf[3], (float)avgConsumptionLt100Trip1 / 10.0, 1) :
-                avgConsumptionLt100Trip1 == 0xFFFF ? notApplicable2Str :
-                    avgConsumptionLt100Trip1 <= 1 ? PSTR("&infin;") :
-                    ToFloatStr(floatBuf[3], ToMilesPerGallon(avgConsumptionLt100Trip1), 0)
+                avgConsumptionLt100Trip1_x10 == 0xFFFF ? notApplicableFloatStr :
+                    ToFloatStr(floatBuf[3], (float)avgConsumptionLt100Trip1_x10 / 10.0, 1) :
+                avgConsumptionLt100Trip1_x10 == 0xFFFF ? notApplicable2Str :
+                    avgConsumptionLt100Trip1_x10 <= 1 ? PSTR("&infin;") :
+                    ToFloatStr(floatBuf[3], ToMilesPerGallon(avgConsumptionLt100Trip1_x10), 0)
         );
 
     const static char jsonFormatter3[] PROGMEM =
@@ -1684,11 +1682,11 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
                     ToStr(ToMiles(distanceTrip2)),
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                avgConsumptionLt100Trip2 == 0xFFFF ? notApplicableFloatStr :
-                    ToFloatStr(floatBuf[0], (float)avgConsumptionLt100Trip2 / 10.0, 1) :
-                avgConsumptionLt100Trip2 == 0xFFFF ? notApplicable2Str :
-                    avgConsumptionLt100Trip2 <= 1 ? PSTR("&infin;") :
-                    ToFloatStr(floatBuf[0], ToMilesPerGallon(avgConsumptionLt100Trip2), 0)
+                avgConsumptionLt100Trip2_x10 == 0xFFFF ? notApplicableFloatStr :
+                    ToFloatStr(floatBuf[0], (float)avgConsumptionLt100Trip2_x10 / 10.0, 1) :
+                avgConsumptionLt100Trip2_x10 == 0xFFFF ? notApplicable2Str :
+                    avgConsumptionLt100Trip2_x10 <= 1 ? PSTR("&infin;") :
+                    ToFloatStr(floatBuf[0], ToMilesPerGallon(avgConsumptionLt100Trip2_x10), 0)
         );
 
     // JSON buffer overflow?
@@ -2537,7 +2535,7 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         data[5] & 0x80 ? yesStr : noStr,
 
         // Factory head unit has fixed maximum volume value of 30
-        #define MAX_AUDIO_VOLUME (30)
+        #define MAX_AUDIO_VOLUME (30.0)
         ToFloatStr(floatBuf, (float)volume / MAX_AUDIO_VOLUME, 2),
 
         // Audio menu. Bug: if CD changer is playing, this one is always "OPEN" (even if it isn't).
@@ -3047,8 +3045,6 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0080 ? PSTR("READY") :
         status == 0x0101 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x0200 ? PSTR("READING_DISC") :
-        //status == 0x0220 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
-        //status == 0x0220 ? PSTR("NEARLY_AT_DESTINATION"):  // TODO - guessing
         status == 0x0220 ? PSTR("READING_DISC") :  // TODO - guessing
         status == 0x0300 ? PSTR("IN_GUIDANCE_MODE") :
         status == 0x0301 ? PSTR("IN_GUIDANCE_MODE") :
@@ -3335,7 +3331,7 @@ uint8_t satnavGuidancePreference = SGP_INVALID;
 // Initialize satnavGuidancePreference, if necessary
 void InitSatnavGuidancePreference()
 {
-    if (IsSatNavGuidancePreferenceValueValid(satnavGuidancePreference)) return;
+    if (IsValidSatNavGuidancePreferenceValue(satnavGuidancePreference)) return;
 
     satnavGuidancePreference = EEPROM.read(SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
 
@@ -3346,7 +3342,7 @@ void InitSatnavGuidancePreference()
         SatNavGuidancePreferenceStr(satnavGuidancePreference),
         SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
 
-    if (IsSatNavGuidancePreferenceValueValid(satnavGuidancePreference)) return;
+    if (IsValidSatNavGuidancePreferenceValue(satnavGuidancePreference)) return;
 
     // When the original MFD is plugged in, this is what it starts with
     satnavGuidancePreference = SGP_FASTEST_ROUTE;
@@ -4676,7 +4672,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     if (listSize != 0xFFFF)
     {
-        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_size\": \"%d\""), listSize);
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_size\": \"%u\""), listSize);
     } // if
 
     // data[10] is some "flags" byte. Values seen:
@@ -4688,7 +4684,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     // - 0xF1 : Second list with same length as first list
     // if ((data[10] == 0x41) || (data[10] == 0x61) && list2Size >= 0)
 
-    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_2_size\": \"%d\""), list2Size);
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_list_2_size\": \"%u\""), list2Size);
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_to_mfd_show_characters\": \""));
 
@@ -4743,8 +4739,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
         at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("."));
     } // if
 
-    at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, PSTR("\"\n}\n}\n"));
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\"\n}\n}\n"));
 
     // JSON buffer overflow?
     if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
@@ -4881,7 +4876,7 @@ VanPacketParseResult_t ParseCom2000Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         data[3] & 0x80 ? onStr : offStr,
 
         data[5] & 0x02 ? onStr : offStr,
-        data[5] & 0x03 ? onStr : offStr,
+        data[5] & 0x04 ? onStr : offStr,
         data[5] & 0x08 ? onStr : offStr,
         data[5] & 0x40 ? onStr : offStr,
         data[5] & 0x80 ? onStr : offStr,
