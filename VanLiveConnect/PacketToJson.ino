@@ -141,7 +141,7 @@ uint8_t mfdTimeUnit = MFD_TIME_UNIT_24H;
 
 // Round downwards (even if negative) to nearest multiple of d. Safe for negative values of n and d, and for
 // values of n around 0.
-sint32_t _floor(sint32_t n, sint32_t d)
+int32_t _floor(int32_t n, int32_t d)
 {
     return (n / d - (((n > 0) ^ (d > 0)) && (n % d))) * d;
 } // _floor
@@ -151,9 +151,9 @@ uint16_t ToMiles(uint16_t km)
     return ((uint32_t)km * 2000 + 1609) / 1609 / 2;  // Adding 1609 for correct rounding
 } // ToMiles
 
-sint32_t ToMiles(sint32_t km)
+int32_t ToMiles(int32_t km)
 {
-    return ((sint32_t)km * 2000 + 1609) / 1609 / 2;  // Adding 1609 for correct rounding
+    return ((int32_t)km * 2000 + 1609) / 1609 / 2;  // Adding 1609 for correct rounding
 } // ToMiles
 
 float ToMiles(float km)
@@ -177,7 +177,7 @@ float ToFahrenheit(float temp_C)
     return temp_C * 1.8 + 32.0;
 } // ToFahrenheit
 
-sint16_t ToFahrenheit(sint16_t temp_C)
+int16_t ToFahrenheit(int16_t temp_C)
 {
     return (temp_C * 90 + 50 / 2) / 50 + 32;  // Adding 50 / 2 for correct rounding
 } // ToFahrenheit
@@ -208,10 +208,10 @@ char* ToStr(uint16_t data)
 } // ToStr
 
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToStr(sint16_t data)
+char* ToStr(int16_t data)
 {
-    #define MAX_SINT16_STR_SIZE 7
-    static char buffer[MAX_SINT16_STR_SIZE];
+    #define MAX_INT16_STR_SIZE 7
+    static char buffer[MAX_INT16_STR_SIZE];
     sprintf_P(buffer, PSTR("%d"), data);
 
     return buffer;
@@ -829,7 +829,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     uint8_t coolantTempRaw = data[2];
     if (coolantTempRaw != 0xFF) lastValidCoolantTempRaw = coolantTempRaw;  // Copy only if packet value is valid
     bool isCoolantTempValid = lastValidCoolantTempRaw != 0xFF;
-    sint16_t coolantTemp = (uint16_t)lastValidCoolantTempRaw - 39;
+    int16_t coolantTemp = (uint16_t)lastValidCoolantTempRaw - 39;
     float odometer = ((uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5]) / 10.0;
 
     // Copy new value for exterior temperature at first time, or if seeing the same value twice
@@ -992,7 +992,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     uint16_t remainingKmToService20 = (uint16_t)(data[2] & 0x7F) << 8 | data[3];
     bool remainingKmToServiceOverdue = data[2] & 0x80;
 
-    sint32_t remainingKmToService = remainingKmToService20 * 20;
+    int32_t remainingKmToService = remainingKmToService20 * 20;
     if (remainingKmToServiceOverdue) remainingKmToService = - remainingKmToService;
 
     snprintf_P(lightsStr, LIGHTS_STRING_LEN, PSTR("%S%S%S%S"),
@@ -2452,8 +2452,8 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
     seenCdPresence = seenCdPresence || isCdPresent;
 
     uint8_t volume = data[5] & 0x7F;
-    sint8_t balance = (sint8_t)(0x3F) - (data[6] & 0x7F);
-    sint8_t fader = (sint8_t)(0x3F) - (data[7] & 0x7F);
+    int8_t balance = (int8_t)(0x3F) - (data[6] & 0x7F);
+    int8_t fader = (int8_t)(0x3F) - (data[7] & 0x7F);
 
     static bool washeadUnitPowerOn = false;
     if (! washeadUnitPowerOn && isHeadUnitPowerOn)
@@ -2543,9 +2543,9 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         // Audio menu. Bug: if CD changer is playing, this one is always "OPEN" (even if it isn't).
         data[1] & 0x20 ? openStr : closedStr,
 
-        (sint8_t)(data[8] & 0x7F) - 0x3F,  // Bass
+        (int8_t)(data[8] & 0x7F) - 0x3F,  // Bass
         data[8] & 0x80 ? yesStr : noStr,
-        (sint8_t)(data[9] & 0x7F) - 0x3F,  // Treble
+        (int8_t)(data[9] & 0x7F) - 0x3F,  // Treble
         data[9] & 0x80 ? yesStr : noStr,
         data[1] & 0x10 ? onStr : offStr,  // Loudness
         fader == 0 ? "   " : fader > 0 ? "F +" : "R ", fader,
@@ -2861,7 +2861,7 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         condenserTemp == 0xFF ? notApplicable2Str :
             mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
                 ToStr(condenserTemp) :
-                ToStr(ToFahrenheit((sint16_t)condenserTemp)),
+                ToStr(ToFahrenheit((int16_t)condenserTemp)),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
             ToFloatStr(floatBuf, evaporatorTempCelsius, 1) :
@@ -4649,7 +4649,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
 } // ParseMfdToSatNavPkt
 
 // Saved equipment status (volatile)
-sint16_t satnavServiceListSize = -1;
+int16_t satnavServiceListSize = -1;
 
 VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -4886,7 +4886,7 @@ VanPacketParseResult_t ParseCom2000Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         data[5] & 0x40 ? onStr : offStr,
         data[5] & 0x80 ? onStr : offStr,
 
-        (sint8_t)data[6]
+        (int8_t)data[6]
     );
 
     // JSON buffer overflow?
@@ -5040,13 +5040,13 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
 
                 data[5] & 0x7F,
                 data[5] & 0x80 ? updatedStr : emptyStr,
-                (sint8_t)(0x3F) - (data[6] & 0x7F),
+                (int8_t)(0x3F) - (data[6] & 0x7F),
                 data[6] & 0x80 ? updatedStr : emptyStr,
-                (sint8_t)(0x3F) - (data[7] & 0x7F),
+                (int8_t)(0x3F) - (data[7] & 0x7F),
                 data[7] & 0x80 ? updatedStr : emptyStr,
-                (sint8_t)(data[8] & 0x7F) - 0x3F,
+                (int8_t)(data[8] & 0x7F) - 0x3F,
                 data[8] & 0x80 ? updatedStr : emptyStr,
-                (sint8_t)(data[9] & 0x7F) - 0x3F,
+                (int8_t)(data[9] & 0x7F) - 0x3F,
                 data[9] & 0x80 ? updatedStr : emptyStr
             );
         } // if
@@ -5101,10 +5101,10 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
         "}\n";
 
         at = snprintf_P(buf, n, jsonFormatter,
-            (sint8_t)(0x3F) - (data[1] & 0x7F),
-            (sint8_t)(0x3F) - data[2],
-            (sint8_t)data[3] - 0x3F,
-            (sint8_t)data[4] - 0x3F
+            (int8_t)(0x3F) - (data[1] & 0x7F),
+            (int8_t)(0x3F) - data[2],
+            (int8_t)data[3] - 0x3F,
+            (int8_t)data[4] - 0x3F
         );
     }
     else if (data[0] == 0x27)
