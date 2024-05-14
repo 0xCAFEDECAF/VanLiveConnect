@@ -242,7 +242,13 @@ on pins D5, D6 and D7, facing outward; see also the above schematics.
 
 Before proceeding with this project, make sure you check all the following prerequisites.
 
-#### 1. Install ESP8266 Board in Arduino IDE
+#### 1. Install Arduino IDE
+
+See [Arduino IDE](https://www.arduino.cc/en/software). I am currently using
+[version 1.8.19](https://downloads.arduino.cc/arduino-1.8.19-windows.exe) but other versions
+may also be working fine.
+
+#### 2. Install ESP8266 Board in Arduino IDE
 
 We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-on installed. You will need:
 
@@ -256,7 +262,7 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Package:
 
 * [Install ESP8266 Board in Arduino IDE (Windows, Mac OS X, Linux)](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
 
-#### 2. Install Libraries
+#### 3. Install Libraries
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
@@ -277,7 +283,7 @@ For more explanation on using the Arduino library manager, you can browse to:
 the indicated directories in your system. In my experience, these patched files significantly improve the stability
 of the WebSocket (TCP/IP over Wi-Fi) communication.
 
-#### 3. Board Settings
+#### 4. Board Settings
 
 In the Arduino IDE, go to the "Tools" menu, and choose:
 
@@ -296,7 +302,7 @@ inside the following file:
 
     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\platform.txt
 
-#### 4. Uploading
+#### 5. Uploading
 
 To upload the compiled project you will need the following:
 
@@ -312,7 +318,7 @@ OTA feature of the arduino-esp8266.
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
 
-#### 5. First Run
+#### 6. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
 the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware sometimes causes the board to
