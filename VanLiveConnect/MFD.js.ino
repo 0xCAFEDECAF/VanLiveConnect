@@ -104,14 +104,6 @@ function showViewportSizes()
 	$("#window_height").text(window.innerHeight);
 }
 
-// -----
-// IR remote control
-
-var ignoringIrCommands = false;
-
-// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
-// The only exceptions are the '+' and '-' buttons in specific menu screens.
-var acceptingHeldValButton = false;
 
 // -----
 // Functions for parsing and handling VAN bus packet data as received in JSON format
@@ -750,6 +742,7 @@ var engineRpm = -1;
 var engineRunning;
 
 var menuStack = [];
+var currentMenu;
 
 function selectDefaultScreen(audioSource)
 {
@@ -947,8 +940,6 @@ function gotoSmallScreen(smallScreenName)
 // -----
 // Functions for navigating through button sets and menus
 
-var currentMenu;
-
 function inMenu()
 {
 	var mainScreenIds =
@@ -1077,23 +1068,6 @@ function findSelectedButton()
 		screen: screen,
 		button: currentButton
 	};
-}
-
-// Handle the 'Val' (enter) button
-function buttonClicked()
-{
-	var selected = findSelectedButton();
-	if (selected === undefined) return;
-
-	var currentButton = selected.button;
-
-	var onClick = currentButton.attr("on_click");
-	if (onClick) eval (onClick);
-
-	var goto_id = currentButton.attr("goto_id");
-	if (! goto_id) return;
-
-	gotoMenu(goto_id);  // Change to the menu screen with that ID
 }
 
 function upMenu()
@@ -1574,6 +1548,7 @@ var audioSettingsPopupHideTimer;
 var audioSettingsPopupShowTimer;
 var cdChangerCurrentDisc = "";
 var tunerSearchMode = "";
+var hideHeadUnitPopupsTimer = null;
 
 var infoTraffic = "NO";
 var infoTrafficPopupTimer;
@@ -1723,8 +1698,8 @@ function showTunerPresetsPopup(msec)
 	NotifyServerAboutPopup("tuner_presets_popup", msec ? msec : 8500);
 
 	// Hide the popup after 8.5 seconds
-	clearTimeout(handleItemChange.tunerPresetsPopupTimer);
-	handleItemChange.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, msec ? msec : 8500);
+	clearTimeout(showTunerPresetsPopup.tunerPresetsPopupTimer);
+	showTunerPresetsPopup.tunerPresetsPopupTimer = setTimeout(hideTunerPresetsPopup, msec ? msec : 8500);
 }
 
 // -----
@@ -2087,6 +2062,7 @@ var satnavInitialized = false;
 // Current sat nav mode, saved as last reported in item "satnav_status_2"
 var satnavMode = "INITIALIZING";
 
+var satnavMfdRequestType;
 var satnavRouteComputed = false;
 var satnavDisclaimerAccepted = false;
 var satnavLastEnteredChar = null;
@@ -2184,7 +2160,6 @@ function satnavGotoListScreen()
 	// In the menu stack, there is never more than one "list screen" stacked. So check if there is an existing list
 	// screen in the current menu stack and, if so, go back to it.
 	var idx = menuStack.indexOf("satnav_choose_from_list");
-
 	if (idx >= 0)
 	{
 		menuStack.length = idx;  // Remove trailing elements
@@ -2195,8 +2170,7 @@ function satnavGotoListScreen()
 
 	gotoMenu("satnav_choose_from_list");
 
-	var reqType = handleItemChange.mfdToSatnavRequestType;
-	if (reqType === "REQ_ITEMS" || reqType === "REQ_N_ITEMS")
+	if (satnavMfdRequestType === "REQ_ITEMS" || satnavMfdRequestType === "REQ_N_ITEMS")
 	{
 		switch(mfdToSatnavRequest)
 		{
@@ -2245,7 +2219,7 @@ function satnavGotoListScreenEmpty()
 
 function satnavGotoListScreenServiceList()
 {
-	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
+	satnavMfdRequestType = "REQ_N_ITEMS";
 	mfdToSatnavRequest = "service";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
@@ -2253,7 +2227,7 @@ function satnavGotoListScreenServiceList()
 
 function satnavGotoListScreenPersonalAddressList()
 {
-	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
+	satnavMfdRequestType = "REQ_N_ITEMS";
 	mfdToSatnavRequest = "personal_address_list";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
@@ -2261,7 +2235,7 @@ function satnavGotoListScreenPersonalAddressList()
 
 function satnavGotoListScreenProfessionalAddressList()
 {
-	handleItemChange.mfdToSatnavRequestType = "REQ_N_ITEMS";
+	satnavMfdRequestType = "REQ_N_ITEMS";
 	mfdToSatnavRequest = "professional_address_list";
 	satnavGotoListScreen();
 	highlightFirstLine("satnav_choice_list");
@@ -3323,6 +3297,8 @@ function satnavStopOrResumeGuidance()
 	if (satnavMode === "IN_GUIDANCE_MODE") satnavStopGuidance(); else satnavSwitchToGuidanceScreen();
 }
 
+var nSatNavDiscUnreadable = 0;
+
 function satnavPoweringOff(satnavMode)
 {
 	// If in guidance mode while turning off contact key, remember to show popup
@@ -3335,17 +3311,17 @@ function satnavPoweringOff(satnavMode)
 
 	satnavInitialized = false;
 	// $("#satnav_disc_recognized").addClass("ledOff");
-	handleItemChange.nSatNavDiscUnreadable = 1;
+	nSatNavDiscUnreadable = 1;
 	satnavDisclaimerAccepted = false;
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
 }
 
 var headUnitLastSwitchedTo = "NAVIGATION";
+var audioSourceTimer;
 
 function satnavNoAudioIcon()
 {
-	clearTimeout(handleItemChange.audioSourceTimer);
-	handleItemChange.audioSourceTimer = undefined;
+	clearTimeout(audioSourceTimer);
 	if (headUnitLastSwitchedTo === "NAVIGATION")
 	{
 		$("#satnav_no_audio_icon").toggle($("#volume").text() === "0");
@@ -3407,6 +3383,176 @@ var doorsOpenText = "Doors open";
 var bootOpenText = "Boot open";
 var bootAndDoorOpenText = "Boot and door open";
 var bootAndDoorsOpenText = "Boot and doors open";
+
+// -----
+// Handling of IR remote control
+
+var ignoringIrCommands = false;
+
+// Normally, holding the "VAL" button on the IR remote control will not cause repetition.
+// The only exceptions are the '+' and '-' buttons in specific menu screens.
+var acceptingHeldValButton = false;
+
+// Handle the 'Val' (enter) button
+function buttonClicked()
+{
+	var selected = findSelectedButton();
+	if (selected === undefined) return;
+
+	var currentButton = selected.button;
+
+	var onClick = currentButton.attr("on_click");
+	if (onClick) eval (onClick);
+
+	var goto_id = currentButton.attr("goto_id");
+	if (! goto_id) return;
+
+	gotoMenu(goto_id);  // Change to the menu screen with that ID
+}
+
+function handleIrRc(button, held)
+{
+	if (button === "MENU_BUTTON")
+	{
+		// Directly hide any visible audio popup or the system screen
+		if ($("#system").is(":visible")) changeLargeScreenTo("clock");
+		hideAudioSettingsPopup();
+		hideTunerPresetsPopup();
+
+		gotoTopLevelMenu();
+	}
+	else if (button === "ESC_BUTTON")
+	{
+		// If a popup is showing, hide it and return
+		if (hideTunerPresetsPopup()) return;
+		if (hideAudioSettingsPopup()) return;
+		if (hidePopup()) return;
+
+		if (ignoringIrCommands) return;
+
+		// Ignore the "Esc" button when guidance screen is showing
+		if ($("#satnav_guidance").is(":visible")) return;
+
+		// Very special situation... Escaping out of list of services after entering a new "Select a Service"
+		// address means escaping back all the way to the to the "Select a Service" address screen.
+		if (currentMenu === "satnav_choose_from_list"
+			&& mfdToSatnavRequest === "service"
+			&& menuStack.indexOf("satnav_show_last_destination") >= 0
+			&& menuStack[menuStack.length - 1] !== "satnav_show_last_destination")
+		{
+			exitMenu();
+			exitMenu();
+		} // if
+
+		exitMenu();
+	}
+	else if (button === "UP_BUTTON" || button === "DOWN_BUTTON"
+			|| button === "LEFT_BUTTON" || button === "RIGHT_BUTTON")
+	{
+		// In non-menu screens, MFD dim level is adjusted with the IR remote control "UP" and "DOWN" buttons
+		if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
+		{
+			let id = adjustDimLevel(headlightStatus, button)
+			let dimLevel = $("#" + id).text();
+
+			// Show very short popup
+			$("#screen_brightness_popup_value").text(dimLevel);
+			$("#screen_brightness_perc").css("transform", "scaleX(" + dimLevel/14 + ")");
+			showPopup("screen_brightness_popup", 3000);
+
+			// Store
+			localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
+			localStorage.dimLevel = $("#display_brightness_level").text();
+
+			return;
+		} // if
+
+		// While driving, it is not possible to navigate the main sat nav menu
+		// (but "satnav_guidance_tools_menu" can be navigated)
+		if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
+		{
+			if (mfdDisableNavigationMenuWhileDriving && satnavVehicleMoving()) return;
+		} // if
+
+		// Entering a character in the "satnav_enter_street_characters" screen?
+		if ($("#satnav_enter_street_characters").is(":visible"))
+		{
+			userHadOpportunityToEnterStreet = true;
+		} // if
+
+		keyPressed(button);
+		satnavGrabSelectedCharacter();
+	}
+	else if (button === "VAL_BUTTON")
+	{
+		// Ignore if just changed screen; sometimes the screen change is triggered by the system, not the
+		// remote control. If the user wanted pressed a button on the previous screen, it will end up
+		// being handled by the current screen, which is confusing.
+		if (Date.now() - lastScreenChangedAt < 250)
+		{
+			console.log("// mfd_remote_control - VAL_BUTTON: ignored");
+			return;
+		} // if
+
+		if (held && ! acceptingHeldValButton) return;
+
+		// Popups that have no buttons can be hidden directly
+		if (hideTunerPresetsPopup()) return;
+		if (hideAudioSettingsPopup()) return;
+		if (hidePopup("status_popup")) return;
+		if (hidePopup("satnav_input_stored_in_professional_dir_popup")) return;
+		if (hidePopup("satnav_input_stored_in_personal_dir_popup")) return;
+		if (hidePopup("satnav_initializing_popup")) return;
+		if (hidePopup("trip_computer_popup")) return;
+		if (hidePopup("satnav_reached_destination_popup")) return;
+		if (hidePopup("audio_popup")) return;
+		if (hidePopup("climate_control_popup")) return;
+
+		// In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
+		if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
+			&& $(".notificationPopup:visible").length === 0  // And no popup showing?
+			&& ! inMenu())  // And not in any menu?
+		{
+			gotoTopLevelMenu("satnav_guidance_tools_menu");
+			return;
+		} // if
+
+		// While driving, it is not possible to navigate the main sat nav menu
+		// (but "satnav_guidance_tools_menu" can be navigated)
+		if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
+		{
+			if (mfdDisableNavigationMenuWhileDriving && satnavVehicleMoving()) return;
+		} // if
+
+		// Entering a character in the "satnav_enter_street_characters" screen?
+		if ($("#satnav_enter_street_characters").is(":visible")) userHadOpportunityToEnterStreet = true;
+
+		if (currentMenu === "satnav_enter_city_characters" || currentMenu === "satnav_enter_street_characters")
+		{
+			// In case both the "Val" packet and the "End_of_button_press" packet were missed...
+			let id = "#satnav_to_mfd_show_characters_line_";
+			let selectedChar = $(id + "1 .invertedText").text();
+			if (! selectedChar) selectedChar = $(id + "2 .invertedText").text();
+			if (selectedChar) satnavLastEnteredChar = selectedChar;
+		} // if
+
+		if (currentLargeScreenId === "satnav_vocal_synthesis_level") satnavNoAudioIcon();
+
+		buttonClicked();
+	}
+	else if (button === "MODE_BUTTON")
+	{
+		if (currentLargeScreenId === "set_screen_brightness")
+		{
+			cycleColorTheme();  // "MODE" button cycles color palette (blue, orange, ...)
+			return;
+		} // if
+
+		if (inMenu()) return;  // Ignore when user is browsing the menus
+
+		nextLargeScreen();
+	} // if
+}
 
 // -----
 // Handling of changed items
@@ -3494,7 +3640,7 @@ function handleItemChange(item, value)
 
 			// Just changed audio source? Then suppress the audio settings popup (which would otherwise pop up every
 			// time the audio source changes).
-			if (handleItemChange.hideHeadUnitPopupsTimer !== null) break;
+			if (hideHeadUnitPopupsTimer !== null) break;
 
 			// Keep the popup for at least another 4 seconds, if already showing
 			hideAudioSettingsPopupAfter(4000);
@@ -3616,8 +3762,6 @@ function handleItemChange(item, value)
 						$("#cd_changer_disc_not_present").hide();
 						$("#cd_changer_selected_disc").hide();
 						$("#cd_changer_current_disc").show();
-
-						handleItemChange.noCdPresentTimer = null;
 					},
 					5000
 				);
@@ -3745,7 +3889,7 @@ function handleItemChange(item, value)
 			hideAudioSettingsPopup();
 
 			// Changed to a non-preset frequency? Or just changed audio source? Then suppress the tuner presets popup.
-			if (value === "-" || handleItemChange.hideHeadUnitPopupsTimer !== null)
+			if (value === "-" || hideHeadUnitPopupsTimer !== null)
 			{
 				hideTunerPresetsPopup();
 			}
@@ -3756,8 +3900,6 @@ function handleItemChange(item, value)
 				let highlightId = "presets_memory_" + value + "_select";
 				$("#" + highlightId).show();
 			} // if
-
-			handleItemChange.currentTunerPresetMemoryValue = value;
 		} // case
 		break;
 
@@ -3846,11 +3988,7 @@ function handleItemChange(item, value)
 
 				// In case the "NO" packet is missed
 				clearTimeout(handleItemChange.infoTrafficOffTimer);
-				handleItemChange.infoTrafficOffTimer = setTimeout
-				(
-					function () { infoTraffic = "NO"; },
-					300000
-				);
+				handleItemChange.infoTrafficOffTimer = setTimeout(() => { infoTraffic = "NO"; }, 300000);
 			}
 			else
 			{
@@ -3971,10 +4109,10 @@ function handleItemChange(item, value)
 			hideTunerPresetsPopup();
 
 			// Suppress the audio settings popup for the next 0.4 seconds (bit clumsy, but effective)
-			clearTimeout(handleItemChange.hideHeadUnitPopupsTimer);
-			handleItemChange.hideHeadUnitPopupsTimer = setTimeout
+			clearTimeout(hideHeadUnitPopupsTimer);
+			hideHeadUnitPopupsTimer = setTimeout
 			(
-				function () { handleItemChange.hideHeadUnitPopupsTimer = null; },
+				function () { hideHeadUnitPopupsTimer = null; },
 				400
 			);
 
@@ -4011,8 +4149,8 @@ function handleItemChange(item, value)
 			headUnitLastSwitchedTo = value;
 			if ($("#audio_source").text() === "NAVIGATION")
 			{
-				clearTimeout(handleItemChange.audioSourceTimer);
-				handleItemChange.audioSourceTimer = setTimeout(satnavNoAudioIcon, 500);
+				clearTimeout(audioSourceTimer);
+				audioSourceTimer = setTimeout(satnavNoAudioIcon, 500);
 			} // if
 		} // case
 		break;
@@ -4022,8 +4160,8 @@ function handleItemChange(item, value)
 			if (headUnitLastSwitchedTo === "NAVIGATION")
 			{
 				// Wait for the audio source to stabilize
-				clearTimeout(handleItemChange.audioSourceTimer);
-				handleItemChange.audioSourceTimer = setTimeout(satnavNoAudioIcon, 500);
+				clearTimeout(audioSourceTimer);
+				audioSourceTimer = setTimeout(satnavNoAudioIcon, 500);
 			} // if
 		} // case
 		break;
@@ -4401,12 +4539,12 @@ function handleItemChange(item, value)
 			// On engine START, add glow effect
 			$("#contact_key_position").toggleClass("glow", value === "START");
 
+			clearTimeout(handleItemChange.contactKeyOffTimer);
+
 			switch(value)
 			{
 				case "ON":
 				{
-					clearTimeout(handleItemChange.contactKeyOffTimer);
-
 					if (inMenu()) break;
 
 					// Show "Pre-flight checks" screen if contact key is in "ON" position, without engine running
@@ -4422,27 +4560,19 @@ function handleItemChange(item, value)
 
 				case "START":
 				{
-					clearTimeout(handleItemChange.contactKeyOffTimer);
 					wasRiskOfIceWarningShown = false;
-				} // case
-				break;
-
-				case "ACC":
-				{
-					clearTimeout(handleItemChange.contactKeyOffTimer);
 				} // case
 				break;
 
 				case "OFF":
 				{
-					// "OFF" position can be very short between any of the other positions, so first wait a bit
-					clearTimeout(handleItemChange.contactKeyOffTimer);
 					let savedSatnavMode = satnavMode;
+
+					// "OFF" position can be very short between any of the other positions, so first wait a bit
 					handleItemChange.contactKeyOffTimer = setTimeout
 					(
 						function ()
 						{
-							handleItemChange.contactKeyOffTimer = null;
 							satnavPoweringOff(savedSatnavMode);
 							selectDefaultScreen();  // Even when in a menu: the original MFD switches off
 						},
@@ -4456,8 +4586,6 @@ function handleItemChange(item, value)
 
 		case "notification_message_on_mfd":
 		{
-			if (handleItemChange.mfdNotificationMsg === undefined) handleItemChange.mfdNotificationMsg = "";
-
 			// Has anything changed?
 			if (value === handleItemChange.mfdNotificationMsg) break;
 			handleItemChange.mfdNotificationMsg = value;
@@ -4468,8 +4596,8 @@ function handleItemChange(item, value)
 				break;
 			} // if
 
-			let isWarning = value.slice(-1) === "!";
-			let message = isWarning ? value.slice(0, -1) : value;
+			const isWarning = value.slice(-1) === "!";
+			const message = isWarning ? value.slice(0, -1) : value;
 			handleItemChange.notificationMessagePopupTimer = showNotificationPopup(message, 8000, isWarning);
 		} // case
 		break;
@@ -4480,7 +4608,9 @@ function handleItemChange(item, value)
 			if (value === handleItemChange.doorsLocked) break;
 			handleItemChange.doorsLocked = value;
 
-			let translations =
+			if (value !== "YES") break;
+
+			const translations =
 			{
 				"set_language_french": "Portes verrouill&eacutees;",
 				"set_language_german": "T&uuml;ren verschlossen",
@@ -4488,9 +4618,8 @@ function handleItemChange(item, value)
 				"set_language_italian": "Porte chiuse",
 				"set_language_dutch": "Deuren op slot"
 			};
-			let content = translations[localStorage.mfdLanguage] || "Doors locked";
-
-			if (value === "YES") showNotificationPopup(content, 4000);
+			const content = translations[localStorage.mfdLanguage] || "Doors locked";
+			showNotificationPopup(content, 4000);
 		} // case
 		break;
 
@@ -4705,16 +4834,14 @@ function handleItemChange(item, value)
 
 		case "satnav_disc_recognized":
 		{
-			if (handleItemChange.nSatNavDiscUnreadable === undefined) handleItemChange.nSatNavDiscUnreadable = 0;
-
 			// No further handling when in power-save mode
 			if (economyMode === "ON") break;
 
-			if (value === "NO" && satnavEquipmentPresent) handleItemChange.nSatNavDiscUnreadable++;
-			else handleItemChange.nSatNavDiscUnreadable = 0;
+			if (value === "NO" && satnavEquipmentPresent) nSatNavDiscUnreadable++;
+			else nSatNavDiscUnreadable = 0;
 
 			// At the 6-th and 14-th time of consequently reporting "NO", shortly show a status popup
-			if (handleItemChange.nSatNavDiscUnreadable == 6 || handleItemChange.nSatNavDiscUnreadable == 14)
+			if (nSatNavDiscUnreadable == 6 || nSatNavDiscUnreadable == 14)
 			{
 				hidePopup("satnav_initializing_popup");
 				showStatusPopup(satnavDiscUnreadbleText, 4000);
@@ -4726,7 +4853,7 @@ function handleItemChange(item, value)
 		{
 			satnavEquipmentPresent = value === "YES";
 
-			if (! satnavEquipmentPresent) handleItemChange.nSatNavDiscUnreadable = 0;
+			if (! satnavEquipmentPresent) nSatNavDiscUnreadable = 0;
 
 			// Enable or disable the "Navigation/Guidance" button in the main menu
 			$("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", value === "NO");
@@ -4999,7 +5126,7 @@ function handleItemChange(item, value)
 
 		case "mfd_to_satnav_request_type":
 		{
-			handleItemChange.mfdToSatnavRequestType = value;
+			satnavMfdRequestType = value;
 
 			if (value !== "REQ_N_ITEMS") break;
 
@@ -5030,19 +5157,18 @@ function handleItemChange(item, value)
 
 		case "mfd_to_satnav_selection":
 		{
-			if (mfdToSatnavRequest === "enter_street"
-				&& handleItemChange.mfdToSatnavRequestType === "SELECT")
+			if (mfdToSatnavRequest === "enter_street" && satnavMfdRequestType === "SELECT")
 			{
 				// Already copy the selected street into the "satnav_show_current_destination" screen, in case the
 				// "satnav_report" packet is missed
 
-				let lines = splitIntoLines("satnav_choice_list");
+				const lines = splitIntoLines("satnav_choice_list");
 
 				if (lines[value] === undefined) break;
 
-				let selectedLine = lines[value];
-				let selectedStreetAndCity = selectedLine.replace(/<[^>]*>/g, '');  // Remove HTML formatting
-				let selectedStreet = selectedStreetAndCity.replace(/ -.*-/g, '');  // Keep only the street; discard city
+				const selectedLine = lines[value];
+				const selectedStreetAndCity = selectedLine.replace(/<[^>]*>/g, '');  // Remove HTML formatting
+				const selectedStreet = selectedStreetAndCity.replace(/ -.*-/g, '');  // Keep only the street; discard city
 
 				$("#satnav_current_destination_street_shown").text(selectedStreet);
 			} // if
@@ -5607,157 +5733,42 @@ function handleItemChange(item, value)
 
 		case "mfd_remote_control":
 		{
-			let parts = value.split(" ");
-			let button = parts[0];
+			const parts = value.split(" ");
 
-			// Ignore remote control buttons if contact key is off
-			if ($("#contact_key_position").text() === "OFF") break;
-
-			if (economyMode === "ON") break;  // Ignore also when in power-save mode
-
-			if (button === "MENU_BUTTON")
+			// Discard out-of-order packets. Note that seqNo counts upwards, starting at 0 and rolling over at 65535.
+			const seqNo = parseInt(parts[0]);
+			if (seqNo !== 0 && handleItemChange.lastIrSeqNo !== undefined)
 			{
-				// Directly hide any visible audio popup or the system screen
-				if ($("#system").is(":visible")) changeLargeScreenTo("clock");
-				hideAudioSettingsPopup();
-				hideTunerPresetsPopup();
-
-				gotoTopLevelMenu();
-			}
-			else if (button === "ESC_BUTTON")
-			{
-				// If a popup is showing, hide it and break
-				if (hideTunerPresetsPopup()) break;
-				if (hideAudioSettingsPopup()) break;
-				if (hidePopup()) break;
-
-				if (ignoringIrCommands) break;
-
-				// Ignore the "Esc" button when guidance screen is showing
-				if ($("#satnav_guidance").is(":visible")) break;
-
-				// Very special situation... Escaping out of list of services after entering a new "Select a Service"
-				// address means escaping back all the way to the to the "Select a Service" address screen.
-				if (currentMenu === "satnav_choose_from_list"
-					&& mfdToSatnavRequest === "service"
-					&& menuStack.indexOf("satnav_show_last_destination") >= 0
-					&& menuStack[menuStack.length - 1] !== "satnav_show_last_destination")
-				{
-					exitMenu();
-					exitMenu();
-				} // if
-
-				exitMenu();
-			}
-			else if (button === "UP_BUTTON"
-					|| button === "DOWN_BUTTON"
-					|| button === "LEFT_BUTTON"
-					|| button === "RIGHT_BUTTON")
-			{
-				// In non-menu screens, MFD dim level is adjusted with the IR remote control "UP" and "DOWN" buttons
-				if (! inMenu() && (button === "UP_BUTTON" || button === "DOWN_BUTTON"))
-				{
-					let id = adjustDimLevel(headlightStatus, button)
-					let dimLevel = $("#" + id).text();
-
-					// Show very short popup
-					$("#screen_brightness_popup_value").text(dimLevel);
-					$("#screen_brightness_perc").css("transform", "scaleX(" + dimLevel/14 + ")");
-					showPopup("screen_brightness_popup", 3000);
-
-					// Store
-					localStorage.dimLevelReduced = $("#display_reduced_brightness_level").text();
-					localStorage.dimLevel = $("#display_brightness_level").text();
-
-					break;
-				} // if
-
-				// While driving, it is not possible to navigate the main sat nav menu
-				// (but "satnav_guidance_tools_menu" can be navigated)
-				if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
-				{
-					if (mfdDisableNavigationMenuWhileDriving && satnavVehicleMoving()) break;
-				} // if
-
-				// Entering a character in the "satnav_enter_street_characters" screen?
-				if ($("#satnav_enter_street_characters").is(":visible"))
-				{
-					userHadOpportunityToEnterStreet = true;
-				} // if
-
-				keyPressed(button);
-				satnavGrabSelectedCharacter();
-			}
-			else if (button === "VAL_BUTTON")
-			{
-				// Ignore if just changed screen; sometimes the screen change is triggered by the system, not the
-				// remote control. If the user wanted pressed a button on the previous screen, it will end up
-				// being handled by the current screen, which is confusing.
-				if (Date.now() - lastScreenChangedAt < 250)
-				{
-					console.log("// mfd_remote_control - VAL_BUTTON: ignored");
-					break;
-				} // if
-
-				let held = parts[1];
-				if (held && ! acceptingHeldValButton) break;
-
-				// Popups that have no buttons can be hidden directly
-				if (hideTunerPresetsPopup()) break;
-				if (hideAudioSettingsPopup()) break;
-				if (hidePopup("status_popup")) break;
-				if (hidePopup("satnav_input_stored_in_professional_dir_popup")) break;
-				if (hidePopup("satnav_input_stored_in_personal_dir_popup")) break;
-				if (hidePopup("satnav_initializing_popup")) break;
-				if (hidePopup("trip_computer_popup")) break;
-				if (hidePopup("satnav_reached_destination_popup")) break;
-				if (hidePopup("audio_popup")) break;
-				if (hidePopup("climate_control_popup")) break;
-
-				// In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
-				if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
-					&& $(".notificationPopup:visible").length === 0  // And no popup showing?
-					&& ! inMenu())  // And not in any menu?
-				{
-					gotoTopLevelMenu("satnav_guidance_tools_menu");
-					break;
-				} // if
-
-				// While driving, it is not possible to navigate the main sat nav menu
-				// (but "satnav_guidance_tools_menu" can be navigated)
-				if (currentMenu === "satnav_main_menu" || menuStack[1] === "satnav_main_menu")
-				{
-					if (mfdDisableNavigationMenuWhileDriving && satnavVehicleMoving()) break;
-				} // if
-
-				// Entering a character in the "satnav_enter_street_characters" screen?
-				if ($("#satnav_enter_street_characters").is(":visible")) userHadOpportunityToEnterStreet = true;
-
-				if (currentMenu === "satnav_enter_city_characters" || currentMenu === "satnav_enter_street_characters")
-				{
-					// In case both the "Val" packet and the "End_of_button_press" packet were missed...
-					let id = "#satnav_to_mfd_show_characters_line_";
-					let selectedChar = $(id + "1 .invertedText").text();
-					if (! selectedChar) selectedChar = $(id + "2 .invertedText").text();
-					if (selectedChar) satnavLastEnteredChar = selectedChar;
-				} // if
-
-				if (currentLargeScreenId === "satnav_vocal_synthesis_level") satnavNoAudioIcon();
-
-				buttonClicked();
-			}
-			else if (button === "MODE_BUTTON")
-			{
-				if (currentLargeScreenId === "set_screen_brightness")
-				{
-					cycleColorTheme();  // "MODE" button cycles color palette (blue, orange, ...)
-					break;
-				} // if
-
-				if (inMenu()) break;  // Ignore when user is browsing the menus
-
-				nextLargeScreen();
+				if ((new Uint16Array([handleItemChange.lastIrSeqNo - seqNo]))[0] < 65536 - 200) break;
 			} // if
+			handleItemChange.lastIrSeqNo = seqNo;
+
+			const button = parts[1];
+			if (button !== handleItemChange.lastIrButton)
+			{
+				handleItemChange.lastIrButton = button;
+				handleItemChange.lastIrButtonCount = 0;
+			} // if
+
+			const buttonCount = parseInt(parts[2]);
+			const held = parts[3];
+
+			while (handleItemChange.lastIrButtonCount <= buttonCount)
+			{
+				handleItemChange.lastIrButtonCount++;
+
+				$("#ir_button_pressed").text(button.substring(0, 3));  // Debug info
+
+				// Ignore remote control buttons if contact key is off, or when in power-save mode
+				// But don't ignore in on-desk setup
+				if ($("#esp_mac_address").text() !== "E8:DB:84:DA:BF:81")
+				{
+					if ($("#contact_key_position").text() === "OFF") break;
+					if (economyMode === "ON") break;
+				} // if
+
+				handleIrRc(button, held);
+			} // while
 		} // case
 		break;
 

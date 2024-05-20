@@ -232,7 +232,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     #define IR_JSON_BUFFER_SIZE 256
     static char jsonBuffer[IR_JSON_BUFFER_SIZE];
 
-    static uint8_t sequenceNo = 0;
+    static uint16_t sequenceNo = 0;
     static uint8_t buttonCount = 0;
 
     static unsigned long lastButton = pkt.value;
@@ -249,11 +249,9 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"mfd_remote_control_pkt_seq\": \"%d\",\n"
-            "\"mfd_remote_control_btn_cnt\": \"%d\",\n"
-            "\"mfd_remote_control\": \"%S%S\"";
+            "\"mfd_remote_control\": \"%" PRIu16 " %S %" PRIu8 "%S\"";
 
-    int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, sequenceNo++, buttonCount++, pkt.buttonStr, heldStr);
+    int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, sequenceNo++, pkt.buttonStr, buttonCount++, heldStr);
 
     // "MOD" button pressed?
     if (pkt.value == IB_MODE)
@@ -345,8 +343,7 @@ bool IrReceive(TIrPacket& irPacket)
 
     // Code that detects "button held" condition
     //
-    // The IR controller normally fires ~ 20 times per second (measured 16 firings in 805 milliseconds,
-    // i.e. 805 / 16 = 50.3 milliseconds).
+    // The IR controller normally fires ~ 20 times per second.
     //
     // Handling procedure:
     //
@@ -368,7 +365,7 @@ bool IrReceive(TIrPacket& irPacket)
     // Firing interval or IR unit (milliseconds)
     #define IR_BUTTON_HELD_INTV_MS (50UL)
 
-    static unsigned nFirings = 0;
+    static unsigned int nFirings = 0;
 
     // Same IR decoded value seen within this time (milliseconds) is seen as "held" button
     #define IR_BUTTON_HELD_2_MS (101UL)

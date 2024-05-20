@@ -72,7 +72,7 @@ static const char msg_1_0_fr[] PROGMEM = "Cycle de nettoyage du filtre diesel (F
 static const char msg_1_0_ger[] PROGMEM = "Die Reinigung des Diesel-Filters (FAP) ist dringend erforderlich";
 static const char msg_1_0_spa[] PROGMEM = "Hacer pronto la limpieza del filtro diesel (FAP)";
 static const char msg_1_0_ita[] PROGMEM = "Pulire il filtro diesel (FAP) al più presto";
-static const char msg_1_0_dut[] PROGMEM = "Dieselfilter snel schoonmaken";
+static const char msg_1_0_dut[] PROGMEM = "Dieselfilter snel schoonmaken";  // incorrect, should be "roetfilter"
 
 #define msg_1_1 emptyStr
 
@@ -214,7 +214,7 @@ static const char msg_3_7_fr[] PROGMEM = "Présence d'eau dans le filtre à gaso
 static const char msg_3_7_ger[] PROGMEM = "Wasser im Dieselfilter";
 static const char msg_3_7_spa[] PROGMEM = "Presencia de agua en el filtro de gasoil";
 static const char msg_3_7_ita[] PROGMEM = "Presenza d'acqua nel filtro del gasolio";
-static const char msg_3_7_dut[] PROGMEM = "Water aanwezig in dieselfilter";
+static const char msg_3_7_dut[] PROGMEM = "Water aanwezig in dieselfilter";  // should be "brandstoffilter"
 
 // -----
 // Byte 4, 0x20...0x27
