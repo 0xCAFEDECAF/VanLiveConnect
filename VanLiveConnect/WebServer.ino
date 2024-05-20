@@ -438,7 +438,10 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
 
     if (request->method() != HTTP_GET) return;
 
+  #ifdef DEBUG_WEBSERVER
     unsigned long start = millis();
+  #endif // DEBUG_WEBSERVER
+
     bool eTagMatches = checkETag(request, md5Checksum);
     if (! eTagMatches)
     {

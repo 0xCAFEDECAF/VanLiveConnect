@@ -1783,11 +1783,9 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     engineRpm_x8 = (uint16_t)data[0] << 8 | data[1];
     vehicleSpeed_x100 = (uint16_t)data[2] << 8 | data[3];
-    uint32_t seq = (uint32_t)data[4] << 16 | (uint32_t)data[5] << 8 | data[6];  // What use?
 
     static long prevEngineRpm_x8 = 0;
     static long prevVehicleSpeed_x100 = 0;
-    static uint32_t prevSeq = 0;
 
     // With engine running, there are about 20 or so of these packets per second. Limit the rate somewhat.
     // Send only if any of the reported values changes with more than 20 rpm (engine_rpm), 1 km/h (vehicle_speed),
@@ -1809,7 +1807,6 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     prevEngineRpm_x8 = engineRpm_x8;
     prevVehicleSpeed_x100 = vehicleSpeed_x100;
-    prevSeq = seq;
 
     float vehicleSpeed = vehicleSpeed_x100 / 100.0;
 
@@ -2786,7 +2783,6 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     // https://github.com/morcibacsi/PSAVanCanBridge/blob/master/src/Van/Structs/VanAirConditioner2Structs.h
 
     const uint8_t* data = pkt.Data();
-    int dataLen = pkt.DataLen();
 
     // Avoid continuous updates if a temperature value is constantly toggling between 2 values, while the rest of the
     // data is the same.
@@ -3783,9 +3779,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
     const uint8_t* data = pkt.Data();
 
-    uint8_t globalSeqNo = data[0] & 0x07;
     uint8_t packetFragmentNo = data[0] >> 3 & 0x0F;
-    bool lastPacket = data[0] & 0x80;
 
     #define INVALID_SATNAV_REPORT (0xFF)
     static uint8_t report = INVALID_SATNAV_REPORT;
@@ -5312,7 +5306,10 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 // Optionally, print the new packet on serial port, highlighting the bytes that differ.
 bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
 {
+  #ifdef PRINT_RAW_PACKET_DATA
     uint16_t iden = pkt.Iden();
+  #endif // PRINT_RAW_PACKET_DATA
+
     int dataLen = pkt.DataLen();
     const uint8_t* data = pkt.Data();
 

@@ -134,7 +134,9 @@ void DeleteAllQueuedJsons()
 // Optionally, pass one or two WebSocket IDs: the packet will not be re-sent to these IDs.
 void QueueJson(const char* json, uint32_t lastSentOnId_1 = 0, uint32_t lastSentOnId_2 = 0)
 {
+  #if DEBUG_WEBSOCKET >= 2
     int currentJsonPacketIdx;
+  #endif // DEBUG_WEBSOCKET >= 2
     JsonPacket_t* entry;
 
     do
@@ -144,7 +146,10 @@ void QueueJson(const char* json, uint32_t lastSentOnId_1 = 0, uint32_t lastSentO
         // Free a slot if necessary
         FreeQueuedJson(entry);
 
+      #if DEBUG_WEBSOCKET >= 2
         currentJsonPacketIdx = nextJsonPacketIdx;
+      #endif // DEBUG_WEBSOCKET >= 2
+
         if (++nextJsonPacketIdx == N_QUEUED_JSON) nextJsonPacketIdx = 0;
 
     } while (system_get_free_heap_size() < 5 * 1024);
