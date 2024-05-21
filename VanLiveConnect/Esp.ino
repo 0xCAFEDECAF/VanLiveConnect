@@ -198,7 +198,7 @@ const char* EspRuntimeDataToJson(char* buf, const int n)
         "{\n"
             "\"uptime_seconds\": \"%lu\",\n"
             "\"esp_wifi_rssi\": \"%d dB\",\n"
-            "\"esp_free_ram\": \"%lu bytes\"\n"
+            "\"esp_free_ram\": \"%" PRIu32 " bytes\"\n"
         "}\n"
     "}\n";
 

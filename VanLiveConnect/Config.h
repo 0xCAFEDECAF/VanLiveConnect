@@ -104,7 +104,7 @@
 //
 // - The following clamping circuit is required to decouple the ESP from transient spikes that may occur on the VAN bus:
 //
-//     CANL ---[R]---\
+//     CANL ---[R]---.
 //                   |
 //      GND ---|>|---+---|>|--- +5V on ESP board
 //

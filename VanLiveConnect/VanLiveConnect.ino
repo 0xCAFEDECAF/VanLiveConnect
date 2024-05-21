@@ -261,7 +261,7 @@ void PrintDebugDefines()
 } // PrintDebugDefines
 
 // After a few minutes of VAN bus inactivity, go to sleep to save power
-unsigned long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
+long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
 
 void setup()
 {
