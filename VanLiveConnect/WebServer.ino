@@ -138,7 +138,8 @@ void printHttpRequest(class AsyncWebServerRequest* request)
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] Received request from "), TimeStamp());
     Serial.print(request->client()->remoteIP());
-    Serial.printf_P(PSTR(": %s - '"), request->methodToString());
+    Serial.printf_P(PSTR(": %s - 'http://"), request->methodToString());
+    Serial.print(request->host());
     Serial.print(request->url());
 
     if (request->args() > 0) Serial.print("?");
@@ -308,21 +309,25 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     Serial.printf_P(PSTR("%s[webServer] File '%s' not found\n"), TimeStamp(), request->url().c_str());
   #endif // DEBUG_WEBSERVER
 
-    //if (! request->client()->remoteIP()) return;  // No use to reply if there is no IP to reply to
+    if (! request->client()->remoteIP()) return;  // No use to reply if there is no IP to reply to
+
+  #ifdef WIFI_AP_MODE // Wi-Fi access point mode
+    #define MY_IP String(IP_ADDR)
+  #else
+    #define MY_IP  WiFi.localIP().toString()
+  #endif // ifdef WIFI_AP_MODE
 
   #ifdef WIFI_AP_MODE
     // Redirect to the main HTML page ('/MFD.html').
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
-    // http://detectportal.firefox.com/success.txt ; Android tries to load https://www.gstatic.com/generate_204 .
+    // http://detectportal.firefox.com/success.txt and http://detectportal.firefox.com/canonical.html .
 
     // TODO - commented out because this occasionally crashes the ESP due to out-of-memory condition
   #if 0
     DeleteAllQueuedJsons();  // Maximize free heap space
 
-    //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
     AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-    response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
-    //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
+    response->addHeader(F("Location"), "http://" + MY_IP + "/MFD.html");
     request->send(response);
 
     return;
@@ -331,13 +336,17 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 
     if (request->url() == "/")
     {
+        // Redirect to the main HTML page ('/MFD.html').
+
         DeleteAllQueuedJsons();  // Maximize free heap space
 
-        //AsyncWebServerResponse* response = request->beginResponse(301, F("text/plain"), F("Redirect"));
         AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-        response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
-        //response->addHeader(F("Cache-Control"), F("no-store")); // TODO - necessary?
+        response->addHeader(F("Location"), "http://" + MY_IP + "/MFD.html");
         request->send(response);
+
+      #ifdef DEBUG_WEBSERVER
+        Serial.printf_P(PSTR("%s[webServer] Redirected (302) to 'http://%s/MFD.html'\n"), TimeStamp(), MY_IP.c_str());
+      #endif // DEBUG_WEBSERVER
 
         return;
     } // if
