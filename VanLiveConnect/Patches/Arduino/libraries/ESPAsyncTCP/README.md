@@ -4,30 +4,6 @@ Patched from the latest (current) version, https://github.com/me-no-dev/ESPAsync
 
 The patches include the following fixes:
 
-- ESPAsyncTCPbuffer.cpp:
-  * Possible fix for issue causing soft watchdog timeout resets
-  * Fix issue causing missing of response, possibly fix for hanging TCP connections
-
-```diff
-diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCPbuffer.cpp ./src/ESPAsyncTCPbuffer.cpp
-113c113,115
-<         _sendBuffer();
----
->
->         // Seems to fix soft watchdog timeout resets
->         if (_client->canSend()) _sendBuffer();
-389c399,400
-<     if(!_client || !_client->connected()) {
----
->     //FIX do not check connected here, otherwise miss responce
->     if(!_client /*|| !_client->connected()*/) {
-450c461,462
-<     if(!_client || !_client->connected() || _RXbuffer == NULL) {
----
->     //FIX do not check connected here, otherwise miss responce
->     if(!_client /*|| !_client->connected()*/ || _RXbuffer == NULL) {
-```
-
 - ESPAsyncTCP.cpp:
   * Possible fix for memory leak
 
@@ -37,15 +13,4 @@ diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCP.cpp ./src/ESPAsyncTCP.cpp
 >   if (err != ERR_OK){
 >     tcp_close(pcb);
 >   }
-```
-
-- ESPAsyncTCP.h:
-  * Shorter time-out value for reception of ACK
-
-```diff
-diff ~/Arduino/libraries/ESPAsyncTCP/src/ESPAsyncTCP.h ./src/ESPAsyncTCP.h
-40c40
-< #define ASYNC_MAX_ACK_TIME 5000
----
-> #define ASYNC_MAX_ACK_TIME 2000
 ```
