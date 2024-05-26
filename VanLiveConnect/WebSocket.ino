@@ -43,6 +43,9 @@ uint32_t websocketId_2 = WEBSOCKET_INVALID_ID;
 // Maps IP address (cast to uint32_t) to last time that webSocket communication occurred on that IP address
 std::map<uint32_t, unsigned long> lastWebSocketCommunication;
 
+// Counts the number of new connection requests from the WebSocket client
+int nWebSocketConnections = 0;
+
 bool inMenu = false;  // true if user is browsing the menus
 int irButtonFasterRepeat = 0;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
@@ -54,7 +57,7 @@ bool IsIdConnected(uint32_t id)
 } // IsIdConnected
 
 // Try to send a data packet on a specific webSocket. Fails if the webSocket is not connected or its queue is full
-// (not available for write).
+// (not available for writing).
 bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
 {
   #if DEBUG_WEBSOCKET >= 3
@@ -372,7 +375,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
     return result;
 } // SendJsonOnWebSocket
 
-// The client (javascript) is sending data back to the ESP
+// The WebSocket client (JavaScript) is sending data back to the ESP
 void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
 {
     String clientMessage(payload);
@@ -381,10 +384,13 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
 
     if (clientMessage.startsWith("in_menu:"))
     {
+        // The WebSocket client is browsing through a menu
         inMenu = clientMessage.endsWith(":YES");
     }
     else if (clientMessage.startsWith("ir_button_faster_repeat:"))
     {
+        // The WebSocket client is indicating the repeat rate of the IR remote controller buttons
+
         // Possible values:
         // - Rate 0 (slow): menus
         // - Rate 1 (faster): sat nav lists of cities and streets
@@ -397,6 +403,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     }
     else if (clientMessage.startsWith("mfd_popup_showing:"))
     {
+        // The WebSocket client is showing a popup
+
         // We need to know when a popup is showing, e.g. to know when to ignore a "MOD" button press from the
         // IR remote control.
         if (clientMessage.endsWith(":NO")) NoPopup();
@@ -404,6 +412,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     }
     else if (clientMessage.startsWith("mfd_language:"))
     {
+        // The WebSocket client passes the current language
+
         String value = clientMessage.substring(13);
 
         mfdLanguage =
@@ -424,6 +434,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     }
     else if (clientMessage.startsWith("mfd_distance_unit:"))
     {
+        // The WebSocket client passes the current distance unit (km/h or mph)
+
         String value = clientMessage.substring(18);
 
         uint8_t prevMfdDistanceUnit = mfdDistanceUnit;
@@ -435,6 +447,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     }
     else if (clientMessage.startsWith("mfd_temperature_unit:"))
     {
+        // The WebSocket client passes the current temperature unit (Celsius or Fahrenheit)
+
         String value = clientMessage.substring(21);
 
         uint8_t prevMfdTemperatureUnit = mfdTemperatureUnit;
@@ -446,6 +460,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     }
     else if (clientMessage.startsWith("mfd_time_unit:"))
     {
+        // The WebSocket client passes the current time unit (12 or 24 hour)
+
         String value = clientMessage.substring(14);
 
         mfdTimeUnit =
@@ -457,6 +473,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
 
     else if (clientMessage.startsWith("time_offset:"))
     {
+        // The WebSocket client passes the current time offset from UTC
+
         String value = clientMessage.substring(12);
         int offsetMinutes = value.toInt();
         SetTimeZoneOffset(offsetMinutes);
@@ -468,6 +486,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     }
     else if (clientMessage.startsWith("date_time:"))
     {
+        // The WebSocket client passes the current UTC time
+
         String value = clientMessage.substring(10);
         uint64_t epoch_msec = atoll(value.c_str());
 
@@ -551,7 +571,7 @@ void WebSocketEvent(
 
             // Tune some TCP parameters
             client->client()->setNoDelay(true);
-            //client->client()->setAckTimeout(500);
+            client->client()->setAckTimeout(10000);
             //client->client()->setRxTimeout(120);
 
             lastWebSocketCommunication[clientIp] = millis();
@@ -559,6 +579,8 @@ void WebSocketEvent(
             // A completely new value for id?
             if (id != websocketId_1 && id != websocketId_2)
             {
+                nWebSocketConnections++;
+
                 webSocketIdJustConnected = id;
                 Serial.printf_P(PSTR(" --> will start serving %lu\n"), id);
 
@@ -775,8 +797,9 @@ void LoopWebSocket()
 
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket] %zu clients are currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu\n"),
-            TimeStamp(), webSocket.count(), countQueuedJsons(), websocketId_1, websocketId_2
+            PSTR("%s[webSocket] %zu clients are currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%u\n"),
+            TimeStamp(), webSocket.count(), countQueuedJsons(), websocketId_1, websocketId_2,
+            system_get_free_heap_size()
         );
       #endif // DEBUG_WEBSOCKET
     } // if

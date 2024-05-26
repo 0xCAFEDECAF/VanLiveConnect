@@ -36,6 +36,7 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     Serial.print(macToString(evt.mac));
     Serial.print("\n");
 
+  #if 0
     // Note: even though the webSocket is closed here, the resources will be freed only after a re-connection.
     // This is because the resources are associated to a TCP/IP connection, which can only be closed successfully
     // when there is a connection.
@@ -44,6 +45,7 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 
     websocketId_1 = WEBSOCKET_INVALID_ID;
     websocketId_2 = WEBSOCKET_INVALID_ID;
+  #endif // 0
 
     //Serial.printf_P(PSTR("==> websocketId_1=%u, websocketId_2=%u\n"), websocketId_1, websocketId_2);
 } // onStationDisconnected
@@ -161,8 +163,6 @@ const char* SetupWifi()
 
     softap_config config;
     wifi_softap_get_config(&config);
-    config.beacon_interval = 1000;
-    wifi_softap_set_config(&config);
     PrintSoftApConfig(config);
 
     // Register event handlers
