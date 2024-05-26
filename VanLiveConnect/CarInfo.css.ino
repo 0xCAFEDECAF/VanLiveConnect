@@ -563,6 +563,7 @@ body
   left:25px;
   top:110px;
   width:925px;
+  height:65px;
 }
 .satNavCityTag
 {
