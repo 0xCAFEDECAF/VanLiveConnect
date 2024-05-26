@@ -233,16 +233,18 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
     {
         unsigned long since = millis() - lastWebSocketCommunication[clientIp];
 
+      #define WEBSERVER_RESPOND_TO_204_AFTER_MS (7 * 1000)
+
       #ifdef DEBUG_WEBSERVER
         Serial.printf_P(PSTR("%s[webServer] Last websocket communication with %s was %lu msecs ago: %Sresponding\n"),
             TimeStamp(),
             clientIp.toString().c_str(),
             since,
-            since < 7000 ? PSTR("NOT ") : emptyStr
+            since < WEBSERVER_RESPOND_TO_204_AFTER_MS ? PSTR("NOT ") : emptyStr
         );
       #endif // DEBUG_WEBSERVER
 
-        if (since < 7000) return;  // Arithmetic has safe roll-over
+        if (since < WEBSERVER_RESPOND_TO_204_AFTER_MS) return;  // Arithmetic has safe roll-over
     } // if
 
     // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
@@ -266,8 +268,8 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 // -----
 // MIME type string constants
 
-//static const char PROGMEM textJavascriptStr[] = "text/javascript";
-static const char textJavascriptStr[] = "text/javascript";
+//static const char PROGMEM textJavaScriptStr[] = "text/javascript";
+static const char textJavaScriptStr[] = "text/javascript";
 //static const char PROGMEM textCssStr[] = "text/css";
 static const char textCssStr[] = "text/css";
 //static const char PROGMEM fontWoffStr[] = "font/woff";
@@ -285,7 +287,7 @@ extern char webfonts_fa_solid_900_woff[];
 extern unsigned int webfonts_fa_solid_900_woff_len;
 
 // -----
-// Javascript files
+// JavaScript files
 
 extern char jQuery_js[];  // Defined in jquery-3.5.1.min.js.ino
 extern char mfd_js[];  // Defined in MFD.js.ino
@@ -433,7 +435,7 @@ const char* getContentType(const String& path)
     if (path.endsWith(".html")) return "text/html";
     if (path.endsWith(".woff")) return fontWoffStr;
     if (path.endsWith(".css")) return textCssStr;
-    if (path.endsWith(".js")) return textJavascriptStr;
+    if (path.endsWith(".js")) return textJavaScriptStr;
     if (path.endsWith(".ico")) return "image/x-icon";
     if (path.endsWith(".jpg")) return "image/jpeg";
     if (path.endsWith(".png")) return "image/png";
@@ -566,14 +568,14 @@ void SetupWebServer()
     });
 
     // -----
-    // Javascript files
+    // JavaScript files
 
     webServer.on("/jquery-3.5.1.min.js", [](AsyncWebServerRequest *request)
     {
       #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
         ServeDocumentFromFile(request, "/jquery-3.5.1.min.js");
       #else
-        ServeDocument(request, textJavascriptStr, jQuery_js);
+        ServeDocument(request, textJavaScriptStr, jQuery_js);
       #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
     });
 
@@ -582,7 +584,7 @@ void SetupWebServer()
       #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
         ServeDocumentFromFile(request, "/MFD.js");
       #else
-        ServeDocument(request, textJavascriptStr, mfd_js);
+        ServeDocument(request, textJavaScriptStr, mfd_js);
       #endif // SERVE_MAIN_FILES_FROM_SPIFFS
     });
 
