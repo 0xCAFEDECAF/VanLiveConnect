@@ -13,7 +13,7 @@
 
 char mfd_js[] PROGMEM = R"=====(
 
-// Javascript functions to drive the browser-based Multi-Function Display (MFD)
+// JavaScript functions to drive the browser-based Multi-Function Display (MFD)
 
 // -----
 // General
@@ -1509,7 +1509,7 @@ function highlightPreviousLine(id)
 // - In SVG element, write:
 //   <path id="arc1" fill="none" stroke="#446688" stroke-width="20" />
 //
-// - For a right-hand roundabout, write the following in code Javascript:
+// - For a right-hand roundabout, write the following in JavaScript code:
 //   document.getElementById("arc1").setAttribute("d", describeArc(200, 400, 100, <angle_to_go_round> - 180, 180));
 //
 function polarToCartesian(centerX, centerY, radius, angleInDegrees)

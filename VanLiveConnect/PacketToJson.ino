@@ -4491,7 +4491,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 1)
 
         // Don't switch screen; the screen must either stay "satnav_guidance" in guidance mode, or
-        // "satnav_current_location" if the current screen is "clock". Complicated, so let the Javascript logic
+        // "satnav_current_location" if the current screen is "clock". Complicated, so let the JavaScript logic
         // handle this.
         request == SR_CURRENT_STREET && param == 0xFF && type == SRT_REQ_ITEMS ? emptyStr :
 
