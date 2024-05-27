@@ -32,7 +32,7 @@
 
   // Set between (1) and (13). Note: some devices cannot connect to channels above 11. Channel 6 seems best for
   // avoiding interference with Bluetooth.
-  #define WIFI_CHANNEL (8)
+  #define WIFI_CHANNEL (6)
 
   #define IP_ADDR "192.168.244.1"
 
