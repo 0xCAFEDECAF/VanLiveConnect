@@ -324,12 +324,16 @@ void setup()
     IrSetup();
 
     sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
-  #if 0
+
   #ifdef ON_DESK_MFD_ESP_MAC
-    // On the desk test setup, we want to go to sleep much quicker
+    // On the desk test setup, go to sleep much quicker
     if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
   #endif // ON_DESK_MFD_ESP_MAC
-  #endif // 0
+
+  #ifdef WIFI_STRESS_TEST_MFD_ESP_MAC
+    // Wi-Fi stress test: don't go to sleep
+    if (WiFi.macAddress() == WIFI_STRESS_TEST_MFD_ESP_MAC) sleepAfter = -1;
+  #endif // WIFI_STRESS_TEST_MFD_ESP_MAC
 
     if (sleepAfter != -1)
     {

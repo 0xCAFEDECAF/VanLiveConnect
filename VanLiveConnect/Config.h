@@ -241,6 +241,9 @@
 // When set to 1, sends small test packets (~ 55 bytes). When set to 2, sends large test packets (~ 2.5 KByte).
 //#define WIFI_STRESS_TEST 1
 
+// When running a Wi-Fi stress test, specify the MAC address of the board running it
+//#define WIFI_STRESS_TEST_MFD_ESP_MAC "C8:C9:A3:5C:20:53"
+
 // Define to show the VAN bus statistics on the "system" screen
 // Requires installation of the 'PrintEx' library; see: https://github.com/Chris--A/PrintEx (tested with version 1.2.0)
 // Note that the 'PrintEx' library only compiles under ESP8266 Arduino release 2.7.4 or lower.
