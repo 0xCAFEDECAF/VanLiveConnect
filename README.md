@@ -357,9 +357,9 @@ same time the Android client device is showing the vehicle data as coming in via
 Wi-Fi connection
 
 To make the latter possible with mobile data enabled on the Android device, the web server ("WebServer.ino") in
-the ESP offers a special feature: it will respond to any request for '.../generate_204'. This makes make
-Android believe that the Wi-Fi connection has an Internet connection, and therefore it chooses Wi-Fi as
-the preferred medium.
+the ESP offers a special feature: [it will respond to any request for '.../generate_204'](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/aece0d71480ae534d1ff40c2043e673175219ed0/VanLiveConnect/WebServer.ino#L258).
+This makes make Android believe that the Wi-Fi connection has an Internet connection, and therefore it chooses
+Wi-Fi as the preferred medium.
 
 However, even though "Internet access" via Wi-Fi seems now enabled to the Android device, it still sees that the
 connection is pretty limited. Android tries to access all kinds of other Internet addresses, which (obviously)
@@ -378,8 +378,9 @@ via Wi-Fi, even with mobile data enabled.
 Unfortunately, the effect is still the same as above: all apps will try to use the (non-Internet) Wi-Fi connection,
 so all apps still fail to access the Internet.
 
-The solution is to have the web server in the ESP <i>stop responding</i> to requests for '.../generate_204' as soon
-as a data (WebSocket) connection between the ESP and the Android device is well established.
+The solution is to have the web server in the ESP [stop responding](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/aece0d71480ae534d1ff40c2043e673175219ed0/VanLiveConnect/WebServer.ino#L247)
+to requests for '.../generate_204' as soon as a data (WebSocket) connection between the ESP and the Android device
+is well established.
 
 In this way, the following sequence of events takes place:
 

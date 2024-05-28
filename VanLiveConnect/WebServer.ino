@@ -231,7 +231,7 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 
     if (lastWebSocketCommunication.find(clientIp) != lastWebSocketCommunication.end())
     {
-        unsigned long since = millis() - lastWebSocketCommunication[clientIp];
+        unsigned long since = millis() - lastWebSocketCommunication[clientIp];  // Arithmetic has safe roll-over
 
       #define WEBSERVER_RESPOND_TO_204_AFTER_MS (7 * 1000)
 
@@ -244,7 +244,7 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
         );
       #endif // DEBUG_WEBSERVER
 
-        if (since < WEBSERVER_RESPOND_TO_204_AFTER_MS) return;  // Arithmetic has safe roll-over
+        if (since < WEBSERVER_RESPOND_TO_204_AFTER_MS) return;
     } // if
 
     // As long as the WebSocket connection is not established, respond to connectivity check. In that way,
