@@ -4821,14 +4821,14 @@ function handleItemChange(item, value)
 
 		case "satnav_on_map":
 		{
-			satnavOnMap = value === "YES";
-
-			if (value === "NO" && satnavCurrentStreet !== "")
+			if (satnavOnMap && value === "NO" && satnavCurrentStreet !== "")
 			{
 				satnavCurrentStreet = "";
 				$('[gid="satnav_curr_street_shown"]').html(notDigitizedAreaText);
 				changeBackLargeScreenAfter(15000);
 			} // if
+
+			satnavOnMap = value === "YES";
 		} // case
 		break;
 
@@ -5605,6 +5605,10 @@ function handleItemChange(item, value)
 
 		case "satnav_not_on_map_icon":
 		{
+			// Has anything changed?
+			if (value === handleItemChange.notOnMapIcon) break;
+			handleItemChange.notOnMapIcon = value;
+
 			$("#satnav_turn_at_indication").toggle(value !== "ON");
 			if (value !== "ON") break;
 
