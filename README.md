@@ -267,8 +267,7 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Package:
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Tested with versions
-  0.2.4 ... 0.3.4 . Should that not work, you can always try
-  [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
+  0.2.4 and higher. Best to use [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
@@ -353,15 +352,16 @@ Mobile data always active". But it doesn't work: all apps will still try to use 
 Internet connection. Moreover, having "Mobile data always active" turned on, decreases battery life,
 so it is a bad idea anyway.
 
-Ideally, we would like the Android client device to show the vehicle data as coming in via the
-(non-Internet) "PSA display AP" Wi-Fi connection, whilst all the apps are still being able to connect
-to the Internet via mobile data.
+Ideally, we would like all the Android apps to be able to connect to the Internet via mobile data, while at the
+same time the Android client device is showing the vehicle data as coming in via the (non-Internet) "PSA display AP"
+Wi-Fi connection
 
-To make that possible, the web server ("WebServer.ino") in the ESP offers a special feature: it will
-respond to any request for '.../generate_204'. This makes make Android believe that the Wi-Fi
-connection has an Internet connection.
+To make the latter possible with mobile data enabled on the Android device, the web server ("WebServer.ino") in
+the ESP offers a special feature: it will respond to any request for '.../generate_204'. This makes make
+Android believe that the Wi-Fi connection has an Internet connection, and therefore it chooses Wi-Fi as
+the preferred medium.
 
-However, even though "Internet access" seems now enabled to the Android device, it still sees that the
+However, even though "Internet access" via Wi-Fi seems now enabled to the Android device, it still sees that the
 connection is pretty limited. Android tries to access all kinds of other Internet addresses, which (obviously)
 fails. Therefore, the Android device now presents a different system notification:
 "PSA display AP has limited connectivity. Tap to connect anyway.":
@@ -372,7 +372,8 @@ Make sure to check-mark "Don't ask again for this network", then tap "Yes":
 
 <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Network%20has%20limited%20connectivity%20popup%20checked.png" width="33%">
 
-The Wi-Fi icon at the top is now shown without the small "X" in it. The landing page of the ESP can be accessed.
+The Wi-Fi icon at the top is now shown without the small "X" in it. The landing page of the ESP can now be accessed
+via Wi-Fi, even with mobile data enabled.
 
 Unfortunately, the effect is still the same as above: all apps will try to use the (non-Internet) Wi-Fi connection,
 so all apps still fail to access the Internet.
@@ -385,15 +386,18 @@ In this way, the following sequence of events takes place:
 1. As soon as the ESP powers up (or wakes up from sleep), it starts to offer its "PSA display AP" Wi-Fi access point.
 2. The Android device connects to the Wi-Fi access point. The Wi-Fi icon at the top is now shown without the
    small "X" in it (because the ESP is responding to the '.../generate_204' requests).
-3. The landing page 'http://<...>/MFD.html' of the ESP can be accessed by the browser on the Android device.
+3. The landing page 'http://<...>/MFD.html' of the ESP can be accessed by the browser on the Android device, using
+   Wi-Fi to connect.
 4. The JavaScript code in the landing page sets up a WebSocket connection: vehicle data is sent to the Android
    device and displayed in its browser.
-5. About 7 seconds after the WebSocket connection is established, the web server on the ESP stops responding to
-   the '.../generate_204' requests.
+5. About [7 seconds](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/c4f09a756724c128c41cca4281a808e69095d3c9/VanLiveConnect/WebServer.ino#L236)
+   after the WebSocket connection is established, the web server on the ESP stops responding to the
+   '.../generate_204' requests.
 6. After a few retries, Android now thinks that the Wi-Fi access point is no longer offering Internet connectivity.
-   As a result, it switches to its mobile connection. However, <i>the WebSocket (TCP/IP) connection stays up!</i>
+   As a result, it switches to its mobile connection. However, <i>the WebSocket (TCP/IP) connection remains
+   established!</i>
 7. The apps on the Android device can now access the Internet via the mobile connection, while the vehicle data
-   is coming in on the already established WebSocket (TCP/IP) connection.
+   is coming in on the just established WebSocket (TCP/IP) connection.
 
 More background information and explanation can be found
 [here](https://www.reddit.com/r/HomeNetworking/comments/r0sruo/android_ignores_routing_table_uses_phone_data/) and
@@ -416,6 +420,10 @@ To add the route:
   - Enter `192.168.244.0/24` (note: the `"192.168.244."` part must match with the IP address as specified in
     [`Config.h`](VanLiveConnect/Config.h#L37)).
   - Tap 'OK'
+* Tap the 'ADVANCED' tab
+  - Make sure 'Persistent tun' is *not* checked
+
+Then press the Android 'Back' button to go back to the overview of connection profile.
 
 ### Automating your smartphone or tablet
 
