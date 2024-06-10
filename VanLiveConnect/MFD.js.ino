@@ -350,7 +350,7 @@ function hidePopup(id)
 {
 	var popup;
 	if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
-	if (popup.length === 0 || ! popup.is(":visible")) return false;
+	if (popup.length === 0 || popup.css("display") !== "block") return false;
 
 	popup.hide();
 
@@ -376,7 +376,7 @@ function showPopup(id, msec)
 
 		// A popup can appear under another. In that case, don't register the time.
 		let topLevelPopup = $(".notificationPopup:visible").slice(-1)[0];
-		if (id === topLevelPopup.id) lastScreenChangedAt = Date.now();
+		if (topLevelPopup && id === topLevelPopup.id) lastScreenChangedAt = Date.now();
 
 		// Perform "on_enter" action, if specified
 		let onEnter = popup.attr("on_enter");
