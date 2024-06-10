@@ -2,12 +2,6 @@
 char carInfo_css[] PROGMEM = R"=====(
 @font-face
 {
-  /* For the "fixed" items in the display */
-  font-family:Arial-Rounded-MT-bold;
-  src:url(ArialRoundedMTbold.woff) format('woff');
-}
-@font-face
-{
   /* New 'Peugot' font */
   font-family:Peugeot-New;
   src: url(PeugeotNewRegular.woff) format('woff');
