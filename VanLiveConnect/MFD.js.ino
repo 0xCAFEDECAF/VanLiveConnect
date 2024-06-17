@@ -333,6 +333,9 @@ function connectToWebSocket()
 			webSocket.send("time_offset:" + new Date().getTimezoneOffset() * -1);
 			webSocket.send("date_time:" + Date.now());  // Unix epoch, in milliseconds
 
+			if (satnavDisclaimerAccepted) webSocket.send("satnav_disclaimer_accepted:YES");
+			if (satnavServiceListSize > 0) webSocket.send("satnav_service_list_size:" + satnavServiceListSize);
+
 			restartKeepAliveWebSocket();
 		}
 	);
@@ -452,6 +455,11 @@ function showStatusPopup(message, msec)
 {
 	$("#status_popup_text").html(message);  // Set the popup text
 	showPopupAndNotifyServer("status_popup", msec);  // Show the popup
+}
+
+function hideStatusPopup(message)
+{
+	if ($("#status_popup_text").text() === message.replace(/<[^>]+>/g, '')) hidePopup("status_popup");
 }
 
 function showAudioPopup(id)
@@ -2065,11 +2073,13 @@ var satnavMode = "INITIALIZING";
 var satnavMfdRequestType;
 var satnavRouteComputed = false;
 var satnavDisclaimerAccepted = false;
+var satnavServiceListSize = -1;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
 var satnavDestinationReachable = false;
 var satnavGpsFix = false;
 var satnavOnMap = true;
+var satnavDownloading = false;
 var satnavStatus1 = "";
 var satnavStatus3 = "";
 var satnavDestinationNotAccessible = false;
@@ -2090,12 +2100,27 @@ var satnavProfessionalDirectoryEntries = JSON.parse(localStorage.satnavProfessio
 var satnavDiscUnreadbleText = "Navigation CD-ROM<br />is unreadable";
 var satnavDiscMissingText = "Navigation CD-ROM is<br />missing";
 
+function inSatnavMenuOrGuidanceScreen()
+{
+	return menuStack.indexOf("satnav_main_menu") >= 0 || currentLargeScreenId === "satnav_guidance";
+}
+
 function satnavShowDisclaimer()
 {
 	if (satnavDisclaimerAccepted) return;
 
 	currentMenu = "satnav_disclaimer";
 	changeLargeScreenTo(currentMenu);
+}
+
+function satnavDisclaimerAcceptClicked()
+{
+	satnavDisclaimerAccepted = true;
+	upMenu();
+	satnavGotoMainMenu();
+
+	// Report back to server (ESP) that user has accepted the disclaimer
+	if (webSocket !== undefined) webSocket.send("satnav_disclaimer_accepted:YES");
 }
 
 // When vehicle is moving, certain menus are disabled
@@ -2135,18 +2160,17 @@ function satnavShowStreet(selector, content)
 
 function satnavGotoMainMenu()
 {
+	if ($("#satnav_disc_recognized").hasClass("ledOff"))
+	{
+		return showStatusPopup(satnavDiscMissingText, 7200);
+	}
+
+	if (satnavStatus1.match(/DISC_UNREADABLE/)) return showStatusPopup(satnavDiscUnreadbleText, 10000);
+
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
-	if (! satnavInitialized) return showPopupAndNotifyServer("satnav_initializing_popup", 20000);
+	if (! satnavInitialized) return showPopupAndNotifyServer("satnav_initializing_popup", 50000);
 
 	hidePopup("satnav_initializing_popup");
-
-	if (satnavStatus1.match(/NO_DISC/)) return showStatusPopup(satnavDiscMissingText, 8000);
-
-	if (satnavStatus1.match(/DISC_UNREADABLE/) || $("#satnav_disc_recognized").hasClass("ledOff"))
-	{
-		showStatusPopup(satnavDiscUnreadbleText, 10000);
-		return;
-	} // if
 
 	// We can get here from various screens. Rewrite the menu stack for direct exit to main menu.
 	menuStack = [ menuStack[0] ];
@@ -2398,24 +2422,36 @@ function satnavEnterCharactersChangeOrCityCenterButtonPress()
 	} // if
 }
 
-function satnavEnterCity()
-{
-	gotoMenu("satnav_enter_city_characters");
-	satnavConfirmCityMode();
-}
-
-function satnavEnterNewCity()
-{
-	gotoMenu("satnav_enter_city_characters");
-	satnavEnterByLetterMode();
-}
-
 function satnavEnterNewCityForService()
 {
 	$("#satnav_current_destination_city").empty();
 	$("#satnav_entered_string").empty();  // Clear also the character-by-character entry string
 	satnavLastEnteredChar = null;
-	satnavEnterNewCity();
+
+	gotoMenu("satnav_enter_city_characters");
+	satnavEnterByLetterMode();
+}
+
+function satnavPrepareEntryScreen()
+{
+	$("#satnav_to_mfd_show_characters_line_1").empty();
+	$("#satnav_to_mfd_show_characters_line_2").empty();
+
+	// Disable buttons until "satnav_to_mfd_list_size" is received
+	$("#satnav_enter_characters_list_button").addClass("buttonDisabled");
+	$("#satnav_enter_characters_change_or_city_center_button").addClass("buttonDisabled");
+
+	// Show the spinning disc after a second or so
+	clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
+	handleItemChange.showCharactersSpinningDiscTimer = setTimeout
+	(
+		function ()
+		{
+			$("#satnav_to_mfd_show_characters_spinning_disc").show();
+			ignoringIrEscCommand = false;
+		},
+		1500
+	);
 }
 
 function satnavGotoEnterCity()
@@ -2428,7 +2464,10 @@ function satnavGotoEnterCity()
 	if (topLevel !== "main_menu") menuStack.unshift(topLevel);  // Keep the top level if it was not "main_menu"
 	currentMenu = undefined;
 
-	satnavEnterCity();
+	satnavPrepareEntryScreen();
+
+	gotoMenu("satnav_enter_city_characters");
+	satnavConfirmCityMode();
 }
 
 function satnavGotoEnterStreetOrNumber()
@@ -3310,10 +3349,30 @@ function satnavPoweringOff(satnavMode)
 	} // if
 
 	satnavInitialized = false;
-	// $("#satnav_disc_recognized").addClass("ledOff");
 	nSatNavDiscUnreadable = 1;
 	satnavDisclaimerAccepted = false;
+	satnavServiceListSize = -1;
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
+}
+
+function satnavSetInitialized(isInitialized)
+{
+	satnavInitialized = isInitialized;
+	if (isInitialized)
+	{
+		hidePopup("satnav_initializing_popup");
+
+		// Show "Continue guidance to destination?" popup if applicable
+		if (contactKeyPosition === "ON" && localStorage.askForGuidanceContinuation === "YES")
+		{
+			showPopup("satnav_continue_guidance_popup", 15000);
+			localStorage.askForGuidanceContinuation = "NO";
+		} // if
+	}
+	else
+	{
+		satnavPoweringOff(satnavMode);
+	} // if
 }
 
 var headUnitLastSwitchedTo = "NAVIGATION";
@@ -3387,7 +3446,7 @@ var bootAndDoorsOpenText = "Boot and doors open";
 // -----
 // Handling of IR remote control
 
-var ignoringIrCommands = false;
+var ignoringIrEscCommand = false;
 
 // Normally, holding the "VAL" button on the IR remote control will not cause repetition.
 // The only exceptions are the '+' and '-' buttons in specific menu screens.
@@ -3412,6 +3471,8 @@ function buttonClicked()
 
 function handleIrRc(button, held)
 {
+	if (satnavDownloading) return;
+
 	if (button === "MENU_BUTTON")
 	{
 		// Directly hide any visible audio popup or the system screen
@@ -3428,7 +3489,7 @@ function handleIrRc(button, held)
 		if (hideAudioSettingsPopup()) return;
 		if (hidePopup()) return;
 
-		if (ignoringIrCommands) return;
+		if (ignoringIrEscCommand) return;
 
 		// Ignore the "Esc" button when guidance screen is showing
 		if ($("#satnav_guidance").is(":visible")) return;
@@ -4091,6 +4152,8 @@ function handleItemChange(item, value)
 			if (handleItemChange.currentAudioSource !== value) hideAudioSettingsPopup();
 			handleItemChange.currentAudioSource = value;
 
+			$('[gid="satnav_volume_menu_button"]').removeClass("buttonDisabled");
+
 			// Sat nav audio (e.g. guidance instruction or welcome message) needs no further action
 			if (value === "NAVIGATION") break;
 
@@ -4696,17 +4759,30 @@ function handleItemChange(item, value)
 
 			if (economyMode === "ON") break;
 
-			if (satnavStatus1.match(/NO_DISC/))
+			if (value.match(/NO_DISC/))
 			{
 				hidePopup("satnav_initializing_popup");
-				showStatusPopup(satnavDiscMissingText, 5000);
+
+				if (! inMenu() || inSatnavMenuOrGuidanceScreen() || currentMenu === "main_menu")
+				{
+					showStatusPopup(satnavDiscMissingText, 7200);
+				} // if
+
+				if (inSatnavMenuOrGuidanceScreen()) selectDefaultScreen();
 			} // if
-			else if (satnavStatus1.match(/DISC_UNREADABLE/))
+			else if (value.match(/DISC_UNREADABLE/))
 			{
 				hidePopup("satnav_initializing_popup");
 
 				// TODO - show popup not directly, but only after a few times this status
 				showStatusPopup(satnavDiscUnreadbleText, 5000);
+
+				if (inSatnavMenuOrGuidanceScreen()) selectDefaultScreen();
+			}
+			else if (value.match(/READY/))
+			{
+				hideStatusPopup(satnavDiscMissingText);
+				hideStatusPopup(satnavDiscUnreadbleText);
 			} // if
 		} // case
 		break;
@@ -4720,10 +4796,7 @@ function handleItemChange(item, value)
 			let previousSatnavMode = satnavMode;
 			satnavMode = value;
 
-			// In case the ESP boots after the moment the sat nav has reported its "satnav_system_id"
-			// (i.e., reports it is initialized)
-			satnavInitialized = value !== "INITIALIZING";
-			if (satnavInitialized) hidePopup("satnav_initializing_popup");
+			satnavSetInitialized(value !== "INITIALIZING");
 
 			let text = value === "IN_GUIDANCE_MODE" ? stopGuidanceText : resumeGuidanceText;
 			$("#satnav_navigation_options_menu .button:eq(3)").html(text);
@@ -4832,6 +4905,15 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "satnav_downloading":
+		{
+			$("#satnav_download_progress").text(value);
+			if (value === "0") break;
+			selectDefaultScreen();  // Original MFD no longer responds, showing "WAITING FOR DOWNLOADING"
+			showPopup("satnav_downloading_popup", 120000);
+		} // case
+		break;
+
 		case "satnav_disc_recognized":
 		{
 			// No further handling when in power-save mode
@@ -4915,8 +4997,7 @@ function handleItemChange(item, value)
 
 		case "satnav_curr_street":
 		{
-			satnavInitialized = true;
-			hidePopup("satnav_initializing_popup");
+			satnavSetInitialized(true);
 
 			satnavCurrentStreet = value;
 
@@ -4981,10 +5062,12 @@ function handleItemChange(item, value)
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value.replace(/&#x24E7;/, ''));
 
-				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
-				$("#satnav_manage_personal_address_rename_button").toggleClass("buttonSelected", entryOnDisc);
+				const id = "#satnav_manage_personal_address_rename_button";
+				$(id).toggleClass("buttonDisabled", ! entryOnDisc);
+				$(id).toggleClass("buttonSelected", entryOnDisc);
+				if (entryOnDisc) resizeButton(id);
+
 				$("#satnav_manage_personal_address_delete_button").toggleClass("buttonSelected", ! entryOnDisc);
-				if (entryOnDisc) resizeButton("satnav_manage_personal_address_rename_button");
 			}
 			else
 			{
@@ -5008,10 +5091,12 @@ function handleItemChange(item, value)
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value.replace(/&#x24E7;/, ''));
 
-				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonDisabled", ! entryOnDisc);
-				$("#satnav_manage_professional_address_rename_button").toggleClass("buttonSelected", entryOnDisc);
+				const id = "#satnav_manage_professional_address_rename_button";
+				$(id).toggleClass("buttonDisabled", ! entryOnDisc);
+				$(id).toggleClass("buttonSelected", entryOnDisc);
+				if (entryOnDisc) resizeButton(id);
+
 				$("#satnav_manage_professional_address_delete_button").toggleClass("buttonSelected", ! entryOnDisc);
-				if (entryOnDisc) resizeButton("satnav_manage_professional_address_rename_button");
 			}
 			else
 			{
@@ -5047,7 +5132,7 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
-		case "mfd_to_satnav_go_to_screen":
+		case "go_to_screen":
 		{
 			// A VAN packet indicates we must switch to a specific screen
 
@@ -5135,20 +5220,7 @@ function handleItemChange(item, value)
 				case "enter_city":
 				case "enter_street":
 				{
-					$("#satnav_to_mfd_show_characters_line_1").empty();
-					$("#satnav_to_mfd_show_characters_line_2").empty();
-
-					// Show the spinning disc after a second or so
-					clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
-					handleItemChange.showCharactersSpinningDiscTimer = setTimeout
-					(
-						function ()
-						{
-							$("#satnav_to_mfd_show_characters_spinning_disc").show();
-							ignoringIrCommands = false;
-						},
-						1500
-					);
+					satnavPrepareEntryScreen();
 				} // case
 				break;
 			} // switch
@@ -5183,23 +5255,34 @@ function handleItemChange(item, value)
 
 		case "satnav_to_mfd_list_size":
 		{
-			// Hide the spinning disc
-			ignoringIrCommands = false;
-			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
-			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
+			ignoringIrEscCommand = false;
+
+			const listSize = parseInt(value);
+			if (isNaN(listSize)) break;
 
 			if (satnavToMfdResponse === "service")
 			{
-				// Sat nav menu item "Select a service": enable if sat nav responds with a list size value > 0
-				if (parseInt(value) > 0) $("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
+				// Sat nav menu item "Select a service": enable if sat nav responds with a list size > 0
+				if (listSize > 0)
+				{
+					$("#satnav_main_menu_select_a_service_button").removeClass("buttonDisabled");
+					satnavServiceListSize = listSize;
+				} // if
+			}
+			else
+			{
+				// Hide the spinning disc
+				clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
+				$("#satnav_to_mfd_show_characters_spinning_disc").hide();
+
+				// "List XXX" button: only enable if less than 80 items in list
+				$("#satnav_enter_characters_list_button").toggleClass("buttonDisabled", listSize > 80);
+				$("#satnav_enter_characters_change_or_city_center_button").removeClass("buttonDisabled");
 			} // if
 
-			// "List XXX" button: only enable if less than 80 items in list
-			$("#satnav_enter_characters_list_button").toggleClass("buttonDisabled", parseInt(value) > 80);
-
-			if ($("#satnav_choose_from_list").is(":visible") && value == 0)
+			if ($("#satnav_choose_from_list").is(":visible") && listSize === 0)
 			{
-				if (mfdToSatnavRequest.match(/^service/))
+				if (satnavToMfdResponse.match(/^service/))
 				{
 					// User selected a service which has no address entries for the specified location
 
@@ -5210,14 +5293,14 @@ function handleItemChange(item, value)
 						"set_language_german": "Dieser Dienst ist f&uuml;r<br />diesen Standort<br />nicht verf&uuml;gbar",
 						"set_language_spanish": "Este servicio no est&aacute;<br />disponible para<br />esta ubicaci&oacute;n",
 						"set_language_italian": "Questo servizio non<br />&egrave; disponibile per<br />questa localit&agrave;",
-						"set_language_dutch": "Deze dienst is<br />niet beschikbaar voor<br />deze locatie"
+						"set_language_dutch": "Deze informatie is hier<br />niet beschikbaar"
 					};
 					let content = translations[localStorage.mfdLanguage] ||
 						"This service is<br />not available for<br />this location";
 
-					showStatusPopup(content, 8000);
+					showStatusPopup(content, 7000);
 				}
-				else if (mfdToSatnavRequest === "personal_address_list")
+				else if (satnavToMfdResponse === "personal_address_list")
 				{
 					exitMenu();
 
@@ -5232,9 +5315,9 @@ function handleItemChange(item, value)
 					};
 					let content = translations[localStorage.mfdLanguage] || "Personal directory<br />is empty";
 
-					showStatusPopup(content, 8000);
+					showStatusPopup(content, 7000);
 				}
-				else if (mfdToSatnavRequest === "professional_address_list")
+				else if (satnavToMfdResponse === "professional_address_list")
 				{
 					exitMenu();
 
@@ -5249,7 +5332,7 @@ function handleItemChange(item, value)
 					};
 					let content = translations[localStorage.mfdLanguage] || "Professional directory<br />is empty";
 
-					showStatusPopup(content, 8000);
+					showStatusPopup(content, 7000);
 				} // if
 			} // if
 		} // case
@@ -5362,6 +5445,12 @@ function handleItemChange(item, value)
 		} // case
 		break;
 
+		case "satnav_disclaimer_accepted":
+		{
+			satnavDisclaimerAccepted = (value === "YES");
+		} // case
+		break;
+
 		case "satnav_guidance_preference":
 		{
 			if (value === "---") break;
@@ -5372,22 +5461,7 @@ function handleItemChange(item, value)
 
 		case "satnav_initialized":
 		{
-			if (value !== "YES") break;
-		} // case
-		// Fallthrough intended
-
-		case "satnav_system_id":
-		{
-			// As soon as any value is received for "satnav_system_id", the sat nav is considered "initialized"
-			satnavInitialized = true;
-			hidePopup("satnav_initializing_popup");
-
-			// Show "Continue guidance to destination?" popup if applicable
-			if (contactKeyPosition === "ON" && localStorage.askForGuidanceContinuation === "YES")
-			{
-				showPopup("satnav_continue_guidance_popup", 15000);
-				localStorage.askForGuidanceContinuation = "NO";
-			} // if
+			satnavSetInitialized(value === "YES");
 		} // case
 		break;
 
@@ -5488,7 +5562,7 @@ function handleItemChange(item, value)
 		case "satnav_to_mfd_show_characters":
 		{
 			// Hide the spinning disc
-			ignoringIrCommands = false;
+			ignoringIrEscCommand = false;
 			clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 			$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 
@@ -5764,12 +5838,8 @@ function handleItemChange(item, value)
 				$("#ir_button_pressed").text(button.substring(0, 3));  // Debug info
 
 				// Ignore remote control buttons if contact key is off, or when in power-save mode
-				// But don't ignore in on-desk setup
-				if ($("#esp_mac_address").text() !== "E8:DB:84:DA:BF:81")
-				{
-					if ($("#contact_key_position").text() === "OFF") break;
-					if (economyMode === "ON") break;
-				} // if
+				if ($("#contact_key_position").text() === "OFF") break;
+				if (economyMode === "ON") break;
 
 				handleIrRc(button, held);
 			} // while
@@ -5781,6 +5851,11 @@ function handleItemChange(item, value)
 			if (value === "MFD_SCREEN_ON")
 			{
 				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
+				satnavDownloading = false;
+				$("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
+				$("#satnav_main_menu_select_a_service_button").addClass("buttonDisabled");
+				$('[gid="satnav_to_mfd_list_size"]').empty();
+				$("#satnav_to_mfd_list_size").empty();
 			}
 			else if (value === "MFD_SCREEN_OFF")
 			{

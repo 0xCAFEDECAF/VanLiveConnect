@@ -74,6 +74,7 @@ PGM_P dashStr = notApplicable1Str;
 
 // Defined in WebSocket.ino
 extern bool inMenu;
+extern bool satnavDisclaimerAccepted;
 
 // Defined in PacketFilter.ino
 bool IsPacketSelected(uint16_t iden, VanPacketFilter_t filter);
@@ -2558,6 +2559,9 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
     return VAN_PACKET_PARSE_OK;
 } // ParseAudioSettingsPkt
 
+// Saved equipment status (volatile)
+int16_t satnavServiceListSize = -1;
+
 VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#5E4
@@ -2565,6 +2569,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     const uint8_t* data = pkt.Data();
     uint16_t mfdStatus = (uint16_t)data[0] << 8 | data[1];
+    static bool mfdWasOff = true;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -2614,8 +2619,31 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         } // if
     } // if
 
+    if (mfdWasOff && mfdStatus == MFD_SCREEN_ON)
+    {
+        satnavServiceListSize = -1;
+
+        satnavDisclaimerAccepted = false;
+        at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"satnav_disclaimer_accepted\": \"NO\""));
+
+        UpdateLargeScreenForMfdOff();  // 'largeScreen' will become 'LARGE_SCREEN_CLOCK'
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at,
+                PSTR(
+                    ",\n"
+                    "\"large_screen\": \"%S\",\n"
+                    "\"go_to_screen\": \"clock\""
+                ),
+                LargeScreenStr()
+            );
+
+        mfdWasOff = false;
+    } // if
+
     if (mfdStatus == MFD_SCREEN_OFF)
     {
+        mfdWasOff = true;
+
         // The moment the MFD switches off seems to be the best time to check if the store must be saved; better than
         // when the MFD is active and VAN packets are being received. VAN bus and ESP8266 flash system (SPI based)
         // don't work well together.
@@ -2634,15 +2662,6 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
         isSatnavGuidanceActive = false;
         isCurrentStreetKnown = false;
-
-        // In the "minimal VAN network" (only MFD + head unit), the mfdStatus "MFD_SCREEN_OFF" does not imply that
-        // the MFD has switched off. This situation is recognized by the head unit still being powered on. In that
-        // case, don't update "large_screen".
-        if (! isHeadUnitPowerOn)
-        {
-            UpdateLargeScreenForMfdOff();  // 'largeScreen' will become 'LARGE_SCREEN_CLOCK'
-            at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""), LargeScreenStr());
-        } // if
     } // if
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
@@ -3054,7 +3073,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0710 ? PSTR("ARRIVED_AT_DESTINATION_AUDIO_ANNOUNCEMENT") :  // TODO - guessing
         status == 0x0800 ? PSTR("END_OF_AUDIO_MESSAGE") :  // Follows 0x0400, 0x0700, 0x0701
         status == 0x4000 ? PSTR("GUIDANCE_STOPPED") :
-        status == 0x4001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
+        status == 0x4001 ? PSTR("DESTINATION_NOT_ACCESSIBLE_BY_ROAD") :  // And guidance ended immediately
         status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
         status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
         status == 0x9000 ? PSTR("READING_DISC") :
@@ -3106,6 +3125,7 @@ PGM_P satnavStatus2Str = emptyStr;
 bool satnavDiscRecognized = false;
 bool satnavInitialized = false;
 bool reachedDestination = false;
+uint32_t satnavDownloadProgress = 0;
 
 VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -3117,6 +3137,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     // Count number of times a a "read" frame did not get an in-frame response
     static int nSatNavNotSeen = 0;
+    static int nBursts = 0;
 
     if (dataLen == 0)
     {
@@ -3129,27 +3150,28 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         unsigned long packetInterval = now - lastPacketReceived;  // Arithmetic has safe roll-over
         lastPacketReceived = now;
 
-        if (packetInterval < 500)
+        if (packetInterval < 100)
         {
             // As long as the MFD assumes the sat nav equipment is present (e.g. at boot time), it sends 5 bursts
             // of each 3 packets. Ater that it sends one packet per second.
             nSatNavNotSeen = 0;
 
-            // Already reported "equipment present"?
-            if (satnavEquipmentDetected) return VAN_PACKET_NO_CONTENT;
-
-            satnavEquipmentDetected = true;
+            return VAN_PACKET_NO_CONTENT;
         }
         else
         {
             // Already reported "no equipment present"?
             if (! satnavEquipmentDetected) return VAN_PACKET_NO_CONTENT;
 
+            // Count 7 bursts
+            nBursts++;
+
             // After the last burst, count 2 non-bursts
             nSatNavNotSeen++;
 
+            #define SATNAV_NO_ANSWER_AFTER_BURSTS (7)
             #define SATNAV_NO_ANSWER (2)
-            if (nSatNavNotSeen < SATNAV_NO_ANSWER) return VAN_PACKET_NO_CONTENT;
+            if (nBursts < SATNAV_NO_ANSWER_AFTER_BURSTS && nSatNavNotSeen < SATNAV_NO_ANSWER) return VAN_PACKET_NO_CONTENT;
 
             satnavEquipmentDetected = false;
         } // if
@@ -3171,22 +3193,30 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         return VAN_PACKET_PARSE_OK;
     } // if
 
+    nBursts = 0;
     nSatNavNotSeen = 0;
 
     const uint8_t* data = pkt.Data();
 
-    // Ignore duplicates of the "long" (20 byte) packets
-    static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
-    if (memcmp(data, packetData, dataLen) == 0) return VAN_PACKET_DUPLICATE;
-    memcpy(packetData, data, dataLen);
+    if (satnavEquipmentDetected)
+    {
+        // Ignore duplicates of the "long" (20 byte) packets
+        static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
+        if (memcmp(data, packetData, dataLen) == 0) return VAN_PACKET_DUPLICATE;
+        memcpy(packetData, data, dataLen);
+    } // if
 
     satnavStatus2 = data[1] & 0x0F;
+
+    bool downloadFinished = data[1] & 0x80;
+    if (downloadFinished) satnavDownloadProgress = 0;
 
     satnavStatus2Str =
         satnavStatus2 == SATNAV_STATUS_2_INITIALIZING ? PSTR("INITIALIZING") :
         satnavStatus2 == SATNAV_STATUS_2_IDLE ? PSTR("IDLE") :
         satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE ? PSTR("IN_GUIDANCE_MODE") :
         emptyStr;
+    satnavInitialized = satnavStatus2 != SATNAV_STATUS_2_INITIALIZING;
 
     static bool wasSatnavGuidanceActive = false;
     isSatnavGuidanceActive = satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE;
@@ -3221,7 +3251,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         data[1] & 0x10 ? yesStr : noStr,
         data[1] & 0x40 ? noStr : yesStr,
-        data[1] & 0x80 ? yesStr : noStr,
+        downloadFinished ? yesStr : noStr,
 
         satnavDiscRecognized ? yesStr :
         (data[2] & 0x70) == 0x70 ? noStr :
@@ -3264,7 +3294,10 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
                 data[17] & 0x04 ? PSTR("NEW_GUIDANCE_INSTRUCTION ") : emptyStr,
                 data[17] & 0x08 ? PSTR("READING_DISC ") : emptyStr,
                 data[17] & 0x10 ? PSTR("COMPUTING_ROUTE ") : emptyStr,
+
+                // TODO - not sure. This bit is also set when there is no disc present
                 data[17] & 0x20 ? PSTR("DISC_PRESENT ") : emptyStr,
+
                 reachedDestination ? PSTR("REACHED_DESTINATION ") : emptyStr
             );
     } // if
@@ -3359,6 +3392,8 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     if (dataLen == 2)
     {
+        satnavDownloadProgress = 0;
+
         uint16_t status = (uint16_t)data[0] << 8 | data[1];
 
         const static char jsonFormatter[] PROGMEM =
@@ -3384,7 +3419,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
             status == 0x0110 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING") :
             status == 0x0120 ? PSTR("ACCEPTED_TERMS_AND_CONDITIONS") :
-            status == 0x0140 ? PSTR("GPS_POS_FOUND") :
+            status == 0x0140 ? PSTR("SYSTEM_ID_READ") : // TODO - not sure
             status == 0x0180 ? ToHexStr(status) :  // Changing distance unit (km <--> mi)?
             status == 0x0300 ? PSTR("SATNAV_LANGUAGE_SET_TO_FRENCH") :
             status == 0x0301 ? PSTR("SATNAV_LANGUAGE_SET_TO_ENGLISH") :
@@ -3419,8 +3454,6 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
     else if (dataLen == 17 && data[0] == 0x20)
     {
         // Some set of ID strings. Stays the same even when the navigation CD is changed.
-
-        satnavInitialized = true;
 
         const static char jsonFormatter[] PROGMEM =
         "{\n"
@@ -4421,7 +4454,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         //     -- data[7] << 8 | data[8]: number of items to retrieve (always 38)
 
         request == SR_SERVICE_LIST && param == 0xFF && type == SRT_REQ_N_ITEMS ? emptyStr :
-        request == SR_SERVICE_LIST && param == 0xFF && type == SRT_REQ_ITEMS ? PSTR("satnav_choose_from_list") :
+        request == SR_SERVICE_LIST && param == 0xFF && type == SRT_REQ_ITEMS ? emptyStr :
 
         // * request == 0x09 (SR_SERVICE_ADDRESS),
         //   param == 0x0D:
@@ -4568,7 +4601,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
             snprintf_P(buf + at, n - at, PSTR
                 (
                     ",\n"
-                    "\"mfd_to_satnav_go_to_screen\": \"%S\""
+                    "\"go_to_screen\": \"%S\""
                 ),
 
                 goToScreen
@@ -4637,9 +4670,6 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     return VAN_PACKET_PARSE_OK;
 } // ParseMfdToSatNavPkt
-
-// Saved equipment status (volatile)
-int16_t satnavServiceListSize = -1;
 
 VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -4740,6 +4770,28 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavToMfdPkt
+
+VanPacketParseResult_t ParseSatNavDownloading(TVanPacketRxDesc& pkt, char* buf, const int n)
+{
+    const static char jsonFormatter[] PROGMEM =
+    "{\n"
+        "\"event\": \"display\",\n"
+        "\"data\":\n"
+        "{\n"
+            "\"satnav_downloading\": \"%" PRIu32 "\"\n"
+        "}\n"
+    "}\n";
+
+    int at = snprintf_P(buf, n, jsonFormatter, ++satnavDownloadProgress);
+
+    satnavServiceListSize = -1;
+    satnavDisclaimerAccepted = false;  // User will need to accept again
+
+    // JSON buffer overflow?
+    if (at >= n) return VAN_PACKET_PARSE_JSON_TOO_LONG;
+
+    return VAN_PACKET_PARSE_OK;
+} // ParseSatNavDownloading
 
 VanPacketParseResult_t ParseWheelSpeedPkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -5229,6 +5281,11 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         SatNavGuidancePreferenceStr(satnavGuidancePreference)
     );
 
+    if (satnavDisclaimerAccepted)
+    {
+        at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"satnav_disclaimer_accepted\": \"YES\""));
+    } // if
+
     // The fuel level as percentage (byte 7 of IDEN 4FC) does not seem to be regularly sent over the VAN bus,
     // so if we have it, report it here.
     if (fuelLevelPercentage != FUEL_LEVEL_PERCENTAGE_INVALID)
@@ -5322,7 +5379,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
     if (handler->ignoreDups && isDuplicate) return true;  // Duplicate packet, to be ignored
 
     // Don't repeatedly print the same packet
-    if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print
+    if (isDuplicate) return false;  // Duplicate packet, not to be ignored, but don't print over and over
 
   #ifdef PRINT_RAW_PACKET_DATA
     // Not a duplicate packet: print the diff, and save the packet to compare with the next
@@ -5426,6 +5483,7 @@ static IdenHandler_t handlers[] =
     { SATNAV_REPORT_IDEN, "satnav_report", -1, true, &ParseSatNavReportPkt, -1 },
     { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, true, &ParseMfdToSatNavPkt, -1 },
     { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, true, &ParseSatNavToMfdPkt, -1 },
+    { SATNAV_DOWNLOADING_IDEN, "satnav_downloading", 0, false, &ParseSatNavDownloading, -1 },
     { WHEEL_SPEED_IDEN, "wheel_speed", 5, true, &ParseWheelSpeedPkt, -1 },
     { ODOMETER_IDEN, "odometer", 5, true, &ParseOdometerPkt, -1 },
     { COM2000_IDEN, "com2000", 10, true, &ParseCom2000Pkt, -1 },

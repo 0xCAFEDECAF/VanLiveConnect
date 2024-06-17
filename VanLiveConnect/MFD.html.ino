@@ -1008,7 +1008,7 @@ char mfd_html[] PROGMEM = R"=====(
 							checked by the user.<br />
 						</div>
 						<div id="satnav_disclaimer_validate_button"
-							on_click="satnavDisclaimerAccepted = true; upMenu(); satnavGotoMainMenu();"
+							on_click="satnavDisclaimerAcceptClicked();"
 							class="button validateButton buttonSelected" style="left:630px; top:300px;">
 							Validate
 						</div>
@@ -1022,7 +1022,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div class="menuTitleLine">Navigation / Guidance<br /></div>
 
-					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
+					<!-- TODO - trigger the screen change via "go_to_screen"? -->
 					<div class="button buttonSelected" on_click="satnavGotoEnterCity();">Enter new destination</div>
 
 					<!--
@@ -1064,7 +1064,7 @@ char mfd_html[] PROGMEM = R"=====(
 						on_click="satnavSetDirectoryAddressScreenMode('MANAGE');"
 						goto_id="satnav_directory_management_menu">Directory management</div>
 
-					<div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
+					<div class="button buttonDisabled" gid="satnav_volume_menu_button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
 					<div class="button" on_click="showPopup('satnav_delete_directory_data_popup');">Delete directories</div>
 
@@ -1075,10 +1075,10 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="satnav_directory_management_menu" class="tag menuScreen">
 					<div class="menuTitleLine">Directory management<br /></div>
 
-					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
+					<!-- TODO - trigger the screen change via "go_to_screen"? -->
 					<div class="button buttonSelected" on_click="satnavGotoListScreenPersonalAddressList();">Personal directory</div>
 
-					<!-- TODO - trigger the screen change via "mfd_to_satnav_go_to_screen"? -->
+					<!-- TODO - trigger the screen change via "go_to_screen"? -->
 					<div class="button" on_click="satnavGotoListScreenProfessionalAddressList();">Professional directory</div>
 				</div>	<!-- "satnav_directory_management_menu" -->
 
@@ -1090,7 +1090,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div class="button" goto_id="satnav_show_programmed_destination">Programmed destination</div>
 
-					<div class="button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
+					<div class="button buttonDisabled" gid="satnav_volume_menu_button" goto_id="satnav_vocal_synthesis_level">Vocal synthesis volume</div>
 
 					<div id="satnav_tools_menu_stop_guidance_button" class="button"
 						on_click="satnavStopOrResumeGuidance();">Stop guidance</div>
@@ -1251,7 +1251,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_choose_from_list"
 						on_enter="if (highlightIndexes['satnav_choice_list'] === 0) $('#satnav_choice_list').scrollTop(0);"
-						on_esc="if ($('#satnav_tag_street_list').is(':visible')) ignoringIrCommands = true; upMenu();"
+						on_esc="if ($('#satnav_tag_street_list').is(':visible')) ignoringIrEscCommand = true; upMenu();"
 						style="display:none;">
 
 						<!-- What is being entered? (city, street) -->
@@ -1419,7 +1419,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_show_service_address"
 						style="display:none;"
-						on_esc="mfdToSatnavRequest = 'service';"
+						on_esc="mfdToSatnavRequest = 'service'; upMenu();"
 						on_enter="satnavEnterShowServiceAddress();">
 
 						<div id="satnav_service_address_entry" class="dots satNavAddressEntry"></div>
@@ -2428,6 +2428,16 @@ char mfd_html[] PROGMEM = R"=====(
 					Navigation system<br />being initialised
 				</div>
 			</div>	<!-- "satnav_initializing_popup" -->
+
+			<!-- Sat nav downloading popup -->
+
+			<div id="satnav_downloading_popup"
+				on_enter="satnavDownloading = true;"
+				class="icon notificationPopup">
+				<div class="centerAligned messagePopupArea">
+					DOWNLOAD IN PROGRESS - <span id="satnav_download_progress"></span>
+				</div>
+			</div>	<!-- "satnav_downloading_popup" -->
 
 			<!-- Sat nav popup "Input has been stored in personal directory" -->
 

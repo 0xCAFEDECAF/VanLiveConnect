@@ -19,6 +19,7 @@ void WifiChangeChannel();
 extern uint8_t mfdDistanceUnit;
 extern uint8_t mfdTemperatureUnit;
 extern uint8_t mfdTimeUnit;
+extern int16_t satnavServiceListSize;
 void PrintJsonText(const char* jsonBuffer);
 void ResetPacketPrevData();
 
@@ -46,7 +47,9 @@ std::map<uint32_t, unsigned long> lastWebSocketCommunication;
 // Counts the number of new connection requests from the WebSocket client
 int nWebSocketConnections = 0;
 
+// Data coming in from the WebSocket client (user)
 bool inMenu = false;  // true if user is browsing the menus
+bool satnavDisclaimerAccepted = false;  // true if user has accepted the sat nav disclaimer screen
 int irButtonFasterRepeat = 0;  // Some sat nav "list" screens have a slightly quicker IR repeat timing
 
 // Check if a webSocket on a specific ID is connected
@@ -386,6 +389,19 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     {
         // The WebSocket client is browsing through a menu
         inMenu = clientMessage.endsWith(":YES");
+    }
+    else if (clientMessage.startsWith("satnav_disclaimer_accepted:"))
+    {
+        // The WebSocket client has just accepted the sat nav disclaimer screen
+        satnavDisclaimerAccepted = clientMessage.endsWith(":YES");
+
+        Serial.printf("==> ProcessWebSocketClientMessage: satnavDisclaimerAccepted = %s\n", satnavDisclaimerAccepted ? "true" : "false");
+    }
+    else if (clientMessage.startsWith("satnav_service_list_size:"))
+    {
+        satnavServiceListSize = clientMessage.substring(25).toInt();
+
+        Serial.printf("==> ProcessWebSocketClientMessage: satnavServiceListSize = %d\n", satnavServiceListSize);
     }
     else if (clientMessage.startsWith("ir_button_faster_repeat:"))
     {
