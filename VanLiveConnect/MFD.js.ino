@@ -2083,6 +2083,7 @@ var satnavDownloading = false;
 var satnavStatus1 = "";
 var satnavStatus3 = "";
 var satnavDestinationNotAccessible = false;
+var satnavNotOnMap = false;
 var satnavComputingRoute = false;
 var satnavDisplayCanBeDimmed = true;
 
@@ -4707,7 +4708,7 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
-			if ($("#satnav_not_on_map_icon").is(':visible')) break;
+			if (satnavNotOnMap) break;
 			if (! satnavOnMap) break;
 
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
@@ -4728,7 +4729,7 @@ function handleItemChange(item, value)
 			} // if
 
 			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
-			if ($("#satnav_not_on_map_icon").is(':visible')) break;
+			if (satnavNotOnMap) break;
 			if (! satnavOnMap) break;
 
 			temporarilyChangeLargeScreenTo("satnav_guidance", 120000);
@@ -4817,6 +4818,7 @@ function handleItemChange(item, value)
 			if (previousSatnavMode === "IN_GUIDANCE_MODE")
 			{
 				if ($("#satnav_guidance").is(":visible")) selectDefaultScreen();
+				satnavNotOnMap = false;
 			} // if
 
 			if (value === "IDLE") satnavRouteComputed = false;
@@ -5680,8 +5682,8 @@ function handleItemChange(item, value)
 		case "satnav_not_on_map_icon":
 		{
 			// Has anything changed?
-			if (value === handleItemChange.notOnMapIcon) break;
-			handleItemChange.notOnMapIcon = value;
+			if (value === satnavNotOnMap) break;
+			satnavNotOnMap = value;
 
 			$("#satnav_turn_at_indication").toggle(value !== "ON");
 			if (value !== "ON") break;
