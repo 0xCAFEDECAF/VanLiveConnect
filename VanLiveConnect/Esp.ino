@@ -129,7 +129,7 @@ const char* EspSystemDataToJson(char* buf, const int n)
             "\"esp_flash_size_ide\": \"%s MBytes\",\n"
             "\"esp_flash_speed_ide\": \"%s MHz\",\n"
 
-            "\"esp_flash_mode_ide\": \"%S\",\n"
+            "\"esp_flash_mode_ide\": \"%s\",\n"
 
             "\"esp_mac_address\": \"%s\",\n"
             "\"esp_ip_address\": \"%s\",\n"
@@ -138,7 +138,7 @@ const char* EspSystemDataToJson(char* buf, const int n)
             "\"esp_free_ram\": \"%u bytes\",\n"
 
             "\"img_md5_checksum\": \"%s\",\n"
-            "\"img_compile_date\": \"%S\"\n"
+            "\"img_compile_date\": \"%s\"\n"
         "}\n"
     "}\n";
 

@@ -82,7 +82,7 @@ uint8_t mfdLanguage = MFD_LANGUAGE_ENGLISH;
 
 unsigned long NotificationPopupShowingSince = 0;
 unsigned long TripComputerPopupShowingSince = 0;
-long popupDuration = 0;
+unsigned long popupDuration = 0;
 
 // As found in VAN bus packets with IDEN 0x5E4, data bytes 0 and 1
 enum MfdStatus_t
@@ -178,14 +178,14 @@ void NoPopup()
 // Register the fact that a notification popup (not the trip computer popup) is showing.
 // We need to know when a popup is showing, e.g. to know when to ignore a "MOD" button press from the
 // IR remote control.
-void NotificationPopupShowing(unsigned long since, long duration)
+void NotificationPopupShowing(unsigned long since, unsigned long duration)
 {
     NotificationPopupShowingSince = since;
     TripComputerPopupShowingSince = 0;
     popupDuration = duration;
 
   #ifdef DEBUG_ORIGINAL_MFD
-    Serial.printf_P(PSTR("[originalMfd] NotificationPopupShowing(%ld msec)\n"), popupDuration);
+    Serial.printf_P(PSTR("[originalMfd] NotificationPopupShowing(%lu msec)\n"), popupDuration);
   #endif // DEBUG_ORIGINAL_MFD
 } // NotificationPopupShowing
 
@@ -199,7 +199,7 @@ bool IsNotificationPopupShowing(bool beVerbose)
     if (beVerbose)
     {
         Serial.printf_P(
-            PSTR("[originalMfd] IsNotificationPopupShowing = %S (popupDuration = %ld"),
+            PSTR("[originalMfd] IsNotificationPopupShowing = %S (popupDuration = %lu"),
             result ? yesStr : noStr,
             popupDuration
         );
@@ -218,7 +218,7 @@ bool IsNotificationPopupShowing(bool beVerbose)
 } // IsNotificationPopupShowing
 
 // Register the fact that the trip computer popup is showing
-void TripComputerPopupShowing(unsigned long since, long duration)
+void TripComputerPopupShowing(unsigned long since, unsigned long duration)
 {
     NotificationPopupShowingSince = 0;
     TripComputerPopupShowingSince = since;
@@ -226,7 +226,7 @@ void TripComputerPopupShowing(unsigned long since, long duration)
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] TripComputerPopupShowing(%ld msec); TripComputer = %S\n"),
+        PSTR("[originalMfd] TripComputerPopupShowing(%lu msec); TripComputer = %S\n"),
         popupDuration,
         TripComputerStr()
     );
@@ -459,7 +459,7 @@ void UpdateLargeScreenForHeadUnitOn()
 
   #ifdef DEBUG_ORIGINAL_MFD
     char popupDurationStr[20];
-    sprintf_P(popupDurationStr, PSTR(" (%ld msec)"), popupDuration);
+    sprintf_P(popupDurationStr, PSTR(" (%lu msec)"), popupDuration);
     Serial.printf_P(
         PSTR("[originalMfd] Head unit powered on; NotificationPopupShowing = %S%S; largeScreen := %S\n"),
         IsNotificationPopupShowing() ? yesStr : noStr,

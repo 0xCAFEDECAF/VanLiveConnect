@@ -85,7 +85,7 @@ extern uint8_t mfdLanguage;
 PGM_P TripComputerStr();
 PGM_P SmallScreenStr();
 PGM_P LargeScreenStr();
-void NotificationPopupShowing(unsigned long since, long duration);
+void NotificationPopupShowing(unsigned long since, unsigned long duration);
 bool IsTripComputerPopupShowing();
 void InitSmallScreen();
 void ResetTripInfo(uint16_t mfdStatus);
@@ -283,7 +283,7 @@ char* ToFloatStr(char* buffer, float f, int prec, bool useLocalizedDecimalSepara
 // See also: https://www.ascii-code.com/ .
 void AsciiToHtml(String& in)
 {
-    for (int i = 0; i < in.length(); i++)
+    for (unsigned int i = 0; i < in.length(); i++)
     {
         char c = in.c_str()[i];
 
@@ -717,8 +717,8 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
     const static char jsonFormatter[] PROGMEM =
         "\n"
         "},\n"
-        "\"%S_direction_as_text\": \"%u.%u\",\n"  // degrees
-        "\"%S_direction\":\n"
+        "\"%s_direction_as_text\": \"%u.%u\",\n"  // degrees
+        "\"%s_direction\":\n"
         "{\n"
             "\"style\":\n"
             "{\n"
@@ -847,19 +847,19 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"dash_light\": \"%S\",\n"
+            "\"dash_light\": \"%s\",\n"
             "\"dash_actual_brightness\": \"%u\",\n"
-            "\"contact_key_position\": \"%S\",\n"
-            "\"engine_running\": \"%S\",\n"
-            "\"economy_mode\": \"%S\",\n"
-            "\"in_reverse\": \"%S\",\n"
-            "\"trailer\": \"%S\",\n"
-            "\"coolant_temp\": \"%S\",\n"
+            "\"contact_key_position\": \"%s\",\n"
+            "\"engine_running\": \"%s\",\n"
+            "\"economy_mode\": \"%s\",\n"
+            "\"in_reverse\": \"%s\",\n"
+            "\"trailer\": \"%s\",\n"
+            "\"coolant_temp\": \"%s\",\n"
             "\"coolant_temp_perc\":\n"
             "{\n"
                 "\"style\":\n"
                 "{\n"
-                    "\"transform\": \"scaleX(%S)\"\n"
+                    "\"transform\": \"scaleX(%s)\"\n"
                 "}\n"
             "},\n"
             "\"odometer_1\": \"%s\",\n"
@@ -926,11 +926,11 @@ VanPacketParseResult_t ParseHeadUnitStalkPkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"head_unit_stalk_button_next\": \"%S\",\n"
-            "\"head_unit_stalk_button_prev\": \"%S\",\n"
-            "\"head_unit_stalk_button_volume_up\": \"%S\",\n"
-            "\"head_unit_stalk_button_volume_down\": \"%S\",\n"
-            "\"head_unit_stalk_button_source\": \"%S\",\n"
+            "\"head_unit_stalk_button_next\": \"%s\",\n"
+            "\"head_unit_stalk_button_prev\": \"%s\",\n"
+            "\"head_unit_stalk_button_volume_up\": \"%s\",\n"
+            "\"head_unit_stalk_button_volume_down\": \"%s\",\n"
+            "\"head_unit_stalk_button_source\": \"%s\",\n"
             "\"head_unit_stalk_wheel\": \"%d\",\n"
             "\"head_unit_stalk_wheel_rollover\": \"%u\"\n"
         "}\n"
@@ -965,7 +965,7 @@ const char PROGMEM fuelLevelPercentageFormatter[] =
     "{\n"
         "\"style\":\n"
         "{\n"
-            "\"transform\": \"scaleX(%S)\"\n"
+            "\"transform\": \"scaleX(%s)\"\n"
         "}\n"
     "}";
 
@@ -1006,21 +1006,21 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"instrument_cluster\": \"%SENALED\",\n"
-            "\"speed_regulator_wheel\": \"%S\",\n"
-            "\"hazard_lights\": \"%S\",\n"
-            "\"diesel_glow_plugs\": \"%S\",\n"
-            "\"door_open\": \"%S\",\n"
-            "\"distance_to_service\": \"%ld\",\n"
-            "\"distance_to_service_dash\": \"%ld\",\n"
+            "\"instrument_cluster\": \"%sENALED\",\n"
+            "\"speed_regulator_wheel\": \"%s\",\n"
+            "\"hazard_lights\": \"%s\",\n"
+            "\"diesel_glow_plugs\": \"%s\",\n"
+            "\"door_open\": \"%s\",\n"
+            "\"distance_to_service\": \"%" PRId32 "\",\n"
+            "\"distance_to_service_dash\": \"%" PRId32 "\",\n"
             "\"distance_to_service_perc\":\n"
             "{\n"
                 "\"style\":\n"
                 "{\n"
-                    "\"transform\": \"scaleX(%S)\"\n"
+                    "\"transform\": \"scaleX(%s)\"\n"
                 "}\n"
             "},\n"
-            "\"lights\": \"%S%S%S\"";
+            "\"lights\": \"%s%s%s\"";
 
     char floatBuf[MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
@@ -1187,7 +1187,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"head_unit_report\": \"%S\"";
+                "\"head_unit_report\": \"%s\"";
 
         at = snprintf_P(buf, n, jsonFormatter,
 
@@ -1337,15 +1337,15 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"mfd_to_satnav_instruction\": \"%S\",\n"
-                "\"mfd_to_satnav_status_1_request\": \"%S\",\n"
-                "\"mfd_to_satnav_status_2_request\": \"%S\",\n"
-                "\"mfd_to_satnav_status_3_request\": \"%S\",\n"
-                "\"mfd_to_satnav_guidance_request\": \"%S\",\n"
-                "\"mfd_to_satnav_guidance_data_request\": \"%S\",\n"
-                "\"mfd_to_satnav_report_request\": \"%S\",\n"
-                "\"mfd_to_satnav_response_request\": \"%S\",\n"
-                "\"mfd_to_satnav_user_selection\": \"%S\"";
+                "\"mfd_to_satnav_instruction\": \"%s\",\n"
+                "\"mfd_to_satnav_status_1_request\": \"%s\",\n"
+                "\"mfd_to_satnav_status_2_request\": \"%s\",\n"
+                "\"mfd_to_satnav_status_3_request\": \"%s\",\n"
+                "\"mfd_to_satnav_guidance_request\": \"%s\",\n"
+                "\"mfd_to_satnav_guidance_data_request\": \"%s\",\n"
+                "\"mfd_to_satnav_report_request\": \"%s\",\n"
+                "\"mfd_to_satnav_response_request\": \"%s\",\n"
+                "\"mfd_to_satnav_user_selection\": \"%s\"";
 
         uint16_t code = (uint16_t)data[1] << 8 | data[2];
 
@@ -1572,10 +1572,10 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"right_stalk_button\": \"%S\",\n"
-            "\"small_screen\": \"%S\",\n"
-            "\"trip_computer_screen_tab\": \"%S\",\n"
-            "\"mfd_popup\": \"%S\"";
+            "\"right_stalk_button\": \"%s\",\n"
+            "\"small_screen\": \"%s\",\n"
+            "\"trip_computer_screen_tab\": \"%s\",\n"
+            "\"mfd_popup\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter1,
         stalkIsPressed ? PSTR("PRESSED") : PSTR("RELEASED"),
@@ -1598,19 +1598,19 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
     const static char jsonFormatter2[] PROGMEM =
             ",\n"
-            "\"door_front_right\": \"%S\",\n"
-            "\"door_front_left\": \"%S\",\n"
-            "\"door_rear_right\": \"%S\",\n"
-            "\"door_rear_left\": \"%S\",\n"
-            "\"door_boot\": \"%S\",\n"
+            "\"door_front_right\": \"%s\",\n"
+            "\"door_front_left\": \"%s\",\n"
+            "\"door_rear_right\": \"%s\",\n"
+            "\"door_rear_left\": \"%s\",\n"
+            "\"door_boot\": \"%s\",\n"
             "\"exp_moving_avg_speed\": \"%u\",\n"
-            "\"delivered_power\": \"%S\",\n"
-            "\"delivered_torque\": \"%S\",\n"
-            "\"inst_consumption\": \"%S\",\n"
+            "\"delivered_power\": \"%s\",\n"
+            "\"delivered_torque\": \"%s\",\n"
+            "\"inst_consumption\": \"%s\",\n"
             "\"distance_to_empty\": \"%u\",\n"
             "\"avg_speed_1\": \"%u\",\n"
-            "\"distance_1\": \"%S\",\n"
-            "\"avg_consumption_1\": \"%S\"";
+            "\"distance_1\": \"%s\",\n"
+            "\"avg_consumption_1\": \"%s\"";
 
     char floatBuf[4][MAX_FLOAT_SIZE];
     at += at >= n ? 0 :
@@ -1667,8 +1667,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     const static char jsonFormatter3[] PROGMEM =
             ",\n"
             "\"avg_speed_2\": \"%u\",\n"
-            "\"distance_2\": \"%S\",\n"
-            "\"avg_consumption_2\": \"%S\"\n"
+            "\"distance_2\": \"%s\",\n"
+            "\"avg_consumption_2\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -1816,8 +1816,8 @@ VanPacketParseResult_t ParseDashboardPkt(TVanPacketRxDesc& pkt, char* buf, const
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"engine_rpm\": \"%S\",\n"
-            "\"vehicle_speed\": \"%S\"\n"
+            "\"engine_rpm\": \"%s\",\n"
+            "\"vehicle_speed\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -1854,10 +1854,10 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"hazard_lights_button\": \"%S\",\n"  // Not sure
-            "\"door_lock\": \"%S\",\n"
+            "\"hazard_lights_button\": \"%s\",\n"  // Not sure
+            "\"door_lock\": \"%s\",\n"
             "\"dashboard_programmed_brightness\": \"%u\",\n"
-            "\"esp\": \"%S\"";
+            "\"esp\": \"%s\"";
 
     // data[6..10] - always 00-FF-00-FF-00
 
@@ -1874,13 +1874,13 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         float fuelLevelFiltered = data[4] / 2.0;  // Averaged over time
 
         const static char jsonFormatterFuel[] PROGMEM = ",\n"
-            "\"fuel_level\": \"%S\",\n"
-            "\"fuel_level_unit\": \"%S\",\n"
+            "\"fuel_level\": \"%s\",\n"
+            "\"fuel_level_unit\": \"%s\",\n"
             "\"fuel_level_perc\":\n"
             "{\n"
                 "\"style\":\n"
                 "{\n"
-                    "\"transform\": \"scaleX(%S)\"\n"
+                    "\"transform\": \"scaleX(%s)\"\n"
                 "}\n"
             "}";
 
@@ -1904,7 +1904,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         float fuelLevelRaw = data[5] / 2.0;  // Instantaneous value; can vary wildly
 
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, ",\n\"fuel_level_raw\": \"%S\"",
+            snprintf_P(buf + at, n - at, ",\n\"fuel_level_raw\": \"%s\"",
                 mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                     ToFloatStr(floatBuf[2], fuelLevelRaw, 1) :
                     ToFloatStr(floatBuf[2], ToGallons(fuelLevelRaw), 1)
@@ -2022,27 +2022,27 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 "\"event\": \"display\",\n"
                 "\"data\":\n"
                 "{\n"
-                    "\"tuner_band\": \"%S\",\n"
-                    "\"fm_band\": \"%S\",\n"
-                    "\"fm_band_1\": \"%S\",\n"
-                    "\"fm_band_2\": \"%S\",\n"
-                    "\"fm_band_ast\": \"%S\",\n"
-                    "\"am_band\": \"%S\",\n"
-                    "\"tuner_memory\": \"%S\",\n"
-                    "\"frequency\": \"%S\",\n"
-                    "\"frequency_h\": \"%S\",\n"
-                    "\"frequency_unit\": \"%S\",\n"
-                    "\"frequency_khz\": \"%S\",\n"
-                    "\"frequency_mhz\": \"%S\",\n"
-                    "\"signal_strength\": \"%S\",\n"
-                    "\"search_mode\": \"%S\",\n"
-                    "\"search_manual\": \"%S\",\n"
-                    "\"search_sensitivity\": \"%S\",\n"
-                    "\"search_sensitivity_lo\": \"%S\",\n"
-                    "\"search_sensitivity_dx\": \"%S\",\n"
-                    "\"search_direction\": \"%S\",\n"
-                    "\"search_direction_up\": \"%S\",\n"
-                    "\"search_direction_down\": \"%S\"";
+                    "\"tuner_band\": \"%s\",\n"
+                    "\"fm_band\": \"%s\",\n"
+                    "\"fm_band_1\": \"%s\",\n"
+                    "\"fm_band_2\": \"%s\",\n"
+                    "\"fm_band_ast\": \"%s\",\n"
+                    "\"am_band\": \"%s\",\n"
+                    "\"tuner_memory\": \"%s\",\n"
+                    "\"frequency\": \"%s\",\n"
+                    "\"frequency_h\": \"%s\",\n"
+                    "\"frequency_unit\": \"%s\",\n"
+                    "\"frequency_khz\": \"%s\",\n"
+                    "\"frequency_mhz\": \"%s\",\n"
+                    "\"signal_strength\": \"%s\",\n"
+                    "\"search_mode\": \"%s\",\n"
+                    "\"search_manual\": \"%s\",\n"
+                    "\"search_sensitivity\": \"%s\",\n"
+                    "\"search_sensitivity_lo\": \"%s\",\n"
+                    "\"search_sensitivity_dx\": \"%s\",\n"
+                    "\"search_direction\": \"%s\",\n"
+                    "\"search_direction_up\": \"%s\",\n"
+                    "\"search_direction_down\": \"%s\"";
 
             char floatBuf[MAX_FLOAT_SIZE];
             at = snprintf_P(buf, n, jsonFormatterCommon,
@@ -2132,25 +2132,25 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 rdsTxt[8] = 0;
 
                 const static char jsonFormatterFmBand[] PROGMEM = ",\n"
-                    "\"pty_selection_menu\": \"%S\",\n"
-                    "\"selected_pty_8\": \"%S\",\n"
-                    "\"selected_pty_16\": \"%S\",\n"
-                    "\"selected_pty_full\": \"%S\",\n"
-                    "\"pty_standby_mode\": \"%S\",\n"
-                    "\"pty_match\": \"%S\",\n"
-                    "\"pty_8\": \"%S\",\n"
-                    "\"pty_16\": \"%S\",\n"
-                    "\"pty_full\": \"%S\",\n"
-                    "\"pi_code\": \"%S\",\n"
-                    "\"pi_country\": \"%S\",\n"
-                    "\"pi_area_coverage\": \"%S\",\n"
-                    "\"regional\": \"%S\",\n"
-                    "\"ta_selected\": \"%S\",\n"
-                    "\"ta_not_available\": \"%S\",\n"
-                    "\"rds_selected\": \"%S\",\n"
-                    "\"rds_not_available\": \"%S\",\n"
+                    "\"pty_selection_menu\": \"%s\",\n"
+                    "\"selected_pty_8\": \"%s\",\n"
+                    "\"selected_pty_16\": \"%s\",\n"
+                    "\"selected_pty_full\": \"%s\",\n"
+                    "\"pty_standby_mode\": \"%s\",\n"
+                    "\"pty_match\": \"%s\",\n"
+                    "\"pty_8\": \"%s\",\n"
+                    "\"pty_16\": \"%s\",\n"
+                    "\"pty_full\": \"%s\",\n"
+                    "\"pi_code\": \"%s\",\n"
+                    "\"pi_country\": \"%s\",\n"
+                    "\"pi_area_coverage\": \"%s\",\n"
+                    "\"regional\": \"%s\",\n"
+                    "\"ta_selected\": \"%s\",\n"
+                    "\"ta_not_available\": \"%s\",\n"
+                    "\"rds_selected\": \"%s\",\n"
+                    "\"rds_not_available\": \"%s\",\n"
                     "\"rds_text\": \"%s\",\n"
-                    "\"info_traffic\": \"%S\"";
+                    "\"info_traffic\": \"%s\"";
 
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatterFmBand,
@@ -2198,15 +2198,15 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 "\"event\": \"display\",\n"
                 "\"data\":\n"
                 "{\n"
-                    "\"tape_side\": \"%S\",\n"
-                    "\"tape_status\": \"%S\",\n"
-                    "\"tape_status_stopped\": \"%S\",\n"
-                    "\"tape_status_loading\": \"%S\",\n"
-                    "\"tape_status_play\": \"%S\",\n"
-                    "\"tape_status_fast_forward\": \"%S\",\n"
-                    "\"tape_status_next_track\": \"%S\",\n"
-                    "\"tape_status_rewind\": \"%S\",\n"
-                    "\"tape_status_previous_track\": \"%S\"\n"
+                    "\"tape_side\": \"%s\",\n"
+                    "\"tape_status\": \"%s\",\n"
+                    "\"tape_status_stopped\": \"%s\",\n"
+                    "\"tape_status_loading\": \"%s\",\n"
+                    "\"tape_status_play\": \"%s\",\n"
+                    "\"tape_status_fast_forward\": \"%s\",\n"
+                    "\"tape_status_next_track\": \"%s\",\n"
+                    "\"tape_status_rewind\": \"%s\",\n"
+                    "\"tape_status_previous_track\": \"%s\"\n"
                 "}\n"
             "}\n";
 
@@ -2252,7 +2252,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 "\"event\": \"display\",\n"
                 "\"data\":\n"
                 "{\n"
-                    "\"radio_preset_%S_%u\": \"%s%S\"\n"
+                    "\"radio_preset_%s_%u\": \"%s%s\"\n"
                 "}\n"
             "}\n";
 
@@ -2297,19 +2297,19 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 "\"event\": \"display\",\n"
                 "\"data\":\n"
                 "{\n"
-                    "\"cd_status\": \"%S\",\n"
-                    "\"cd_status_loading\": \"%S\",\n"
-                    "\"cd_status_eject\": \"%S\",\n"
-                    "\"cd_status_pause\": \"%S\",\n"
-                    "\"cd_status_play\": \"%S\",\n"
-                    "\"cd_status_fast_forward\": \"%S\",\n"
-                    "\"cd_status_rewind\": \"%S\",\n"
-                    "\"cd_status_searching\": \"%S\",\n"
-                    "\"cd_track_time\": \"%S\",\n"
+                    "\"cd_status\": \"%s\",\n"
+                    "\"cd_status_loading\": \"%s\",\n"
+                    "\"cd_status_eject\": \"%s\",\n"
+                    "\"cd_status_pause\": \"%s\",\n"
+                    "\"cd_status_play\": \"%s\",\n"
+                    "\"cd_status_fast_forward\": \"%s\",\n"
+                    "\"cd_status_rewind\": \"%s\",\n"
+                    "\"cd_status_searching\": \"%s\",\n"
+                    "\"cd_track_time\": \"%s\",\n"
                     "\"cd_current_track\": \"%X\",\n"
-                    "\"cd_total_tracks\": \"%S\",\n"
-                    "\"cd_total_time\": \"%S\",\n"
-                    "\"cd_random\": \"%S\"\n"
+                    "\"cd_total_tracks\": \"%s\",\n"
+                    "\"cd_total_time\": \"%s\",\n"
+                    "\"cd_random\": \"%s\"\n"
                 "}\n"
             "}\n";
 
@@ -2377,10 +2377,10 @@ VanPacketParseResult_t ParseMfdLanguageUnitsPkt(TVanPacketRxDesc& pkt, char* buf
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"mfd_language\": \"%S\",\n"
-            "\"mfd_temperature_unit\": \"%S\",\n"
-            "\"mfd_distance_unit\": \"%S\",\n"
-            "\"mfd_time_unit\": \"%S\"\n"
+            "\"mfd_language\": \"%s\",\n"
+            "\"mfd_temperature_unit\": \"%s\",\n"
+            "\"mfd_distance_unit\": \"%s\",\n"
+            "\"mfd_time_unit\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -2470,34 +2470,34 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"head_unit_power\": \"%S\",\n"
-            "\"tape_present\": \"%S\",\n"
-            "\"cd_present\": \"%S\",\n"
-            "\"audio_source\": \"%S\",\n"
-            "\"ext_mute\": \"%S\",\n"
-            "\"mute\": \"%S\",\n"
+            "\"head_unit_power\": \"%s\",\n"
+            "\"tape_present\": \"%s\",\n"
+            "\"cd_present\": \"%s\",\n"
+            "\"audio_source\": \"%s\",\n"
+            "\"ext_mute\": \"%s\",\n"
+            "\"mute\": \"%s\",\n"
             "\"volume\": \"%u\",\n"
-            "\"volume_update\": \"%S\",\n"
+            "\"volume_update\": \"%s\",\n"
             "\"volume_perc\":\n"
             "{\n"
                 "\"style\":\n"
                 "{\n"
-                    "\"transform\": \"scaleX(%S)\"\n"
+                    "\"transform\": \"scaleX(%s)\"\n"
                 "}\n"
             "},\n"
-            "\"audio_menu\": \"%S\",\n"
+            "\"audio_menu\": \"%s\",\n"
             "\"bass\": \"%+d\",\n"
-            "\"bass_update\": \"%S\",\n"
+            "\"bass_update\": \"%s\",\n"
             "\"treble\": \"%+d\",\n"
-            "\"treble_update\": \"%S\",\n"
-            "\"loudness\": \"%S\",\n"
+            "\"treble_update\": \"%s\",\n"
+            "\"loudness\": \"%s\",\n"
             "\"fader\": \"%s%d\",\n"
-            "\"fader_update\": \"%S\",\n"
+            "\"fader_update\": \"%s\",\n"
             "\"balance\": \"%s%d\",\n"
-            "\"balance_update\": \"%S\",\n"
-            "\"auto_volume\": \"%S\",\n"
-            "\"large_screen\": \"%S\",\n"
-            "\"mfd_popup\": \"%S\"\n"
+            "\"balance_update\": \"%s\",\n"
+            "\"auto_volume\": \"%s\",\n"
+            "\"large_screen\": \"%s\",\n"
+            "\"mfd_popup\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -2576,7 +2576,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"mfd_status\": \"%S\"";
+            "\"mfd_status\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
 
@@ -2770,9 +2770,9 @@ VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"ac_icon\": \"%S\",\n"
-            "\"recirc\": \"%S\",\n"
-            "\"rear_heater_1\": \"%S\",\n"
+            "\"ac_icon\": \"%s\",\n"
+            "\"recirc\": \"%s\",\n"
+            "\"rear_heater_1\": \"%s\",\n"
             "\"reported_fan_speed\": \"%u\",\n"
             "\"set_fan_speed\": \"%u\"\n"
         "}\n"
@@ -2845,12 +2845,12 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"contact_key_on\": \"%S\",\n"
-            "\"ac_enabled\": \"%S\",\n"
-            "\"rear_heater_2\": \"%S\",\n"
-            "\"ac_compressor\": \"%S\",\n"
-            "\"contact_key_position_ac\": \"%S\",\n"
-            "\"condenser_temp\": \"%S\",\n"
+            "\"contact_key_on\": \"%s\",\n"
+            "\"ac_enabled\": \"%s\",\n"
+            "\"rear_heater_2\": \"%s\",\n"
+            "\"ac_compressor\": \"%s\",\n"
+            "\"contact_key_position_ac\": \"%s\",\n"
+            "\"condenser_temp\": \"%s\",\n"
             "\"evaporator_temp\": \"%s\"\n"
         "}\n"
     "}\n";
@@ -2927,28 +2927,28 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"cd_changer_present\": \"%S\",\n"
-            "\"cd_changer_status_loading\": \"%S\",\n"
-            "\"cd_changer_status_eject\": \"%S\",\n"
-            "\"cd_changer_status_operational\": \"%S\",\n"
-            "\"cd_changer_status_searching\": \"%S\",\n"
-            "\"cd_changer_status\": \"%S\",\n"
-            "\"cd_changer_status_pause\": \"%S\",\n"
-            "\"cd_changer_status_play\": \"%S\",\n"
-            "\"cd_changer_status_fast_forward\": \"%S\",\n"
-            "\"cd_changer_status_rewind\": \"%S\",\n"
-            "\"cd_changer_cartridge_present\": \"%S\",\n"
-            "\"cd_changer_track_time\": \"%S\",\n"
-            "\"cd_changer_current_track\": \"%S\",\n"
-            "\"cd_changer_total_tracks\": \"%S\",\n"
-            "\"cd_changer_disc_1_present\": \"%S\",\n"
-            "\"cd_changer_disc_2_present\": \"%S\",\n"
-            "\"cd_changer_disc_3_present\": \"%S\",\n"
-            "\"cd_changer_disc_4_present\": \"%S\",\n"
-            "\"cd_changer_disc_5_present\": \"%S\",\n"
-            "\"cd_changer_disc_6_present\": \"%S\",\n"
-            "\"cd_changer_current_disc\": \"%S\",\n"
-            "\"cd_changer_random\": \"%S\"\n"
+            "\"cd_changer_present\": \"%s\",\n"
+            "\"cd_changer_status_loading\": \"%s\",\n"
+            "\"cd_changer_status_eject\": \"%s\",\n"
+            "\"cd_changer_status_operational\": \"%s\",\n"
+            "\"cd_changer_status_searching\": \"%s\",\n"
+            "\"cd_changer_status\": \"%s\",\n"
+            "\"cd_changer_status_pause\": \"%s\",\n"
+            "\"cd_changer_status_play\": \"%s\",\n"
+            "\"cd_changer_status_fast_forward\": \"%s\",\n"
+            "\"cd_changer_status_rewind\": \"%s\",\n"
+            "\"cd_changer_cartridge_present\": \"%s\",\n"
+            "\"cd_changer_track_time\": \"%s\",\n"
+            "\"cd_changer_current_track\": \"%s\",\n"
+            "\"cd_changer_total_tracks\": \"%s\",\n"
+            "\"cd_changer_disc_1_present\": \"%s\",\n"
+            "\"cd_changer_disc_2_present\": \"%s\",\n"
+            "\"cd_changer_disc_3_present\": \"%s\",\n"
+            "\"cd_changer_disc_4_present\": \"%s\",\n"
+            "\"cd_changer_disc_5_present\": \"%s\",\n"
+            "\"cd_changer_disc_6_present\": \"%s\",\n"
+            "\"cd_changer_current_disc\": \"%s\",\n"
+            "\"cd_changer_random\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -3033,22 +3033,22 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_status_1\": \"%S%S\",\n"
-            "\"satnav_destination_not_accessible\": \"%S\",\n"
-            "\"satnav_arrived_at_destination\": \"%S\",\n"
+            "\"satnav_status_1\": \"%s%s\",\n"
+            "\"satnav_destination_not_accessible\": \"%s\",\n"
+            "\"satnav_arrived_at_destination\": \"%s\",\n"
 
             // Send this before "satnav_new_guidance_instruction", for correct handling by MFD.js
-            "\"satnav_guidance_display_can_be_dimmed\": \"%S\",\n"
+            "\"satnav_guidance_display_can_be_dimmed\": \"%s\",\n"
 
-            "\"satnav_new_guidance_instruction\": \"%S\",\n"
-            "\"satnav_audio_start\": \"%S\",\n"
-            "\"satnav_audio_end\": \"%S\",\n"
-            "\"satnav_calculating_route\": \"%S\",\n"
-            "\"satnav_guidance_ended\": \"%S\",\n"
-            "\"satnav_calculating_route_2\": \"%S\",\n"
+            "\"satnav_new_guidance_instruction\": \"%s\",\n"
+            "\"satnav_audio_start\": \"%s\",\n"
+            "\"satnav_audio_end\": \"%s\",\n"
+            "\"satnav_calculating_route\": \"%s\",\n"
+            "\"satnav_guidance_ended\": \"%s\",\n"
+            "\"satnav_calculating_route_2\": \"%s\",\n"
 
-            "\"satnav_last_instruction_given\": \"%S\",\n"
-            "\"satnav_entering_new_dest\": \"%S\"\n"
+            "\"satnav_last_instruction_given\": \"%s\",\n"
+            "\"satnav_entering_new_dest\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -3181,7 +3181,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"satnav_equipment_present\": \"%S\"\n"
+                "\"satnav_equipment_present\": \"%s\"\n"
             "}\n"
         "}\n";
 
@@ -3230,17 +3230,17 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_route_computed\": \"%S\",\n" // Report this first. TODO - explain why
-            "\"satnav_status_2\": \"%S\",\n"
-            "\"satnav_destination_reachable\": \"%S\",\n"
-            "\"satnav_on_map\": \"%S\",\n"
-            "\"satnav_download_finished\": \"%S\",\n"
-            "\"satnav_disc_recognized\": \"%S\",\n"
-            "\"satnav_gps_fix\": \"%S\",\n"
-            "\"satnav_gps_fix_lost\": \"%S\",\n"
-            "\"satnav_gps_scanning\": \"%S\",\n"
-            "\"satnav_language\": \"%S\",\n"
-            "\"satnav_gps_speed\": \"%S%s\"";
+            "\"satnav_route_computed\": \"%s\",\n" // Report this first. TODO - explain why
+            "\"satnav_status_2\": \"%s\",\n"
+            "\"satnav_destination_reachable\": \"%s\",\n"
+            "\"satnav_on_map\": \"%s\",\n"
+            "\"satnav_download_finished\": \"%s\",\n"
+            "\"satnav_disc_recognized\": \"%s\",\n"
+            "\"satnav_gps_fix\": \"%s\",\n"
+            "\"satnav_gps_fix_lost\": \"%s\",\n"
+            "\"satnav_gps_scanning\": \"%s\",\n"
+            "\"satnav_language\": \"%s\",\n"
+            "\"satnav_gps_speed\": \"%s%s\"";
 
     char floatBuf[MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
@@ -3401,7 +3401,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"satnav_status_3\": \"%S\"\n"
+                "\"satnav_status_3\": \"%s\"\n"
             "}\n"
         "}\n";
 
@@ -3443,7 +3443,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"satnav_guidance_preference\": \"%S\"\n"
+                "\"satnav_guidance_preference\": \"%s\"\n"
             "}\n"
         "}\n";
 
@@ -3531,10 +3531,10 @@ VanPacketParseResult_t ParseSatNavGuidanceDataPkt(TVanPacketRxDesc& pkt, char* b
                 "}\n"
             "},\n"
             "\"satnav_heading_to_dest\": \"%u\",\n"  // degrees
-            "\"satnav_distance_to_dest_via_road\": \"%S %S\",\n"
-            "\"satnav_distance_to_dest_via_straight_line\": \"%S %S\",\n"
-            "\"satnav_turn_at\": \"%S %S\",\n"
-            "\"satnav_heading_on_roundabout_as_text\": \"%S\",\n"  // degrees
+            "\"satnav_distance_to_dest_via_road\": \"%s %s\",\n"
+            "\"satnav_distance_to_dest_via_straight_line\": \"%s %s\",\n"
+            "\"satnav_turn_at\": \"%s %s\",\n"
+            "\"satnav_heading_on_roundabout_as_text\": \"%s\",\n"  // degrees
             "\"satnav_minutes_to_travel\": \"%u\"\n"
         "}\n"
     "}\n";
@@ -3595,23 +3595,23 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_curr_turn_icon\": \"%S\",\n"
+            "\"satnav_curr_turn_icon\": \"%s\",\n"
 
-            "\"satnav_fork_icon_take_right_exit\": \"%S\",\n"
-            "\"satnav_fork_icon_keep_right\": \"%S\",\n"
-            "\"satnav_fork_icon_take_left_exit\": \"%S\",\n"
-            "\"satnav_fork_icon_keep_left\": \"%S\",\n"
+            "\"satnav_fork_icon_take_right_exit\": \"%s\",\n"
+            "\"satnav_fork_icon_keep_right\": \"%s\",\n"
+            "\"satnav_fork_icon_take_left_exit\": \"%s\",\n"
+            "\"satnav_fork_icon_keep_left\": \"%s\",\n"
 
-            "\"satnav_next_turn_icon\": \"%S\",\n"
+            "\"satnav_next_turn_icon\": \"%s\",\n"
 
-            "\"satnav_next_fork_icon_take_right_exit\": \"%S\",\n"
-            "\"satnav_next_fork_icon_keep_right\": \"%S\",\n"
-            "\"satnav_next_fork_icon_take_left_exit\": \"%S\",\n"
-            "\"satnav_next_fork_icon_keep_left\": \"%S\",\n"
+            "\"satnav_next_fork_icon_take_right_exit\": \"%s\",\n"
+            "\"satnav_next_fork_icon_keep_right\": \"%s\",\n"
+            "\"satnav_next_fork_icon_take_left_exit\": \"%s\",\n"
+            "\"satnav_next_fork_icon_keep_left\": \"%s\",\n"
 
-            "\"satnav_turn_around_if_possible_icon\": \"%S\",\n"
-            "\"satnav_follow_road_icon\": \"%S\",\n"
-            "\"satnav_not_on_map_icon\": \"%S\"";
+            "\"satnav_turn_around_if_possible_icon\": \"%s\",\n"
+            "\"satnav_follow_road_icon\": \"%s\",\n"
+            "\"satnav_not_on_map_icon\": \"%s\"";
 
     // Determines which guidance icon(s) will be visible
     int at = snprintf_P(buf, n, jsonFormatter,
@@ -3704,11 +3704,11 @@ VanPacketParseResult_t ParseSatNavGuidancePkt(TVanPacketRxDesc& pkt, char* buf, 
 
         const static char jsonFormatter[] PROGMEM =
             ",\n"
-            "\"satnav_follow_road_then_turn_right\": \"%S\",\n"
-            "\"satnav_follow_road_then_turn_left\": \"%S\",\n"
-            "\"satnav_follow_road_until_roundabout\": \"%S\",\n"
-            "\"satnav_follow_road_straight_ahead\": \"%S\",\n"
-            "\"satnav_follow_road_retrieving_next_instruction\": \"%S\"";
+            "\"satnav_follow_road_then_turn_right\": \"%s\",\n"
+            "\"satnav_follow_road_then_turn_left\": \"%s\",\n"
+            "\"satnav_follow_road_until_roundabout\": \"%s\",\n"
+            "\"satnav_follow_road_straight_ahead\": \"%s\",\n"
+            "\"satnav_follow_road_retrieving_next_instruction\": \"%s\"";
 
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, jsonFormatter,
@@ -3981,7 +3981,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_report\": \"%S\"";
+            "\"satnav_report\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(report));
 
@@ -4013,7 +4013,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                 const static char jsonFormatter[] PROGMEM =
                     ",\n"
-                    "\"%S\": \"%s\"";
+                    "\"%s\": \"%s\"";
 
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at, jsonFormatter,
@@ -4041,7 +4041,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
             const static char jsonFormatter[] PROGMEM =
                 ",\n"
-                "\"%S\": \"%s (%s)\"";
+                "\"%s\": \"%s (%s)\"";
 
             // Current/next street is in first (and only) record. Copy only city [3], district [4] (if any) and
             // street [5, 6]; skip the other strings.
@@ -4059,11 +4059,11 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         {
             const static char jsonFormatter[] PROGMEM =
                 ",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%S\"";
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\"";
 
             // Address is in first (and only) record. Copy at least only city [3], district [4] (if any), street [5, 6]
             // and house number [7]; skip the other strings.
@@ -4117,12 +4117,12 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         {
             const static char jsonFormatter[] PROGMEM =
                 ",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\",\n"
-                "\"%S\": \"%s\"";
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\",\n"
+                "\"%s\": \"%s\"";
 
             // Chosen address is in first (and only) record. Copy at least city [3], district [4] (if any),
             // street [5, 6], house number [7] and entry name [8]; skip the other strings.
@@ -4189,7 +4189,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "\"satnav_service_address_province\": \"%s\",\n"
                 "\"satnav_service_address_city\": \"%s\",\n"
                 "\"satnav_service_address_street\": \"%s\",\n"
-                "\"satnav_service_address_distance\": \"%s %S\"";
+                "\"satnav_service_address_distance\": \"%s %s\"";
 
             // Chosen service address is in first (and only) record. Copy at least city [3], district [4]
             // (if any), street [5, 6], entry name [9] and distance [11]; skip the other strings.
@@ -4379,8 +4379,8 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"mfd_to_satnav_request\": \"%S\",\n"
-            "\"mfd_to_satnav_request_type\": \"%S\"";
+            "\"mfd_to_satnav_request\": \"%s\",\n"
+            "\"mfd_to_satnav_request_type\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request), SatNavRequestTypeStr(type));
 
@@ -4690,7 +4690,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"satnav_to_mfd_response\": \"%S\"";
+            "\"satnav_to_mfd_response\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter, SatNavRequestStr(request));
 
@@ -4871,29 +4871,29 @@ VanPacketParseResult_t ParseCom2000Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"com2000_light_switch_auto\": \"%S\",\n"
-            "\"com2000_light_switch_fog_light_forward\": \"%S\",\n"
-            "\"com2000_light_switch_fog_light_backward\": \"%S\",\n"
-            "\"com2000_light_switch_signal_beam\": \"%S\",\n"
-            "\"com2000_light_switch_full_beam\": \"%S\",\n"
-            "\"com2000_light_switch_all_off\": \"%S\",\n"
-            "\"com2000_light_switch_side_lights\": \"%S\",\n"
-            "\"com2000_light_switch_low_beam\": \"%S\",\n"
-            "\"com2000_right_stalk_button_trip_computer\": \"%S\",\n"
-            "\"com2000_right_stalk_rear_window_wash\": \"%S\",\n"
-            "\"com2000_right_stalk_rear_window_wiper\": \"%S\",\n"
-            "\"com2000_right_stalk_windscreen_wash\": \"%S\",\n"
-            "\"com2000_right_stalk_windscreen_wipe_once\": \"%S\",\n"
-            "\"com2000_right_stalk_windscreen_wipe_auto\": \"%S\",\n"
-            "\"com2000_right_stalk_windscreen_wipe_normal\": \"%S\",\n"
-            "\"com2000_right_stalk_windscreen_wipe_fast\": \"%S\",\n"
-            "\"com2000_turn_signal_left\": \"%S\",\n"
-            "\"com2000_turn_signal_right\": \"%S\",\n"
-            "\"com2000_head_unit_stalk_button_src\": \"%S\",\n"
-            "\"com2000_head_unit_stalk_button_volume_up\": \"%S\",\n"
-            "\"com2000_head_unit_stalk_button_volume_down\": \"%S\",\n"
-            "\"com2000_head_unit_stalk_button_seek_backward\": \"%S\",\n"
-            "\"com2000_head_unit_stalk_button_seek_forward\": \"%S\",\n"
+            "\"com2000_light_switch_auto\": \"%s\",\n"
+            "\"com2000_light_switch_fog_light_forward\": \"%s\",\n"
+            "\"com2000_light_switch_fog_light_backward\": \"%s\",\n"
+            "\"com2000_light_switch_signal_beam\": \"%s\",\n"
+            "\"com2000_light_switch_full_beam\": \"%s\",\n"
+            "\"com2000_light_switch_all_off\": \"%s\",\n"
+            "\"com2000_light_switch_side_lights\": \"%s\",\n"
+            "\"com2000_light_switch_low_beam\": \"%s\",\n"
+            "\"com2000_right_stalk_button_trip_computer\": \"%s\",\n"
+            "\"com2000_right_stalk_rear_window_wash\": \"%s\",\n"
+            "\"com2000_right_stalk_rear_window_wiper\": \"%s\",\n"
+            "\"com2000_right_stalk_windscreen_wash\": \"%s\",\n"
+            "\"com2000_right_stalk_windscreen_wipe_once\": \"%s\",\n"
+            "\"com2000_right_stalk_windscreen_wipe_auto\": \"%s\",\n"
+            "\"com2000_right_stalk_windscreen_wipe_normal\": \"%s\",\n"
+            "\"com2000_right_stalk_windscreen_wipe_fast\": \"%s\",\n"
+            "\"com2000_turn_signal_left\": \"%s\",\n"
+            "\"com2000_turn_signal_right\": \"%s\",\n"
+            "\"com2000_head_unit_stalk_button_src\": \"%s\",\n"
+            "\"com2000_head_unit_stalk_button_volume_up\": \"%s\",\n"
+            "\"com2000_head_unit_stalk_button_volume_down\": \"%s\",\n"
+            "\"com2000_head_unit_stalk_button_seek_backward\": \"%s\",\n"
+            "\"com2000_head_unit_stalk_button_seek_forward\": \"%s\",\n"
             "\"com2000_head_unit_stalk_wheel_pos\": \"%d\"\n"
         "}\n"
     "}\n";
@@ -4948,7 +4948,7 @@ VanPacketParseResult_t ParseCdChangerCmdPkt(TVanPacketRxDesc& pkt, char* buf, co
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"cd_changer_command\": \"%S\"\n"
+            "\"cd_changer_command\": \"%s\"\n"
         "}\n"
     "}\n";
 
@@ -4997,12 +4997,12 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"head_unit_update_audio_bits_mute\": \"%S\",\n"
-                "\"head_unit_update_audio_bits_auto_volume\": \"%S\",\n"
-                "\"head_unit_update_audio_bits_loudness\": \"%S\",\n"
-                "\"head_unit_update_audio_bits_audio_menu\": \"%S\",\n"
-                "\"head_unit_update_audio_bits_power\": \"%S\",\n"
-                "\"head_unit_update_audio_bits_contact_key\": \"%S\"\n"
+                "\"head_unit_update_audio_bits_mute\": \"%s\",\n"
+                "\"head_unit_update_audio_bits_auto_volume\": \"%s\",\n"
+                "\"head_unit_update_audio_bits_loudness\": \"%s\",\n"
+                "\"head_unit_update_audio_bits_audio_menu\": \"%s\",\n"
+                "\"head_unit_update_audio_bits_power\": \"%s\",\n"
+                "\"head_unit_update_audio_bits_contact_key\": \"%s\"\n"
             "}\n"
         "}\n";
 
@@ -5027,7 +5027,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"head_unit_update_switch_to\": \"%S\"";
+                "\"head_unit_update_switch_to\": \"%s\"";
 
         at = snprintf_P(buf, n, jsonFormatter,
             data[1] == 0x01 ? PSTR("TUNER") :
@@ -5050,13 +5050,13 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
         if (dataLen == 11)
         {
             const static char jsonFormatter2[] PROGMEM = ",\n"
-                "\"head_unit_update_power\": \"%S\",\n"
-                "\"head_unit_update_source\": \"%S\",\n"
-                "\"head_unit_update_volume_1\": \"%u%S\",\n"
-                "\"head_unit_update_balance\": \"%d%S\",\n"
-                "\"head_unit_update_fader\": \"%d%S\",\n"
-                "\"head_unit_update_bass\": \"%d%S\",\n"
-                "\"head_unit_update_treble\": \"%d%S\"";
+                "\"head_unit_update_power\": \"%s\",\n"
+                "\"head_unit_update_source\": \"%s\",\n"
+                "\"head_unit_update_volume_1\": \"%u%s\",\n"
+                "\"head_unit_update_balance\": \"%d%s\",\n"
+                "\"head_unit_update_fader\": \"%d%s\",\n"
+                "\"head_unit_update_bass\": \"%d%s\",\n"
+                "\"head_unit_update_treble\": \"%d%s\"";
 
             at += at >= n ? 0 : snprintf_P(buf + at, n - at, jsonFormatter2,
 
@@ -5103,7 +5103,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"head_unit_update_volume_2\": \"%u(%S%S)\"\n"
+                "\"head_unit_update_volume_2\": \"%u(%s%s)\"\n"
             "}\n"
         "}\n";
 
@@ -5157,7 +5157,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"head_unit_preset_request_band\": \"%S\",\n"
+                "\"head_unit_preset_request_band\": \"%s\",\n"
                 "\"head_unit_preset_request_memory\": \"%u\"\n"
             "}\n"
         "}\n";
@@ -5176,7 +5176,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"event\": \"display\",\n"
             "\"data\":\n"
             "{\n"
-                "\"head_unit_cd_request\": \"%S\"\n"
+                "\"head_unit_cd_request\": \"%s\"\n"
             "}\n"
         "}\n";
 
@@ -5257,16 +5257,16 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"contact_key_position\": \"%S\",\n"
-            "\"door_open\": \"%S\",\n"
-            "\"lights\": \"%S\",\n"
-            "\"small_screen\": \"%S\",\n"
-            "\"trip_computer_screen_tab\": \"%S\",\n"
-            "\"cd_changer_cartridge_present\": \"%S\",\n"
-            "\"satnav_equipment_present\": \"%S\",\n"
-            "\"satnav_disc_recognized\": \"%S\",\n"
-            "\"satnav_initialized\": \"%S\",\n"
-            "\"satnav_guidance_preference\": \"%S\"";
+            "\"contact_key_position\": \"%s\",\n"
+            "\"door_open\": \"%s\",\n"
+            "\"lights\": \"%s\",\n"
+            "\"small_screen\": \"%s\",\n"
+            "\"trip_computer_screen_tab\": \"%s\",\n"
+            "\"cd_changer_cartridge_present\": \"%s\",\n"
+            "\"satnav_equipment_present\": \"%s\",\n"
+            "\"satnav_disc_recognized\": \"%s\",\n"
+            "\"satnav_initialized\": \"%s\",\n"
+            "\"satnav_guidance_preference\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
         ContactKeyPositionStr(contactKeyPosition),

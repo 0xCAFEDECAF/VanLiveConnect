@@ -249,7 +249,7 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"mfd_remote_control\": \"%" PRIu16 " %S %" PRIu8 "%S\"";
+            "\"mfd_remote_control\": \"%" PRIu16 " %s %" PRIu8 "%s\"";
 
     int at = snprintf_P(jsonBuffer, IR_JSON_BUFFER_SIZE, jsonFormatter, sequenceNo++, pkt.buttonStr, buttonCount++, heldStr);
 

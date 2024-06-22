@@ -335,7 +335,7 @@ void setup()
     if (WiFi.macAddress() == WIFI_STRESS_TEST_MFD_ESP_MAC) sleepAfter = -1;
   #endif // WIFI_STRESS_TEST_MFD_ESP_MAC
 
-    if (sleepAfter != -1)
+    if (sleepAfter > 0)
     {
         Serial.printf_P
         (
@@ -369,12 +369,12 @@ void loop()
     if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket), true);
 
     static unsigned long lastPacketAt = 0;
-    if (sleepAfter != -1)
+    if (sleepAfter > 0)
     {
-        if (millis() - lastPacketAt >= sleepAfter)
+        if (millis() - lastPacketAt >= (unsigned long)sleepAfter)
         {
             GoToSleep();
-            lastPacketAt = millis();
+            // lastPacketAt = millis();
             return;
         } // if
     } // if

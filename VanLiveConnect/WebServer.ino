@@ -81,7 +81,6 @@ void SetupStore()
     Serial.printf_P(PSTR(" OK, total %s MByes\n"), FloatToStr(b, fs_info.totalBytes / 1024.0 / 1024.0, 2));
 
     // Print the contents of the root directory
-    bool foundOne = false;
     Dir dir = SPIFFS.openDir("/");
     while (dir.next())
     {
@@ -499,7 +498,10 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
 
     if (request->method() != HTTP_GET) return;
 
+  #ifdef DEBUG_WEBSERVER
     unsigned long start = millis();
+  #endif // DEBUG_WEBSERVER
+
     bool eTagMatches = checkETag(request, md5);
     if (! eTagMatches)
     {

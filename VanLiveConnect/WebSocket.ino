@@ -26,7 +26,7 @@ void ResetPacketPrevData();
 // Defined in OriginalMfd.ino
 extern uint8_t mfdLanguage;
 void NoPopup();
-void NotificationPopupShowing(unsigned long since, long duration);
+void NotificationPopupShowing(unsigned long since, unsigned long duration);
 
 // Defined in Esp.ino
 const char* EspSystemDataToJson(char* buf, const int n);
@@ -394,14 +394,10 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
     {
         // The WebSocket client has just accepted the sat nav disclaimer screen
         satnavDisclaimerAccepted = clientMessage.endsWith(":YES");
-
-        Serial.printf("==> ProcessWebSocketClientMessage: satnavDisclaimerAccepted = %s\n", satnavDisclaimerAccepted ? "true" : "false");
     }
     else if (clientMessage.startsWith("satnav_service_list_size:"))
     {
         satnavServiceListSize = clientMessage.substring(25).toInt();
-
-        Serial.printf("==> ProcessWebSocketClientMessage: satnavServiceListSize = %d\n", satnavServiceListSize);
     }
     else if (clientMessage.startsWith("ir_button_faster_repeat:"))
     {

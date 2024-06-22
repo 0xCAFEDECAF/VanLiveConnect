@@ -13,7 +13,7 @@ void SetTimeZoneOffset(int newTimeZoneOffset)
 // Check if an epoch value is valid
 inline boolean IsTimeValid(time_t t)
 {
-    return (t >= 1451606400UL);  // 2016-01-01 0:00:00
+    return (t >= 1451606400);  // 2016-01-01 0:00:00
 } // IsTimeValid 
 
 char _dt[20];
@@ -40,26 +40,23 @@ const char* DateTime(time_t t, boolean full)
         return _dt;
     } // if
 
-    time_t prev, next;
-
     if (! full)
     {
         time_t t = now();
-        prev = previousMidnight(t);
-        next = nextMidnight(t);
+        time_t prev = previousMidnight(t);
+        time_t next = nextMidnight(t);
+
+        if (t >= prev && t < next)
+        {
+            // Today
+            sprintf_P(_dt, PSTR("%02d:%02d:%02d"), hour(t), minute(t), second(t));
+
+            return _dt;
+        } // if
     } // if
 
-    // Rely on short-circuit boolean evaluation
-    if (! full && t >= prev && t < next)
-    {
-        // Today
-        sprintf_P(_dt, PSTR("%02d:%02d:%02d"), hour(t), minute(t), second(t));
-    }
-    else
-    {
-        // Other day, or 'full' format requested
-        sprintf_P(_dt, PSTR("%02d-%02d-%04d %02d:%02d:%02d"), day(t), month(t), year(t), hour(t), minute(t), second(t));
-    } // if
+    // Other day, or 'full' format requested
+    sprintf_P(_dt, PSTR("%02d-%02d-%04d %02d:%02d:%02d"), day(t), month(t), year(t), hour(t), minute(t), second(t));
 
     return _dt;
 } // DateTime
