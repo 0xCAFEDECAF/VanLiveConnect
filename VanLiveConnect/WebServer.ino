@@ -152,6 +152,8 @@ void printHttpRequest(class AsyncWebServerRequest* request)
     } // for
 
     Serial.print("'\n");
+  #else
+    (void)request;
   #endif // DEBUG_WEBSERVER
 } // printHttpRequest
 

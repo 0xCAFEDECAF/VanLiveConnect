@@ -4771,7 +4771,7 @@ VanPacketParseResult_t ParseSatNavToMfdPkt(TVanPacketRxDesc& pkt, char* buf, con
     return VAN_PACKET_PARSE_OK;
 } // ParseSatNavToMfdPkt
 
-VanPacketParseResult_t ParseSatNavDownloading(TVanPacketRxDesc& pkt, char* buf, const int n)
+VanPacketParseResult_t ParseSatNavDownloading(TVanPacketRxDesc&, char* buf, const int n)
 {
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -5261,6 +5261,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             "\"door_open\": \"%s\",\n"
             "\"lights\": \"%s\",\n"
             "\"small_screen\": \"%s\",\n"
+            "\"large_screen\": \"%s\",\n"
             "\"trip_computer_screen_tab\": \"%s\",\n"
             "\"cd_changer_cartridge_present\": \"%s\",\n"
             "\"satnav_equipment_present\": \"%s\",\n"
@@ -5273,6 +5274,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         doorOpen ? yesStr : noStr,
         lightsStr,
         SmallScreenStr(),  // Small screen (left hand side of the display) to start with
+        LargeScreenStr(),  // Large screen (right hand side of the display) to start with
         TripComputerStr(),
         cdChangerCartridgePresent ? yesStr : noStr,
         satnavEquipmentDetected ? yesStr : noStr,
@@ -5459,36 +5461,36 @@ static IdenHandler_t handlers[] =
     // 4. Ignore duplicates (boolean)
     // 5. handler function
     // 6. prevDataLen: must be initialized to -1 to indicate "unknown"
-    { VIN_IDEN, "vin", 17, true, &ParseVinPkt, -1 },
-    { ENGINE_IDEN, "engine", 7, true, &ParseEnginePkt, -1 },
-    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, true, &ParseHeadUnitStalkPkt, -1 },
-    { LIGHTS_STATUS_IDEN, "lights_status", -1, true, &ParseLightsStatusPkt, -1 },
-    { DEVICE_REPORT, "device_report", -1, true, &ParseDeviceReportPkt, -1 },
-    { CAR_STATUS1_IDEN, "car_status_1", 27, true, &ParseCarStatus1Pkt, -1 },
-    { CAR_STATUS2_IDEN, "car_status_2", -1, true, &ParseCarStatus2Pkt, -1 },
-    { DASHBOARD_IDEN, "dashboard", 7, true, &ParseDashboardPkt, -1 },
-    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, true, &ParseDashboardButtonsPkt, -1 },
-    { HEAD_UNIT_IDEN, "head_unit", -1, true, &ParseHeadUnitPkt, -1 },
-    { MFD_LANGUAGE_UNITS_IDEN, "time", 5, true, &ParseMfdLanguageUnitsPkt, -1 },
-    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, true, &ParseAudioSettingsPkt, -1 },
-    { MFD_STATUS_IDEN, "mfd_status", 2, true, &ParseMfdStatusPkt, -1 },
-    { AIRCON1_IDEN, "aircon_1", 5, true, &ParseAirCon1Pkt, -1 },
-    { AIRCON2_IDEN, "aircon_2", 7, true, &ParseAirCon2Pkt, -1 },
-    { CDCHANGER_IDEN, "cd_changer", -1, true, &ParseCdChangerPkt, -1 },
-    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, true, &ParseSatNavStatus1Pkt, -1 },
-    { SATNAV_STATUS_2_IDEN, "satnav_status_2", -1, false, &ParseSatNavStatus2Pkt, -1 },
-    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, true, &ParseSatNavStatus3Pkt, -1 },
-    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, true, &ParseSatNavGuidanceDataPkt, -1 },
-    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, true, &ParseSatNavGuidancePkt, -1 },
-    { SATNAV_REPORT_IDEN, "satnav_report", -1, true, &ParseSatNavReportPkt, -1 },
-    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, true, &ParseMfdToSatNavPkt, -1 },
-    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, true, &ParseSatNavToMfdPkt, -1 },
-    { SATNAV_DOWNLOADING_IDEN, "satnav_downloading", 0, false, &ParseSatNavDownloading, -1 },
-    { WHEEL_SPEED_IDEN, "wheel_speed", 5, true, &ParseWheelSpeedPkt, -1 },
-    { ODOMETER_IDEN, "odometer", 5, true, &ParseOdometerPkt, -1 },
-    { COM2000_IDEN, "com2000", 10, true, &ParseCom2000Pkt, -1 },
-    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, true, &ParseCdChangerCmdPkt, -1 },
-    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, true, &ParseMfdToHeadUnitPkt, -1 },
+    { VIN_IDEN, "vin", 17, true, &ParseVinPkt, -1, nullptr },
+    { ENGINE_IDEN, "engine", 7, true, &ParseEnginePkt, -1, nullptr },
+    { HEAD_UNIT_STALK_IDEN, "head_unit_stalk", 2, true, &ParseHeadUnitStalkPkt, -1, nullptr },
+    { LIGHTS_STATUS_IDEN, "lights_status", -1, true, &ParseLightsStatusPkt, -1, nullptr },
+    { DEVICE_REPORT, "device_report", -1, true, &ParseDeviceReportPkt, -1, nullptr },
+    { CAR_STATUS1_IDEN, "car_status_1", 27, true, &ParseCarStatus1Pkt, -1, nullptr },
+    { CAR_STATUS2_IDEN, "car_status_2", -1, true, &ParseCarStatus2Pkt, -1, nullptr },
+    { DASHBOARD_IDEN, "dashboard", 7, true, &ParseDashboardPkt, -1, nullptr },
+    { DASHBOARD_BUTTONS_IDEN, "dashboard_buttons", -1, true, &ParseDashboardButtonsPkt, -1, nullptr },
+    { HEAD_UNIT_IDEN, "head_unit", -1, true, &ParseHeadUnitPkt, -1, nullptr },
+    { MFD_LANGUAGE_UNITS_IDEN, "time", 5, true, &ParseMfdLanguageUnitsPkt, -1, nullptr },
+    { AUDIO_SETTINGS_IDEN, "audio_settings", 11, true, &ParseAudioSettingsPkt, -1, nullptr },
+    { MFD_STATUS_IDEN, "mfd_status", 2, true, &ParseMfdStatusPkt, -1, nullptr },
+    { AIRCON1_IDEN, "aircon_1", 5, true, &ParseAirCon1Pkt, -1, nullptr },
+    { AIRCON2_IDEN, "aircon_2", 7, true, &ParseAirCon2Pkt, -1, nullptr },
+    { CDCHANGER_IDEN, "cd_changer", -1, true, &ParseCdChangerPkt, -1, nullptr },
+    { SATNAV_STATUS_1_IDEN, "satnav_status_1", 6, true, &ParseSatNavStatus1Pkt, -1, nullptr },
+    { SATNAV_STATUS_2_IDEN, "satnav_status_2", -1, false, &ParseSatNavStatus2Pkt, -1, nullptr },
+    { SATNAV_STATUS_3_IDEN, "satnav_status_3", -1, true, &ParseSatNavStatus3Pkt, -1, nullptr },
+    { SATNAV_GUIDANCE_DATA_IDEN, "satnav_guidance_data", 16, true, &ParseSatNavGuidanceDataPkt, -1, nullptr },
+    { SATNAV_GUIDANCE_IDEN, "satnav_guidance", -1, true, &ParseSatNavGuidancePkt, -1, nullptr },
+    { SATNAV_REPORT_IDEN, "satnav_report", -1, true, &ParseSatNavReportPkt, -1, nullptr },
+    { MFD_TO_SATNAV_IDEN, "mfd_to_satnav", -1, true, &ParseMfdToSatNavPkt, -1, nullptr },
+    { SATNAV_TO_MFD_IDEN, "satnav_to_mfd", 27, true, &ParseSatNavToMfdPkt, -1, nullptr },
+    { SATNAV_DOWNLOADING_IDEN, "satnav_downloading", 0, false, &ParseSatNavDownloading, -1, nullptr },
+    { WHEEL_SPEED_IDEN, "wheel_speed", 5, true, &ParseWheelSpeedPkt, -1, nullptr },
+    { ODOMETER_IDEN, "odometer", 5, true, &ParseOdometerPkt, -1, nullptr },
+    { COM2000_IDEN, "com2000", 10, true, &ParseCom2000Pkt, -1, nullptr },
+    { CDCHANGER_COMMAND_IDEN, "cd_changer_command", 2, true, &ParseCdChangerCmdPkt, -1, nullptr },
+    { MFD_TO_HEAD_UNIT_IDEN, "display_to_head_unit", -1, true, &ParseMfdToHeadUnitPkt, -1, nullptr },
 }; // handlers
 
 const IdenHandler_t* const handlers_end = handlers + sizeof(handlers) / sizeof(handlers[0]);

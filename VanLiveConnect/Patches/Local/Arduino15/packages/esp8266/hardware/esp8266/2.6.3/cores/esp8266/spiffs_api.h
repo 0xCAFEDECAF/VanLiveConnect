@@ -460,11 +460,12 @@ public:
         if (spiffs_fd_get(_fs->getFs(), _fd, &sfd) == SPIFFS_OK) {
             return SPIFFS_OK == spiffs_object_truncate(sfd, size, 0);
         } else {
-      #endif
           return false;
-      #ifndef SPIFFS_READ_ONLY
         }
-      #endif
+      #else
+        (void)size;
+        return false;
+      #endif // SPIFFS_READ_ONLY
     }
 
     bool isFile() const override

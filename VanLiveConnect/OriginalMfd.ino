@@ -134,14 +134,14 @@ PGM_P TripComputerStr(uint8_t idx)
 PGM_P TripComputerStr()
 {
     // The trip computer screen and popup show the fuel consumption if the small screen showed the GPS icon
-    return TripComputerStr(smallScreen == SMALL_SCREEN_GPS_INFO ? SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen);
+    return TripComputerStr(smallScreen == SMALL_SCREEN_GPS_INFO ? (uint8_t)SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen);
 } // TripComputerStr
 
 // Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
 PGM_P SmallScreenStr()
 {
     // The small screen shows guidance data when the sat nav is in guidance mode
-    return TripComputerStr(isSatnavGuidanceActive ? SMALL_SCREEN_GPS_INFO : smallScreen);
+    return TripComputerStr(isSatnavGuidanceActive ? (uint8_t)SMALL_SCREEN_GPS_INFO : smallScreen);
 } // SmallScreenStr
 
 // Map a large-screen index number to a string.
@@ -195,9 +195,9 @@ bool IsNotificationPopupShowing(bool beVerbose)
     // Arithmetic has safe roll-over
     bool result = popupDuration != 0 && millis() - NotificationPopupShowingSince < popupDuration;
 
-  #ifdef DEBUG_ORIGINAL_MFD
     if (beVerbose)
     {
+      #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
             PSTR("[originalMfd] IsNotificationPopupShowing = %S (popupDuration = %lu"),
             result ? yesStr : noStr,
@@ -211,8 +211,8 @@ bool IsNotificationPopupShowing(bool beVerbose)
             );
         } // if
         Serial.print(")\n");
+      #endif // DEBUG_ORIGINAL_MFD
     } // if
-  #endif // DEBUG_ORIGINAL_MFD
 
     return result;
 } // IsNotificationPopupShowing
@@ -253,7 +253,7 @@ PGM_P PopupStr()
 void InitSmallScreen()
 {
     // Already initialized?
-    if (smallScreen >= SMALL_SCREEN_FIRST && smallScreen <= SMALL_SCREEN_LAST) return;
+    if (smallScreen != SMALL_SCREEN_INVALID) return;
 
     // Initialize from (emulated) EEPROM
     smallScreen = EEPROM.read(SMALL_SCREEN_EEPROM_POS);
@@ -267,7 +267,7 @@ void InitSmallScreen()
   #endif // DEBUG_ORIGINAL_MFD
 
     // Successfully read from EEPROM?
-    if (smallScreen >= SMALL_SCREEN_FIRST && smallScreen <= SMALL_SCREEN_LAST) return;
+    if (smallScreen <= SMALL_SCREEN_LAST) return;
 
     // No valid value from EEPROM: fall back to default. When the original MFD is plugged in, this is what
     // it starts with.
@@ -397,7 +397,10 @@ void UpdateSmallScreenAfterStoppingGuidance()
     if (largeScreen != LARGE_SCREEN_TRIP_COMPUTER)
     {
         uint8_t oldSmallScreen = smallScreen;
-        if (smallScreenBeforeGoingIntoGuidanceMode >= 0) smallScreen = smallScreenBeforeGoingIntoGuidanceMode;
+        if (smallScreenBeforeGoingIntoGuidanceMode != SMALL_SCREEN_INVALID)
+        {
+            smallScreen = smallScreenBeforeGoingIntoGuidanceMode;
+        } // if
 
         if (smallScreen != oldSmallScreen) WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen, PSTR("Small screen"));
     } // if

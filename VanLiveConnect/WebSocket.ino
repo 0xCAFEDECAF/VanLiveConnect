@@ -516,7 +516,8 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
             );
         } // if
     } // if
-
+  #else
+    (void)id;
   #endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 
 } // ProcessWebSocketClientMessage
@@ -524,7 +525,7 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
 uint32_t webSocketIdJustConnected = 0;
 
 void WebSocketEvent(
-    AsyncWebSocket* server,
+    AsyncWebSocket*,
     AsyncWebSocketClient* client,
     AwsEventType type,
     void* arg,
