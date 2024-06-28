@@ -2435,7 +2435,7 @@ char mfd_html[] PROGMEM = R"=====(
 				on_enter="satnavDownloading = true;"
 				class="icon notificationPopup">
 				<div class="centerAligned messagePopupArea">
-					DOWNLOAD IN PROGRESS - <span id="satnav_download_progress"></span>
+					DOWNLOAD IN PROGRESS... <span id="satnav_download_progress"></span>
 				</div>
 			</div>	<!-- "satnav_downloading_popup" -->
 

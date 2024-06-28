@@ -1364,6 +1364,9 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // TODO - also when user selects service from list of services
             code == 0x0101 ? PSTR("Selected_street_from_list") :
 
+            code == 0x0200 ? PSTR("Guidance_request") :
+            code == 0x0600 ? PSTR("Guidance_data_request") :
+
             // User selects a menu entry or letter? User pressed "Val" (middle button on IR remote control).
             // Always followed by 0x0100.
             code == 0x1000 || code == 0x1100 ? PSTR("Val") :
@@ -3020,6 +3023,8 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
     return VAN_PACKET_PARSE_OK;
 } // ParseCdChangerPkt
 
+String satnavCurrentStreet;
+
 VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#54E
@@ -3027,6 +3032,13 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     const uint8_t* data = pkt.Data();
     uint16_t status = (uint16_t)data[1] << 8 | data[2];
+    bool noDiscPresent = data[4] == 0x0E;
+
+    if (noDiscPresent)
+    {
+        satnavCurrentStreet = "";
+        isCurrentStreetKnown = false;
+    } // if
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -3083,7 +3095,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         data[4] == 0x0B ? emptyStr :  // Seen with status 0x4001 and 0xD001
         data[4] == 0x0C ? PSTR(" DISC_UNREADABLE") :
-        data[4] == 0x0E ? PSTR(" NO_DISC") :
+        noDiscPresent ? PSTR(" NO_DISC") :
         emptyStr,
 
         data[2] & 0x01 ? yesStr : noStr,  // satnav_destination_not_accessible
@@ -3780,8 +3792,6 @@ String ComposeStreetString(const String& records5, const String& records6)
     return result;
 } // ComposeStreetString
 
-String satnavCurrentStreet;
-
 // Compose a string for a city name plus optional district
 String ComposeCityString(const String& records3, const String& records4)
 {
@@ -4000,12 +4010,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
                 if (report == SR_CURRENT_STREET && city.length() > 0)
                 {
-                    // Bug in original MFD: it seems to not "know" the current street as long as we're not driving
-                    //if (IsVehicleSpeedValid()) isCurrentStreetKnown = true;
-
                     // Bug in original MFD: it seems to not "know" the current street as long as we're
-                    // "IN_GUIDANCE_MODE" ?
-                    // TODO - not sure
+                    // "IN_GUIDANCE_MODE"? TODO - not sure
                     if (satnavStatus2 != SATNAV_STATUS_2_IN_GUIDANCE_MODE) isCurrentStreetKnown = true;
 
                     satnavCurrentStreet = city;
@@ -4028,12 +4034,8 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
 
             if (report == SR_CURRENT_STREET)
             {
-                // Bug in original MFD: it seems to not "know" the current street as long as we're not driving
-                //if (IsVehicleSpeedValid()) isCurrentStreetKnown = true;
-
                 // Bug in original MFD: it seems to not "know" the current street as long as we're
-                // "IN_GUIDANCE_MODE" ?
-                // TODO - not sure
+                // "IN_GUIDANCE_MODE"? TODO - not sure
                 if (satnavStatus2 != SATNAV_STATUS_2_IN_GUIDANCE_MODE) isCurrentStreetKnown = true;
 
                 satnavCurrentStreet = street + " (" + city + ")";

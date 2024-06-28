@@ -2083,7 +2083,7 @@ var satnavDownloading = false;
 var satnavStatus1 = "";
 var satnavStatus3 = "";
 var satnavDestinationNotAccessible = false;
-var satnavNotOnMap = false;
+var satnavGuidanceOffMap = false;
 var satnavComputingRoute = false;
 var satnavDisplayCanBeDimmed = true;
 
@@ -2169,7 +2169,7 @@ function satnavGotoMainMenu()
 	if (satnavStatus1.match(/DISC_UNREADABLE/)) return showStatusPopup(satnavDiscUnreadbleText, 10000);
 
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
-	if (! satnavInitialized) return showPopupAndNotifyServer("satnav_initializing_popup", 50000);
+	if (! satnavInitialized) return showPopupAndNotifyServer("satnav_initializing_popup", 82000);
 
 	hidePopup("satnav_initializing_popup");
 
@@ -3068,23 +3068,30 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Show popup only once at start of guidance or after recalculation
 	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
 
-	if (! satnavDestinationReachable && satnavOnMap)
-	{
-		hidePopup();
-
-		let translations =
+	// Need to wait a bit until all data has been received
+	setTimeout
+	(
+		function ()
 		{
-			"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
-			"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
-			"set_language_spanish": "Destino inaccesible<br />por carratera",
-			"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
-			"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
-		};
-		showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
-	} // if
+			if (! satnavDestinationReachable && ! satnavRouteComputed)
+			{
+				hidePopup();
+
+				let translations =
+				{
+					"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
+					"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
+					"set_language_spanish": "Destino inaccesible<br />por carratera",
+					"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
+					"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
+				};
+				showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
+			} // if
+		},
+		150
+	);
 
 	satnavDestinationNotAccessibleByRoadPopupShown = true;
-
 	return true;
 }
 
@@ -3177,7 +3184,6 @@ function satnavGuidancePreferenceValidate()
 {
 	if (currentLargeScreenId === "satnav_guidance")
 	{
-		// Return to the guidance screen
 		satnavSwitchToGuidanceScreen();
 		if (satnavComputingRoute) satnavCalculatingRoute(); else showDestinationNotAccessiblePopupIfApplicable();
 	}
@@ -3191,10 +3197,10 @@ function satnavCalculatingRoute()
 {
 	localStorage.askForGuidanceContinuation = "NO";
 
-	// Don't pop up in the guidance preference screen
+	// No popup in the guidance preference screen
 	if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
 
-	// No popups while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
+	// No popup while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
 	if (satnavVehicleMoving()) return;
 
 	cancelChangeBackScreenTimer();
@@ -4708,7 +4714,7 @@ function handleItemChange(item, value)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! satnavDisplayCanBeDimmed) break;
 			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
-			if (satnavNotOnMap) break;
+			if (satnavGuidanceOffMap) break;
 			if (! satnavOnMap) break;
 
 			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
@@ -4729,7 +4735,7 @@ function handleItemChange(item, value)
 			} // if
 
 			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
-			if (satnavNotOnMap) break;
+			if (satnavGuidanceOffMap) break;
 			if (! satnavOnMap) break;
 
 			temporarilyChangeLargeScreenTo("satnav_guidance", 120000);
@@ -4762,6 +4768,8 @@ function handleItemChange(item, value)
 
 			if (value.match(/NO_DISC/))
 			{
+				satnavMode = "IDLE";
+				satnavCurrentStreet = "";
 				hidePopup("satnav_initializing_popup");
 
 				if (! inMenu() || inSatnavMenuOrGuidanceScreen() || currentMenu === "main_menu")
@@ -4818,7 +4826,7 @@ function handleItemChange(item, value)
 			if (previousSatnavMode === "IN_GUIDANCE_MODE")
 			{
 				if ($("#satnav_guidance").is(":visible")) selectDefaultScreen();
-				satnavNotOnMap = false;
+				satnavGuidanceOffMap = false;
 			} // if
 
 			if (value === "IDLE") satnavRouteComputed = false;
@@ -5064,9 +5072,9 @@ function handleItemChange(item, value)
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value.replace(/&#x24E7;/, ''));
 
-				const id = "#satnav_manage_personal_address_rename_button";
-				$(id).toggleClass("buttonDisabled", ! entryOnDisc);
-				$(id).toggleClass("buttonSelected", entryOnDisc);
+				const id = "satnav_manage_personal_address_rename_button";
+				$("#" + id).toggleClass("buttonDisabled", ! entryOnDisc);
+				$("#" + id).toggleClass("buttonSelected", entryOnDisc);
 				if (entryOnDisc) resizeButton(id);
 
 				$("#satnav_manage_personal_address_delete_button").toggleClass("buttonSelected", ! entryOnDisc);
@@ -5093,9 +5101,9 @@ function handleItemChange(item, value)
 				$("#satnav_rename_entry_in_directory_title").text(title + " (" + value + ")");
 				$("#satnav_delete_directory_entry_in_popup").text(value.replace(/&#x24E7;/, ''));
 
-				const id = "#satnav_manage_professional_address_rename_button";
-				$(id).toggleClass("buttonDisabled", ! entryOnDisc);
-				$(id).toggleClass("buttonSelected", entryOnDisc);
+				const id = "satnav_manage_professional_address_rename_button";
+				$("#" + id).toggleClass("buttonDisabled", ! entryOnDisc);
+				$("#" + id).toggleClass("buttonSelected", entryOnDisc);
 				if (entryOnDisc) resizeButton(id);
 
 				$("#satnav_manage_professional_address_delete_button").toggleClass("buttonSelected", ! entryOnDisc);
@@ -5682,8 +5690,9 @@ function handleItemChange(item, value)
 		case "satnav_not_on_map_icon":
 		{
 			// Has anything changed?
-			if (value === satnavNotOnMap) break;
-			satnavNotOnMap = value;
+			const notOnMap = value === "ON";
+			if (notOnMap === satnavGuidanceOffMap) break;
+			satnavGuidanceOffMap = notOnMap;
 
 			$("#satnav_turn_at_indication").toggle(value !== "ON");
 			if (value !== "ON") break;
