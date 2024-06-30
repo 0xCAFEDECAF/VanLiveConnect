@@ -624,12 +624,12 @@ function changeLargeScreenTo(id)
 	if (webSocket) webSocket.send("ir_button_faster_repeat:" + irFastRepeatValue);
 
 	hidePopup("audio_popup");
+	setVisibilityOfElementAndParents(currentLargeScreenId, "none");
 
 	// Perform current screen's "on_exit" action, if specified
 	var onExit = $("#" + currentLargeScreenId).attr("on_exit");
 	if (onExit) eval(onExit);
 
-	setVisibilityOfElementAndParents(currentLargeScreenId, "none");
 	setVisibilityOfElementAndParents(id, "block");
 
 	// A screen can change under a popup. In that case, don't register the time
@@ -1304,14 +1304,13 @@ function navigateButtons(key)
 	} // if
 
 	restoreButtonSize(currentButtonId);
+	currentButton.removeClass("buttonSelected");
 
 	// Perform "on_exit" action, if specified
 	var onExit = currentButton.attr("on_exit");
 	if (onExit) eval(onExit);
 
-	currentButton.removeClass("buttonSelected");
 	gotoButton.addClass("buttonSelected");
-
 	resizeButton(gotoButtonId);
 
 	// Perform "on_enter" action, if specified
@@ -3048,7 +3047,6 @@ function satnavDeleteDirectories()
 
 function satnavSwitchToGuidanceScreen()
 {
-	hidePopup("satnav_computing_route_popup");
 	cancelChangeBackScreenTimer();
 	menuStack = [];
 	currentMenu = undefined;
@@ -3061,7 +3059,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 {
 	if (! satnavDestinationNotAccessible) return false;
 
-	// Don't show this popup while still in the guidance preference popup or menu
+	// No popup while still in the guidance preference popup or menu
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
 
@@ -3151,11 +3149,34 @@ function satnavGuidancePreferenceSelectTickedButton()
 	$("#satnav_guidance_preference_menu_validate_button").removeClass("buttonSelected");
 }
 
+function satnavCalculatingRoute()
+{
+	localStorage.askForGuidanceContinuation = "NO";
+
+	// No popup in the guidance preference screen
+	if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
+
+	// No popup while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
+	if (satnavVehicleMoving()) return;
+
+	cancelChangeBackScreenTimer();
+
+	// If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
+	// start, but not any more during the guidance.
+	satnavDestinationNotAccessibleByRoadPopupShown = false;
+
+	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
+}
+
 function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
 	if (showDestinationNotAccessiblePopupIfApplicable()) return;
-	if (! $('#satnav_guidance').is(':visible')) satnavCalculatingRoute();
+	if (satnavMode === "IN_GUIDANCE_MODE" && ! $('#satnav_guidance').is(':visible'))
+	{
+		satnavSwitchToGuidanceScreen();
+		satnavCalculatingRoute();
+	}
 }
 
 function satnavGuidancePreferencePopupNoButton()
@@ -3191,25 +3212,6 @@ function satnavGuidancePreferenceValidate()
 	{
 		satnavSwitchToGuidanceScreen();
 	} // if
-}
-
-function satnavCalculatingRoute()
-{
-	localStorage.askForGuidanceContinuation = "NO";
-
-	// No popup in the guidance preference screen
-	if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
-
-	// No popup while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
-	if (satnavVehicleMoving()) return;
-
-	cancelChangeBackScreenTimer();
-
-	// If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
-	// start, but not any more during the guidance.
-	satnavDestinationNotAccessibleByRoadPopupShown = false;
-
-	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 }
 
 function showOrTimeoutDestinationNotAccessiblePopup()
@@ -4768,7 +4770,7 @@ function handleItemChange(item, value)
 
 			if (value.match(/NO_DISC/))
 			{
-				satnavMode = "IDLE";
+				writeToDom({"satnav_status_2":"IDLE"});
 				satnavCurrentStreet = "";
 				hidePopup("satnav_initializing_popup");
 
