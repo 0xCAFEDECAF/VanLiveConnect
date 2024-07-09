@@ -1304,13 +1304,14 @@ function navigateButtons(key)
 	} // if
 
 	restoreButtonSize(currentButtonId);
-	currentButton.removeClass("buttonSelected");
 
 	// Perform "on_exit" action, if specified
 	var onExit = currentButton.attr("on_exit");
 	if (onExit) eval(onExit);
 
+	currentButton.removeClass("buttonSelected");
 	gotoButton.addClass("buttonSelected");
+
 	resizeButton(gotoButtonId);
 
 	// Perform "on_enter" action, if specified
