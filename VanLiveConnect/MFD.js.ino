@@ -3950,6 +3950,9 @@ function handleItemChange(item, value)
 			// Check for legal value
 			if (value !== "-" && (value < "1" || value > "6")) break;
 
+			if (value === handleItemChange.tunerMemory) break;
+			handleItemChange.tunerMemory = value;
+
 			// Switch to head unit display if applicable
 			if ($("#clock").is(":visible")) selectDefaultScreen();
 
