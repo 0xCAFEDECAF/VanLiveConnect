@@ -494,6 +494,14 @@ body
   text-align:center;
 }
 
+/* Doors open icon */
+.doors
+{
+  stroke:var(--main-color);
+  stroke-width:14;
+  stroke-linecap:round;
+}
+
 /* Sat nav menu and screen element styles */
 .satNavInstructionIcon
 {

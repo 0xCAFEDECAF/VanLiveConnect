@@ -439,7 +439,7 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 					<div gid="fuel_level_perc" class="gauge">
 						<svg style="width:324px;">
-							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
+							<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
 						</svg>
 					</div>
 					<div class="gaugeBoxDiv">
@@ -469,14 +469,14 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 					<div id="coolant_temp_perc" class="gauge">
 						<svg style="width:324px;">
-							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
+							<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:14; stroke-opacity:0.8;" x1="0" y1="20" x2="324" y2="20"></line>
 						</svg>
 					</div>
 					<div class="gaugeBoxDiv">
 						<svg style="width:348px;">
 							<rect x="5" y="5" width="340" height="30" class="gaugeBox"></rect>
-							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
-							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:5;" x1="285" y1="8" x2="285" y2="32"></line> <!-- 110 degrees -->
+							<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:5;" x1="184" y1="8" x2="184" y2="32"></line> <!-- 70 degrees -->
+							<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:5;" x1="285" y1="8" x2="285" y2="32"></line> <!-- 110 degrees -->
 						</svg>
 					</div>
 				</div>
@@ -494,7 +494,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div style="position:absolute; left:20px; top:280px; width:350px; height:60px;">
 						<div id="oil_level_raw_perc" class="gauge">
 							<svg style="width:324px;">
-								<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+								<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
 							</svg>
 						</div>
 						<div class="gaugeBoxDiv">
@@ -515,7 +515,7 @@ char mfd_html[] PROGMEM = R"=====(
 					<div style="position:absolute; left:590px; top:280px; width:350px; height:60px;">
 						<div id="distance_to_service_perc" class="gauge">
 							<svg style="width:324px;">
-								<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
+								<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:14;" x1="0" y1="20" x2="324" y2="20"></line>
 							</svg>
 						</div>
 						<div class="gaugeBoxDiv">
@@ -1272,7 +1272,7 @@ char mfd_html[] PROGMEM = R"=====(
 							style="position:absolute; font-size:33px; line-height:1.3;
 								left:20px; top:180px; width:923px; height:346px;
 								overflow:hidden; white-space:nowrap;
-								background:none; color:var(--main-color); border-style:none;">
+								background:none; color:#dfe7f2; color:var(--main-color); border-style:none;">
 						</div>
 
 						<!-- Show spinning disk while text area is still empty, i.e. data is being retrieved -->
@@ -1313,7 +1313,7 @@ char mfd_html[] PROGMEM = R"=====(
 							on_exit="unhighlightLetter();"
 							class="dots buttonSelected"
 							style="left:25px; top:310px; width:830px; line-height:1.5; display:inline-block; letter-spacing:25px;
-								background:none; color:var(--main-color); border-style:none;">1234567890</div>
+								background:none; color:#dfe7f2; color:var(--main-color); border-style:none;">1234567890</div>
 
 						<div button_orientation="horizontal" class="buttonBar">
 							<div id="satnav_enter_house_number_validate_button"
@@ -1720,11 +1720,11 @@ char mfd_html[] PROGMEM = R"=====(
 
 					<!-- Current and next street name -->
 
-					<div style="border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:570px; height:120px; padding:10px 10px">
+					<div style="border:5px solid #dfe7f2; border:5px solid var(--main-color); border-radius:15px; position:absolute; overflow: hidden; left:350px; top:120px; width:570px; height:120px; padding:10px 10px">
 						<div id="satnav_guidance_next_street" class="centerAligned" style="font-size:33px; white-space:normal;">
 						</div>
 					</div>
-					<div style="border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:570px; height:120px; padding:10px 10px">
+					<div style="border:5px solid #dfe7f2; border:5px solid var(--main-color); border-radius:15px; border-style:dotted; position:absolute; overflow: hidden; left:350px; top:280px; width:570px; height:120px; padding:10px 10px">
 						<div id="satnav_guidance_curr_street" class="centerAligned" style="font-size:33px;">
 						</div>
 					</div>
@@ -1926,7 +1926,7 @@ char mfd_html[] PROGMEM = R"=====(
 								<!-- "No entry" icon definition -->
 								<defs>
 									<g id="no_entry">
-										<path style="fill:var(--main-color)" transform="translate(130 250) scale(0.08)" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zM124 296c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h264c6.6 0 12 5.4 12 12v56c0 6.6-5.4 12-12 12H124z"></path>
+										<path style="fill:#dfe7f2; fill:var(--main-color)" transform="translate(130 250) scale(0.08)" d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zM124 296c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h264c6.6 0 12 5.4 12 12v56c0 6.6-5.4 12-12 12H124z"></path>
 									</g>
 								</defs>
 
@@ -1953,13 +1953,13 @@ char mfd_html[] PROGMEM = R"=====(
 								style="display:none; position:absolute; top:0px; width:300px; height:300px;">
 								<svg width="300" height="300">
 									<!-- <circle class="satNavRoundabout" cx="150" cy="150" r="40"></circle> -->
-									<circle class="satNavRoundabout" style="fill:var(--disabled-element-color);" cx="150" cy="150" r="20"></circle>
+									<circle class="satNavRoundabout" style="fill:rgb(67,82,105); fill:var(--disabled-element-color);" cx="150" cy="150" r="20"></circle>
 									<path id="p" class="satNavRoundabout" d="M150 150m-40,0a40,40,0 1,0 80,0a 40,40 0 1,0 -80,0zM150 150m-20,0a20,20,0 0,1 40,0a 20,20 0 0,1 -40,0z"></path>
 								</svg>
 								<div style="position:absolute; top:0px; width:300px; height:300px;">
 									<!-- Indicate the "to" direction also in the roundabout -->
 									<svg width="300" height="300">
-										<path id="satnav_curr_turn_icon_direction_on_roundabout" fill="none" stroke="var(--main-color)" stroke-width="8"></path>
+										<path id="satnav_curr_turn_icon_direction_on_roundabout" fill="none" style="stroke:#dfe7f2; stroke:var(--main-color);" stroke-width="8"></path>
 									</svg>
 								</div>
 							</div>	<!-- "satnav_curr_turn_roundabout" -->
@@ -2385,7 +2385,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="door_open_popup" class="icon notificationPopup">
 				<div class="centerAligned icon" style="position:absolute; left:40px; width:200px; height:175px;">
-					<svg width="160px" height="175px" style="fill:var(--main-color)">
+					<svg width="160px" height="175px" style="fill:#dfe7f2; fill:var(--main-color)">
 						<defs>
 							<g id="car_icon">
 								<path d="M29.395,0H17.636c-3.117,0-5.643,3.467-5.643,6.584v34.804c0,3.116,2.526,5.644,5.643,5.644h11.759
@@ -2399,11 +2399,11 @@ char mfd_html[] PROGMEM = R"=====(
 						<use xlink:href="#car_icon" transform="scale(3.3)"></use>
 
 						<!-- One line for each door -->
-						<line id="door_front_left" stroke="var(--main-color)" stroke-width="14" stroke-linecap="round" x1="10" y1="65" x2="40" y2="48" style="display:none;"></line>
-						<line id="door_front_right" stroke="var(--main-color)" stroke-width="14" stroke-linecap="round" x1="146" y1="65" x2="116" y2="48" style="display:none;"></line>
-						<line id="door_rear_left" stroke="var(--main-color)" stroke-width="14" stroke-linecap="round" x1="10" y1="110" x2="40" y2="93" style="display:none;"></line>
-						<line id="door_rear_right" stroke="var(--main-color)" stroke-width="14" stroke-linecap="round" x1="146" y1="110" x2="116" y2="93" style="display:none;"></line>
-						<line id="door_boot" stroke="var(--main-color)" stroke-width="14" stroke-linecap="round" x1="50" y1="165" x2="105" y2="165" style="display:none;"></line>
+						<line class="doors" id="door_front_left" x1="10" y1="65" x2="40" y2="48" style="display:none;"></line>
+						<line class="doors" id="door_front_right" x1="146" y1="65" x2="116" y2="48" style="display:none;"></line>
+						<line class="doors" id="door_rear_left" x1="10" y1="110" x2="40" y2="93" style="display:none;"></line>
+						<line class="doors" id="door_rear_right" x1="146" y1="110" x2="116" y2="93" style="display:none;"></line>
+						<line class="doors" id="door_boot" x1="50" y1="165" x2="105" y2="165" style="display:none;"></line>
 					</svg>
 				</div>
 				<div id="door_open_popup_text" class="centerAligned" style="position:absolute; left:250px; width:500px;">
@@ -2584,7 +2584,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div style="position:absolute; left:240px; top:60px; width:350px; height:80px;">
 					<div id="screen_brightness_perc" class="gauge" style="transform: scaleX(1.0);">
 						<svg style="width:324px;">
-							<line style="stroke:hsl(215,42%,91%); stroke:var(--main-color); stroke-width:54; stroke-opacity:0.8;" x1="0" y1="40" x2="324" y2="40"></line>
+							<line style="stroke:#dfe7f2; stroke:var(--main-color); stroke-width:54; stroke-opacity:0.8;" x1="0" y1="40" x2="324" y2="40"></line>
 						</svg>
 					</div>
 					<div class="gaugeBoxDiv">
