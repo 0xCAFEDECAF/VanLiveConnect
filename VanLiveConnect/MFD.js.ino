@@ -108,6 +108,9 @@ function showViewportSizes()
 // -----
 // Functions for parsing and handling VAN bus packet data as received in JSON format
 
+// Associative array, using the data item as key
+var liveData = {};
+
 function processJsonObject(item, jsonObject)
 {
 	var selectorById = '#' + item;  // Select by 'id' attribute (must be unique in the DOM)
@@ -170,8 +173,11 @@ function processJsonObject(item, jsonObject)
 		} // if
 	}); // each
 
+	let changed = jsonObject != liveData[item];
+	liveData[item] = jsonObject;
+
 	// Check if a handler must be invoked
-	handleItemChange(item, jsonObject);
+	handleItemChange(item, jsonObject, changed);
 }
 
 function writeToDom(jsonObj)
@@ -322,7 +328,7 @@ function connectToWebSocket()
 	);
 	webSocket.bind
 	(
-		'open', function ()
+		'open', function()
 		{
 			webSocket.send("mfd_language:" + localStorage.mfdLanguage);
 			webSocket.send("mfd_distance_unit:" + localStorage.mfdDistanceUnit);
@@ -390,7 +396,7 @@ function showPopup(id, msec)
 
 	// Hide popup after specified milliseconds
 	clearTimeout(popupTimer[id]);
-	popupTimer[id] = setTimeout(function () { hidePopup(id); }, msec);
+	popupTimer[id] = setTimeout(function() { hidePopup(id); }, msec);
 	return popupTimer[id];
 }
 
@@ -662,7 +668,7 @@ function changeBackLargeScreenAfter(msec)
 
 	changeBackScreenTimer = setTimeout
 	(
-		function ()
+		function()
 		{
 			changeBackScreenTimer = undefined;
 
@@ -739,7 +745,7 @@ function preventTemporaryScreenChange(msec)
 	clearTimeout(preventTemporaryScreenChangeTimer);
 	preventTemporaryScreenChangeTimer = setTimeout
 	(
-		function () { preventTemporaryScreenChangeTimer = null; },
+		function() { preventTemporaryScreenChangeTimer = null; },
 		msec
 	);
 }
@@ -1178,7 +1184,7 @@ function resizeButton(id)
 		buttonOriginalWidths[id] = button.width();  // Save original width of button
 
 		// Move left a bit if necessary
-		var scale = $(":root").css("--scale-factor");
+		var scale = $(":root").css("--scale-factor") || 1;
 		let right = button.position().left / scale + widthAtLeast;
 		let moveLeft = right - 910;
 		if (moveLeft > 0) button.css({ 'marginLeft': '-=' + moveLeft + 'px' });
@@ -1466,7 +1472,7 @@ function highlightNextLine(id)
 
 	// Scroll along if necessary
 
-	var scale = $(":root").css("--scale-factor");
+	var scale = $(":root").css("--scale-factor") || 1;
 	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top / scale);
 	var heightOfHighlightedLine = $("#" + id + " .invertedText").height();
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
@@ -1495,7 +1501,7 @@ function highlightPreviousLine(id)
 
 	// Scroll along if necessary
 
-	var scale = $(":root").css("--scale-factor");
+	var scale = $(":root").css("--scale-factor") || 1;
 	var topOfHighlightedLine = Math.ceil($("#" + id + " .invertedText").position().top / scale);
 	var heightOfUnhighlightedLine = parseFloat($("#" + id).css('line-height'));
 
@@ -1660,7 +1666,7 @@ function showAudioVolumePopup()
 		// head unit. To prevent the audio settings popup to flash up and disappear, show it only after
 		// 100 msec in this specific situation.
 		clearTimeout(audioSettingsPopupShowTimer);
-		audioSettingsPopupShowTimer = setTimeout(function ()
+		audioSettingsPopupShowTimer = setTimeout(function()
 		{
 			$("#audio_settings_popup").show();
 			NotifyServerAboutPopup("audio_settings_popup", 3700);
@@ -1809,7 +1815,7 @@ function setColorTheme(theme, palette)
 	if (! theme) theme = "set_dark_theme";
 	if (! palette) palette = "blue_palette";
 	var selectedPalette = colorPalettes[palette][theme];
-	for (const key in selectedPalette) $(":root").css(key, selectedPalette[key]);
+	for (let key in selectedPalette) $(":root").css(key, selectedPalette[key]);
 
 	var bkImgNameThemeExtenders = { "set_light_theme": "_light", "set_dark_theme": "" }
 	var bkImgNamePaletteExtenders = { "gold_palette": "_gold", "orange_palette": "_orange", "blue_palette": "" }
@@ -2056,7 +2062,7 @@ function changeToInstrumentsScreen()
 
 	// Suppress climate control popup during the next 2 seconds
 	clearTimeout(suppressClimateControlPopup);
-	suppressClimateControlPopup = setTimeout(function () { suppressClimateControlPopup = null; }, 2000);
+	suppressClimateControlPopup = setTimeout(function() { suppressClimateControlPopup = null; }, 2000);
 
 	changeLargeScreenTo("instruments");
 }
@@ -2226,7 +2232,7 @@ function satnavGotoListScreen()
 		clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
 		satnavGotoListScreen.showSpinningDiscTimer = setTimeout
 		(
-			function () { $("#satnav_choose_from_list_spinning_disc").show(); },
+			function() { $("#satnav_choose_from_list_spinning_disc").show(); },
 			3500
 		);
 	} // if
@@ -2446,7 +2452,7 @@ function satnavPrepareEntryScreen()
 	clearTimeout(handleItemChange.showCharactersSpinningDiscTimer);
 	handleItemChange.showCharactersSpinningDiscTimer = setTimeout
 	(
-		function ()
+		function()
 		{
 			$("#satnav_to_mfd_show_characters_spinning_disc").show();
 			ignoringIrEscCommand = false;
@@ -2544,7 +2550,7 @@ function satnavRemoveEnteredCharacter(newState)
 		clearTimeout(showAvailableCharactersTimer);
 		showAvailableCharactersTimer = setTimeout
 		(
-			function () { writeToDom({"satnav_to_mfd_show_characters":availableCharacters}); },
+			function() { writeToDom({"satnav_to_mfd_show_characters":availableCharacters}); },
 			1500
 		);
 	} // if
@@ -3070,7 +3076,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	// Need to wait a bit until all data has been received
 	setTimeout
 	(
-		function ()
+		function()
 		{
 			if (! satnavDestinationReachable && ! satnavRouteComputed)
 			{
@@ -3223,7 +3229,7 @@ function showOrTimeoutDestinationNotAccessiblePopup()
 	clearTimeout(showOrTimeoutDestinationNotAccessiblePopup.timer);
 	showOrTimeoutDestinationNotAccessiblePopup.timer = setTimeout
 	(
-		function () { satnavDestinationNotAccessibleByRoadPopupShown = true; },
+		function() { satnavDestinationNotAccessibleByRoadPopupShown = true; },
 		10000
 	);
 }
@@ -3274,7 +3280,7 @@ function satnavSetAudioLed(playingAudio)
 		// Set timeout on LED, in case the "AUDIO OFF" packet is missed
 		satnavSetAudioLed.showSatnavAudioLed = setTimeout
 		(
-			function ()
+			function()
 			{
 				$("#satnav_audio").removeClass("ledOn");
 				$("#satnav_audio").addClass("ledOff");
@@ -3293,7 +3299,7 @@ function satnavValidateVocalSynthesisLevel()
 		// When head unit is playing audio (tuner, CD, CD changer), the "audio_source" will change to it after
 		// setting the vocal synthesis level. In that situation, ignore that change during a short period.
 		clearTimeout(suppressScreenChangeToAudio);
-		suppressScreenChangeToAudio = setTimeout(function () { suppressScreenChangeToAudio = null; }, 400);
+		suppressScreenChangeToAudio = setTimeout(function() { suppressScreenChangeToAudio = null; }, 400);
 	} // if
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
@@ -3323,7 +3329,7 @@ function satnavEscapeVocalSynthesisLevel()
 		// When head unit is playing audio (tuner, CD, CD changer), the "audio_source" will change to it after
 		// setting the vocal synthesis level. In that situation, ignore that change during a short period.
 		clearTimeout(suppressScreenChangeToAudio);
-		suppressScreenChangeToAudio = setTimeout(function () { suppressScreenChangeToAudio = null; }, 400);
+		suppressScreenChangeToAudio = setTimeout(function() { suppressScreenChangeToAudio = null; }, 400);
 	} // if
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
@@ -3636,8 +3642,10 @@ var icyConditions = false;
 var wasRiskOfIceWarningShown = false;
 var riskOfIceText = "Risk of ice!";
 
-function handleItemChange(item, value)
+function handleItemChange(item, value, changed)
 {
+	if (changed === undefined) changed = false;  // IE11 does not support default parameters
+
 	switch(item)
 	{
 		case "mfd_language":
@@ -3828,7 +3836,7 @@ function handleItemChange(item, value)
 				clearTimeout(handleItemChange.noCdPresentTimer);
 				handleItemChange.noCdPresentTimer = setTimeout
 				(
-					function ()
+					function()
 					{
 						$("#cd_changer_disc_not_present").hide();
 						$("#cd_changer_selected_disc").hide();
@@ -3852,11 +3860,7 @@ function handleItemChange(item, value)
 
 		case "head_unit_stalk_wheel":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.headUnitStalkWheel) break;
-			handleItemChange.headUnitStalkWheel = value;
-
-			if (value === "0") break;
+			if (! changed || value === "0") break;
 			if ($("#audio_source").text() !== "TUNER") break;
 			if (inMenu()) break;
 
@@ -3866,22 +3870,15 @@ function handleItemChange(item, value)
 
 		case "tape_side":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.tapeSide) break;
-			handleItemChange.tapeSide = value;
-
+			if (! changed) break;
 			hideAudioSettingsPopup();
-
 			showAudioPopup();
 		} // case
 		break;
 
 		case "tape_status":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.tapeStatus) break;
-			handleItemChange.tapeStatus = value;
-
+			if (! changed) break;
 			hideAudioSettingsPopup();
 			showAudioPopup();
 		} // case
@@ -3889,9 +3886,7 @@ function handleItemChange(item, value)
 
 		case "tuner_band":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.tunerBand) break;
-			handleItemChange.tunerBand = value;
+			if (! changed) break;
 
 			// Hide the audio and tuner presets popup when changing band
 			hideTunerPresetsPopup();
@@ -3930,9 +3925,7 @@ function handleItemChange(item, value)
 
 		case "am_band":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.amBand) break;
-			handleItemChange.amBand = value;
+			if (! changed) break;
 
 			$("#presets_am").toggle(value === "ON");
 
@@ -3947,11 +3940,10 @@ function handleItemChange(item, value)
 
 		case "tuner_memory":
 		{
-			// Check for legal value
+			// Legal value?
 			if (value !== "-" && (value < "1" || value > "6")) break;
 
-			if (value === handleItemChange.tunerMemory) break;
-			handleItemChange.tunerMemory = value;
+			if (! changed) break;
 
 			// Switch to head unit display if applicable
 			if ($("#clock").is(":visible")) selectDefaultScreen();
@@ -3979,9 +3971,7 @@ function handleItemChange(item, value)
 
 		case "rds_text":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.rdsText) break;
-			handleItemChange.rdsText = value;
+			if (! changed) break;
 
 			let showRdsText = value !== "" && tunerSearchMode !== "MANUAL_TUNING";
 
@@ -3996,8 +3986,8 @@ function handleItemChange(item, value)
 
 		case "search_mode":
 		{
-			// Has anything changed?
-			if (value === tunerSearchMode) break;
+			if (! changed) break;
+
 			tunerSearchMode = value;
 
 			hideAudioSettingsPopup();
@@ -4062,7 +4052,7 @@ function handleItemChange(item, value)
 
 				// In case the "NO" packet is missed
 				clearTimeout(handleItemChange.infoTrafficOffTimer);
-				handleItemChange.infoTrafficOffTimer = setTimeout(() => { infoTraffic = "NO"; }, 300000);
+				handleItemChange.infoTrafficOffTimer = setTimeout(function() { infoTraffic = "NO"; }, 300000);
 			}
 			else
 			{
@@ -4073,9 +4063,7 @@ function handleItemChange(item, value)
 
 		case "cd_status":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.cdPlayerStatus) break;
-			handleItemChange.cdPlayerStatus = value;
+			if (! changed) break;
 
 			$("#cd_status_error").toggle(value === "ERROR");
 
@@ -4111,9 +4099,7 @@ function handleItemChange(item, value)
 
 		case "cd_changer_status":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.cdChangerStatus) break;
-			handleItemChange.cdChangerStatus = value;
+			if (! changed) break;
 
 			$("#cd_changer_status_error").toggle(value === "ERROR");
 
@@ -4188,7 +4174,7 @@ function handleItemChange(item, value)
 			clearTimeout(hideHeadUnitPopupsTimer);
 			hideHeadUnitPopupsTimer = setTimeout
 			(
-				function () { hideHeadUnitPopupsTimer = null; },
+				function() { hideHeadUnitPopupsTimer = null; },
 				400
 			);
 
@@ -4244,11 +4230,7 @@ function handleItemChange(item, value)
 
 		case "mute":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.headUnitMute) break;
-			handleItemChange.headUnitMute = value;
-
-			if (value !== "ON") break;
+			if (! changed || value !== "ON") break;
 
 			if (
 				  $("#audio_source").text() !== "NONE"
@@ -4496,7 +4478,7 @@ function handleItemChange(item, value)
 			clearTimeout(handleItemChange.indicatorOffTimer);
 			handleItemChange.indicatorOffTimer = setTimeout
 			(
-				function () { $("#left_indicator,#right_indicator").removeClass("ledOnGreen").addClass("ledOff"); },
+				function() { $("#left_indicator,#right_indicator").removeClass("ledOnGreen").addClass("ledOff"); },
 				1000
 			);
 
@@ -4647,7 +4629,7 @@ function handleItemChange(item, value)
 					// "OFF" position can be very short between any of the other positions, so first wait a bit
 					handleItemChange.contactKeyOffTimer = setTimeout
 					(
-						function ()
+						function()
 						{
 							satnavPoweringOff(savedSatnavMode);
 							selectDefaultScreen();  // Even when in a menu: the original MFD switches off
@@ -4662,9 +4644,7 @@ function handleItemChange(item, value)
 
 		case "notification_message_on_mfd":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.mfdNotificationMsg) break;
-			handleItemChange.mfdNotificationMsg = value;
+			if (! changed) break;
 
 			if (value === "")
 			{
@@ -4680,11 +4660,7 @@ function handleItemChange(item, value)
 
 		case "doors_locked":
 		{
-			// Has anything changed?
-			if (value === handleItemChange.doorsLocked) break;
-			handleItemChange.doorsLocked = value;
-
-			if (value !== "YES") break;
+			if (! changed || value !== "YES") break;
 
 			const translations =
 			{
@@ -5532,14 +5508,10 @@ function handleItemChange(item, value)
 
 		case "satnav_curr_turn_icon_direction_as_text":
 		{
-			if (value === "") break;
+			if (! changed || value === "") break;
 
 			// Break out if current turn roundabout is not visible
 			if (! $("#satnav_curr_turn_roundabout").is(":visible")) break;
-
-			// Has anything changed?
-			if (value === handleItemChange.currentTurnDirection) break;
-			handleItemChange.currentTurnDirection = value;
 
 			// Draw the small arc inside the roundabout
 			document.getElementById("satnav_curr_turn_icon_direction_on_roundabout").setAttribute
