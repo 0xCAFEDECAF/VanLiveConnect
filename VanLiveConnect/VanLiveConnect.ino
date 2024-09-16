@@ -108,7 +108,7 @@ bool IRAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
 
             || (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x8A)  // head_unit_report, head_unit_button_pressed
 
-            || pkt.Iden() == HEAD_UNIT_IDEN
+            //|| pkt.Iden() == HEAD_UNIT_IDEN  // JSON data for these packets can be quite large (~1 KByte)
             || pkt.Iden() == AUDIO_SETTINGS_IDEN
             || pkt.Iden() == MFD_LANGUAGE_UNITS_IDEN
 
