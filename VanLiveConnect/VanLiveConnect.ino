@@ -93,7 +93,7 @@ bool IrReceive(TIrPacket& irPacket);
 
 // The following VAN bus packets are considered important, and should not be skipped when the RX queue
 // is overrunning
-bool ICACHE_RAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
+bool IRAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
 {
     return
         pkt.DataLen() >= 3 &&

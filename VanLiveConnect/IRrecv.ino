@@ -73,7 +73,7 @@ volatile unsigned long lastIrPulse = 0;
 
 volatile TIrParams irparams;
 
-void ICACHE_RAM_ATTR irPinChangeIsr()
+void IRAM_ATTR irPinChangeIsr()
 {
     if (irparams.rcvstate == STATE_STOP) return;
 
