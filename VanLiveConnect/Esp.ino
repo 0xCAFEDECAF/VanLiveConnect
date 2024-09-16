@@ -33,6 +33,7 @@ void PrintSystemSpecs()
     Serial.printf_P(PSTR("Arduino ESP8266 board package version: UNKNOWN\n"));
   #endif
     Serial.printf_P(PSTR("\"NONOS\" SDK version: %s\n"), system_get_sdk_version());
+    Serial.printf_P(PSTR("lwIP (lightweight IP) version: %s\n"), LWIP_VERSION_STRING);
 
     uint32_t realSize = ESP.getFlashChipRealSize();
     uint32_t ideSize = ESP.getFlashChipSize();
