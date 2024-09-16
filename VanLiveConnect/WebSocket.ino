@@ -557,7 +557,7 @@ void WebSocketEvent(
             } // if
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
           #endif // DEBUG_WEBSOCKET
 
           #if 0
@@ -619,7 +619,7 @@ void WebSocketEvent(
             } // if
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
           #endif // DEBUG_WEBSOCKET
 
             // Send ESP system data to client
@@ -678,7 +678,7 @@ void WebSocketEvent(
                     } // if
 
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR("==> id_1=%lu, id_2=%lu\n"), websocketId_1, websocketId_2);
+                    Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
                   #endif // DEBUG_WEBSOCKET
                 }
                 else
@@ -810,8 +810,10 @@ void LoopWebSocket()
 
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket] %zu clients are currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%u\n"),
-            TimeStamp(), webSocket.count(), countQueuedJsons(), websocketId_1, websocketId_2,
+            PSTR("%s[webSocket] %zu client%S currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%u\n"),
+            TimeStamp(), webSocket.count(),
+            webSocket.count() == 1 ? PSTR(" is") : PSTR("s are"),
+            countQueuedJsons(), websocketId_1, websocketId_2,
             system_get_free_heap_size()
         );
       #endif // DEBUG_WEBSOCKET
