@@ -118,19 +118,18 @@ bool IRAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
 
 void SetupVanReceiver()
 {
+  #if defined VAN_RX_IFS_DEBUGGING
+    #define VAN_PACKET_QUEUE_SIZE 25
+  #else
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
-    // Looks like it should be set to at least 100.
+    // Looks like it should be set to at least 30.
   #define VAN_PACKET_QUEUE_SIZE 30
+  #endif
 
   #if VAN_BUS_VERSION_INT >= 000003003
     // When queue fills above 80%, start dropping non-essential packets
     VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsImportantPacket);
-  #endif
-
-  #if defined VAN_RX_IFS_DEBUGGING
-    #undef VAN_PACKET_QUEUE_SIZE
-    #define VAN_PACKET_QUEUE_SIZE 25
   #endif
 
     #define TX_PIN D3  // GPIO pin connected to VAN bus transceiver input
@@ -434,6 +433,7 @@ void loop()
       #endif // SHOW_VAN_RX_STATS
     } // if
 
+  #if VAN_BUS_VERSION_INT >= 000003002 || defined SHOW_ESP_RUNTIME_STATS || defined SHOW_VAN_RX_STATS
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
     {
@@ -457,6 +457,7 @@ void loop()
         SendJsonOnWebSocket(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
       #endif // SHOW_VAN_RX_STATS
     } // if
+  #endif // VAN_BUS_VERSION_INT >= 000003002 || defined SHOW_ESP_RUNTIME_STATS || defined SHOW_VAN_RX_STATS
 
   #ifdef SHOW_VAN_RX_STATS
     static unsigned long lastUpdate2 = 0;
