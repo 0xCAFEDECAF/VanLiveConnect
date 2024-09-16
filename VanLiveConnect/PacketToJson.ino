@@ -863,7 +863,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
                 "}\n"
             "},\n"
             "\"odometer_1\": \"%s\",\n"
-            "\"exterior_temp\": \"%s\",\n"  // Machine format: "3.0"
+            "\"exterior_temp\": \"%s\",\n"  // Machine format, e.g. "3.0"
             "\"exterior_temp_loc\": \"%s\"\n"  // Localized, e.g. "3,5" or "3.5", depending on language
         "}\n"
     "}\n";

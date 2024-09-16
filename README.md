@@ -254,9 +254,8 @@ We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-
 
 * [Arduino IDE](https://www.arduino.cc/en/software), with
 * [ESP8266 Board Package](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed.
-  I am currently using [version 2.6.3](https://github.com/esp8266/Arduino/releases/tag/2.6.3) but other versions
-  may also be working fine (tested on versions 2.6.3 ... 3.0.2; lowest VAN packet CRC error rate was achieved
-  using version 2.6.3).
+  I am currently using [version 3.1.2](https://github.com/esp8266/Arduino/releases/tag/3.1.2) but other versions
+  seem to be also working fine (I tested with versions 2.6.3 ... 3.1.2).
 
 Follow the next tutorial to install the IDE and the ESP8266 Board Package:
 

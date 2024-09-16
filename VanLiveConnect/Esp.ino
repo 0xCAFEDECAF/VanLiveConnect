@@ -25,8 +25,14 @@ const char PROGMEM compileDate[] = __DATE__ ", " __TIME__;
 void PrintSystemSpecs()
 {
     Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
+  #if defined ARDUINO_ESP8266_RELEASE
     Serial.printf_P(PSTR("Arduino ESP8266 board package version: %s\n"), ARDUINO_ESP8266_RELEASE);
-    Serial.printf_P(PSTR("SDK: %s\n"), system_get_sdk_version());
+  #elif defined ARDUINO_ESP8266_DEV
+    Serial.printf_P(PSTR("Arduino ESP8266 board package version: DEV\n"));
+  #else
+    Serial.printf_P(PSTR("Arduino ESP8266 board package version: UNKNOWN\n"));
+  #endif
+    Serial.printf_P(PSTR("\"NONOS\" SDK version: %s\n"), system_get_sdk_version());
 
     uint32_t realSize = ESP.getFlashChipRealSize();
     uint32_t ideSize = ESP.getFlashChipSize();

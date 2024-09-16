@@ -46,8 +46,6 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     websocketId_1 = WEBSOCKET_INVALID_ID;
     websocketId_2 = WEBSOCKET_INVALID_ID;
   #endif // 0
-
-    //Serial.printf_P(PSTR("==> websocketId_1=%u, websocketId_2=%u\n"), websocketId_1, websocketId_2);
 } // onStationDisconnected
 
 void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
