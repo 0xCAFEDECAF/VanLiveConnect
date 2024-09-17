@@ -107,6 +107,8 @@
 //     CANL ---[R]---.
 //                   |
 //      GND ---|>|---+---|>|--- +5V on ESP board
+//                   |
+//                   \--------- LIGHT_SLEEP_WAKE_PIN (D1) pin (input) on ESP board
 //
 //      GND ---|>|--- +5V
 //
@@ -138,9 +140,10 @@
 //
 // - Using SPIFFS as it is shipped by default in the esp8266/Arduino releases (https://github.com/esp8266/Arduino)
 //   causes many VAN packets have CRC errors. The solution is to use SPIFFS in "read-only" mode. For that,
-//   patch the following file (on Windows; in Linux the path will be slightly different but similar):
+//   patch the following file:
 //
-//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\cores\esp8266\spiffs\spiffs_config.h
+//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\cores\esp8266\spiffs\spiffs_config.h (Windows)
+//     /home/<user_id>/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/spiffs/spiffs_config.h (Linux)
 //
 //   Change the SPIFFS_READ_ONLY define to:
 //
@@ -148,7 +151,8 @@
 //
 //   That will break compilation, which is solved by patching the file:
 //
-//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\cores\esp8266\spiffs_api.h
+//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\cores\esp8266\spiffs_api.h (Windows)
+//     /home/<user_id>/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/spiffs_api.h (Linux)
 //
 //   Change the 'truncate' function as follows:
 //
