@@ -91,9 +91,9 @@ void IrSetup();
 const char* ParseIrPacketToJson(const TIrPacket& pkt);
 bool IrReceive(TIrPacket& irPacket);
 
-// The following VAN bus packets are considered important, and should not be skipped when the RX queue
+// The following VAN bus packets are considered very important, and should not be skipped when the VAN bus RX queue
 // is overrunning
-bool IRAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
+bool IRAM_ATTR IsVeryImportantPacket(const TVanPacketRxDesc& pkt)
 {
     return
         pkt.DataLen() >= 3 &&
@@ -114,6 +114,22 @@ bool IRAM_ATTR IsImportantPacket(const TVanPacketRxDesc& pkt)
 
             || pkt.Iden() == CAR_STATUS2_IDEN  // Info and alarm popups
         );
+} // IsVeryImportantPacket
+
+// For VAN-bus packets identified as "important", the JSON data will be kept for later sending if the WebSocket
+// send queue is full. By default, the WebSocket has 8 slots; see AsyncWebSocket.h: "#define WS_MAX_QUEUED_MESSAGES 8".
+bool IsImportantPacket(const TVanPacketRxDesc& pkt)
+{
+    return
+        IsVeryImportantPacket(pkt)
+        ||
+        (
+            pkt.DataLen() >= 3 &&
+            (
+                pkt.Iden() == LIGHTS_STATUS_IDEN
+                || pkt.Iden() == AIRCON1_IDEN
+            )
+        );
 } // IsImportantPacket
 
 void SetupVanReceiver()
@@ -129,7 +145,7 @@ void SetupVanReceiver()
 
   #if VAN_BUS_VERSION_INT >= 000003003
     // When queue fills above 80%, start dropping non-essential packets
-    VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsImportantPacket);
+    VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsVeryImportantPacket);
   #endif
 
     #define TX_PIN D3  // GPIO pin connected to VAN bus transceiver input
@@ -392,7 +408,7 @@ void loop()
         #define PANIC_AT_PERCENTAGE (60)
 
         int nDiscarded = 0;
-        while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsImportantPacket(pkt))
+        while (VanBusRx.GetNQueued() * 100 / VanBusRx.QueueSize() > PANIC_AT_PERCENTAGE && ! IsVeryImportantPacket(pkt))
         {
             bool isQueueOverrun2 = false;
             if (! VanBusRx.Receive(pkt, &isQueueOverrun2)) break;
