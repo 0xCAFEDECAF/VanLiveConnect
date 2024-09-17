@@ -142,8 +142,8 @@
 //   causes many VAN packets have CRC errors. The solution is to use SPIFFS in "read-only" mode. For that,
 //   patch the following file:
 //
-//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\cores\esp8266\spiffs\spiffs_config.h (Windows)
-//     /home/<user_id>/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/spiffs/spiffs_config.h (Linux)
+//     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\cores\esp8266\spiffs\spiffs_config.h (Windows)
+//     $HOME/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/spiffs/spiffs_config.h (Linux)
 //
 //   Change the SPIFFS_READ_ONLY define to:
 //
@@ -151,8 +151,8 @@
 //
 //   That will break compilation, which is solved by patching the file:
 //
-//     c:\Users\<user_id>\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\cores\esp8266\spiffs_api.h (Windows)
-//     /home/<user_id>/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/spiffs_api.h (Linux)
+//     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\cores\esp8266\spiffs_api.h (Windows)
+//     $HOME/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266/spiffs_api.h (Linux)
 //
 //   Change the 'truncate' function as follows:
 //
@@ -251,9 +251,12 @@
 // Define to show the VAN bus statistics on the "system" screen
 // Requires installation of the 'PrintEx' library; see: https://github.com/Chris--A/PrintEx (tested with version 1.2.0)
 // Note that the 'PrintEx' library only compiles under ESP8266 Arduino release 2.7.4 or lower.
-// To use the 'PrintEx' library with ESP8266 Arduino release 3.0.0 or higher, a patch is needed in the file
-// c:\Users\<user_id>\Documents\Arduino\libraries\PrintEx\src\lib\TypeTraits.h . Edit that file; replace
-// "struct select" by "struct select_P".
+// To use the 'PrintEx' library with ESP8266 Arduino release 3.0.0 or higher, a patch is needed in the file:
+//
+//   %USERPROFILE%\Documents\Arduino\libraries\PrintEx\src\lib\TypeTraits.h (Windows)
+//   $HOME/Arduino/libraries/PrintEx/src/lib/TypeTraits.h (Linux)
+//
+// Edit that file; replace "struct select" by "struct select_P".
 //#define SHOW_VAN_RX_STATS
 
 // Define to show the ESP RAM and Wi-Fi statistics on the "system" screen

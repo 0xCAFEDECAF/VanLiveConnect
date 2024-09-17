@@ -298,7 +298,8 @@ I seem to have better Wi-Fi performance by setting the variable `build.sdk` to:
 
 inside the following file:
 
-    %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\2.6.3\platform.txt
+    %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\platform.txt (Windows)
+    $HOME/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/platform.txt (Linux)
 
 #### 5. Uploading
 
