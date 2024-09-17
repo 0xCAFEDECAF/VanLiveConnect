@@ -106,7 +106,7 @@ file.
 See also the [screenshots](#screenshots) above.
 
 * Clock with exterior temperature
-* Instruments (speed, RPM, fuel level, engine temperature)
+* Instruments (speed, RPM, fuel level, engine temperature, lights and indicators)
 * "Pre-flight" checks (oil and fuel level, engine temperature)
 * Odometer and trip counters
 * Live fuel data (consumption, remaining distance)
@@ -171,7 +171,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
     * Using +12 Volt permanent line (pin 7 of the "A" block of the ISO connector). To prevent battery drain,
       the ESP board will go to sleep after 5 minutes ([configurable in `Config.h`](VanLiveConnect/Config.h#L87)).
-      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L121) to be connected, so that the ESP board
+      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L123) to be connected, so that the ESP board
       wakes up as soon as any activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
@@ -253,7 +253,7 @@ may also be working fine.
 We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-on installed. You will need:
 
 * [Arduino IDE](https://www.arduino.cc/en/software), with
-* [ESP8266 Board Package](http://arduino.esp8266.com/Arduino/versions/2.0.0/doc/installing.html) installed.
+* [ESP8266 Board Package](https://arduino-esp8266.readthedocs.io/en/stable/installing.html) installed.
   I am currently using [version 3.1.2](https://github.com/esp8266/Arduino/releases/tag/3.1.2) but other versions
   seem to be also working fine (I tested with versions 2.6.3 ... 3.1.2).
 
@@ -286,7 +286,7 @@ of the WebSocket (TCP/IP over Wi-Fi) communication.
 In the Arduino IDE, go to the "Tools" menu, and choose:
 
 * CPU frequency: 160 MHz, and
-* lwIP variant: "v2 Lower Memory (no features)".
+* lwIP variant: "v2 Higher Bandwidth (no features)".
 
 Here is a picture of board settings that have been tested to work:
 
@@ -378,7 +378,7 @@ via Wi-Fi, even with mobile data enabled.
 Unfortunately, the effect is still the same as above: all apps will try to use the (non-Internet) Wi-Fi connection,
 so all apps still fail to access the Internet.
 
-The solution is to have the web server in the ESP [stop responding](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/aece0d71480ae534d1ff40c2043e673175219ed0/VanLiveConnect/WebServer.ino#L247)
+The solution is to have the web server in the ESP [stop responding](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/20780182943b44f90241af8eb2d614e8ce9d53b9/VanLiveConnect/WebServer.ino#L248)
 to requests for '.../generate_204' as soon as a data (WebSocket) connection between the ESP and the Android device
 is well established.
 
@@ -391,7 +391,7 @@ In this way, the following sequence of events takes place:
    Wi-Fi to connect.
 4. The JavaScript code in the landing page sets up a WebSocket connection: vehicle data is sent to the Android
    device and displayed in its browser.
-5. About [7 seconds](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/c4f09a756724c128c41cca4281a808e69095d3c9/VanLiveConnect/WebServer.ino#L236)
+5. About [7 seconds](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/20780182943b44f90241af8eb2d614e8ce9d53b9/VanLiveConnect/WebServer.ino#L237)
    after the WebSocket connection is established, the web server on the ESP stops responding to the
    '.../generate_204' requests.
 6. After a few retries, Android now thinks that the Wi-Fi access point is no longer offering Internet connectivity.
