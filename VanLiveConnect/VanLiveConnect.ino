@@ -108,7 +108,6 @@ bool IRAM_ATTR IsVeryImportantPacket(const TVanPacketRxDesc& pkt)
 
             || (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x8A)  // head_unit_report, head_unit_button_pressed
 
-            //|| pkt.Iden() == HEAD_UNIT_IDEN  // JSON data for these packets can be quite large (~1 KByte)
             || pkt.Iden() == AUDIO_SETTINGS_IDEN
             || pkt.Iden() == MFD_LANGUAGE_UNITS_IDEN
 
@@ -126,7 +125,8 @@ bool IsImportantPacket(const TVanPacketRxDesc& pkt)
         (
             pkt.DataLen() >= 3 &&
             (
-                pkt.Iden() == LIGHTS_STATUS_IDEN
+                pkt.Iden() == HEAD_UNIT_IDEN
+                || pkt.Iden() == LIGHTS_STATUS_IDEN
                 || pkt.Iden() == AIRCON1_IDEN
             )
         );
@@ -140,7 +140,7 @@ void SetupVanReceiver()
     // Having the default VAN packet queue size of 15 (see VanBusRx.h) seems too little given the time that
     // is needed to send a JSON packet over the Wi-Fi; seeing quite some "VAN PACKET QUEUE OVERRUN!" lines.
     // Looks like it should be set to at least 30.
-  #define VAN_PACKET_QUEUE_SIZE 30
+    #define VAN_PACKET_QUEUE_SIZE 30
   #endif
 
   #if VAN_BUS_VERSION_INT >= 000003003
