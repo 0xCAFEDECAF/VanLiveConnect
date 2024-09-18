@@ -326,14 +326,14 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
             unsigned long thisDuration = millis() - start;
             if (thisDuration < duration) duration = thisDuration;
 
-          #ifdef DEBUG_WEBSOCKET
+          #if DEBUG_WEBSOCKET >= 2
             Serial.printf_P(
                 PSTR("%s[webSocket %lu] Sent %zu-byte packet\n"),
                 TimeStamp(),
                 id,
                 strlen(json)
             );
-          #endif // DEBUG_WEBSOCKET
+          #endif // DEBUG_WEBSOCKET >= 2
 
             result = true;
             if (lastSentOnId_1 == 0) lastSentOnId_1 = id; else lastSentOnId_2 = id;
