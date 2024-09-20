@@ -34,7 +34,8 @@ void GoToSleep()
 {
     Serial.printf_P
     (
-        PSTR("====> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%u)\n"),
+        PSTR("%s===> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%u)\n"),
+        TimeStamp(),
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
@@ -77,7 +78,7 @@ void GoToSleep()
 
     Serial.printf_P
     (
-        PSTR("====> VAN bus activity on pin %s (GPIO%u) detected: waking up from light sleep mode\n"),
+        PSTR("\n===> VAN bus activity on pin %s (GPIO%u) detected: waking up from light sleep mode\n"),
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
