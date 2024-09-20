@@ -22,51 +22,6 @@ const uint32_t flashChipSpeed = ESP.getFlashChipSpeed();
 
 const char PROGMEM compileDate[] = __DATE__ ", " __TIME__;
 
-void PrintSystemSpecs()
-{
-    Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
-  #if defined ARDUINO_ESP8266_RELEASE
-    Serial.printf_P(PSTR("Arduino ESP8266 board package version: %s\n"), ARDUINO_ESP8266_RELEASE);
-  #elif defined ARDUINO_ESP8266_DEV
-    Serial.printf_P(PSTR("Arduino ESP8266 board package version: DEV\n"));
-  #else
-    Serial.printf_P(PSTR("Arduino ESP8266 board package version: UNKNOWN\n"));
-  #endif
-    Serial.printf_P(PSTR("\"NONOS\" SDK version: %s\n"), system_get_sdk_version());
-    Serial.printf_P(PSTR("lwIP (lightweight IP) version: %s\n"), LWIP_VERSION_STRING);
-
-    uint32_t realSize = ESP.getFlashChipRealSize();
-    uint32_t ideSize = ESP.getFlashChipSize();
-
-    char floatBuf[MAX_FLOAT_SIZE];
-    Serial.printf_P(PSTR("Flash real size: %s MBytes\n"), FloatToStr(floatBuf, realSize/1024.0/1024.0, 2));
-    Serial.printf_P(PSTR("Flash ide size: %s MBytes\n"), FloatToStr(floatBuf, ideSize/1024.0/1024.0, 2));
-    Serial.printf_P(PSTR("Flash ide speed: %s MHz\n"), FloatToStr(floatBuf, ESP.getFlashChipSpeed()/1000000.0, 2));
-    FlashMode_t ideMode = ESP.getFlashChipMode();
-    Serial.printf_P(PSTR("Flash ide mode: %S\n"),
-        ideMode == FM_QIO ? qioStr :
-        ideMode == FM_QOUT ? qoutStr :
-        ideMode == FM_DIO ? dioStr :
-        ideMode == FM_DOUT ? doutStr :
-        unknownStr);
-    Serial.printf_P(PSTR("Flash chip configuration %S\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
-
-    Serial.print(F("Software image MD5 checksum: "));
-    Serial.print(md5Checksum);
-    Serial.printf_P(PSTR(" (%S)\n"), compileDate);
-
-    Serial.print(F("Wi-Fi MAC address: "));
-    Serial.print(WiFi.macAddress());
-  #ifdef ON_DESK_MFD_ESP_MAC
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
-    {
-        Serial.print(F(" == ON_DESK_MFD_ESP_MAC, i.e., this is the on-desk test setup, so:\n"));
-        Serial.print(F("==> Will print detailed debug info when a VAN bus packet with CRC error is received."));
-    }
-  #endif // ON_DESK_MFD_ESP_MAC
-    Serial.print("\n");
-} // PrintSystemSpecs
-
 String EspGetResetInfo()
 {
     struct rst_info* espResetInfo = ESP.getResetInfoPtr();
@@ -115,7 +70,54 @@ String EspGetResetInfo()
     } // if
 
     return String(buf);
-}
+} // EspGetResetInfo
+
+void PrintSystemSpecs()
+{
+    Serial.printf_P(PSTR("Reset reason: %s\n"), EspGetResetInfo().c_str());
+    Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
+  #if defined ARDUINO_ESP8266_RELEASE
+    Serial.printf_P(PSTR("Arduino ESP8266 board package version: %s\n"), ARDUINO_ESP8266_RELEASE);
+  #elif defined ARDUINO_ESP8266_DEV
+    Serial.printf_P(PSTR("Arduino ESP8266 board package version: DEV\n"));
+  #else
+    Serial.printf_P(PSTR("Arduino ESP8266 board package version: UNKNOWN\n"));
+  #endif
+    Serial.printf_P(PSTR("\"NONOS\" SDK version: %s\n"), system_get_sdk_version());
+    Serial.printf_P(PSTR("lwIP (lightweight IP) version: %s\n"), LWIP_VERSION_STRING);
+
+    uint32_t realSize = ESP.getFlashChipRealSize();
+    uint32_t ideSize = ESP.getFlashChipSize();
+
+    char floatBuf[MAX_FLOAT_SIZE];
+    Serial.printf_P(PSTR("Flash real size: %s MBytes\n"), FloatToStr(floatBuf, realSize/1024.0/1024.0, 2));
+    Serial.printf_P(PSTR("Flash ide size: %s MBytes\n"), FloatToStr(floatBuf, ideSize/1024.0/1024.0, 2));
+    Serial.printf_P(PSTR("Flash ide speed: %s MHz\n"), FloatToStr(floatBuf, ESP.getFlashChipSpeed()/1000000.0, 2));
+    FlashMode_t ideMode = ESP.getFlashChipMode();
+    Serial.printf_P(PSTR("Flash ide mode: %S\n"),
+        ideMode == FM_QIO ? qioStr :
+        ideMode == FM_QOUT ? qoutStr :
+        ideMode == FM_DIO ? dioStr :
+        ideMode == FM_DOUT ? doutStr :
+        unknownStr);
+    Serial.printf_P(PSTR("Flash chip configuration %S\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
+
+    Serial.print(F("Software image MD5 checksum: "));
+    Serial.print(md5Checksum);
+    Serial.printf_P(PSTR(" (%S)\n"), compileDate);
+
+    Serial.print(F("Wi-Fi MAC address: "));
+    Serial.print(WiFi.macAddress());
+  #ifdef ON_DESK_MFD_ESP_MAC
+    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
+    {
+        Serial.print(F(" == ON_DESK_MFD_ESP_MAC, i.e., this is the on-desk test setup, so:\n"));
+        Serial.print(F("==> Will print detailed debug info when a VAN bus packet with CRC error is received.\n"));
+        Serial.print(F("==> Will go to sleep quicker if no bus activity is detected."));
+    }
+  #endif // ON_DESK_MFD_ESP_MAC
+    Serial.print("\n");
+} // PrintSystemSpecs
 
 const char* EspSystemDataToJson(char* buf, const int n)
 {
