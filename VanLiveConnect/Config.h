@@ -4,12 +4,6 @@
 #include <ESP8266WiFi.h>
 
 // -----
-// Compilation
-
-// Print warning / error messages for unadvised values of compile-time #defines
-#define STRICT_COMPILATION
-
-// -----
 // Wi-Fi and IP configuration
 
 #define HOST_NAME "VanLiveConnect"
