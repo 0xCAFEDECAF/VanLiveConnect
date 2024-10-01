@@ -2,9 +2,14 @@
 #include <map>
 #include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
 
-#ifdef SERVE_FROM_SPIFFS
+#if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 #include "FS.h"
+
+#ifdef SERVE_FROM_LITTLEFS
+  #include <LittleFS.h>
+  #define SPIFFS LittleFS
+#endif
 
 // Use the following #defines to define which type of web documents will be served from the
 // SPI flash file system (SPIFFS)
@@ -19,7 +24,7 @@
 #define SERVE_JAVASCRIPT_FROM_SPIFFS  // jquery-3.5.1.min.js
 #define SERVE_CSS_FROM_SPIFFS  // all.css, CarInfo.css
 
-#endif // SERVE_FROM_SPIFFS
+#endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 #include <TimeLib.h>
@@ -35,7 +40,7 @@ extern const String md5Checksum;
 extern std::map<uint32_t, unsigned long> lastWebSocketCommunication;
 void DeleteAllQueuedJsons();
 
-#ifdef SERVE_FROM_SPIFFS
+#if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Table with the MD5 hash value of each file in the root directory
 struct FileMd5Entry_t
@@ -84,7 +89,11 @@ void SetupStore()
     Dir dir = SPIFFS.openDir("/");
     while (dir.next())
     {
+      #ifdef SERVE_FROM_LITTLEFS
+        String fileName = "/" + dir.fileName();
+      #else
         String fileName = dir.fileName();
+      #endif // SERVE_FROM_LITTLEFS
 
         // Create a table with the MD5 hash value of each file
         // Inspired by https://github.com/esp8266/Arduino/issues/3003
@@ -129,7 +138,7 @@ String getMd5(const String& path)
     return "";
 } // getMd5
 
-#endif // SERVE_FROM_SPIFFS
+#endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Print all HTTP request details on Serial
 void printHttpRequest(class AsyncWebServerRequest* request)
@@ -394,7 +403,7 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
   #endif // DEBUG_WEBSERVER
 } // ServeFont
 
-#ifdef SERVE_FROM_SPIFFS
+#if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Serve a specified font from the SPI Flash File System (SPIFFS)
 void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
@@ -428,7 +437,7 @@ void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
   #endif // DEBUG_WEBSERVER
 } // ServeFontFromFile
 
-#endif // SERVE_FROM_SPIFFS
+#endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Convert the file extension to the MIME type
 const char* getContentType(const String& path)
@@ -479,7 +488,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
   #endif // DEBUG_WEBSERVER
 } // ServeDocument
 
-#ifdef SERVE_FROM_SPIFFS
+#if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
 void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* urlPath = 0, const char* mimeType = 0)
@@ -531,7 +540,7 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
   #endif // DEBUG_WEBSERVER
 } // ServeDocumentFromFile
 
-#endif // SERVE_FROM_SPIFFS
+#endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Serve the main HTML page
 void ServeMainHtml(class AsyncWebServerRequest* request)
@@ -625,7 +634,7 @@ void SetupWebServer()
     webServer.on("/generate_204", HandleAndroidConnectivityCheck);
     webServer.on("/gen_204", HandleAndroidConnectivityCheck);
 
-  #ifdef SERVE_FROM_SPIFFS
+  #if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
     // Try to serve any not further listed document from the SPI flash file system
     webServer.onNotFound([](AsyncWebServerRequest *request)
@@ -637,7 +646,7 @@ void SetupWebServer()
 
     webServer.onNotFound(HandleNotFound);
 
-  #endif // SERVE_FROM_SPIFFS
+  #endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
     webServer.begin();
 } // SetupWebServer

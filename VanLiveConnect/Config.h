@@ -120,8 +120,8 @@
 // Web server
 
 // Define SERVE_FROM_SPIFFS to make the web server to use the SPI Flash File system (SPIFFS) to serve its web
-// documents from. When SERVE_FROM_SPIFFS is not defined (commented out), the web server serves the web documents
-// from program space.
+// documents from. When neither SERVE_FROM_SPIFFS nor SERVE_FROM_LITTLEFS is defined (commented out), the
+// web server serves the web documents from program space.
 //
 // Notes:
 //
@@ -131,6 +131,16 @@
 //   instructions.
 //
 // - The web documents to be uploaded to SPIFFS are already present in the expected directory 'data'.
+//
+// - As from version 2.7.1 of the ESP8266 Board Package, SPIFFS is marked "deprecated". The compiler
+//   will issue warnings like:
+//
+//   [...]\VanLiveConnect\VanLiveConnect\WebServer.ino: In function 'void ServeDocumentFromFile(AsyncWebServerRequest*, const char*, const char*)':
+//   [...]\VanLiveConnect\VanLiveConnect\WebServer.ino:525:67: warning: 'SPIFFS' is deprecated: SPIFFS has been deprecated. Please consider moving to LittleFS or other filesystems. [-Wdeprecated-declarations]
+//     525 |         AsyncWebServerResponse* response = request->beginResponse(SPIFFS, path, mimeType);
+//         |                                                                   ^~~~~~
+//
+//   Despite these warnings, it will still work normally.
 //
 // - Using SPIFFS as it is shipped by default in the esp8266/Arduino releases (https://github.com/esp8266/Arduino)
 //   causes many VAN packets have CRC errors. The solution is to use SPIFFS in "read-only" mode. For that,
@@ -166,6 +176,29 @@
 //    }
 //
 //#define SERVE_FROM_SPIFFS
+
+// Define SERVE_FROM_LITTLEFS to make the web server to use the LittleFS Flash File system to serve its web
+// documents from. When neither SERVE_FROM_SPIFFS nor SERVE_FROM_LITTLEFS is defined (commented out), the
+// web server serves the web documents from program space.
+//
+// Notes:
+//
+// - To upload the web document files to the LittleFS on the ESP8266, you will need the "Arduino ESP8266 LittleFS
+//   Filesystem Uploader", as found at https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases .
+//   See also https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/ for installation
+//   instructions.
+//
+// - The web documents to be uploaded to LittleFS are already present in the expected directory 'data'.
+//
+// - If you previously stored the 'data' documents using the "Arduino ESP8266 filesystem uploader" (for SPIFFS),
+//   you will need to upload them again, this time using the above mentioned "Arduino ESP8266 LittleFS
+//   Filesystem Uploader".
+//
+//#define SERVE_FROM_LITTLEFS
+
+#if defined SERVE_FROM_SPIFFS && defined SERVE_FROM_LITTLEFS
+#error "Either #define SERVE_FROM_SPIFFS or #define SERVE_FROM_LITTLEFS, but not both"
+#endif
 
 // -----
 // Define to disable (gray-out) the navigation menu while driving.

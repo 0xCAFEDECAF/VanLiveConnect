@@ -300,10 +300,10 @@ void setup()
     Serial.print(F("Initializing EEPROM\n"));
     EEPROM.begin(64);
 
-  #ifdef SERVE_FROM_SPIFFS
-    // Setup non-volatile storage on SPIFFS
+  #if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
+    // Setup non-volatile storage on SPIFFS resp. LittleFS
     SetupStore();
-  #endif // SERVE_FROM_SPIFFS
+  #endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
     // Setup "Over The Air" (OTA) update
     SetupOta();
