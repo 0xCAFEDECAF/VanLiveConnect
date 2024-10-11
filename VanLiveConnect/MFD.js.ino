@@ -1088,6 +1088,7 @@ function upMenu()
 {
 	currentMenu = menuStack.pop();
 	if (currentMenu) changeLargeScreenTo(currentMenu);
+	else if (inMenu()) selectDefaultScreen();
 }
 
 function exitMenu()

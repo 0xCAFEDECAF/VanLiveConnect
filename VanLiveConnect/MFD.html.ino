@@ -121,12 +121,10 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="instrument_small" style="display:none;">
 
-				<!-- Vehicle speed -->
 				<div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:33px; width:260px;">0</div>
 				<div gid="distance_unit" class="tag" style="text-align:left; left:280px; top:75px; font-size:30px;">km</div>
 				<div class="tag" style="text-align:left; left:280px; top:110px; font-size:30px;">/h</div>
 
-				<!-- Engine rpm -->
 				<div gid="engine_rpm" class="dseg7" style="font-size:70px; left:10px; top:173px; width:260px;">0</div>
 				<div class="tag" style="text-align:left; left:280px; top:203px; font-size:30px;">rpm</div>
 
@@ -151,7 +149,6 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="centerAligned fas fa-volume-up"></div>
 				</div>
 
-				<!-- Fuel level -->
 				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:375px;"></div>
 				<div gid="fuel_level" class="dseg7" style="font-size:50px; left:100px; top:372px; width:170px;">--.-</div>
 				<div gid="fuel_level_unit" class="tag" style="text-align:left; left:280px; top:385px; font-size:30px;">lt</div>
@@ -579,21 +576,17 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="centerAligned fas fa-angle-double-right"></div>
 					</div>
 
-					<!-- Vehicle speed -->
 					<div gid="vehicle_speed" class="dseg7" style="font-size:120px; left:10px; top:235px; width:300px;">0</div>
 					<div gid="speed_unit" class="tag" style="left:310px; top:310px;">km/h</div>
 
-					<!-- Engine rpm -->
 					<div gid="engine_rpm" class="dseg7" style="font-size:120px; left:440px; top:235px; width:400px;">0</div>
 					<div class="tag" style="left:840px; top:310px;">rpm</div>
 
-					<!-- Odometer -->
 					<div class="icon iconSmall" style="top:475px; width:90px;">...</div>
 					<div class="icon iconSmall fas fa-car-side" style="left:55px; top:480px;"></div>
 					<div id="odometer_1" class="dseg7" style="font-size:45px; left:120px; top:480px; width:280px;">--.-</div>
 					<div gid="distance_unit" class="tag" style="font-size:30px; text-align:left; left:415px; top:490px;">km</div>
 
-					<!-- Chosen gear -->
 					<div id="chosen_gear" class="dseg7" style="font-size:45px; left:470px; top:480px; width:100px;">-</div>
 					<div class="tag" style="font-size:30px; left:580px; top:490px;">Gear</div>
 
