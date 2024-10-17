@@ -1,0 +1,28 @@
+1.1.0
+    User interface improvements:
+    * Use the [Peugeot-New](https://www.cdnfonts.com/peugeot-new.font) font in the Web-based user interface
+    * Three color themes (blue, orange and gold) selectable in "Set color and brightness" menu screen
+    * Many small improvements in user interface layout and handling ("Doors locked" popup, sat nav "no audio" icon, ...)
+    * Better handling of sat nav initialization, CD change and download
+    * Improved handling or IR remote control
+    * Serve up to two connected clients
+    * Show lights and indicator status also on small (left) "Instruments" panel
+
+    "Under the hood" improvements:
+    * Web server can now also use the new "LittleFS" Flash File system (as alternative to the SPIFFS) to serve its
+      web documents from
+    * Minimize loss of important data in flaky Wi-Fi environments by classifying data. Important data is kept for
+      later (re-)transmission if the WebSocket transmission queue is running full
+    * Selective response to Android  'http://.../generate_204' requests, enabling the use of mobile data for internet
+      connectivity, while still receiving vehicle data via Wi-Fi.
+    * Tested up to ESP8266 board package version 3.1.2
+    * Added patches and patched copies for some of the files of the used libraries
+    * WebSocket: switched from "WebSockets" library (https://github.com/Links2004/arduinoWebSockets) to
+      "ESPAsyncWebSrv" library (https://github.com/dvarrel/ESPAsyncWebSrv)
+    * WebServer: switched from "ESP8266WebServer " library (as shipped with ESP8266 board package) to
+      "ESPAsyncWebSrv" library (https://github.com/dvarrel/ESPAsyncWebSrv)
+    * Fix compiler warnings
+    * Improve debug output (on serial console)
+
+1.0.0
+    First release of VanLiveConnect.
