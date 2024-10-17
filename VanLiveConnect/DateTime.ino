@@ -23,11 +23,11 @@ const char* DateTime(time_t t, boolean full)
     {
         // Print elapsed time since last (re-)boot
 
-        unsigned long t = millis() / 1000;  // Total number of seconds since (re-)boot
-        unsigned long hours = t / 3600;
-        t = t % 3600;
-        unsigned long minutes = t / 60;
-        unsigned long seconds = t % 60;
+        unsigned long m = millis() / 1000;  // Total number of seconds since (re-)boot
+        unsigned long hours = m / 3600;
+        m = m % 3600;
+        unsigned long minutes = m / 60;
+        unsigned long seconds = m % 60;
         sprintf_P(_dt, PSTR("%02d:%02d:%02d"), hours, minutes, seconds);
 
         // Replace leading '00' by '--' to indicate this is not real time of day
@@ -42,21 +42,17 @@ const char* DateTime(time_t t, boolean full)
 
     if (! full)
     {
-        time_t t = now();
-        time_t prev = previousMidnight(t);
-        time_t next = nextMidnight(t);
-
-        if (t >= prev && t < next)
+        time_t n = now();
+        if (t >= previousMidnight(n) && t < nextMidnight(n))
         {
             // Today
             sprintf_P(_dt, PSTR("%02d:%02d:%02d"), hour(t), minute(t), second(t));
-
             return _dt;
-        } // if
+        }
     } // if
 
     // Other day, or 'full' format requested
-    sprintf_P(_dt, PSTR("%02d-%02d-%04d %02d:%02d:%02d"), day(t), month(t), year(t), hour(t), minute(t), second(t));
+    sprintf_P(_dt, PSTR("%04d-%02d-%02d %02d:%02d:%02d"), year(t), month(t), day(t), hour(t), minute(t), second(t));
 
     return _dt;
 } // DateTime
