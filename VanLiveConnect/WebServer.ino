@@ -12,23 +12,19 @@
 #endif
 
 // Use the following #defines to define which type of web documents will be served from the
-// SPI flash file system (SPIFFS)
-#define SERVE_MAIN_FILES_FROM_SPIFFS  // MFD.html, MFD.js
+// flash file system (SPIFFS or LittleFS)
+#define SERVE_MAIN_FILES_FROM_FFS  // MFD.html, MFD.js
 
-// Note: it seems to be better to not serve font files from the SPIFFS. The browser requests these files very
+// Note: it seems to be better to not serve font files from the FFS. The browser requests these files very
 // late, at seemingly random times after the initial page requests. I've seen ESP often running out of stack
 // space while serving a font file.
 
-//#define SERVE_FONTS_FROM_SPIFFS  // .woff files
+//#define SERVE_FONTS_FROM_FFS  // .woff files
 
-#define SERVE_JAVASCRIPT_FROM_SPIFFS  // jquery-3.5.1.min.js
-#define SERVE_CSS_FROM_SPIFFS  // all.css, CarInfo.css
+#define SERVE_JAVASCRIPT_FROM_FFS  // jquery-3.5.1.min.js
+#define SERVE_CSS_FROM_FFS  // all.css, CarInfo.css
 
 #endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
-
-#ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
-#include <TimeLib.h>
-#endif  // PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 
 // Create AsyncWebServer on port 80
 AsyncWebServer webServer(80);
@@ -63,7 +59,11 @@ String _formatBytes(size_t bytes)
 
 void SetupStore()
 {
+  #ifdef SERVE_FROM_SPIFFS
     Serial.print(F("Mounting SPI Flash File System (SPIFFS) ..."));
+  #else
+    Serial.print(F("Mounting LittleFS flash file system ..."));
+  #endif // SERVE_FROM_SPIFFS
 
     VanBusRx.Disable();
 
@@ -155,7 +155,7 @@ void printHttpRequest(class AsyncWebServerRequest* request)
     for (size_t i = 0; i < request->args(); i++)
     {
         Serial.print(request->argName(i));
-        Serial.print(F("="));
+        Serial.print("=");
         Serial.print(request->arg(i));
         if (i < request->args() - 1) Serial.print('&');
     } // for
@@ -204,7 +204,7 @@ bool checkETag(class AsyncWebServerRequest* request, const String& etag)
             //   that would have been sent in a 200 (OK) response to the same request: Cache-Control, Content-Location,
             //   Date, ETag, Expires, and Vary."
             response->addHeader(F("Cache-Control"), F("no-cache"));
-            response->addHeader(F("ETag"), String("\"") + etag + "\"");
+            response->addHeader("ETag", String("\"") + etag + "\"");
             request->send(response);
 
           #ifdef DEBUG_WEBSERVER
@@ -374,7 +374,7 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     message += "\n";
     for (size_t i = 0; i < request->args(); i++)
     {
-        message += " " + request->argName(i) + F(": ") + request->arg(i) + "\n";
+        message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
     } // for
 
     request->send(404, F("text/plain;charset=utf-8"), message);
@@ -405,7 +405,7 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
 
 #if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
-// Serve a specified font from the SPI Flash File System (SPIFFS)
+// Serve a specified font from the flash file system
 void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
 {
     VanBusRx.Disable();
@@ -470,7 +470,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
 
         // Serve the complete document
         AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
-        response->addHeader(F("ETag"), String("\"") + md5Checksum + "\"");
+        response->addHeader("ETag", String("\"") + md5Checksum + "\"");
 
         // Tells the client that it can cache the asset, but it cannot use the cached asset without
         // re-validating with the server
@@ -490,7 +490,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
 
 #if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
-// Serve a specified document (text, html, css, javascript, ...) from the SPI Flash File System (SPIFFS)
+// Serve a specified document (text, html, css, javascript, ...) from the flash file system
 void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* urlPath = 0, const char* mimeType = 0)
 {
     String path(urlPath == 0 ? request->url().c_str() : urlPath);
@@ -523,7 +523,7 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
 
         // Serve the complete document
         AsyncWebServerResponse* response = request->beginResponse(SPIFFS, path, mimeType);
-        response->addHeader(F("ETag"), String("\"") + md5 + "\"");
+        response->addHeader("ETag", String("\"") + md5 + "\"");
         response->addHeader(F("Cache-Control"), F("no-cache"));
 
         VanBusRx.Disable();
@@ -545,17 +545,17 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
 // Serve the main HTML page
 void ServeMainHtml(class AsyncWebServerRequest* request)
 {
-  #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
+  #ifdef SERVE_MAIN_FILES_FROM_FFS
 
-    // Serve from the SPI flash file system
+    // Serve from the flash file system
     ServeDocumentFromFile(request, "/MFD.html");
 
   #else
 
-    // Serve from program memory, so updating is easy and does not need the SPI flash file system uploader
+    // Serve from program memory, so updating is easy and does not need the flash file system uploader
     ServeDocument(request, PSTR("text/html"), mfd_html);
 
-  #endif // SERVE_MAIN_FILES_FROM_SPIFFS
+  #endif // SERVE_MAIN_FILES_FROM_FFS
 } // ServeMainHtml
 
 void SetupWebServer()
@@ -565,19 +565,19 @@ void SetupWebServer()
 
     webServer.on("/PeugeotNewRegular.woff", [](AsyncWebServerRequest *request)
     {
-      #ifdef SERVE_FONTS_FROM_SPIFFS
+      #ifdef SERVE_FONTS_FROM_FFS
         ServeFontFromFile(request, "/PeugeotNewRegular.woff");
       #else
         ServeFont(request, PeugeotNewRegular_woff, PeugeotNewRegular_woff_len);
-      #endif // SERVE_FONTS_FROM_SPIFFS
+      #endif // SERVE_FONTS_FROM_FFS
     });
     webServer.on("/webfonts/fa-solid-900.woff", [](AsyncWebServerRequest *request)
     {
-      #ifdef SERVE_FONTS_FROM_SPIFFS
+      #ifdef SERVE_FONTS_FROM_FFS
         ServeFontFromFile(request, "/fa-solid-900.woff");
       #else
         ServeFont(request, webfonts_fa_solid_900_woff, webfonts_fa_solid_900_woff_len);
-      #endif // SERVE_FONTS_FROM_SPIFFS
+      #endif // SERVE_FONTS_FROM_FFS
     });
 
     // -----
@@ -585,20 +585,20 @@ void SetupWebServer()
 
     webServer.on("/jquery-3.5.1.min.js", [](AsyncWebServerRequest *request)
     {
-      #ifdef SERVE_JAVASCRIPT_FROM_SPIFFS
+      #ifdef SERVE_JAVASCRIPT_FROM_FFS
         ServeDocumentFromFile(request, "/jquery-3.5.1.min.js");
       #else
         ServeDocument(request, textJavaScriptStr, jQuery_js);
-      #endif // SERVE_JAVASCRIPT_FROM_SPIFFS
+      #endif // SERVE_JAVASCRIPT_FROM_FFS
     });
 
     webServer.on("/MFD.js", [](AsyncWebServerRequest *request)
     {
-      #ifdef SERVE_MAIN_FILES_FROM_SPIFFS
+      #ifdef SERVE_MAIN_FILES_FROM_FFS
         ServeDocumentFromFile(request, "/MFD.js");
       #else
         ServeDocument(request, textJavaScriptStr, mfd_js);
-      #endif // SERVE_MAIN_FILES_FROM_SPIFFS
+      #endif // SERVE_MAIN_FILES_FROM_FFS
     });
 
     // -----
@@ -606,20 +606,20 @@ void SetupWebServer()
 
     webServer.on("/css/all.css", [](AsyncWebServerRequest *request)
     {
-      #ifdef SERVE_CSS_FROM_SPIFFS
+      #ifdef SERVE_CSS_FROM_FFS
         ServeDocumentFromFile(request, "/all.css");
       #else
         ServeDocument(request, textCssStr, faAll_css);
-      #endif // SERVE_CSS_FROM_SPIFFS
+      #endif // SERVE_CSS_FROM_FFS
     });
 
     webServer.on("/CarInfo.css", [](AsyncWebServerRequest *request)
     {
-      #ifdef SERVE_CSS_FROM_SPIFFS
+      #ifdef SERVE_CSS_FROM_FFS
         ServeDocumentFromFile(request, "/CarInfo.css");
       #else
         ServeDocument(request, textCssStr, carInfo_css);
-      #endif // SERVE_CSS_FROM_SPIFFS
+      #endif // SERVE_CSS_FROM_FFS
     });
 
     // -----
@@ -636,7 +636,7 @@ void SetupWebServer()
 
   #if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
-    // Try to serve any not further listed document from the SPI flash file system
+    // Try to serve any not further listed document from the flash file system
     webServer.onNotFound([](AsyncWebServerRequest *request)
     {
         ServeDocumentFromFile(request);
