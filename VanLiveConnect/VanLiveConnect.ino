@@ -99,19 +99,15 @@ bool IRAM_ATTR IsVeryImportantPacket(const TVanPacketRxDesc& pkt)
         pkt.DataLen() >= 3 &&
         (
             (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x07) // mfd_to_satnav_...
+            || (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x8A)  // head_unit_report, head_unit_button_pressed
+            || pkt.Iden() == CAR_STATUS1_IDEN  // Right-hand stalk button press
+            || pkt.Iden() == CAR_STATUS2_IDEN  // Info and alarm popups
+            || pkt.Iden() == MFD_LANGUAGE_UNITS_IDEN
+            || pkt.Iden() == AUDIO_SETTINGS_IDEN
             || pkt.Iden() == SATNAV_STATUS_1_IDEN
             || pkt.Iden() == SATNAV_GUIDANCE_IDEN
             || pkt.Iden() == SATNAV_REPORT_IDEN
             || pkt.Iden() == SATNAV_TO_MFD_IDEN
-
-            || pkt.Iden() == CAR_STATUS1_IDEN  // Right-hand stalk button press
-
-            || (pkt.Iden() == DEVICE_REPORT && pkt.Data()[0] == 0x8A)  // head_unit_report, head_unit_button_pressed
-
-            || pkt.Iden() == AUDIO_SETTINGS_IDEN
-            || pkt.Iden() == MFD_LANGUAGE_UNITS_IDEN
-
-            || pkt.Iden() == CAR_STATUS2_IDEN  // Info and alarm popups
         );
 } // IsVeryImportantPacket
 
@@ -125,8 +121,9 @@ bool IsImportantPacket(const TVanPacketRxDesc& pkt)
         (
             pkt.DataLen() >= 3 &&
             (
-                pkt.Iden() == HEAD_UNIT_IDEN
+                pkt.Iden() == ENGINE_IDEN
                 || pkt.Iden() == LIGHTS_STATUS_IDEN
+                || pkt.Iden() == HEAD_UNIT_IDEN
                 || pkt.Iden() == AIRCON1_IDEN
             )
         );

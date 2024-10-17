@@ -809,6 +809,9 @@ PGM_P ContactKeyPositionStr(int data)
         notApplicable3Str;
 } // TunerBandStr
 
+// Set to true to disable (once) duplicate detection. For use when switching to other units.
+bool SkipEnginePktDupDetect = false;
+
 int contactKeyPosition = CKP_OFF;
 bool economyMode = false;
 
@@ -819,28 +822,54 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
     const uint8_t* data = pkt.Data();
 
-    contactKeyPosition = data[1] & 0x03;
-    economyMode = data[1] & 0x10;
+    // Avoid continuous updates if the exterior temperature value is constantly toggling between 2 values, while
+    // the rest of the data is the same.
+
+    static uint16_t prevDashLightStatus = 0xFFFF;  // Value that can never come from a packet itself
+    uint8_t dashLightStatus = data[0];
+
+    static uint16_t prevStatusBits = 0xFFFF;  // Value that can never come from a packet itself
+    uint8_t statusBits = data[1];
+
+    static uint16_t prevCoolantTempRaw = 0xFFFF;  // Value that can never come from a packet itself
+    static uint8_t coolantTempRaw = 0xFF;
 
     // Coolant water temperature value often falls back to 'invalid' (0xFF), even if a valid value was previously
     // found. Keep the last reported valid value.
-    static uint8_t lastValidCoolantTempRaw = 0xFF;
-    uint8_t coolantTempRaw = data[2];
-    if (coolantTempRaw != 0xFF) lastValidCoolantTempRaw = coolantTempRaw;  // Copy only if packet value is valid
-    bool isCoolantTempValid = lastValidCoolantTempRaw != 0xFF;
-    int16_t coolantTemp = (uint16_t)lastValidCoolantTempRaw - 39;
-    float odometer = ((uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5]) / 10.0;
+    if (data[2] != 0xFF) coolantTempRaw = data[2];  // Copy only if packet value is valid
 
-    // Copy new value for exterior temperature at first time, or if seeing the same value twice
+    static uint32_t prevOdometerRaw = 0xFFFFFFFF;  // Value that can never come from a packet itself
+    uint32_t odometerRaw = (uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5];
 
-    uint8_t extTempRaw = data[6];
-    static uint32_t reportedTempRaw = extTempRaw;
-    static uint32_t prevTempRaw = extTempRaw;
+    static uint16_t lastReportedExteriorTempRaw = 0xFFFF;  // Value that can never come from a packet itself
+    uint8_t exteriorTempRaw = data[6];
+    static uint8_t prevExteriorTempRaw = exteriorTempRaw;
 
-    if (extTempRaw != reportedTempRaw && extTempRaw == prevTempRaw) reportedTempRaw = extTempRaw;
-    prevTempRaw = extTempRaw;
+    bool hasNewData =
+        SkipEnginePktDupDetect
+        || dashLightStatus != prevDashLightStatus
+        || statusBits != prevStatusBits
+        || coolantTempRaw != prevCoolantTempRaw
+        || odometerRaw != prevOdometerRaw
+        || (exteriorTempRaw != lastReportedExteriorTempRaw && exteriorTempRaw == prevExteriorTempRaw);
 
-    float extTemp = reportedTempRaw / 2.0 - 40;
+    SkipEnginePktDupDetect = false;
+    prevDashLightStatus = dashLightStatus;
+    prevStatusBits = statusBits;
+    prevCoolantTempRaw = coolantTempRaw;
+    prevOdometerRaw = odometerRaw;
+    prevExteriorTempRaw = exteriorTempRaw;
+
+    if (! hasNewData) return VAN_PACKET_NO_CONTENT;
+
+    lastReportedExteriorTempRaw = exteriorTempRaw;
+
+    contactKeyPosition = statusBits & 0x03;
+    economyMode = statusBits & 0x10;
+    bool isCoolantTempValid = coolantTempRaw != 0xFF;
+    int16_t coolantTemp = (uint16_t)coolantTempRaw - 39;
+    float odometer = odometerRaw / 10.0;
+    float exteriorTemp = exteriorTempRaw / 2.0 - 40;
 
     const static char jsonFormatter[] PROGMEM =
     "{\n"
@@ -871,15 +900,15 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     char floatBuf[4][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
 
-        data[0] & 0x80 ? PSTR("FULL") : PSTR("DIMMED (LIGHTS ON)"),
-        data[0] & 0x0F,
+        dashLightStatus & 0x80 ? PSTR("FULL") : PSTR("DIMMED (LIGHTS ON)"),
+        dashLightStatus & 0x0F,
 
         ContactKeyPositionStr(contactKeyPosition),
 
-        data[1] & 0x04 ? yesStr : noStr,
+        statusBits & 0x04 ? yesStr : noStr,
         economyMode ? onStr : offStr,
-        data[1] & 0x20 ? yesStr : noStr,
-        data[1] & 0x40 ? presentStr : notPresentStr,
+        statusBits & 0x20 ? yesStr : noStr,
+        statusBits & 0x40 ? presentStr : notPresentStr,
 
         ! isCoolantTempValid ? notApplicable3Str :
             mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
@@ -897,12 +926,12 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
             ToFloatStr(floatBuf[1], ToMiles(odometer), 1),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            ToFloatStr(floatBuf[2], extTemp, 1, false) :
-            ToFloatStr(floatBuf[2], ToFahrenheit(extTemp), 0, false),
+            ToFloatStr(floatBuf[2], exteriorTemp, 1, false) :
+            ToFloatStr(floatBuf[2], ToFahrenheit(exteriorTemp), 0, false),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            ToFloatStr(floatBuf[3], extTemp, 1) :
-            ToFloatStr(floatBuf[3], ToFahrenheit(extTemp), 0)
+            ToFloatStr(floatBuf[3], exteriorTemp, 1) :
+            ToFloatStr(floatBuf[3], ToFahrenheit(exteriorTemp), 0)
     );
 
     // TODO? - if contactKeyPosition changed to 0x00 ("OFF"), and satnavStatus2 == 0x05 ("IN_GUIDANCE_MODE"), then
@@ -1467,9 +1496,12 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     int dataLen = pkt.DataLen();
 
     // Only continue parsing if actual content differs, not just the sequence number
-    static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
-    if (! SkipCarStatus1PktDupDetect && memcmp(data + 1, packetData, dataLen - 2) == 0) return VAN_PACKET_DUPLICATE;
-    memcpy(packetData, data + 1, dataLen - 2);
+    static uint8_t prevData[VAN_MAX_DATA_BYTES];  // Previous packet data
+    if (memcmp(data + 1, prevData, dataLen - 2) == 0)
+    {
+        if (! SkipCarStatus1PktDupDetect) return VAN_PACKET_NO_CONTENT;
+    } // if
+    memcpy(prevData, data + 1, dataLen - 2);
     SkipCarStatus1PktDupDetect = false;
 
     InitSmallScreen();
@@ -2465,7 +2497,7 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         // Turning off head unit
         UpdateLargeScreenForHeadUnitOff();
     } // if
-    
+
     washeadUnitPowerOn = isHeadUnitPowerOn;
 
     const static char jsonFormatter[] PROGMEM =
@@ -2808,21 +2840,21 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
 
     // Avoid continuous updates if a temperature value is constantly toggling between 2 values, while the rest of the
     // data is the same.
-    
+
     static uint16_t prevStatusBits = 0xFFFF;  // Value that can never come from a packet itself
     uint8_t statusBits = data[0];
-    
+
     static uint16_t prevContactKeyData = 0xFFFF;  // Value that can never come from a packet itself
     uint8_t contactKeyData = data[1];
-    
-    static uint32_t lastReportedCondenserTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
+
+    static uint16_t lastReportedCondenserTemp = 0xFFFF;  // Value that can never come from a packet itself
     uint8_t condenserTemp = data[2];
     static uint8_t prevCondenserTemp = condenserTemp;
-    
+
     static uint32_t lastReportedEvaporatorTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
     uint16_t evaporatorTemp = (uint16_t)data[3] << 8 | data[4];
     static uint16_t prevEvaporatorTemp = evaporatorTemp;
-    
+
     bool hasNewData =
         SkipAirCon2PktDupDetect
         || statusBits != prevStatusBits
@@ -2835,9 +2867,9 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     prevContactKeyData = contactKeyData;
     prevCondenserTemp = condenserTemp;
     prevEvaporatorTemp = evaporatorTemp;
-    
+
     if (! hasNewData) return VAN_PACKET_DUPLICATE;
-    
+
     lastReportedCondenserTemp = condenserTemp;
     lastReportedEvaporatorTemp = evaporatorTemp;
 
@@ -5618,4 +5650,5 @@ void ResetPacketPrevData()
     // These packet handlers have internal logic to skip duplicates:
     SkipCarStatus1PktDupDetect = true;
     SkipAirCon2PktDupDetect = true;
+    SkipEnginePktDupDetect = true;
 } // ResetPacketPrevData
