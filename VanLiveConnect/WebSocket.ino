@@ -648,7 +648,9 @@ void WebSocketEvent(
             AwsFrameInfo* info = (AwsFrameInfo*)arg;
             if (info != nullptr && info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
             {
-                data[len] = '\0';  // TODO - not sure if this is safe
+                // Seems safe: 'AsyncWebSocket.cpp' says (around line 697):
+                //   restore byte as _handleEvent may have added a null terminator i.e., data[len] = 0;
+                data[len] = '\0';
 
                 IPAddress clientIp = client->remoteIP();
                 lastWebSocketCommunication[clientIp] = millis();
