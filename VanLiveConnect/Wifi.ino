@@ -118,7 +118,7 @@ void PrintSoftApConfig(softap_config const& config)
 
     Serial.print(F("beacon_interval: "));
     Serial.print(config.beacon_interval);
-    Serial.print(F("ms\n"));
+    Serial.print("ms\n");
 
     Serial.print(F("--------------------\n"));
     Serial.print("\n");
