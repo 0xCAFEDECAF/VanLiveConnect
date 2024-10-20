@@ -1,9 +1,19 @@
 <h3 align="center">PSA (Peugeot, Citroën) VAN bus Live Connect</h3>
 
----
-
 <p align="center">Live data from your PSA vehicle (Peugeot, Citroën) on your smartphone or tablet, directly from
 the VAN bus.</p>
+
+---
+
+[![Release Version](https://img.shields.io/github/release/0xCAFEDECAF/VanLiveConnect.svg?style=plastic)](https://github.com/0xCAFEDECAF/VanLiveConnect/releases/latest/)
+[![Release Date](https://img.shields.io/github/release-date/0xCAFEDECAF/VanLiveConnect.svg?style=plastic)](https://github.com/0xCAFEDECAF/VanLiveConnect/releases/latest/)
+
+[![Platform ESP8266](https://img.shields.io/badge/Platform-Espressif8266-yellow)](https://github.com/esp8266/Arduino)
+
+[![Framework](https://img.shields.io/badge/Framework-Arduino-blue)](https://www.arduino.cc/)
+
+[![Build Sketch](https://github.com/0xCAFEDECAF/VanLiveConnect/actions/workflows/compile.yml/badge.svg)](https://github.com/0xCAFEDECAF/VanLiveConnect/actions/workflows/compile.yml)
+
 
 ## 📝 Table of Contents
 
