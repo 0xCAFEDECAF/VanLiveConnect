@@ -51,7 +51,7 @@ jobs:
       # Install the required libraries.
       - name: Install libraries
         run: |
-          arduino-cli lib install VanBus ESPAsyncTCP ESPAsyncWebSrv
+          arduino-cli lib install VanBus ESPAsyncTCP ESPAsyncWebSrv@1.2.7
 
       # Finally, we build the sketch, using the FQBN that was set
       # in the build matrix.
