@@ -57,4 +57,4 @@ jobs:
       # in the build matrix.
       - name: Build sketch
         run: |
-          arduino-cli compile --fqbn ${{ matrix.fqbn }} ./VanLiveConnect
+          arduino-cli compile --fqbn ${{ matrix.fqbn }} --board-options "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n" --warnings all ./VanLiveConnect
