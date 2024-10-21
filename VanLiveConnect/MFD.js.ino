@@ -5477,11 +5477,12 @@ function handleItemChange(item, value, changed)
 				$(id + "straight_line_visible").toggle(distance == 0);
 			} // if
 
-			// Near junction: make sure to show the satnav guidance screen
-			if (item === "satnav_turn_at" && $("#satnav_turn_at_indication").css("display") === "block")
+			if (item === "satnav_turn_at" && ! satnavGuidanceOffMap)
 			{
+				// Near junction: make sure to show the satnav guidance screen
+
 				let parts = value.split(" ");
-				let reportedUnits = parts[1]; // 5000 m and less is reported in metres
+				let reportedUnits = parts[1]; // 5000 m and less is reported in metres/yards
 				if (reportedUnits === "m" || reportedUnits ==="yd")
 				{
 					let distance = parts[0];
@@ -5668,12 +5669,8 @@ function handleItemChange(item, value, changed)
 
 		case "satnav_not_on_map_icon":
 		{
-			// Has anything changed?
-			const notOnMap = value === "ON";
-			if (notOnMap === satnavGuidanceOffMap) break;
-			satnavGuidanceOffMap = notOnMap;
-
 			$("#satnav_turn_at_indication").toggle(value !== "ON");
+			satnavGuidanceOffMap = value === "ON";
 			if (value !== "ON") break;
 
 			// Hide the "Computing route in progress" popup, if showing
