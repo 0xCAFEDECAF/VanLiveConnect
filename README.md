@@ -280,7 +280,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
-  version 1.2.6 and 1.2.7 .
+  version 1.2.6 and 1.2.7 . Skip version 1.2.8: it does not compile on the ESP8266.
 
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
