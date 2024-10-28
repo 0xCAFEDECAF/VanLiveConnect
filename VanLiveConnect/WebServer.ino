@@ -246,7 +246,7 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
       #define WEBSERVER_RESPOND_TO_204_AFTER_MS (7 * 1000)
 
       #ifdef DEBUG_WEBSERVER
-        Serial.printf_P(PSTR("%s[webServer] Last websocket communication with %s was %lu msecs ago: %Sresponding\n"),
+        Serial.printf_P(PSTR("%s[webServer] Last websocket communication with %s was %lu msecs ago: %sresponding\n"),
             TimeStamp(),
             clientIp.toString().c_str(),
             since,
@@ -480,7 +480,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] %S '%s' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] %s '%s' took: %lu msec\n"),
         TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         request->url().c_str(),
@@ -532,7 +532,7 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] %S '%s' from file system took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] %s '%s' from file system took: %lu msec\n"),
         TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         request->url().c_str(),

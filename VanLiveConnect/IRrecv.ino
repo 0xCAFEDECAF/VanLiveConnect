@@ -143,7 +143,7 @@ enum IrButton_t
     IB_VALIDATE = 0xF98D3EE1
 }; // enum IrButton_t
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P IrButtonStr(unsigned long data)
 {
     return
@@ -265,9 +265,9 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
         at += at >= IR_JSON_BUFFER_SIZE ? 0 :
             snprintf_P(jsonBuffer + at, IR_JSON_BUFFER_SIZE - at, PSTR(
                     ",\n"
-                    "\"large_screen\": \"%S\",\n"
-                    "\"trip_computer_screen_tab\": \"%S\",\n"
-                    "\"mfd_popup\": \"%S\""
+                    "\"large_screen\": \"%s\",\n"
+                    "\"trip_computer_screen_tab\": \"%s\",\n"
+                    "\"mfd_popup\": \"%s\""
                 ),
                 LargeScreenStr(),
                 TripComputerStr(),
@@ -378,7 +378,7 @@ bool IrReceive(TIrPacket& irPacket)
   #ifdef DEBUG_IR_RECV
     Serial.printf_P
     (
-        PSTR("%s[irRecv] val = 0x%lX (%S), intv = %lu, held = %S"),
+        PSTR("%s[irRecv] val = 0x%lX (%s), intv = %lu, held = %s"),
         TimeStamp(),
         irPacket.value,
         irPacket.buttonStr,

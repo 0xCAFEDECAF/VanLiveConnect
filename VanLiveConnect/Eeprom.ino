@@ -15,7 +15,7 @@ void WriteEeprom(int const address, uint8_t const val, const char* message)
     _eepromDirty = true;
 
     Serial.printf_P(
-        PSTR("==> %S: written value %u to EEPROM position %d (but not yet committed)\n"),
+        PSTR("==> %s: written value %u to EEPROM position %d (but not yet committed)\n"),
         message ? message : emptyStr,
         val,
         address);

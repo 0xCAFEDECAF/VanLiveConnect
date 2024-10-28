@@ -21,7 +21,7 @@ enum VanPacketParseResult_t
     VAN_PACKET_PARSE_FRAGMENT_MISSED = -6  // Missed at least one fragment of a multi-fragment message
 }; // enum VanPacketParseResult_t
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P VanPacketParseResultStr(int result)
 {
     return
@@ -334,7 +334,7 @@ enum TunerBand_t
     TB_PTY_SELECT = 7
 }; // enum TunerBand_t
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P TunerBandStr(uint8_t data)
 {
     return
@@ -369,7 +369,7 @@ enum TunerSearchMode_t
     TS_FM_AST = 7
 }; // enum TunerSearchMode_t
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P TunerSearchModeStr(uint8_t data)
 {
     return
@@ -382,7 +382,7 @@ PGM_P TunerSearchModeStr(uint8_t data)
 } // TunerSearchModeStr
 
 // "Full" PTY string
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P PtyStrFull(uint8_t ptyCode)
 {
     // See also:
@@ -425,7 +425,7 @@ PGM_P PtyStrFull(uint8_t ptyCode)
 
 // 16-character PTY string
 // See: poupa.cz/rds/r98_009_2.pdf, page 2
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P PtyStr16(uint8_t ptyCode)
 {
     // See also:
@@ -468,7 +468,7 @@ PGM_P PtyStr16(uint8_t ptyCode)
 
 // 8-character PTY string
 // See: poupa.cz/rds/r98_009_2.pdf, page 2
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P PtyStr8(uint8_t ptyCode)
 {
     // See also:
@@ -509,7 +509,7 @@ PGM_P PtyStr8(uint8_t ptyCode)
         notApplicable3Str;
 } // PtyStr8
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P RadioPiCountry(uint8_t countryCode)
 {
     // See also:
@@ -534,7 +534,7 @@ PGM_P RadioPiCountry(uint8_t countryCode)
         notApplicable2Str;
 } // RadioPiCountry
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P RadioPiAreaCoverage(uint8_t coverageCode)
 {
     // https://www.pira.cz/rds/show.asp?art=rds_encoder_support
@@ -580,7 +580,7 @@ enum SatNavRequest_t
     SR_DESTINATION = 0x1D
 }; // enum SatNavRequest_t
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P SatNavRequestStr(uint8_t data)
 {
     return
@@ -616,7 +616,7 @@ enum SatNavRequestType_t
     SRT_SELECT_CITY_CENTER = 3  // Select city center
 }; // enum SatNavRequestType_t
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P SatNavRequestTypeStr(uint8_t data)
 {
     return
@@ -646,7 +646,7 @@ bool IsValidSatNavGuidancePreferenceValue(uint8_t value)
         || value == SGP_COMPROMISE_FAST_SHORT;
 } // IsValidSatNavGuidancePreferenceValue
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P SatNavGuidancePreferenceStr(uint8_t data)
 {
     return
@@ -677,14 +677,14 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
     // Show all the legs in the junction
 
     // Use "namespace" notation
-    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"%S_leg_\":\n{\n"), iconName);
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"%s_leg_\":\n{\n"), iconName);
 
     uint16_t legBits = (uint16_t)data[2] << 8 | data[3];
     for (int legBit = 1; legBit < 16; legBit++)
     {
         uint16_t degrees10 = legBit * 225;
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR("%S\"%u_%u\": \"%S\""),
+            snprintf_P(buf + at, n - at, PSTR("%s\"%u_%u\": \"%s\""),
                 legBit == 1 ? emptyStr : PSTR(",\n"),
                 degrees10 / 10,
                 degrees10 % 10,
@@ -695,14 +695,14 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
     // Show all the "no-entry" legs in the junction
 
     // Use "namespace" notation
-    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n},\n\"%S_no_entry_\":\n{\n"), iconName);
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n},\n\"%s_no_entry_\":\n{\n"), iconName);
 
     uint16_t noEntryBits = (uint16_t)data[4] << 8 | data[5];
     for (int noEntryBit = 1; noEntryBit < 16; noEntryBit++)
     {
         uint16_t degrees10 = noEntryBit * 225;
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR("%S\"%u_%u\": \"%S\""),
+            snprintf_P(buf + at, n - at, PSTR("%s\"%u_%u\": \"%s\""),
                 noEntryBit == 1 ? emptyStr : PSTR(",\n"),
                 degrees10 / 10,
                 degrees10 % 10,
@@ -798,7 +798,7 @@ VanPacketParseResult_t ParseVinPkt(TVanPacketRxDesc& pkt, char* buf, const int n
     return VAN_PACKET_PARSE_OK;
 } // ParseVinPkt
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P ContactKeyPositionStr(int data)
 {
     return
@@ -1023,7 +1023,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     int32_t remainingKmToService = remainingKmToService20 * 20;
     if (remainingKmToServiceOverdue) remainingKmToService = - remainingKmToService;
 
-    snprintf_P(lightsStr, LIGHTS_STRING_LEN, PSTR("%S%S%S%S"),
+    snprintf_P(lightsStr, LIGHTS_STRING_LEN, PSTR("%s%s%s%s"),
         data[5] & 0x80 ? PSTR("DIPPED_BEAM ") : emptyStr,
         data[5] & 0x40 ? PSTR("HIGH_BEAM ") : emptyStr,
         data[5] & 0x20 ? PSTR("FOG_FRONT ") : emptyStr,
@@ -1085,7 +1085,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     {
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at,
-                PSTR(",\n\"auto_gearbox\": \"%S%S%S%S\""),
+                PSTR(",\n\"auto_gearbox\": \"%s%s%s%s\""),
                 (data[4] & 0x70) == 0x00 ? PSTR("P") :
                 (data[4] & 0x70) == 0x10 ? PSTR("R") :
                 (data[4] & 0x70) == 0x20 ? PSTR("N") :
@@ -1132,7 +1132,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                 "{\n"
                     "\"style\":\n"
                     "{\n"
-                        "\"transform\": \"scaleX(%S)\"\n"
+                        "\"transform\": \"scaleX(%s)\"\n"
                     "}\n"
                 "}"
             ),
@@ -1143,7 +1143,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         );
 
     at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, PSTR(",\n\"oil_level_dash\": \"%S\""),
+        snprintf_P(buf + at, n - at, PSTR(",\n\"oil_level_dash\": \"%s\""),
             data[8] <= 11 ? PSTR("------") :
             data[8] <= 25 ? PSTR("O-----") :
             data[8] <= 39 ? PSTR("OO----") :
@@ -1157,7 +1157,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
     {
         // Never seen this; I don't have LPG
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"lpg_fuel_level\": \"%S\""),
+            snprintf_P(buf + at, n - at, PSTR(",\n\"lpg_fuel_level\": \"%s\""),
                 data[10] <= 8 ? PSTR("1") :
                 data[10] <= 17 ? PSTR("2") :
                 data[10] <= 33 ? PSTR("3") :
@@ -1175,7 +1175,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
         // http://pinterpeti.hu/psavanbus/PSA-VAN.html#4FC_2
 
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"cruise_control\": \"%S\""),
+            snprintf_P(buf + at, n - at, PSTR(",\n\"cruise_control\": \"%s\""),
                 data[11] == 0x41 ? offStr :
                 data[11] == 0x49 ? PSTR("Cruise") :
                 data[11] == 0x59 ? PSTR("Cruise - speed") :
@@ -1248,7 +1248,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                 snprintf_P(buf + at, n - at,
                     PSTR(
                         ",\n"
-                        "\"head_unit_button_pressed\": \"%S%S\""
+                        "\"head_unit_button_pressed\": \"%s%s\""
                     ),
 
                     (data[2] & 0x1F) == 0x01 ? PSTR("1") :
@@ -1295,7 +1295,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     snprintf_P(buf + at, n - at,
                         PSTR(
                             ",\n"
-                            "\"mfd_popup\": \"%S\""
+                            "\"mfd_popup\": \"%s\""
                         ),
                         PopupStr()
                     );
@@ -1438,7 +1438,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             UpdateSmallScreenAfterStoppingGuidance();
 
             at += at >= n ? 0 :
-                snprintf_P(buf + at, n - at, PSTR(",\n\"small_screen\": \"%S\""),
+                snprintf_P(buf + at, n - at, PSTR(",\n\"small_screen\": \"%s\""),
                     SmallScreenStr()
                 );
         } // if
@@ -1625,7 +1625,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             snprintf_P(buf + at, n - at,
                 PSTR(
                     ",\n"
-                    "\"trip_computer_popup_tab\": \"%S\""
+                    "\"trip_computer_popup_tab\": \"%s\""
                 ),
                 TripComputerStr()
             );
@@ -1778,7 +1778,7 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
                 // TODO - with lots of alarms set, this packet could become very large and overflow the JSON buffer
                 at += at >= n ? 0 :
-                    snprintf_P(buf + at, n - at, PSTR("%S\n\"%s\""), first ? emptyStr : commaStr, alarmText);
+                    snprintf_P(buf + at, n - at, PSTR("%s\n\"%s\""), first ? emptyStr : commaStr, alarmText);
                 first = false;
             } // if
         } // for
@@ -1791,7 +1791,7 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     // The message to be shown in the popup on the MFD
     at += at >= n ? 0 :
         snprintf_P(buf + at, n - at,
-            PSTR(",\n\"notification_message_on_mfd\": \"%S\""),
+            PSTR(",\n\"notification_message_on_mfd\": \"%s\""),
 
             // Relying on short-circuit boolean evaluation
             currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0 ? msgTable[currentMsg] : emptyStr
@@ -1800,7 +1800,7 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     // Separately report "doors locked" status
     bool doorsLocked = data[8] & 0x01;
     at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, PSTR(",\n\"doors_locked\": \"%S\""), doorsLocked ? yesStr : noStr);
+        snprintf_P(buf + at, n - at, PSTR(",\n\"doors_locked\": \"%s\""), doorsLocked ? yesStr : noStr);
 
     at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR("\n}\n}\n"));
 
@@ -2634,8 +2634,8 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
             snprintf_P(buf + at, n - at,
                 PSTR(
                     ",\n"
-                    "\"small_screen\": \"%S\",\n"
-                    "\"trip_computer_screen_tab\": \"%S\""
+                    "\"small_screen\": \"%s\",\n"
+                    "\"trip_computer_screen_tab\": \"%s\""
                 ),
                 SmallScreenStr(),
                 TripComputerStr()
@@ -2647,7 +2647,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
                 snprintf_P(buf + at, n - at,
                     PSTR(
                         ",\n"
-                        "\"trip_computer_popup_tab\": \"%S\""
+                        "\"trip_computer_popup_tab\": \"%s\""
                     ),
                     TripComputerStr()
                 );
@@ -2666,7 +2666,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
             snprintf_P(buf + at, n - at,
                 PSTR(
                     ",\n"
-                    "\"large_screen\": \"%S\",\n"
+                    "\"large_screen\": \"%s\",\n"
                     "\"go_to_screen\": \"clock\""
                 ),
                 LargeScreenStr()
@@ -2688,8 +2688,8 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
             snprintf_P(buf + at, n - at,
                 PSTR(
                     ",\n"
-                    "\"small_screen\": \"%S\",\n"
-                    "\"trip_computer_screen_tab\": \"%S\""
+                    "\"small_screen\": \"%s\",\n"
+                    "\"trip_computer_screen_tab\": \"%s\""
                 ),
                 SmallScreenStr(),
                 TripComputerStr()
@@ -3331,7 +3331,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         reachedDestination = data[17] & 0x80;
 
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_guidance_status\": \"%S%S%S%S%S%S%S\""),
+            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_guidance_status\": \"%s%s%s%s%s%s%s\""),
 
                 data[17] & 0x01 ? PSTR("LOADING_AUDIO_FRAGMENT ") : emptyStr,
                 data[17] & 0x02 ? PSTR("AUDIO_OUTPUT ") : emptyStr,
@@ -3377,9 +3377,9 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
                 PSTR
                 (
                     ",\n"
-                    "\"small_screen\": \"%S\",\n"
-                    "\"trip_computer_screen_tab\": \"%S\",\n"
-                    "\"large_screen\": \"%S\""
+                    "\"small_screen\": \"%s\",\n"
+                    "\"trip_computer_screen_tab\": \"%s\",\n"
+                    "\"large_screen\": \"%s\""
                 ),
                 SmallScreenStr(),
                 TripComputerStr(),
@@ -3410,7 +3410,7 @@ void InitSatnavGuidancePreference()
 
     // TODO - remove
     Serial.printf_P(
-        PSTR("satnavGuidancePreference: read value %u (%S) from EEPROM position %d\n"),
+        PSTR("satnavGuidancePreference: read value %u (%s) from EEPROM position %d\n"),
         satnavGuidancePreference,
         SatNavGuidancePreferenceStr(satnavGuidancePreference),
         SATNAV_GUIDANCE_PREFERENCE_EEPROM_POS);
@@ -3518,7 +3518,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             strncpy(txt, (const char*) data + at2, dataLen - at2);
             txt[dataLen - at2] = 0;
             at += at >= n ? 0 :
-                snprintf_P(buf + at, n - at, PSTR("%S\n\"%s\""), first ? emptyStr : commaStr, txt);
+                snprintf_P(buf + at, n - at, PSTR("%s\n\"%s\""), first ? emptyStr : commaStr, txt);
             at2 += strlen(txt) + 1;
             first = false;
         } // while
@@ -4272,7 +4272,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             {
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at,
-                        PSTR("%S\n\"%s\""),
+                        PSTR("%s\n\"%s\""),
                         i == 0 ? emptyStr : commaStr,
                         records[i].c_str()
                     );
@@ -4317,7 +4317,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             {
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at,
-                        PSTR("%S\n\"%s\""),
+                        PSTR("%s\n\"%s\""),
                         i == 0 ? emptyStr : commaStr,
                         records[i].c_str()
                     );
@@ -4350,7 +4350,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             {
                 at += at >= n ? 0 :
                     snprintf_P(buf + at, n - at,
-                        PSTR("%S\n\"%s - %s - %s\""),
+                        PSTR("%s\n\"%s - %s - %s\""),
                         i == 0 ? emptyStr : commaStr,
                         records[i * 3].c_str(),
                         records[i * 3 + 1].c_str(),
@@ -4370,7 +4370,7 @@ VanPacketParseResult_t ParseSatNavReportPkt(TVanPacketRxDesc& pkt, char* buf, co
         UpdateLargeScreenForCurrentStreetKnown();
 
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%S\""),
+            snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%s\""),
                 LargeScreenStr()
             );
     } // if
@@ -4635,7 +4635,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
             snprintf_P(buf + at, n - at, PSTR
                 (
                     ",\n"
-                    "\"go_to_screen\": \"%S\""
+                    "\"go_to_screen\": \"%s\""
                 ),
 
                 goToScreen
@@ -5346,13 +5346,13 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
 
     if (strlen_P(satnavStatus2Str) != 0)
     {
-        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_status_2\": \"%S\""), satnavStatus2Str);
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_status_2\": \"%s\""), satnavStatus2Str);
     } // if
 
     if (! satnavCurrentStreet.isEmpty())
     {
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_curr_street\": \"%S\""), satnavCurrentStreet.c_str());
+            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_curr_street\": \"%s\""), satnavCurrentStreet.c_str());
     } // if
 
     if (satnavServiceListSize > 0)
@@ -5362,7 +5362,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             snprintf_P(buf + at, n - at, PSTR
                 (
                     ",\n"
-                    "\"satnav_to_mfd_response\": \"%S\",\n"
+                    "\"satnav_to_mfd_response\": \"%s\",\n"
                     "\"satnav_to_mfd_list_size\": \"%d\""
                 ),
                 SatNavRequestStr(SR_SERVICE_LIST),
@@ -5374,7 +5374,7 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         snprintf_P
         (
             buf + at, n - at,
-            PSTR(",\n\"mfd_disable_navigation_menu_while_driving\": \"%S\""),
+            PSTR(",\n\"mfd_disable_navigation_menu_while_driving\": \"%s\""),
           #ifdef MFD_DISABLE_NAVIGATION_MENU_WHILE_DRIVING
             yesStr
           #else
@@ -5441,7 +5441,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
                     {
                         snprintf_P(diffByte, sizeof(diffByte), PSTR("%02X"), handler->prevData[i]);
                     } // if
-                    Serial.printf_P(PSTR("%s%S"), diffByte, i < n - 1 ? dashStr : emptyStr);
+                    Serial.printf_P(PSTR("%s%s"), diffByte, i < n - 1 ? dashStr : emptyStr);
                 } // for
                 Serial.print("\n");
             }
@@ -5472,7 +5472,7 @@ bool IsPacketDataDuplicate(TVanPacketRxDesc& pkt, IdenHandler_t* handler)
         {
             for (int i = 0; i < dataLen; i++)
             {
-                Serial.printf_P(PSTR("%02X%S"), data[i], i < dataLen - 1 ? dashStr : emptyStr);
+                Serial.printf_P(PSTR("%02X%s"), data[i], i < dataLen - 1 ? dashStr : emptyStr);
             } // for
             Serial.print("\n");
         }
@@ -5605,7 +5605,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
        )
     {
         Serial.printf_P(
-            PSTR("%s==> WARNING: VAN packet parsing result = '%S'!\n"),
+            PSTR("%s==> WARNING: VAN packet parsing result = '%s'!\n"),
             TimeStamp(),
             VanPacketParseResultStr(result)
         );

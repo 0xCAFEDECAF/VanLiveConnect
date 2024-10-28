@@ -175,7 +175,7 @@ void QueueJson(const char* json, uint32_t lastSentOnId_1 = 0, uint32_t lastSentO
 
   #if DEBUG_WEBSOCKET >= 2
     Serial.printf_P(
-        PSTR("%s[webSocket] %S %zu-byte packet for %Ssending in slot '%d'\n"),
+        PSTR("%s[webSocket] %s %zu-byte packet for %ssending in slot '%d'\n"),
         TimeStamp(),
         lastSentOnId_1 == 0 && lastSentOnId_2 == 0 ? PSTR("Saving") : PSTR("Keeping"),
         strlen(json),
@@ -346,7 +346,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
     {
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket] Failed to send %zu-byte packet%S\n"),
+            PSTR("%s[webSocket] Failed to send %zu-byte packet%s\n"),
             TimeStamp(),
             strlen(json),
             saveForLater ? PSTR(", stored for later sending") : PSTR(", discarding")
@@ -812,7 +812,7 @@ void LoopWebSocket()
 
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket] %zu client%S currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%u\n"),
+            PSTR("%s[webSocket] %zu client%s currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%u\n"),
             TimeStamp(), webSocket.count(),
             webSocket.count() == 1 ? PSTR(" is") : PSTR("s are"),
             countQueuedJsons(), websocketId_1, websocketId_2,

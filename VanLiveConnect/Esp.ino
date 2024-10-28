@@ -32,7 +32,7 @@ String EspGetResetInfo()
     char buf[bufSize];
 
     // https://www.espressif.com/sites/default/files/documentation/esp8266_reset_causes_and_common_fatal_exception_causes_en.pdf#page=5
-    int at = snprintf_P(buf, bufSize, PSTR("%x (%S)"),
+    int at = snprintf_P(buf, bufSize, PSTR("%x (%s)"),
 
         espResetInfo->reason,
 
@@ -94,17 +94,17 @@ void PrintSystemSpecs()
     Serial.printf_P(PSTR("Flash ide size: %s MBytes\n"), FloatToStr(floatBuf, ideSize/1024.0/1024.0, 2));
     Serial.printf_P(PSTR("Flash ide speed: %s MHz\n"), FloatToStr(floatBuf, ESP.getFlashChipSpeed()/1000000.0, 2));
     FlashMode_t ideMode = ESP.getFlashChipMode();
-    Serial.printf_P(PSTR("Flash ide mode: %S\n"),
+    Serial.printf_P(PSTR("Flash ide mode: %s\n"),
         ideMode == FM_QIO ? qioStr :
         ideMode == FM_QOUT ? qoutStr :
         ideMode == FM_DIO ? dioStr :
         ideMode == FM_DOUT ? doutStr :
         unknownStr);
-    Serial.printf_P(PSTR("Flash chip configuration %S\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
+    Serial.printf_P(PSTR("Flash chip configuration %s\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
 
     Serial.print(F("Software image MD5 checksum: "));
     Serial.print(md5Checksum);
-    Serial.printf_P(PSTR(" (%S)\n"), compileDate);
+    Serial.printf_P(PSTR(" (%s)\n"), compileDate);
 
     Serial.print(F("Wi-Fi MAC address: "));
     Serial.print(WiFi.macAddress());

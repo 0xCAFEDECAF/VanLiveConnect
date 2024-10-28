@@ -105,7 +105,7 @@ enum ContactKeyPosition_t
 }; // enum ContactKeyPosition_t
 
 // Map a small-screen index number to a short (3-character) string.
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM).
 PGM_P TripComputerShortStr()
 {
     return
@@ -119,7 +119,7 @@ PGM_P TripComputerShortStr()
 } // TripComputerShortStr
 
 // Map a small-screen index number to a string.
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM).
 PGM_P TripComputerStr(uint8_t idx)
 {
     return
@@ -130,14 +130,14 @@ PGM_P TripComputerStr(uint8_t idx)
         notApplicable3Str;
 } // TripComputerStr
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P TripComputerStr()
 {
     // The trip computer screen and popup show the fuel consumption if the small screen showed the GPS icon
     return TripComputerStr(smallScreen == SMALL_SCREEN_GPS_INFO ? (uint8_t)SMALL_SCREEN_FUEL_CONSUMPTION : smallScreen);
 } // TripComputerStr
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P SmallScreenStr()
 {
     // The small screen shows guidance data when the sat nav is in guidance mode
@@ -145,7 +145,7 @@ PGM_P SmallScreenStr()
 } // SmallScreenStr
 
 // Map a large-screen index number to a string.
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM).
 PGM_P LargeScreenStr(uint8_t idx)
 {
     return
@@ -157,7 +157,7 @@ PGM_P LargeScreenStr(uint8_t idx)
         notApplicable3Str;
 } // LargeScreenStr
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P LargeScreenStr()
 {
     return LargeScreenStr(largeScreen);
@@ -199,7 +199,7 @@ bool IsNotificationPopupShowing(bool beVerbose)
     {
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
-            PSTR("[originalMfd] IsNotificationPopupShowing = %S (popupDuration = %lu"),
+            PSTR("[originalMfd] IsNotificationPopupShowing = %s (popupDuration = %lu"),
             result ? yesStr : noStr,
             popupDuration
         );
@@ -226,7 +226,7 @@ void TripComputerPopupShowing(unsigned long since, unsigned long duration)
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] TripComputerPopupShowing(%lu msec); TripComputer = %S\n"),
+        PSTR("[originalMfd] TripComputerPopupShowing(%lu msec); TripComputer = %s\n"),
         popupDuration,
         TripComputerStr()
     );
@@ -240,7 +240,7 @@ bool IsTripComputerPopupShowing()
     return popupDuration != 0 && millis() - TripComputerPopupShowingSince < popupDuration;
 } // IsTripComputerPopupShowing
 
-// Returns a PSTR (allocated in flash, saves RAM). In printf formatter use "%S" (capital S) instead of "%s".
+// Returns a PSTR (allocated in flash, saves RAM)
 PGM_P PopupStr()
 {
     return
@@ -260,7 +260,7 @@ void InitSmallScreen()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] smallScreen: read value %u (%S) from EEPROM position %d\n"),
+        PSTR("[originalMfd] smallScreen: read value %u (%s) from EEPROM position %d\n"),
         smallScreen,
         SmallScreenStr(),
         SMALL_SCREEN_EEPROM_POS);
@@ -293,7 +293,7 @@ void ResetTripInfo(uint16_t mfdStatus)
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] Right stalk button long-press; SmallScreen = %S\n"),
+        PSTR("[originalMfd] Right stalk button long-press; SmallScreen = %s\n"),
         SmallScreenStr()
     );
   #endif // DEBUG_ORIGINAL_MFD
@@ -316,7 +316,7 @@ void CycleTripInfo()
 
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
-            PSTR("[originalMfd] Right stalk button short-press; SmallScreen = %S\n"),
+            PSTR("[originalMfd] Right stalk button short-press; SmallScreen = %s\n"),
             SmallScreenStr()
         );
       #endif // DEBUG_ORIGINAL_MFD
@@ -336,7 +336,7 @@ void CycleTripInfo()
 
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
-            PSTR("[originalMfd] Right stalk button short-press; TripComputer = %S\n"),
+            PSTR("[originalMfd] Right stalk button short-press; TripComputer = %s\n"),
             TripComputerStr()
         );
       #endif // DEBUG_ORIGINAL_MFD
@@ -362,7 +362,7 @@ void CycleTripInfo()
 
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
-            PSTR("[originalMfd] Right stalk button short-press; trip computer popup appeared; TripComputer = %S\n"),
+            PSTR("[originalMfd] Right stalk button short-press; trip computer popup appeared; TripComputer = %s\n"),
             TripComputerStr()
         );
       #endif // DEBUG_ORIGINAL_MFD
@@ -377,7 +377,7 @@ void CycleTripInfo()
 
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
-            PSTR("[originalMfd] Right stalk button short-press; TripComputer = %S\n"),
+            PSTR("[originalMfd] Right stalk button short-press; TripComputer = %s\n"),
             TripComputerStr()
         );
       #endif // DEBUG_ORIGINAL_MFD
@@ -407,7 +407,7 @@ void UpdateSmallScreenAfterStoppingGuidance()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] Going out of guidance; SmallScreen := %S\n"),
+        PSTR("[originalMfd] Going out of guidance; SmallScreen := %s\n"),
         SmallScreenStr()
     );
   #endif // DEBUG_ORIGINAL_MFD
@@ -430,7 +430,7 @@ void UpdateLargeScreenForCurrentStreetKnown()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] current street known; largeScreen := %S\n"),
+        PSTR("[originalMfd] current street known; largeScreen := %s\n"),
         LargeScreenStr()
     );
   #endif // DEBUG_ORIGINAL_MFD
@@ -464,7 +464,7 @@ void UpdateLargeScreenForHeadUnitOn()
     char popupDurationStr[20];
     sprintf_P(popupDurationStr, PSTR(" (%lu msec)"), popupDuration);
     Serial.printf_P(
-        PSTR("[originalMfd] Head unit powered on; NotificationPopupShowing = %S%S; largeScreen := %S\n"),
+        PSTR("[originalMfd] Head unit powered on; NotificationPopupShowing = %s%s; largeScreen := %s\n"),
         IsNotificationPopupShowing() ? yesStr : noStr,
         IsNotificationPopupShowing() ? popupDurationStr : emptyStr,
         LargeScreenStr()
@@ -492,7 +492,7 @@ void UpdateLargeScreenForHeadUnitOff()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] Head unit powered off; guidance=%S; curr_street_known=%S; largeScreen := %S\n"),
+        PSTR("[originalMfd] Head unit powered off; guidance=%s; curr_street_known=%s; largeScreen := %s\n"),
         isSatnavGuidanceActive ? yesStr : noStr,
         isCurrentStreetKnown ? yesStr : noStr,
         LargeScreenStr()
@@ -513,7 +513,7 @@ void UpdateLargeScreenForGuidanceModeOn()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] Going into guidance; largeScreenBefore=%S; largeScreen := %S\n"),
+        PSTR("[originalMfd] Going into guidance; largeScreenBefore=%s; largeScreen := %s\n"),
         LargeScreenStr(largeScreenBeforeGoingIntoGuidanceMode),
         LargeScreenStr()
     );
@@ -557,7 +557,7 @@ void UpdateLargeScreenForGuidanceModeOff()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] Going out of guidance; head_unit=%S; curr_street_known=%S; largeScreen := %S\n"),
+        PSTR("[originalMfd] Going out of guidance; head_unit=%s; curr_street_known=%s; largeScreen := %s\n"),
         isHeadUnitPowerOn ? yesStr : noStr,
         isCurrentStreetKnown ? yesStr : noStr,
         LargeScreenStr()
@@ -574,7 +574,7 @@ void UpdateLargeScreenForMfdOff()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] MFD turning off; largeScreen := %S\n"),
+        PSTR("[originalMfd] MFD turning off; largeScreen := %s\n"),
         LargeScreenStr()
     );
   #endif // DEBUG_ORIGINAL_MFD
@@ -617,7 +617,7 @@ void CycleLargeScreen()
 
   #ifdef DEBUG_ORIGINAL_MFD
     Serial.printf_P(
-        PSTR("[originalMfd] \"MOD\" button press; guidance=%S; head_unit=%S; curr_street_known=%S; largeScreen := %S\n"),
+        PSTR("[originalMfd] \"MOD\" button press; guidance=%s; head_unit=%s; curr_street_known=%s; largeScreen := %s\n"),
         isSatnavGuidanceActive ? yesStr : noStr,
         isHeadUnitPowerOn ? yesStr : noStr,
         isCurrentStreetKnown ? yesStr : noStr,
