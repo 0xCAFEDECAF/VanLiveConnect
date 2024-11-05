@@ -3,7 +3,7 @@
  *
  * Written by Erik Tromp
  *
- * Version 1.0.0 - March, 2023
+ * Version 1.1.0 - November, 2024
  *
  * MIT license, all text above must be included in any redistribution.
  *
@@ -12,22 +12,21 @@
 
 #include "Config.h"
 #include "VanIden.h"
+#include "VanLiveConnectVersion.h"
 
 #include <EEPROM.h>
 #include <VanBusRx.h>
 
 #ifdef USE_MDNS
-#include <ESP8266mDNS.h>
+  #include <ESP8266mDNS.h>
 #endif // USE_MDNS
 
 #ifdef WIFI_AP_MODE
+  #include <DNSServer.h>
 
-#include <DNSServer.h>
-
-#define DNS_PORT (53)
-DNSServer dnsServer;
-IPAddress apIP;
-
+  #define DNS_PORT (53)
+  DNSServer dnsServer;
+  IPAddress apIP;
 #endif // WIFI_AP_MODE
 
 // Encourage the compiler to use the a newer (C++11 ?) standard. If this is removed, it doesn't compile!
@@ -289,7 +288,7 @@ void setup()
 
     delay(1000);
     Serial.begin(115200);
-    Serial.print(F("\nStarting VAN bus \"Live Connect\" server\n"));
+    Serial.printf_P(PSTR("\nStarting VAN bus \"Live Connect\" server version %s\n"), VAN_LIVE_CONNECT_VERSION);
 
     PrintDebugDefines();
     PrintSystemSpecs();
