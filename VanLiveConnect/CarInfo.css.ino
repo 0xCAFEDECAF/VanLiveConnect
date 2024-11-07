@@ -566,6 +566,7 @@ body
   top:110px;
   width:925px;
   height:65px;
+  font-size:45px;
 }
 .satNavCityTag
 {
@@ -613,19 +614,21 @@ body
 .satNavShowAddressCity
 {
   left:210px;
-  top:195px;
+  top:194px;
   width:720px;
-  height:90px;
-  font-size:40px;
+  height:100px;
+  font-size:35px;
+  line-height:1.3;
   white-space:normal;
 }
 .satNavShowAddressStreet
 {
   left:210px;
-  top:285px;
+  top:284px;
   width:720px;
-  height:90px;
-  font-size:40px;
+  height:100px;
+  font-size:35px;
+  line-height: 1.3;
   white-space:normal;
 }
 .satNavShowAddressNumber
