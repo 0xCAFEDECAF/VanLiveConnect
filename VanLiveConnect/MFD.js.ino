@@ -1153,6 +1153,9 @@ function keyPressed(key)
 
 	var currentButton = selected.button;
 
+	// Ignore if grayed out
+	if (currentButton.attr("grayed-out") === "true") return;
+
 	// Retrieve the specified action, like e.g. on_left_button="doSomething();"
 	var action = currentButton.attr("on_" + key.toLowerCase());
 	if (action) return eval(action);
@@ -1411,6 +1414,8 @@ function highlightLine(id)
 {
 	id = getFocusId(id);
 	if (id === undefined) return;
+
+	if ($("#" + id).attr("grayed-out") === "true") return;
 
 	var lines = splitIntoLines(id);
 	if (lines.length === 0) return;  // Nothing to highlight?
@@ -2187,6 +2192,22 @@ function satnavGotoMainMenu()
 	satnavShowDisclaimer();
 }
 
+// The list is kept grayed-out until the actual data is received from the sat nav unit
+function satnavGrayOutList()
+{
+	unhighlightLine("satnav_choice_list");
+	$("#satnav_choice_list").css("color", "var(--disabled-element-color)");
+	$('#satnav_choice_list').attr("grayed-out", "true");
+
+	// Show the spinning disc after a while
+	clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
+	satnavGotoListScreen.showSpinningDiscTimer = setTimeout
+	(
+		function() { $("#satnav_choose_from_list_spinning_disc").show(); },
+		2500
+	);
+}
+
 function satnavGotoListScreen()
 {
 	// In the menu stack, there is never more than one "list screen" stacked. So check if there is an existing list
@@ -2227,19 +2248,7 @@ function satnavGotoListScreen()
 		} // switch
 	} // if
 
-	if ($("#satnav_choice_list").text() === "")
-	{
-		// Show the spinning disc after a while
-		clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
-		satnavGotoListScreen.showSpinningDiscTimer = setTimeout
-		(
-			function() { $("#satnav_choose_from_list_spinning_disc").show(); },
-			3500
-		);
-	} // if
-
-	// We could get here via "Esc" and then the currently selected line must be highlighted
-	highlightLine("satnav_choice_list");
+	satnavGrayOutList();
 }
 
 function satnavGotoListScreenEmpty()
@@ -3353,6 +3362,19 @@ function satnavStopOrResumeGuidance()
 	if (satnavMode === "IN_GUIDANCE_MODE") satnavStopGuidance(); else satnavSwitchToGuidanceScreen();
 }
 
+// Enable or disable the "Navigation/Guidance" button in the main menu
+function toggleNavigationButtonInMainMenu(enable)
+{
+	$("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", ! enable);
+
+	if (! enable)
+	{
+		// Select the 'Configure display' (bottom) button
+		$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
+		$("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
+	} // if
+}
+
 var nSatNavDiscUnreadable = 0;
 
 function satnavPoweringOff(satnavMode)
@@ -3365,8 +3387,10 @@ function satnavPoweringOff(satnavMode)
 		webSocket.send("ask_for_guidance_continuation:YES");
 	} // if
 
+	toggleNavigationButtonInMainMenu(false);
+
 	satnavInitialized = false;
-	nSatNavDiscUnreadable = 1;
+	nSatNavDiscUnreadable = 0;
 	satnavDisclaimerAccepted = false;
 	satnavServiceListSize = -1;
 	satnavDestinationNotAccessibleByRoadPopupShown = false;
@@ -4766,10 +4790,12 @@ function handleItemChange(item, value, changed)
 			{
 				hidePopup("satnav_initializing_popup");
 
-				// TODO - show popup not directly, but only after a few times this status
-				showStatusPopup(satnavDiscUnreadbleText, 5000);
-
-				if (inSatnavMenuOrGuidanceScreen()) selectDefaultScreen();
+				// Show popup not directly
+				if (nSatNavDiscUnreadable >= 1)
+				{
+					showStatusPopup(satnavDiscUnreadbleText, 5000);
+					if (inSatnavMenuOrGuidanceScreen()) selectDefaultScreen();
+				}
 			}
 			else if (value.match(/READY/))
 			{
@@ -4834,12 +4860,7 @@ function handleItemChange(item, value, changed)
 			let driving = satnavVehicleMoving();
 
 			// While driving, disable "Navigation / Guidance" button in main menu
-			$("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", driving);
-			if (driving)
-			{
-				$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
-				$("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
-			} // if
+			toggleNavigationButtonInMainMenu(! driving);
 		} // case
 		break;
 
@@ -4903,6 +4924,7 @@ function handleItemChange(item, value, changed)
 			$("#satnav_download_progress").text(value);
 			if (value === "0") break;
 			selectDefaultScreen();  // Original MFD no longer responds, showing "WAITING FOR DOWNLOADING"
+			$("#large_panel").hide();
 			showPopup("satnav_downloading_popup", 120000);
 		} // case
 		break;
@@ -4919,7 +4941,7 @@ function handleItemChange(item, value, changed)
 			if (nSatNavDiscUnreadable == 6 || nSatNavDiscUnreadable == 14)
 			{
 				hidePopup("satnav_initializing_popup");
-				showStatusPopup(satnavDiscUnreadbleText, 4000);
+				showStatusPopup(satnavDiscUnreadbleText, 5000);
 			} // if
 		} // case
 		break;
@@ -4931,14 +4953,7 @@ function handleItemChange(item, value, changed)
 			if (! satnavEquipmentPresent) nSatNavDiscUnreadable = 0;
 
 			// Enable or disable the "Navigation/Guidance" button in the main menu
-			$("#main_menu_goto_satnav_button").toggleClass("buttonDisabled", value === "NO");
-
-			if (value === "NO")
-			{
-				// Select the 'Configure display' (bottom) button
-				$("#main_menu_goto_satnav_button").removeClass("buttonSelected");
-				$("#main_menu_goto_screen_configuration_button").addClass("buttonSelected");
-			} // if
+			toggleNavigationButtonInMainMenu(satnavEquipmentPresent);
 		} // case
 		break;
 
@@ -5205,18 +5220,9 @@ function handleItemChange(item, value, changed)
 		case "mfd_to_satnav_request_type":
 		{
 			satnavMfdRequestType = value;
-
+			if (value === "REQ_ITEMS") satnavGrayOutList();
 			if (value !== "REQ_N_ITEMS") break;
-
-			switch (mfdToSatnavRequest)
-			{
-				case "enter_city":
-				case "enter_street":
-				{
-					satnavPrepareEntryScreen();
-				} // case
-				break;
-			} // switch
+			if(mfdToSatnavRequest === "enter_city" || mfdToSatnavRequest === "enter_street") satnavPrepareEntryScreen();
 		} // case
 		break;
 
@@ -5346,9 +5352,11 @@ function handleItemChange(item, value, changed)
 
 		case "satnav_list":
 		{
-			// Hide the spinning disc
 			clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
 			$("#satnav_choose_from_list_spinning_disc").hide();
+
+			$("#satnav_choice_list").css("color", "var(--main-color)");
+			$('#satnav_choice_list').removeAttr("grayed-out");
 
 			switch(mfdToSatnavRequest)
 			{
@@ -5837,6 +5845,7 @@ function handleItemChange(item, value, changed)
 		{
 			if (value === "MFD_SCREEN_ON")
 			{
+				$("#small_panel,#large_panel").show();
 				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
 				satnavDownloading = false;
 				$("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
@@ -5847,6 +5856,7 @@ function handleItemChange(item, value, changed)
 			else if (value === "MFD_SCREEN_OFF")
 			{
 				hidePopup();
+				if (satnavDownloading) $("#small_panel,#large_panel").hide();
 			} // if
 		} // case
 		break;

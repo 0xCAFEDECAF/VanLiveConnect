@@ -32,12 +32,13 @@ char mfd_html[] PROGMEM = R"=====(
 		<!-- Our own stuff. Added '?foo=1' to force Chrome reload; see also https://stackoverflow.com/a/70410178 -->
 		<script src="MFD.js?foo=1" async></script>
 	</head>
+
 	<body id="body" translate="no" onload="htmlBodyOnLoad();" onresize="resizeScreenToFit();">
 
 
 		<!-- "Small" information panel -->
 
-		<div style="position:absolute; left:0px; top:0px; width:390px; height:550px;">
+		<div id="small_panel" style="position:absolute; left:0px; top:0px; width:390px; height:550px;">
 
 			<!-- Trip info -->
 
@@ -162,7 +163,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<!-- "Large" information panel -->
 
-		<div style="position:absolute; left:390px; top:0px; width:960px; height:550px;">
+		<div id="large_panel" style="position:absolute; left:390px; top:0px; width:960px; height:550px;">
 
 			<!-- Large clock (nothing better to show) -->
 
@@ -1148,7 +1149,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<!-- Show spinning disc as long as no data has come in -->
 						<div id="satnav_to_mfd_show_characters_spinning_disc"
-							style="display:none; position:absolute; left:400px; top:320px; transform:scaleX(2);">
+							style="display:none; position:absolute; left:400px; top:300px; transform:scaleX(2);">
 							<div class="fas fa-compact-disc" style="font-size:100px;"></div>
 						</div>
 
@@ -1270,7 +1271,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<!-- Show spinning disk while text area is still empty, i.e. data is being retrieved -->
 						<div id="satnav_choose_from_list_spinning_disc"
-							style="display:none; position:absolute; left:400px; top:320px; transform:scaleX(2);">
+							style="display:none; position:absolute; left:400px; top:300px; transform:scaleX(2);">
 							<div class="fas fa-compact-disc" style="font-size:100px;"></div>
 						</div>
 
@@ -1348,7 +1349,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_personal_address_validate_buttons" style="display:block">
 							<div id="satnav_show_personal_address_validate_button"
 								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-								class="icon button validateButton" style="left:25px; top:460px;">
+								class="icon button buttonDisabled validateButton" style="left:25px; top:460px;">
 								Validate
 							</div>
 						</div>
@@ -1388,7 +1389,7 @@ char mfd_html[] PROGMEM = R"=====(
 						<div id="satnav_professional_address_validate_buttons" style="display:block">
 							<div id="satnav_show_professional_address_validate_button"
 								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
-								class="icon button validateButton" style="left:25px; top:460px;">
+								class="icon button buttonDisabled validateButton" style="left:25px; top:460px;">
 								Validate
 							</div>
 						</div>
@@ -2422,16 +2423,6 @@ char mfd_html[] PROGMEM = R"=====(
 				</div>
 			</div>	<!-- "satnav_initializing_popup" -->
 
-			<!-- Sat nav downloading popup -->
-
-			<div id="satnav_downloading_popup"
-				on_enter="satnavDownloading = true;"
-				class="icon notificationPopup">
-				<div class="centerAligned messagePopupArea">
-					DOWNLOAD IN PROGRESS... <span id="satnav_download_progress"></span>
-				</div>
-			</div>	<!-- "satnav_downloading_popup" -->
-
 			<!-- Sat nav popup "Input has been stored in personal directory" -->
 
 			<div id="satnav_input_stored_in_personal_dir_popup"
@@ -2698,6 +2689,16 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="radio_preset_AM_6" class="dots" style="left:600px; top:215px; width:450px;"></div>
 			</div>
 		</div>
+
+		<!-- Sat nav downloading popup -->
+
+		<div id="satnav_downloading_popup" style="left:445px;"
+			on_enter="satnavDownloading = true;"
+			class="icon notificationPopup">
+			<div class="centerAligned messagePopupArea">
+				DOWNLOAD IN PROGRESS... <span id="satnav_download_progress"></span>
+			</div>
+		</div>	<!-- "satnav_downloading_popup" -->
 
 		<!-- Full-screen panels -->
 
