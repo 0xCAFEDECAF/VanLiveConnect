@@ -366,12 +366,16 @@ body
 {
   display:none;
   left:20px;
-  top:130px;
+  top:100px;
   width:920px;
   height:410px;
-  font-size:55px;
+  font-size:50px;
   text-align:center;
   line-height:150%;
+}
+.menuTitleLine
+{
+  line-height:120px;
 }
 .button
 {
