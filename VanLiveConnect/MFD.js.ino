@@ -3387,8 +3387,6 @@ function satnavPoweringOff(satnavMode)
 		webSocket.send("ask_for_guidance_continuation:YES");
 	} // if
 
-	toggleNavigationButtonInMainMenu(false);
-
 	satnavInitialized = false;
 	nSatNavDiscUnreadable = 0;
 	satnavDisclaimerAccepted = false;
