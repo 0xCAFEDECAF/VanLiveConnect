@@ -369,7 +369,7 @@ body
   top:100px;
   width:920px;
   height:410px;
-  font-size:50px;
+  font-size:45px;
   text-align:center;
   line-height:150%;
 }
@@ -384,7 +384,7 @@ body
   border-radius:15px;
   border-color:var(--disabled-element-color);
   text-align:center;
-  font-size:37px;
+  font-size:35px;
   line-height:1.1;
   margin:auto;
   width:700px; /* Default, e.g. for items in a menu */
