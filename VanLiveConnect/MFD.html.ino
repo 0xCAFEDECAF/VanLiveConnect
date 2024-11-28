@@ -1348,7 +1348,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div id="satnav_personal_address_validate_buttons" style="display:block">
 							<div id="satnav_show_personal_address_validate_button"
-								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
+								on_click="showPopup('satnav_guidance_preference_popup', 6000);"
 								class="icon button buttonDisabled validateButton" style="left:25px; top:460px;">
 								Validate
 							</div>
@@ -1388,7 +1388,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div id="satnav_professional_address_validate_buttons" style="display:block">
 							<div id="satnav_show_professional_address_validate_button"
-								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
+								on_click="showPopup('satnav_guidance_preference_popup', 6000);"
 								class="icon button buttonDisabled validateButton" style="left:25px; top:460px;">
 								Validate
 							</div>
@@ -1436,7 +1436,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div button_orientation="horizontal" class="buttonBar">
 							<div id="satnav_service_address_validate_button"
-								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
+								on_click="showPopup('satnav_guidance_preference_popup', 6000);"
 								class="icon button validateButton">
 								Validate
 							</div>
@@ -1469,7 +1469,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 						<div button_orientation="horizontal" class="buttonBar">
 							<div
-								on_click="showPopup('satnav_guidance_preference_popup', 8000);"
+								on_click="showPopup('satnav_guidance_preference_popup', 6000);"
 								class="icon button buttonSelected validateButton">
 								Validate
 							</div>
