@@ -375,6 +375,22 @@ function hidePopup(id)
 	return true;
 }
 
+// The "ESC" button was pressed on the specified or the current (top) popup
+function escapePopup(id)
+{
+	var popup;
+	if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
+	if (popup.length === 0 || popup.css("display") !== "block") return false;
+
+	hidePopup(popup.attr("id"));
+
+	// Perform "on_esc" action, if specified
+	var onEsc = popup.attr("on_esc");
+	if (onEsc) eval(onEsc);
+
+	return true;
+}
+
 // Show the specified popup, with an optional timeout
 function showPopup(id, msec)
 {
@@ -396,7 +412,7 @@ function showPopup(id, msec)
 
 	// Hide popup after specified milliseconds
 	clearTimeout(popupTimer[id]);
-	popupTimer[id] = setTimeout(function() { hidePopup(id); }, msec);
+	popupTimer[id] = setTimeout(function() { escapePopup(id); }, msec);
 	return popupTimer[id];
 }
 
@@ -3525,7 +3541,7 @@ function handleIrRc(button, held)
 		// If a popup is showing, hide it and return
 		if (hideTunerPresetsPopup()) return;
 		if (hideAudioSettingsPopup()) return;
-		if (hidePopup()) return;
+		if (escapePopup()) return;
 
 		if (ignoringIrEscCommand) return;
 
