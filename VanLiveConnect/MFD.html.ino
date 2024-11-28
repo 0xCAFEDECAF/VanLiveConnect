@@ -2471,7 +2471,7 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Sat nav calculating route popup -->
 
 			<div id="satnav_computing_route_popup"
-				on_exit="showOrTimeoutDestinationNotAccessiblePopup();"
+				on_exit="showDestinationNotAccessiblePopupIfApplicable();"
 				class="icon notificationPopup">
 				<div class="centerAligned messagePopupArea">Computing route<br />in progress</div>
 			</div>	<!-- "satnav_computing_route_popup" -->
@@ -2482,7 +2482,7 @@ char mfd_html[] PROGMEM = R"=====(
 			-->
 
 			<div id="satnav_guidance_preference_popup"
-				on_enter="selectButton('satnav_guidance_preference_popup_yes_button');"
+				on_enter="selectButton('satnav_guidance_preference_popup_yes_button'); satnavDestinationNotAccessible = false;"
 				on_esc="showDestinationNotAccessiblePopupIfApplicable();"
 				class="icon notificationPopup" style="height:300px;">
 				<div class="centerAligned yesNoPopupArea">

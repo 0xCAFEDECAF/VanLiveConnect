@@ -2114,9 +2114,6 @@ var satnavGuidanceOffMap = false;
 var satnavComputingRoute = false;
 var satnavDisplayCanBeDimmed = true;
 
-// Show this popup only once at start of guidance or after recalculation
-var satnavDestinationNotAccessibleByRoadPopupShown = false;
-
 var satnavCurrentStreet = "";
 var satnavNextStreet = "";
 var satnavDirectoryEntry = "";
@@ -3089,39 +3086,27 @@ function satnavSwitchToGuidanceScreen()
 // Returns 'false' if it is not (yet) the right moment to check if the popup must be shown.
 function showDestinationNotAccessiblePopupIfApplicable()
 {
+	if ($("#status_popup").is(":visible")) return true;
+
 	if (! satnavDestinationNotAccessible) return false;
 
 	// No popup while still in the guidance preference popup or menu
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
 
-	// Show popup only once at start of guidance or after recalculation
-	if (satnavDestinationNotAccessibleByRoadPopupShown) return true;
+	hidePopup();
 
-	// Need to wait a bit until all data has been received
-	setTimeout
-	(
-		function()
-		{
-			if (! satnavDestinationReachable && ! satnavRouteComputed)
-			{
-				hidePopup();
+	let translations =
+	{
+		"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
+		"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
+		"set_language_spanish": "Destino inaccesible<br />por carratera",
+		"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
+		"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
+	};
+	showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
 
-				let translations =
-				{
-					"set_language_french": "La destination n'est<br />pas accessible par<br />voie routi&egrave;re",
-					"set_language_german": "Das Ziel ist<br />per Stra%szlig;e nicht<br />zu erreichen",
-					"set_language_spanish": "Destino inaccesible<br />por carratera",
-					"set_language_italian": "La destinazione non<br />&egrave; accessibile<br />mediante strada",
-					"set_language_dutch": "De bestemming is niet<br />via de weg bereikbaar"
-				};
-				showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
-			} // if
-		},
-		150
-	);
-
-	satnavDestinationNotAccessibleByRoadPopupShown = true;
+	satnavDestinationNotAccessible = false;
 	return true;
 }
 
@@ -3193,10 +3178,6 @@ function satnavCalculatingRoute()
 
 	cancelChangeBackScreenTimer();
 
-	// If the result of the calculation is "Destination is not accessible by road", show that popup once, at the
-	// start, but not any more during the guidance.
-	satnavDestinationNotAccessibleByRoadPopupShown = false;
-
 	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 }
 
@@ -3204,11 +3185,11 @@ function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
 	if (showDestinationNotAccessiblePopupIfApplicable()) return;
-	if (satnavMode === "IN_GUIDANCE_MODE" && ! $('#satnav_guidance').is(':visible'))
+	if (satnavMode === "IN_GUIDANCE_MODE")
 	{
-		satnavSwitchToGuidanceScreen();
+		if (! $('#satnav_guidance').is(':visible')) satnavSwitchToGuidanceScreen();
 		satnavCalculatingRoute();
-	}
+	} // if
 }
 
 function satnavGuidancePreferencePopupNoButton()
@@ -3244,19 +3225,6 @@ function satnavGuidancePreferenceValidate()
 	{
 		satnavSwitchToGuidanceScreen();
 	} // if
-}
-
-function showOrTimeoutDestinationNotAccessiblePopup()
-{
-	if (showDestinationNotAccessiblePopupIfApplicable()) return;
-
-	// The popup may be displayed during the next 10 seconds, not any more after that
-	clearTimeout(showOrTimeoutDestinationNotAccessiblePopup.timer);
-	showOrTimeoutDestinationNotAccessiblePopup.timer = setTimeout
-	(
-		function() { satnavDestinationNotAccessibleByRoadPopupShown = true; },
-		10000
-	);
 }
 
 // Format a string like "45 km", "15 mi", "7000 m", "880 yd" or "60 m". Return an array [distance, unit]
@@ -3374,7 +3342,15 @@ function satnavStopGuidance()
 
 function satnavStopOrResumeGuidance()
 {
-	if (satnavMode === "IN_GUIDANCE_MODE") satnavStopGuidance(); else satnavSwitchToGuidanceScreen();
+	if (satnavMode === "IN_GUIDANCE_MODE")
+	{
+		satnavStopGuidance();
+	}
+	else
+	{
+		satnavSwitchToGuidanceScreen();
+		satnavCalculatingRoute();
+	} // if
 }
 
 // Enable or disable the "Navigation/Guidance" button in the main menu
@@ -3406,7 +3382,7 @@ function satnavPoweringOff(satnavMode)
 	nSatNavDiscUnreadable = 0;
 	satnavDisclaimerAccepted = false;
 	satnavServiceListSize = -1;
-	satnavDestinationNotAccessibleByRoadPopupShown = false;
+	satnavDestinationNotAccessible = false;
 }
 
 function satnavSetInitialized(isInitialized)
@@ -3625,7 +3601,11 @@ function handleIrRc(button, held)
 
 		// In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
 		if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
-			&& $(".notificationPopup:visible").length === 0  // And no popup showing?
+			&&
+			(
+				$(".notificationPopup:visible").length === 0  // And no popup showing?
+				|| $("#screen_brightness_popup").is(":visible")
+			)
 			&& ! inMenu())  // And not in any menu?
 		{
 			gotoTopLevelMenu("satnav_guidance_tools_menu");
@@ -4602,7 +4582,7 @@ function handleItemChange(item, value, changed)
 		case "engine_running":
 		{
 			// Has anything changed?
-			if (value === engineRunning) return;
+			if (value === engineRunning) break;
 			engineRunning = value;
 
 			// Engine just started?
@@ -4715,9 +4695,14 @@ function handleItemChange(item, value, changed)
 
 		case "satnav_destination_not_accessible":
 		{
-			satnavDestinationNotAccessible = value === "YES";
-
-			if (satnavDestinationNotAccessible) showDestinationNotAccessiblePopupIfApplicable();
+			if (! satnavOnMap) break;
+			if (satnavDestinationReachable) break;
+			if (satnavDestinationNotAccessible) break;
+			if (value === "YES")
+			{
+				satnavDestinationNotAccessible = true;
+				showDestinationNotAccessiblePopupIfApplicable();
+			} // if
 		} // case
 		break;
 
@@ -4859,10 +4844,19 @@ function handleItemChange(item, value, changed)
 		{
 			satnavStatus3 = value;
 
-			if (value === "STOPPING_NAVIGATION") satnavDestinationNotAccessibleByRoadPopupShown = false;
-			else if (value === "POWERING_OFF") satnavPoweringOff(satnavMode);
-			else if (value === "COMPUTING_ROUTE") satnavComputingRoute = true;
-			else if (value === "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT") showAudioVolumePopup();
+			if (value === "POWERING_OFF")
+			{
+				satnavPoweringOff(satnavMode);
+			}
+			else if (value === "COMPUTING_ROUTE")
+			{
+				satnavComputingRoute = true;
+				satnavDestinationNotAccessible = false;
+			}
+			else if (value === "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT")
+			{
+				showAudioVolumePopup();
+			} // if
 		} // case
 		break;
 
@@ -4900,6 +4894,8 @@ function handleItemChange(item, value, changed)
 			if (newValue === satnavRouteComputed) break;
 			satnavRouteComputed = newValue;
 
+			if (satnavRouteComputed) showDestinationNotAccessiblePopupIfApplicable();
+
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (! $("#satnav_guidance").is(":visible")) break;
 
@@ -4910,6 +4906,7 @@ function handleItemChange(item, value, changed)
 		case "satnav_destination_reachable":
 		{
 			satnavDestinationReachable = value === "YES";
+			if (value === "YES") satnavDestinationNotAccessible = false;
 		} // case
 		break;
 
@@ -4929,6 +4926,7 @@ function handleItemChange(item, value, changed)
 			} // if
 
 			satnavOnMap = value === "YES";
+			if (! satnavOnMap) satnavDestinationNotAccessible = false;
 		} // case
 		break;
 
@@ -5241,7 +5239,13 @@ function handleItemChange(item, value, changed)
 
 		case "mfd_to_satnav_selection":
 		{
-			if (mfdToSatnavRequest === "enter_street" && satnavMfdRequestType === "SELECT")
+			if (satnavMfdRequestType !== "SELECT") break;
+
+			if (mfdToSatnavRequest === "personal_address" || mfdToSatnavRequest === "professional_address")
+			{
+				showPopup('satnav_guidance_preference_popup', 6000);
+			}
+			else if (mfdToSatnavRequest === "enter_street")
 			{
 				// Already copy the selected street into the "satnav_show_current_destination" screen, in case the
 				// "satnav_report" packet is missed
@@ -5856,6 +5860,8 @@ function handleItemChange(item, value, changed)
 
 		case "mfd_status":
 		{
+			if (! changed) break;
+
 			if (value === "MFD_SCREEN_ON")
 			{
 				$("#small_panel,#large_panel").show();
@@ -6913,7 +6919,7 @@ function setLanguage(language)
 			satnavDiscMissingText = "De navigatie CD-rom is<br />niet aanwezig";
 
 			id = "#satnav_main_menu";
-			$(id + " .menuTitleLine").html("Navigatie/ Begeleiding<br />");
+			$(id + " .menuTitleLine").html("Navigatie / Begeleiding<br />");
 			$(id + " .button:eq(0)").html("Nieuwe bestemming invoeren");
 			$(id + " .button:eq(1)").html("Informatie-dienstverlening");
 			$(id + " .button:eq(2)").html("Bestemming uit archief kiezen");
