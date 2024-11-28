@@ -755,8 +755,10 @@ var contactKeyPosition = "OFF";
 var engineRpm = -1;
 var engineRunning;
 
+// MFD menu data
 var menuStack = [];
 var currentMenu;
+var satnavMode = "INITIALIZING";  // Current sat nav mode, saved as last reported in item "satnav_status_2"
 
 function selectDefaultScreen(audioSource)
 {
@@ -2078,9 +2080,6 @@ function changeToInstrumentsScreen()
 
 var satnavEquipmentPresent = false;
 var satnavInitialized = false;
-
-// Current sat nav mode, saved as last reported in item "satnav_status_2"
-var satnavMode = "INITIALIZING";
 
 var satnavMfdRequestType;
 var satnavRouteComputed = false;
@@ -4714,19 +4713,6 @@ function handleItemChange(item, value, changed)
 		} // case
 		break;
 
-		case "satnav_new_guidance_instruction":
-		{
-			if (satnavMode !== "IN_GUIDANCE_MODE") break;
-			if (! satnavDisplayCanBeDimmed) break;
-			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
-			if (satnavGuidanceOffMap) break;
-			if (! satnavOnMap) break;
-
-			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
-			else changeBackLargeScreenAfter(4000);
-		} // case
-		break;
-
 		case "satnav_guidance_display_can_be_dimmed":
 		{
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
@@ -4747,9 +4733,16 @@ function handleItemChange(item, value, changed)
 		} // case
 		break;
 
-		case "satnav_calculating_route":
+		case "satnav_new_guidance_instruction":
 		{
-			if (value === "YES") satnavRetrievingInstruction();
+			if (satnavMode !== "IN_GUIDANCE_MODE") break;
+			if (! satnavDisplayCanBeDimmed) break;
+			if (currentLargeScreenId === "satnav_vocal_synthesis_level") break;
+			if (satnavGuidanceOffMap) break;
+			if (! satnavOnMap) break;
+
+			if (value === "YES") temporarilyChangeLargeScreenTo("satnav_guidance", 15000);
+			else changeBackLargeScreenAfter(4000);
 		} // case
 		break;
 
@@ -4762,6 +4755,12 @@ function handleItemChange(item, value, changed)
 		case "satnav_audio_end":
 		{
 			if (value === "YES") satnavSetAudioLed(false);
+		} // case
+		break;
+
+		case "satnav_calculating_route":
+		{
+			if (value === "YES") satnavRetrievingInstruction();
 		} // case
 		break;
 
