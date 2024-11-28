@@ -3118,7 +3118,8 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x0800 ? PSTR("END_OF_AUDIO_MESSAGE") :  // Follows 0x0400, 0x0700, 0x0701
         status == 0x4000 ? PSTR("GUIDANCE_STOPPED") :
         status == 0x4001 ? PSTR("DESTINATION_NOT_ACCESSIBLE_BY_ROAD") :  // And guidance ended immediately
-        status == 0x4080 ? ToHexStr(status) :  // Seen this but what is it??
+        status == 0x4080 ? PSTR("GUIDANCE_STOPPED") :
+        status == 0x4081 ? PSTR("GUIDANCE_STOPPED") :
         status == 0x4200 ? PSTR("ARRIVED_AT_DESTINATION_POPUP") :  // TODO - guessing
         status == 0x9000 ? PSTR("READING_DISC") :
         status == 0x9080 ? PSTR("START_COMPUTING_ROUTE") : // TODO - guessing
