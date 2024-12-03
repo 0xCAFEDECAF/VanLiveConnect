@@ -2113,6 +2113,7 @@ var satnavDownloading = false;
 var satnavStatus1 = "";
 var satnavStatus3 = "";
 var satnavDestinationNotAccessible = false;
+var satnavDestinationNotAccessibleShown = false;
 var satnavGuidanceOffMap = false;
 var satnavComputingRoute = false;
 var satnavDisplayCanBeDimmed = true;
@@ -3091,7 +3092,11 @@ function showDestinationNotAccessiblePopupIfApplicable()
 {
 	if ($("#status_popup").is(":visible")) return true;
 
+	if (! satnavOnMap) return false;
 	if (! satnavDestinationNotAccessible) return false;
+	if (satnavDestinationNotAccessibleShown) return false;
+
+	if (satnavCurrentStreet === "") return false;
 
 	// No popup while still in the guidance preference popup or menu
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
@@ -3109,7 +3114,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	};
 	showStatusPopup(translations[localStorage.mfdLanguage] || "Destination is not<br />accessible by road", 8000);
 
-	satnavDestinationNotAccessible = false;
+	satnavDestinationNotAccessibleShown = true;
 	return true;
 }
 
@@ -3382,6 +3387,7 @@ function satnavPoweringOff(satnavMode)
 	satnavDisclaimerAccepted = false;
 	satnavServiceListSize = -1;
 	satnavDestinationNotAccessible = false;
+	satnavDestinationNotAccessibleShown = false;
 }
 
 function satnavSetInitialized(isInitialized)
@@ -4855,6 +4861,7 @@ function handleItemChange(item, value, changed)
 				if (! satnavComputingRoute) satnavCalculatingRoute();
 				satnavComputingRoute = true;
 				satnavDestinationNotAccessible = false;
+				satnavDestinationNotAccessibleShown = false;
 			}
 			else if (value === "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT")
 			{
@@ -4909,7 +4916,11 @@ function handleItemChange(item, value, changed)
 		case "satnav_destination_reachable":
 		{
 			satnavDestinationReachable = value === "YES";
-			if (value === "YES") satnavDestinationNotAccessible = false;
+			if (value === "YES")
+			{
+				satnavDestinationNotAccessible = false;
+				satnavDestinationNotAccessibleShown = false;
+			} // if
 		} // case
 		break;
 
@@ -4929,7 +4940,6 @@ function handleItemChange(item, value, changed)
 			} // if
 
 			satnavOnMap = value === "YES";
-			if (! satnavOnMap) satnavDestinationNotAccessible = false;
 		} // case
 		break;
 
