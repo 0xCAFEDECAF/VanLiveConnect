@@ -3176,11 +3176,7 @@ function satnavCalculatingRoute()
 	// No popup in the guidance preference screen
 	if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
 
-	// No popup while driving. Note: original MFD does seem to show this popup (in some cases) during driving.
-	if (satnavVehicleMoving()) return;
-
 	cancelChangeBackScreenTimer();
-
 	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 }
 
@@ -4856,6 +4852,7 @@ function handleItemChange(item, value, changed)
 			}
 			else if (value === "COMPUTING_ROUTE")
 			{
+				if (! satnavComputingRoute) satnavCalculatingRoute();
 				satnavComputingRoute = true;
 				satnavDestinationNotAccessible = false;
 			}
@@ -4881,8 +4878,8 @@ function handleItemChange(item, value, changed)
 		{
 			if (value.match(/COMPUTING_ROUTE/) && value.match(/DISC_PRESENT/))
 			{
+				if (! satnavComputingRoute) satnavCalculatingRoute();
 				satnavComputingRoute = true;
-				satnavCalculatingRoute();
 			}
 			else
 			{
