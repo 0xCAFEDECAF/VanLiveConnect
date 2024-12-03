@@ -355,11 +355,12 @@ function connectToWebSocket()
 var popupTimer = {};
 
 // Hide the specified or the current (top) popup
-function hidePopup(id)
+function hidePopup(id, onlyTop)
 {
 	var popup;
 	if (id) popup = $("#" + id); else popup = $(".notificationPopup:visible").last();
 	if (popup.length === 0 || popup.css("display") !== "block") return false;
+	if (id && onlyTop && $(".notificationPopup:visible").last().attr('id') !== id) return false;
 
 	popup.hide();
 
@@ -1598,7 +1599,7 @@ function hideAudioSettingsPopup()
 	updatingAudioVolume = false;
 	isAudioMenuVisible = false;
 
-	hidePopup("audio_settings_popup");
+	const result = hidePopup("audio_settings_popup");
 
 	// Emulate behavior of original MFD
 	if (tunerPresetsPopupWasVisible)
@@ -1606,6 +1607,8 @@ function hideAudioSettingsPopup()
 		tunerPresetsPopupWasVisible = false;
 		showTunerPresetsPopup(7200);  // This time it is shown shorter
 	} // if
+
+	return result;
 }
 
 function hideAudioSettingsPopupAfter(msec)
@@ -3588,24 +3591,27 @@ function handleIrRc(button, held)
 		if (held && ! acceptingHeldValButton) return;
 
 		// Popups that have no buttons can be hidden directly
+
+		// Popups which are not on the original MFD: fall through for button handling
+		hidePopup("screen_brightness_popup", true);
+		hidePopup("climate_control_popup", true);
+
 		if (hideTunerPresetsPopup()) return;
 		if (hideAudioSettingsPopup()) return;
 		if (hidePopup("status_popup")) return;
+		if (hidePopup("satnav_computing_route_popup", true)) return;
 		if (hidePopup("satnav_input_stored_in_professional_dir_popup")) return;
 		if (hidePopup("satnav_input_stored_in_personal_dir_popup")) return;
 		if (hidePopup("satnav_initializing_popup")) return;
+		if (hidePopup("notification_popup")) return;
+		if (hidePopup("door_open_popup")) return;
 		if (hidePopup("trip_computer_popup")) return;
 		if (hidePopup("satnav_reached_destination_popup")) return;
 		if (hidePopup("audio_popup")) return;
-		if (hidePopup("climate_control_popup")) return;
 
 		// In sat nav guidance mode, clicking "Val" shows the "Guidance tools" menu
-		if (satnavMode === "IN_GUIDANCE_MODE"  // In guidance mode?
-			&&
-			(
-				$(".notificationPopup:visible").length === 0  // And no popup showing?
-				|| $("#screen_brightness_popup").is(":visible")
-			)
+		if (satnavMode === "IN_GUIDANCE_MODE"
+			&& $(".notificationPopup:visible").length === 0  // And no popup showing?
 			&& ! inMenu())  // And not in any menu?
 		{
 			gotoTopLevelMenu("satnav_guidance_tools_menu");
@@ -5520,7 +5526,7 @@ function handleItemChange(item, value, changed)
 					{
 						change = change || (vehicleSpeed > 60 && distance <= 800) || (vehicleSpeed > 80 && distance <= 2000);
 					} // if
-					if (change) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
+					if (changed) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
 				} // if
 			} // if
 		} // case
