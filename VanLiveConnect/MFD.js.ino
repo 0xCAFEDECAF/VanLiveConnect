@@ -817,7 +817,7 @@ function selectDefaultScreen(audioSource)
 	} // if
 
 	// Show current street, if known
-	if (! selectedScreenId && satnavCurrentStreet !== "") selectedScreenId = "satnav_current_location";
+	if (! selectedScreenId && satnavCurrentStreet > " ") selectedScreenId = "satnav_current_location";
 
 	// Final fallback screen...
 	if (! selectedScreenId) selectedScreenId = "clock";
@@ -877,7 +877,7 @@ function nextLargeScreen()
 	if (i === screenIds.indexOf("satnav_current_location"))
 	{
 		if (satnavMode === "IN_GUIDANCE_MODE") i = screenIds.indexOf("satnav_guidance");
-		else if (satnavCurrentStreet === "")
+		else if (satnavCurrentStreet <= " ")
 		{
 			let instrIdx = screenIds.indexOf("instruments")
 
@@ -2118,7 +2118,9 @@ var satnavGuidanceOffMap = false;
 var satnavComputingRoute = false;
 var satnavDisplayCanBeDimmed = true;
 
-var satnavCurrentStreet = "";
+// Initialize to non-empty value, so that showDestinationNotAccessiblePopupIfApplicable() is able to
+// show (if applicable) a popup at startup, when GPS has not yet determined the current location
+var satnavCurrentStreet = " ";
 var satnavNextStreet = "";
 var satnavDirectoryEntry = "";
 
@@ -3086,21 +3088,53 @@ function satnavSwitchToGuidanceScreen()
 	changeLargeScreenTo("satnav_guidance");
 }
 
+var destinationNotAccessiblePopupOk = null;
+
+function setDestinationNotAccessiblePopupOk()
+{
+	// The popup may be displayed during the next 20 seconds, not any more after that
+	clearTimeout(destinationNotAccessiblePopupOk);
+	destinationNotAccessiblePopupOk = setTimeout
+	(
+		function() { destinationNotAccessiblePopupOk = null; },
+		20000
+	);
+}
+
+var destinationNotAccessiblePopupTimer = null;
+
 // Show the "Destination is not accessible by road" popup, if applicable.
 // Returns 'false' if it is not (yet) the right moment to check if the popup must be shown.
 function showDestinationNotAccessiblePopupIfApplicable()
 {
 	if ($("#status_popup").is(":visible")) return true;
 
-	if (! satnavOnMap) return false;
 	if (! satnavDestinationNotAccessible) return false;
 	if (satnavDestinationNotAccessibleShown) return false;
 
-	if (satnavCurrentStreet === "") return false;
+	if (! satnavOnMap) return false;
+	if (satnavCurrentStreet === "") return false;  // Considered same condition as "not on map"
+
+	// If the current street is "City", not "Street (City)", the original MFD treats this like it is "",
+	// i.e., "not on map"
+	if (! satnavCurrentStreet.match(/\(.*\)/) && satnavCurrentStreet > " ") return false;
 
 	// No popup while still in the guidance preference popup or menu
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
+
+	//if (satnavVehicleMoving()) return false;  // No popup while driving
+	if (destinationNotAccessiblePopupOk === null) return false;
+
+	// Timer not yet running?
+	if (destinationNotAccessiblePopupTimer === null)
+	{
+		// Come back a little later
+		destinationNotAccessiblePopupTimer = setTimeout(showDestinationNotAccessiblePopupIfApplicable, 1000);
+		return false;
+	} // if
+
+	destinationNotAccessiblePopupTimer = null;
 
 	hidePopup();
 
@@ -3193,6 +3227,7 @@ function satnavGuidancePreferencePopupYesButton()
 	{
 		if (! $('#satnav_guidance').is(':visible')) satnavSwitchToGuidanceScreen();
 		satnavCalculatingRoute();
+		setDestinationNotAccessiblePopupOk();
 	} // if
 }
 
@@ -3223,6 +3258,7 @@ function satnavGuidancePreferenceValidate()
 	if (currentLargeScreenId === "satnav_guidance")
 	{
 		satnavSwitchToGuidanceScreen();
+		setDestinationNotAccessiblePopupOk();
 		if (satnavComputingRoute) satnavCalculatingRoute(); else showDestinationNotAccessiblePopupIfApplicable();
 	}
 	else
@@ -3353,6 +3389,7 @@ function satnavStopOrResumeGuidance()
 	else
 	{
 		satnavSwitchToGuidanceScreen();
+		setDestinationNotAccessiblePopupOk();
 		satnavCalculatingRoute();
 	} // if
 }
