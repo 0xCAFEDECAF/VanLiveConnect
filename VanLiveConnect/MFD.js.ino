@@ -3101,12 +3101,14 @@ var destinationNotAccessiblePopupOk = null;
 
 function setDestinationNotAccessiblePopupOk()
 {
-	// The popup may be displayed during the next 20 seconds, not any more after that
+	satnavDestinationNotAccessibleShown = false;
+
+	// The popup may be displayed during the next 60 seconds, not any more after that
 	clearTimeout(destinationNotAccessiblePopupOk);
 	destinationNotAccessiblePopupOk = setTimeout
 	(
 		function() { destinationNotAccessiblePopupOk = null; },
-		20000
+		60000
 	);
 }
 
@@ -3118,9 +3120,21 @@ function showDestinationNotAccessiblePopupIfApplicable()
 {
 	if ($("#status_popup").is(":visible")) return true;
 
-	if (! satnavDestinationNotAccessible) return false;
 	if (satnavDestinationNotAccessibleShown) return false;
 
+	// Timer not yet running?
+	if (destinationNotAccessiblePopupTimer === null)
+	{
+		// Come back a little later
+		destinationNotAccessiblePopupTimer = setTimeout(showDestinationNotAccessiblePopupIfApplicable, 1000);
+		return false;
+	} // if
+
+	clearTimeout(destinationNotAccessiblePopupTimer);
+	destinationNotAccessiblePopupTimer = null;
+
+	if (! satnavDestinationNotAccessible) return false;
+	if (satnavDestinationReachable) return false;
 	if (! satnavOnMap) return false;
 	if (satnavCurrentStreet === "") return false;  // Considered same condition as "not on map"
 
@@ -3132,18 +3146,7 @@ function showDestinationNotAccessiblePopupIfApplicable()
 	if ($("#satnav_guidance_preference_popup").is(":visible")) return false;
 	if ($("#satnav_guidance_preference_menu").is(":visible")) return false;
 
-	//if (satnavVehicleMoving()) return false;  // No popup while driving
 	if (destinationNotAccessiblePopupOk === null) return false;
-
-	// Timer not yet running?
-	if (destinationNotAccessiblePopupTimer === null)
-	{
-		// Come back a little later
-		destinationNotAccessiblePopupTimer = setTimeout(showDestinationNotAccessiblePopupIfApplicable, 1000);
-		return false;
-	} // if
-
-	destinationNotAccessiblePopupTimer = null;
 
 	hidePopup();
 
@@ -3231,12 +3234,12 @@ function satnavCalculatingRoute()
 function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
+	setDestinationNotAccessiblePopupOk();
 	if (showDestinationNotAccessiblePopupIfApplicable()) return;
 	if (satnavMode === "IN_GUIDANCE_MODE")
 	{
-		if (! $('#satnav_guidance').is(':visible')) satnavSwitchToGuidanceScreen();
+		if (! $("#satnav_guidance").is(":visible")) satnavSwitchToGuidanceScreen();
 		satnavCalculatingRoute();
-		setDestinationNotAccessiblePopupOk();
 	} // if
 }
 
@@ -4749,8 +4752,6 @@ function handleItemChange(item, value, changed)
 
 		case "satnav_destination_not_accessible":
 		{
-			if (! satnavOnMap) break;
-			if (satnavDestinationReachable) break;
 			if (satnavDestinationNotAccessible) break;
 			if (value === "YES")
 			{
