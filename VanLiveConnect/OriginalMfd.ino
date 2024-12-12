@@ -1,5 +1,5 @@
 
-// Functions, types and variables involved in keeping track of what the original multi-function display (MFD) is 
+// Functions, types and variables involved in keeping track of what the original multi-function display (MFD) is
 // showing (the small left side panel, the larger right side panel, and any popup).
 //
 // The original MFD has pretty weird logic for showing its various screens.
@@ -301,6 +301,17 @@ void ResetTripInfo(uint16_t mfdStatus)
     if (mustWrite) WriteEeprom(SMALL_SCREEN_EEPROM_POS, smallScreen, PSTR("Small screen"));
 } // ResetTripInfo
 
+// Select the next tab in the trip computer screen (large screen) or trip computer popup.
+// Thereyby, skip the "GPS info" screen.
+//
+// Updates global variable 'smallScreen'.
+void NextSmallScreenSkipGpsInfo()
+{
+    if (smallScreen == SMALL_SCREEN_GPS_INFO) smallScreen = SMALL_SCREEN_FUEL_CONSUMPTION;
+    smallScreen = (smallScreen + 1) % N_SMALL_SCREENS;
+    if (smallScreen == SMALL_SCREEN_GPS_INFO) smallScreen = SMALL_SCREEN_FUEL_CONSUMPTION;
+} // NextSmallScreenSkipGpsInfo
+
 // Keep track of the cycling through the trip computer tabs (either in the small screen, the large screen or the
 // popup) in the original MFD. Called after a short-press of the right hand stalk button.
 //
@@ -330,9 +341,7 @@ void CycleTripInfo()
     {
         // A trip computer tab is showing on the large screen
 
-        // Select the next tab, but skip the "GPS info" screen
-        smallScreen = (smallScreen + 1) % N_SMALL_SCREENS;
-        if (smallScreen == SMALL_SCREEN_GPS_INFO) smallScreen = SMALL_SCREEN_FUEL_CONSUMPTION;
+        NextSmallScreenSkipGpsInfo();  // Select the next tab, but skip the "GPS info" screen
 
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
@@ -371,9 +380,7 @@ void CycleTripInfo()
     {
         // The trip computer popup is visible
 
-        // Select the next tab, but skip the "GPS info" screen
-        smallScreen = (smallScreen + 1) % N_SMALL_SCREENS;
-        if (smallScreen == SMALL_SCREEN_GPS_INFO) smallScreen = SMALL_SCREEN_FUEL_CONSUMPTION;
+        NextSmallScreenSkipGpsInfo();  // Select the next tab, but skip the "GPS info" screen
 
       #ifdef DEBUG_ORIGINAL_MFD
         Serial.printf_P(
