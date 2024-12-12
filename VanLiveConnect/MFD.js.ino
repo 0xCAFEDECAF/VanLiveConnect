@@ -772,6 +772,11 @@ var contactKeyPosition = "OFF";
 var engineRpm = -1;
 var engineRunning;
 
+function isEngineRunning()
+{
+	return engineRunning === "YES" && contactKeyPosition !== "OFF" && engineRpm > 0;
+}
+
 // MFD menu data
 var menuStack = [];
 var currentMenu;
@@ -811,10 +816,7 @@ function selectDefaultScreen(audioSource)
 	} // if
 
 	// Show instrument screen if engine is running
-	if (! selectedScreenId && engineRunning === "YES" && contactKeyPosition !== "OFF" && engineRpm >= 0)
-	{
-		selectedScreenId = "instruments";
-	} // if
+	if (! selectedScreenId && isEngineRunning()) selectedScreenId = "instruments";
 
 	// Show current street, if known
 	if (! selectedScreenId && satnavCurrentStreet > " ") selectedScreenId = "satnav_current_location";
@@ -963,8 +965,8 @@ function gotoSmallScreen(smallScreenName)
 		case "FUEL_CONSUMPTION":
 		{
 			// Original MFD shows fuel consumption, but we already show that data permanently in the status bar.
-			// Instead, show this screen:
-			changeSmallScreenTo("instrument_small");
+			// Instead, show one of these screens:
+			changeSmallScreenTo(isEngineRunning() ? "instrument_small" : "gps_info");
 		} // case
 		break;
 	} // switch
@@ -2215,7 +2217,7 @@ function satnavGrayOutList()
 {
 	unhighlightLine("satnav_choice_list");
 	$("#satnav_choice_list").css("color", "var(--disabled-element-color)");
-	$('#satnav_choice_list').attr("grayed-out", "true");
+	$("#satnav_choice_list").attr("grayed-out", "true");
 
 	// Show the spinning disc after a while
 	clearTimeout(satnavGotoListScreen.showSpinningDiscTimer);
@@ -2317,7 +2319,7 @@ function satnavSelectFirstAvailableCharacter()
 function satnavEnterCityCharactersScreen()
 {
 	highlightFirstLine('satnav_choice_list');
-	$('#satnav_to_mfd_show_characters_spinning_disc').hide();
+	$("#satnav_to_mfd_show_characters_spinning_disc").hide();
 	$("#satnav_enter_characters_validate_button").addClass("buttonDisabled");  // TODO - check
 	$("#satnav_enter_characters_validate_button").removeClass("buttonSelected");  // TODO - check
 	restoreButtonSizes();
@@ -3078,6 +3080,13 @@ function satnavDeleteDirectories()
 	// Save in local (persistent) store
 	localStorage.satnavPersonalDirectoryEntries = JSON.stringify(satnavPersonalDirectoryEntries);
 	localStorage.satnavProfessionalDirectoryEntries = JSON.stringify(satnavProfessionalDirectoryEntries);
+}
+
+function satnavOnEnterGuidanceScreen()
+{
+	satnavCutoffBottomLines($('#satnav_guidance_curr_street'));
+	satnavCutoffBottomLines($('#satnav_guidance_next_street'));
+	if (isEngineRunning()) gotoSmallScreen('FUEL_CONSUMPTION')
 }
 
 function satnavSwitchToGuidanceScreen()
@@ -5423,7 +5432,7 @@ function handleItemChange(item, value, changed)
 			$("#satnav_choose_from_list_spinning_disc").hide();
 
 			$("#satnav_choice_list").css("color", "var(--main-color)");
-			$('#satnav_choice_list').removeAttr("grayed-out");
+			$("#satnav_choice_list").removeAttr("grayed-out");
 
 			switch(mfdToSatnavRequest)
 			{
@@ -5823,9 +5832,7 @@ function handleItemChange(item, value, changed)
 			if (value === localStorage.smallScreen) break;
 			localStorage.smallScreen = value;
 
-			// Regardless where the original MFD is showing its trip computer data (small screen or large screen),
-			// we show it always in the small screen.
-			gotoSmallScreen(value);
+			if (currentLargeScreenId !== "satnav_guidance") gotoSmallScreen(value);
 		} // case
 		break;
 
@@ -5843,7 +5850,7 @@ function handleItemChange(item, value, changed)
 			if (value === localStorage.smallScreen) break;
 			localStorage.smallScreen = value;
 
-			gotoSmallScreen(value);
+			if (currentLargeScreenId !== "satnav_guidance") gotoSmallScreen(value);
 		} // case
 		break;
 

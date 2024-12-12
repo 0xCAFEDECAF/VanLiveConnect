@@ -1664,7 +1664,8 @@ char mfd_html[] PROGMEM = R"=====(
 				<!-- Sat nav guidance -->
 
 				<div id="satnav_guidance"
-					on_enter="satnavCutoffBottomLines($('#satnav_guidance_curr_street')); satnavCutoffBottomLines($('#satnav_guidance_next_street'));"
+					on_enter="satnavOnEnterGuidanceScreen();"
+					on_exit="gotoSmallScreen(localStorage.smallScreen);"
 					style="display:none;">
 
 					<!-- Distance to destination -->
@@ -1679,7 +1680,7 @@ char mfd_html[] PROGMEM = R"=====(
 							class="dots" style="font-size:30px; left:560px; top:480px;"></div>
 					</div>
 
-					<!-- This one is shown instead of the above, in case that is reported "0" -->
+					<!-- This one is shown instead of the above, in case that is reported as "0" -->
 					<div id="satnav_distance_to_dest_via_straight_line_visible" style="display:none">
 						<div id="satnav_distance_to_dest_via_straight_line_number"
 							class="dots" style="left:350px; top:457px; width:200px; text-align:right;">-</div>
