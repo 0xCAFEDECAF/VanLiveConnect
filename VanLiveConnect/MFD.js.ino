@@ -3235,7 +3235,6 @@ function satnavGuidancePreferencePopupYesButton()
 {
 	hidePopup('satnav_guidance_preference_popup');
 	setDestinationNotAccessiblePopupOk();
-	if (showDestinationNotAccessiblePopupIfApplicable()) return;
 	if (satnavMode === "IN_GUIDANCE_MODE")
 	{
 		if (! $("#satnav_guidance").is(":visible")) satnavSwitchToGuidanceScreen();
@@ -3267,16 +3266,7 @@ function satnavGuidancePreferenceEscape()
 
 function satnavGuidancePreferenceValidate()
 {
-	if (currentLargeScreenId === "satnav_guidance")
-	{
-		satnavSwitchToGuidanceScreen();
-		setDestinationNotAccessiblePopupOk();
-		if (satnavComputingRoute) satnavCalculatingRoute(); else showDestinationNotAccessiblePopupIfApplicable();
-	}
-	else
-	{
-		satnavSwitchToGuidanceScreen();
-	} // if
+	satnavSwitchToGuidanceScreen();
 }
 
 // Format a string like "45 km", "15 mi", "7000 m", "880 yd" or "60 m". Return an array [distance, unit]
