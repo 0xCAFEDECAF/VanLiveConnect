@@ -5291,7 +5291,6 @@ function handleItemChange(item, value, changed)
 		case "mfd_to_satnav_request_type":
 		{
 			satnavMfdRequestType = value;
-			if (value === "REQ_ITEMS") satnavGrayOutList();
 			if (value !== "REQ_N_ITEMS") break;
 			if(mfdToSatnavRequest === "enter_city" || mfdToSatnavRequest === "enter_street") satnavPrepareEntryScreen();
 		} // case
