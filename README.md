@@ -366,26 +366,14 @@ The Wi-Fi icon at the top is now shown, but it has a small "X" in it. This small
 Wi-Fi connection does not offer an Internet connection. Even though, the landing page 'http://<...>/MFD.html'
 of the ESP can be accessed successfully.
 
-However, it now becomes impossible for the Android device to access the Internet. All network access is routed
-towards the Wi-Fi connection, which does not offer Internet. While this is good for accessing the "PSA display AP",
-this prevents any apps from accessing the Internet.
-
-**Step 2.**
-
-To make it possible for the Android device to access the Internet while connected to the "PSA display AP", go to
-"Settings > Network & internet > Wi-Fi > Wi-Fi preferences > Advanced" and turn on "Switch to mobile data
-automatically":
-
-<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Switch%20to%20mobile%20data%20automatically.png">
-
-However, even though "Internet access" via Wi-Fi seems now enabled to the Android device, it still sees that the
+Even though the Android device is now using Wi-Fi for its "Internet access", it still sees that the
 connection is pretty limited. Android tries to access all kinds of other Internet addresses, which (obviously)
 fails. Therefore, the Android device now presents a different system notification: "PSA display AP has limited
 connectivity. Tap to connect anyway.":
 
 <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Network%20has%20limited%20connectivity%20status%20bar%20notification.png" width="33%">
 
-**Step 3.**
+**Step 2.**
 
 When this "limited connectivity" notification appears, make sure to check-mark "Don't ask again for this network",
 then tap "Yes":
@@ -394,6 +382,18 @@ then tap "Yes":
 
 The Wi-Fi icon at the top is now shown without the small "X" in it. The landing page of the ESP can now be accessed
 via Wi-Fi, even with mobile data enabled.
+
+However, it now becomes impossible for the Android device to access the Internet. All network access is routed
+towards the Wi-Fi connection, which does not offer Internet. While this is good for accessing the "PSA display AP",
+this prevents any apps from accessing the Internet.
+
+**Step 3.**
+
+To make it possible for the Android device to access the Internet while connected to the "PSA display AP", go to
+"Settings > Network & internet > Wi-Fi > Wi-Fi preferences > Advanced" and turn on "Switch to mobile data
+automatically":
+
+<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Switch%20to%20mobile%20data%20automatically.png">
 
 #### Technical details
 
