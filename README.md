@@ -337,7 +337,19 @@ crash the very first time, but after that it works (uploads) fine.
 
 ### Android Connected to Both Wi-Fi and Mobile Data Simultaneously
 
-Android does not like a Wi-Fi connection that does not have an Internet connection.
+Ideally, we would like all the Android apps to be able to connect to the Internet via mobile data, while at the
+same time the Android client device is showing the vehicle data as coming in via the (non-Internet) "PSA display AP"
+Wi-Fi connection
+
+However, Android does not like a Wi-Fi connection that does not have an Internet connection. By default, it will
+not use it.
+
+We would like to convince Android that it can use the Wi-Fi connection for the "PSA display AP", and the mobile
+data connection for access to the Internet. To achieve that, we need to do a couple of things:
+
+#### Setup
+
+**Step 1.**
 
 When connecting to the Wi-Fi access point as offered by the ESP, your android device will present a system notification
 "PSA display AP has no Internet connection. Tap for options.", similar to this:
@@ -355,38 +367,44 @@ Wi-Fi connection does not offer an Internet connection. Even though, the landing
 of the ESP can be accessed successfully.
 
 However, it now becomes impossible for the Android device to access the Internet. All network access is routed
-towards the Wi-Fi connection, which does not offer Internet. This prevents any apps from accessing the Internet.
+towards the Wi-Fi connection, which does not offer Internet. While this is good for accessing the "PSA display AP",
+this prevents any apps from accessing the Internet.
 
-A commonly suggested option is to turn on the Android developer-option "Settings > System > Developer options >
-Mobile data always active". But it doesn't work: all apps will still try to use the Wi-Fi connection for their
-Internet connection. Moreover, having "Mobile data always active" turned on, decreases battery life,
-so it is a bad idea anyway.
+**Step 2.**
 
-Ideally, we would like all the Android apps to be able to connect to the Internet via mobile data, while at the
-same time the Android client device is showing the vehicle data as coming in via the (non-Internet) "PSA display AP"
-Wi-Fi connection
+To make it possible for the Android device to access the Internet while connected to the "PSA display AP", go to
+"Settings > Network & internet > Wi-Fi > Wi-Fi preferences > Advanced" and turn on "Switch to mobile data
+automatically":
 
-To make the latter possible with mobile data enabled on the Android device, the web server ("WebServer.ino") in
-the ESP offers a special feature: [it will respond to any request for '.../generate_204'](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/aece0d71480ae534d1ff40c2043e673175219ed0/VanLiveConnect/WebServer.ino#L258).
-This makes make Android believe that the Wi-Fi connection has an Internet connection, and therefore it chooses
-Wi-Fi as the preferred medium.
+<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Switch%20to%20mobile%20data%20automatically.png">
 
 However, even though "Internet access" via Wi-Fi seems now enabled to the Android device, it still sees that the
 connection is pretty limited. Android tries to access all kinds of other Internet addresses, which (obviously)
-fails. Therefore, the Android device now presents a different system notification:
-"PSA display AP has limited connectivity. Tap to connect anyway.":
+fails. Therefore, the Android device now presents a different system notification: "PSA display AP has limited
+connectivity. Tap to connect anyway.":
 
 <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Network%20has%20limited%20connectivity%20status%20bar%20notification.png" width="33%">
 
-Make sure to check-mark "Don't ask again for this network", then tap "Yes":
+**Step 3.**
+
+When this "limited connectivity" notification appears, make sure to check-mark "Don't ask again for this network",
+then tap "Yes":
 
 <img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/Network%20has%20limited%20connectivity%20popup%20checked.png" width="33%">
 
 The Wi-Fi icon at the top is now shown without the small "X" in it. The landing page of the ESP can now be accessed
 via Wi-Fi, even with mobile data enabled.
 
-Unfortunately, the effect is still the same as above: all apps will try to use the (non-Internet) Wi-Fi connection,
-so all apps still fail to access the Internet.
+#### Technical details
+
+To make it possible to use the Wi-Fi connection for the "PSA display AP", and the mobile data connection for
+access to the Internet, the web server ("WebServer.ino") in the ESP offers a special feature:
+[it will respond to any request for '.../generate_204'](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/aece0d71480ae534d1ff40c2043e673175219ed0/VanLiveConnect/WebServer.ino#L258).
+This makes make Android believe that the Wi-Fi connection has an Internet connection, and therefore it chooses
+Wi-Fi as the preferred medium.
+
+Unfortunately, the effect is that now all apps will try to use the (non-Internet) Wi-Fi connection, so all apps will
+fail to access the Internet.
 
 The solution is to have the web server in the ESP [stop responding](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/20780182943b44f90241af8eb2d614e8ce9d53b9/VanLiveConnect/WebServer.ino#L248)
 to requests for '.../generate_204' as soon as a data (WebSocket) connection between the ESP and the Android device
@@ -424,17 +442,22 @@ able to find the ESP device after it connects to the ESP's Wi-Fi access point.
 To add the route:
 * Open the "OpenVPN for Android" app
 * Tap the 'pen' icon next to your connection profile
+* Tap the 'ADVANCED' tab
+  - Make sure 'Persistent tun' is *not* checked
 * Tap the 'ROUTING' tab
-* Under the 'IPv4' section:
-  - Untick 'Use default route'
+  - Make sure that 'Bypass VPN for local networks' is selected
+* In that same tab, under the 'IPv4' section:
+  - Make sure that 'Use default route' is *not* selected
   - Tap 'Excluded Networks'
   - Enter `192.168.244.0/24` (note: the `"192.168.244."` part must match with the IP address as specified in
     [`Config.h`](VanLiveConnect/Config.h#L37)).
   - Tap 'OK'
-* Tap the 'ADVANCED' tab
-  - Make sure 'Persistent tun' is *not* checked
 
-Then press the Android 'Back' button to go back to the overview of connection profile.
+The 'ROUTING' tab will look like this:
+
+<img src="https://github.com/0xCAFEDECAF/VanLiveConnect/blob/main/extras/Android/OpenVpn%20route%20to%20local%20LAN.png">
+
+After setting the above, press the Android 'Back' button to go back to the overview of connection profile.
 
 ### Automating your smartphone or tablet
 
