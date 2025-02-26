@@ -5,11 +5,10 @@ Patched from the latest (current) version 1.2.9, https://github.com/dvarrel/ESPA
 The patch includes the following fixes:
 
 - AsyncWebSocket.h:
-  * Change #define WS_MAX_QUEUED_MESSAGES value to 4 for better memory efficiency
+  * Change `#define WS_MAX_QUEUED_MESSAGES` value to `4` for better memory efficiency
 
 ```diff
 diff ~/Arduino/libraries/ESPAsyncWebSrv/src/AsyncWebSocket.h ./src/AsyncWebSocket.h
- diff ~/Arduino/libraries/ESPAsyncWebSrv/src/AsyncWebSocket.h ./src/AsyncWebSocket.h
 34c34
 < #define WS_MAX_QUEUED_MESSAGES 8
 ---
