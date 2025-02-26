@@ -280,7 +280,7 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
-  version 1.2.6 and 1.2.7 . Skip version 1.2.8: it does not compile on the ESP8266.
+  version 1.2.6, 1.2.7 and 1.2.9 . Skip version 1.2.8: it does not compile on the ESP8266.
 
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
@@ -293,10 +293,14 @@ of the WebSocket (TCP/IP over Wi-Fi) communication.
 
 #### 4. Board Settings
 
+I tested with board "LOLIN(WEMOS) D1 R2 & mini". Other ESP8266-based boards may also work.
+
 In the Arduino IDE, go to the "Tools" menu, and choose:
 
-* CPU frequency: 160 MHz, and
-* lwIP variant: "v2 Higher Bandwidth (no features)".
+* CPU frequency: "160 MHz"
+* Flash size: "4MB (FS:1MB OTA:~1019KB)"
+* lwIP variant: "v2 Higher Bandwidth (no features)"
+* SSL support: "Basic SSL ciphers (lower ROM use)"
 
 Here is a picture of board settings that have been tested to work:
 
@@ -311,7 +315,18 @@ inside the following file:
     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\platform.txt (Windows)
     $HOME/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/platform.txt (Linux)
 
-#### 5. Uploading
+#### 5. Compiling
+
+Download https://github.com/0xCAFEDECAF/VanLiveConnect/archive/refs/heads/main.zip and unzip it. Navigate into its
+sub-folder `VanLiveConnect` and double-click the `ESP8266_IDE.bat` file (Windows) or `ESP8266_IDE.sh`
+file (Linux). This will open the Arduino IDE with all the correct board settings.
+
+> 👉 Note: the `ESP8266_IDE.*` scripts assume that the Arduino IDE was installed in `C:\Program Files (x86)\Arduino`
+(Windows) or `/usr/local/bin` (Linux). If you installed the Arduino IDE in a different location, you will need to
+update the [`ArduinoIdeEnv.bat`](extras/Scripts/ArduinoIdeEnv.bat#L16) file (Windows) resp. the
+[`ArduinoIdeEnv.sh`](extras/Scripts/ArduinoIdeEnv.sh#L16) file (Linux).
+
+#### 6. Uploading
 
 To upload the compiled project you will need the following:
 
@@ -327,7 +342,7 @@ OTA feature of the arduino-esp8266.
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
 
-#### 6. First Run
+#### 7. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
 the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware sometimes causes the board to
