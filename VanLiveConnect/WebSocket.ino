@@ -158,7 +158,7 @@ void QueueJson(const char* json, uint32_t lastSentOnId_1 = 0, uint32_t lastSentO
 
         if (++nextJsonPacketIdx == N_QUEUED_JSON) nextJsonPacketIdx = 0;
 
-    } while (system_get_free_heap_size() < 20 * 1024);
+    } while (system_get_free_heap_size() < 20 * 1024 && countQueuedJsons() > 0);
 
     // Try to allocate memory
     entry->packet = (char*) malloc(strlen(json) + 1);
@@ -191,8 +191,6 @@ static unsigned long lastSendQueued = 0;
 // Send any queued JSON packets to a specific WebSocket ID
 void SendQueuedJson(uint32_t id)
 {
-    lastSendQueued = millis();
-
     if (! IsIdConnected(id)) return;
 
     int i = nextJsonPacketIdx;
@@ -204,6 +202,8 @@ void SendQueuedJson(uint32_t id)
 
         // Don't resend a queued packet on the same WebSocket ID
         if (entry->lastSentOnId_1 == id || entry->lastSentOnId_2 == id) goto NEXT;
+
+        lastSendQueued = millis();
 
         if (! TryToSendJsonOnWebSocket(id, entry->packet)) goto NEXT;
 
@@ -807,7 +807,7 @@ void LoopWebSocket()
     } // if
   #endif // WIFI_STRESS_TEST
 
-    if (millis() - lastSendQueued >= 100UL)  // Arithmetic has safe roll-over
+    if (millis() - lastSendQueued >= 200UL)  // Arithmetic has safe roll-over
     {
         SendQueuedJson(websocketId_1);
         SendQueuedJson(websocketId_2);
