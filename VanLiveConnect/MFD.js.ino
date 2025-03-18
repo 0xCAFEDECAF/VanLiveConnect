@@ -465,8 +465,6 @@ function showNotificationPopup(message, msec, isWarning)
 	$("#notification_icon_info").toggle(! isWarning);
 	$("#notification_icon_warning").toggle(isWarning);
 
-	// TODO - if popup is already showing with this message, return here
-
 	hideAllPopups();
 
 	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
@@ -4718,6 +4716,9 @@ function handleItemChange(item, value, changed)
 			} // if
 
 			const isWarning = value.slice(-1) === "!";
+
+			if (inMenu() && ! isWarning) break;  // When user is browsing the menu, let only warnings pop up
+
 			const message = isWarning ? value.slice(0, -1) : value;
 			handleItemChange.notificationMessagePopupTimer = showNotificationPopup(message, 8000, isWarning);
 		} // case
@@ -5557,7 +5558,7 @@ function handleItemChange(item, value, changed)
 
 				let parts = value.split(" ");
 				let reportedUnits = parts[1]; // 5000 m and less is reported in metres/yards
-				if (reportedUnits === "m" || reportedUnits ==="yd")
+				if (reportedUnits === "m" || reportedUnits === "yd")
 				{
 					let distance = parts[0];
 					let change = distance <= 300;
@@ -5569,7 +5570,7 @@ function handleItemChange(item, value, changed)
 					{
 						change = change || (vehicleSpeed > 60 && distance <= 800) || (vehicleSpeed > 80 && distance <= 2000);
 					} // if
-					if (changed) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
+					if (change) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
 				} // if
 			} // if
 		} // case
