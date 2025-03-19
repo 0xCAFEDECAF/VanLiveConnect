@@ -3225,7 +3225,6 @@ function satnavCalculatingRoute()
 	// No popup in the guidance preference screen
 	if (currentLargeScreenId === "satnav_guidance_preference_menu") return;
 
-	cancelChangeBackScreenTimer();
 	showPopupAndNotifyServer("satnav_computing_route_popup", 30000);
 }
 
