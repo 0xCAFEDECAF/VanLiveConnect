@@ -4694,6 +4694,7 @@ function handleItemChange(item, value, changed)
 						function()
 						{
 							satnavPoweringOff(savedSatnavMode);
+							engineRunning = "NO";
 							selectDefaultScreen();  // Even when in a menu: the original MFD switches off
 						},
 						500
