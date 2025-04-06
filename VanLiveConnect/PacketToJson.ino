@@ -2830,6 +2830,12 @@ VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const i
 // Set to true to disable (once) duplicate detection. For use when switching to other units.
 bool SkipAirCon2PktDupDetect = false;
 
+#define CONDENSER_TEMP_INVALID (0xFF)
+uint8_t condenserTemp = CONDENSER_TEMP_INVALID;
+
+#define EVAPORATOR_TEMP_INVALID (0xFFFF)
+uint16_t evaporatorTemp = EVAPORATOR_TEMP_INVALID;
+
 VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
     // http://graham.auld.me.uk/projects/vanbus/packets.html#4DC
@@ -2848,19 +2854,25 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     uint8_t contactKeyData = data[1];
 
     static uint16_t lastReportedCondenserTemp = 0xFFFF;  // Value that can never come from a packet itself
-    uint8_t condenserTemp = data[2];
+    condenserTemp = data[2];
     static uint8_t prevCondenserTemp = condenserTemp;
+    if (condenserTemp == CONDENSER_TEMP_INVALID) condenserTemp = prevCondenserTemp;
 
     static uint32_t lastReportedEvaporatorTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
-    uint16_t evaporatorTemp = (uint16_t)data[3] << 8 | data[4];
+    evaporatorTemp = (uint16_t)data[3] << 8 | data[4];
     static uint16_t prevEvaporatorTemp = evaporatorTemp;
+    if (evaporatorTemp == EVAPORATOR_TEMP_INVALID) evaporatorTemp = prevEvaporatorTemp;
 
     bool hasNewData =
         SkipAirCon2PktDupDetect
         || statusBits != prevStatusBits
         || contactKeyData != prevContactKeyData
         || (condenserTemp != lastReportedCondenserTemp && condenserTemp == prevCondenserTemp)
-        || (evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp == prevEvaporatorTemp);
+        || condenserTemp < lastReportedCondenserTemp - 1
+        || condenserTemp > lastReportedCondenserTemp + 1
+        || (evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp == prevEvaporatorTemp)
+        || evaporatorTemp < lastReportedEvaporatorTemp - 1
+        || evaporatorTemp > lastReportedEvaporatorTemp + 1;
 
     SkipAirCon2PktDupDetect = false;
     prevStatusBits = statusBits;
@@ -2906,7 +2918,7 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         // This is not interior temperature. This rises quite rapidly if the aircon compressor is
         // running, and drops again when the aircon compressor is off. So I think this is the condenser
         // temperature.
-        condenserTemp == 0xFF ? notApplicable2Str :
+        condenserTemp == CONDENSER_TEMP_INVALID ? notApplicable2Str :
             mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
                 ToStr(condenserTemp) :
                 ToStr(ToFahrenheit((int16_t)condenserTemp)),
@@ -5338,6 +5350,28 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
     if (strlen(vinNumber) != 0)
     {
         at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"vin\": \"%-17.17s\""), vinNumber);
+    } // if
+
+    if (condenserTemp != CONDENSER_TEMP_INVALID)
+    {
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"condenser_temp\": \"%s\""),
+                mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+                    ToStr(condenserTemp) :
+                    ToStr(ToFahrenheit((int16_t)condenserTemp))
+            );
+    } // if
+
+    if (evaporatorTemp != EVAPORATOR_TEMP_INVALID)
+    {
+        float evaporatorTempCelsius = evaporatorTemp / 10.0 - 40.0;
+        char floatBuf[MAX_FLOAT_SIZE];
+        at += at >= n ? 0 :
+            snprintf_P(buf + at, n - at, PSTR(",\n\"evaporator_temp\": \"%s\""),
+                mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+                    ToFloatStr(floatBuf, evaporatorTempCelsius, 1) :
+                    ToFloatStr(floatBuf, ToFahrenheit(evaporatorTempCelsius), 0)
+            );
     } // if
 
     if (setFanSpeed != SET_FAN_SPEED_INVALID)

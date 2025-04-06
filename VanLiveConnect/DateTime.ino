@@ -8,7 +8,7 @@ void SetTimeZoneOffset(int newTimeZoneOffset)
 
 #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 
-#include <TimeLib.h>
+#include <TimeLib.h>  // https://github.com/PaulStoffregen/Time
 
 // Check if an epoch value is valid
 inline boolean IsTimeValid(time_t t)

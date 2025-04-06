@@ -723,7 +723,7 @@ const char* WebSocketPacketLossTestDataToJson(uint32_t packetNo, char* buf)
         "\"event\": \"test\",\n"
         "\"data\":\n"
         "{\n"
-            "\"packet_number\": \"%lu\""
+            "\"packet_number\": \"%" PRIu32 " bytes\""
 #if WIFI_STRESS_TEST >= 2
             ",\n"
             "\"filler_00\": \"1234567812345678123456781234567812345678123456781234567812345678\",\n"

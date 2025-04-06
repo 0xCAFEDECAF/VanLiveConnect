@@ -15,7 +15,7 @@
 #include "VanLiveConnectVersion.h"
 
 #include <EEPROM.h>
-#include <VanBusRx.h>
+#include <VanBusRx.h>  // https://github.com/0xCAFEDECAF/VanBus
 
 #ifdef USE_MDNS
   #include <ESP8266mDNS.h>
@@ -190,7 +190,7 @@ char jsonBuffer[JSON_BUFFER_SIZE];
 
 #ifdef SHOW_VAN_RX_STATS
 
-#include <PrintEx.h>
+#include <PrintEx.h>  // https://github.com/Chris--A/PrintEx plus patches from https://github.com/0xCAFEDECAF/VanLiveConnect/tree/main/VanLiveConnect/Patches/Arduino/libraries/PrintEx
 
 const char* VanBusStatsToStr()
 {
