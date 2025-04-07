@@ -2656,23 +2656,19 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
 
     if (mfdWasOff && mfdStatus == MFD_SCREEN_ON)
     {
+        mfdWasOff = false;
+
+        // We do all this now, when mfdStatus goes from MFD_SCREEN_OFF to MFD_SCREEN_ON. It would be more logical
+        // to do this when mfdStatus == MFD_SCREEN_OFF (below), but that would not work in the "minimal VAN network"
+        // test setup with only the head unit (radio) and MFD.
+
         satnavServiceListSize = -1;
 
         satnavDisclaimerAccepted = false;
         at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"satnav_disclaimer_accepted\": \"NO\""));
 
         UpdateLargeScreenForMfdOff();  // 'largeScreen' will become 'LARGE_SCREEN_CLOCK'
-        at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at,
-                PSTR(
-                    ",\n"
-                    "\"large_screen\": \"%s\",\n"
-                    "\"go_to_screen\": \"clock\""
-                ),
-                LargeScreenStr()
-            );
-
-        mfdWasOff = false;
+        at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"large_screen\": \"%s\""), LargeScreenStr());
     } // if
 
     if (mfdStatus == MFD_SCREEN_OFF)

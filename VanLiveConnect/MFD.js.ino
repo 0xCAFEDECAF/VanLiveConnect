@@ -5913,8 +5913,9 @@ function handleItemChange(item, value, changed)
 			if (value === "MFD_SCREEN_ON")
 			{
 				$("#small_panel,#large_panel").show();
-				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
+				if (satnavDownloading) changeLargeScreenTo("clock");
 				satnavDownloading = false;
+				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
 				$("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
 				$("#satnav_main_menu_select_a_service_button").addClass("buttonDisabled");
 				$('[gid="satnav_to_mfd_list_size"]').empty();
