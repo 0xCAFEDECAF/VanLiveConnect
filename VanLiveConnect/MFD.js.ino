@@ -435,7 +435,7 @@ function showPopupAndNotifyServer(id, msec, message)
 	return timer;
 }
 
-// Hide all visible popups. Optionally, pass the ID of a popup not keep visible.
+// Hide all visible popups. Optionally, pass the ID of a popup to not hide (keep visible).
 function hideAllPopups(except)
 {
 	var allPopups = $(".notificationPopup:visible");
@@ -465,7 +465,7 @@ function showNotificationPopup(message, msec, isWarning)
 	$("#notification_icon_info").toggle(! isWarning);
 	$("#notification_icon_warning").toggle(isWarning);
 
-	hideAllPopups();
+	hideAllPopups("notification_popup");
 
 	$("#last_notification_message_on_mfd").html(message);  // Set the notification text
 	return showPopupAndNotifyServer("notification_popup", msec, message);
@@ -5809,6 +5809,8 @@ function handleItemChange(item, value, changed)
 			if (satnavMode !== "IN_GUIDANCE_MODE") break;
 			if (mfdLargeScreen === "TRIP_COMPUTER") break;
 			if (inMenu()) break;
+
+			hideAllPopups("trip_computer_popup");
 
 			// Will either start showing the popup, or restart its timer if it is already showing
 			showPopup("trip_computer_popup", 8000);
