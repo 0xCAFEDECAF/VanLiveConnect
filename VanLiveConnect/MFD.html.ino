@@ -2050,8 +2050,8 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Data -->
 				<div id="set_fan_speed" class="dseg7" style="font-size:90px; left:200px; top:20px; width:100px;">-</div>
-				<div id="condenser_temp" class="tag" style="font-size:50px; left:100px; top:125px; width:160px;">--</div>
-				<div class="tag" style="font-size:50px; left:270px; top:125px; width:90px; text-align:left;">&deg;C</div>
+				<div id="condenser_pressure_bar" class="tag" style="font-size:50px; left:60px; top:125px; width:160px;">--</div>
+				<div class="tag" style="font-size:50px; left:230px; top:125px; width:110px; text-align:left;">Bar</div>
 				<div id="evaporator_temp" class="tag" style="font-size:50px; left:380px; top:125px; width:230px;">-.-</div>
 				<div class="tag" style="font-size:50px; left:620px; top:125px; width:90px; text-align:left;">&deg;C</div>
 			</div>

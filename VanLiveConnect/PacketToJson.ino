@@ -183,6 +183,16 @@ int16_t ToFahrenheit(int16_t temp_C)
     return (temp_C * 90 + 50 / 2) / 50 + 32;  // Adding 50 / 2 for correct rounding
 } // ToFahrenheit
 
+float ToBar(uint8_t condenserPressure)
+{
+    return condenserPressure / 4.0;
+} // ToBar
+
+float ToPsi(uint8_t condenserPressure)
+{
+    return condenserPressure * 14.5037738 / 4.0;
+} // ToPsi
+
 float ToGallons(float litres)
 {
     return litres / 4.546;  // Assuming imperial gallons
@@ -2826,8 +2836,8 @@ VanPacketParseResult_t ParseAirCon1Pkt(TVanPacketRxDesc& pkt, char* buf, const i
 // Set to true to disable (once) duplicate detection. For use when switching to other units.
 bool SkipAirCon2PktDupDetect = false;
 
-#define CONDENSER_TEMP_INVALID (0xFF)
-uint8_t condenserTemp = CONDENSER_TEMP_INVALID;
+#define CONDENSER_PRESSURE_INVALID (0xFF)
+uint8_t condenserPressure = CONDENSER_PRESSURE_INVALID;
 
 #define EVAPORATOR_TEMP_INVALID (0xFFFF)
 uint16_t evaporatorTemp = EVAPORATOR_TEMP_INVALID;
@@ -2849,10 +2859,10 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     static uint16_t prevContactKeyData = 0xFFFF;  // Value that can never come from a packet itself
     uint8_t contactKeyData = data[1];
 
-    static uint16_t lastReportedCondenserTemp = 0xFFFF;  // Value that can never come from a packet itself
-    condenserTemp = data[2];
-    static uint8_t prevCondenserTemp = condenserTemp;
-    if (condenserTemp == CONDENSER_TEMP_INVALID) condenserTemp = prevCondenserTemp;
+    static uint16_t lastReportedCondenserPressure = 0xFFFF;  // Value that can never come from a packet itself
+    condenserPressure = data[2];
+    static uint8_t prevCondenserPressure = condenserPressure;
+    if (condenserPressure == CONDENSER_PRESSURE_INVALID) condenserPressure = prevCondenserPressure;
 
     static uint32_t lastReportedEvaporatorTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
     evaporatorTemp = (uint16_t)data[3] << 8 | data[4];
@@ -2863,9 +2873,9 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         SkipAirCon2PktDupDetect
         || statusBits != prevStatusBits
         || contactKeyData != prevContactKeyData
-        || (condenserTemp != lastReportedCondenserTemp && condenserTemp == prevCondenserTemp)
-        || condenserTemp < lastReportedCondenserTemp - 1
-        || condenserTemp > lastReportedCondenserTemp + 1
+        || (condenserPressure != lastReportedCondenserPressure && condenserPressure == prevCondenserPressure)
+        || condenserPressure < lastReportedCondenserPressure - 1
+        || condenserPressure > lastReportedCondenserPressure + 1
         || (evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp == prevEvaporatorTemp)
         || evaporatorTemp < lastReportedEvaporatorTemp - 1
         || evaporatorTemp > lastReportedEvaporatorTemp + 1;
@@ -2873,12 +2883,12 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     SkipAirCon2PktDupDetect = false;
     prevStatusBits = statusBits;
     prevContactKeyData = contactKeyData;
-    prevCondenserTemp = condenserTemp;
+    prevCondenserPressure = condenserPressure;
     prevEvaporatorTemp = evaporatorTemp;
 
     if (! hasNewData) return VAN_PACKET_DUPLICATE;
 
-    lastReportedCondenserTemp = condenserTemp;
+    lastReportedCondenserPressure = condenserPressure;
     lastReportedEvaporatorTemp = evaporatorTemp;
 
     float evaporatorTempCelsius = evaporatorTemp / 10.0 - 40.0;
@@ -2893,12 +2903,13 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
             "\"rear_heater_2\": \"%s\",\n"
             "\"ac_compressor\": \"%s\",\n"
             "\"contact_key_position_ac\": \"%s\",\n"
-            "\"condenser_temp\": \"%s\",\n"
+            "\"condenser_pressure_bar\": \"%s\",\n"
+            "\"condenser_pressure_psi\": \"%s\",\n"
             "\"evaporator_temp\": \"%s\"\n"
         "}\n"
     "}\n";
 
-    char floatBuf[MAX_FLOAT_SIZE];
+    char floatBuf[3][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
         statusBits & 0x80 ? yesStr : noStr,
         statusBits & 0x40 ? yesStr : noStr,
@@ -2914,14 +2925,15 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         // This is not interior temperature. This rises quite rapidly if the aircon compressor is
         // running, and drops again when the aircon compressor is off. So I think this is the condenser
         // temperature.
-        condenserTemp == CONDENSER_TEMP_INVALID ? notApplicable2Str :
-            mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-                ToStr(condenserTemp) :
-                ToStr(ToFahrenheit((int16_t)condenserTemp)),
+        condenserPressure == CONDENSER_PRESSURE_INVALID ? notApplicable2Str :
+            ToFloatStr(floatBuf[0], ToBar(condenserPressure), 1),
+
+        condenserPressure == CONDENSER_PRESSURE_INVALID ? notApplicable2Str :
+            ToFloatStr(floatBuf[1], ToPsi(condenserPressure), 0),
 
         mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            ToFloatStr(floatBuf, evaporatorTempCelsius, 1) :
-            ToFloatStr(floatBuf, ToFahrenheit(evaporatorTempCelsius), 0)
+            ToFloatStr(floatBuf[2], evaporatorTempCelsius, 1) :
+            ToFloatStr(floatBuf[2], ToFahrenheit(evaporatorTempCelsius), 0)
     );
 
     // JSON buffer overflow?
@@ -5348,13 +5360,18 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         at += at >= n ? 0 : snprintf(buf + at, n - at, PSTR(",\n\"vin\": \"%-17.17s\""), vinNumber);
     } // if
 
-    if (condenserTemp != CONDENSER_TEMP_INVALID)
+    if (condenserPressure != CONDENSER_PRESSURE_INVALID)
     {
+        char floatBuf[2][MAX_FLOAT_SIZE];
+
         at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"condenser_temp\": \"%s\""),
-                mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-                    ToStr(condenserTemp) :
-                    ToStr(ToFahrenheit((int16_t)condenserTemp))
+            snprintf_P(buf + at, n - at,
+                PSTR(
+                    ",\n\"condenser_pressure_bar\": \"%s\",\n"
+                    "\"condenser_pressure_psi\": \"%s\""
+                ),
+                ToFloatStr(floatBuf[0], ToBar(condenserPressure), 1),
+                ToFloatStr(floatBuf[1], ToPsi(condenserPressure), 0)
             );
     } // if
 

@@ -7135,13 +7135,11 @@ function setUnits(distanceUnit, temperatureUnit, timeUnit)
 	if (temperatureUnit === "set_units_deg_fahrenheit")
 	{
 		$('[gid="coolant_temp_unit"]').html("&deg;F");
-		$("#climate_control_popup .tag:eq(1)").html("&deg;F");
 		$("#climate_control_popup .tag:eq(3)").html("&deg;F");
 	}
 	else
 	{
 		$('[gid="coolant_temp_unit"]').html("&deg;C");
-		$("#climate_control_popup .tag:eq(1)").html("&deg;C");
 		$("#climate_control_popup .tag:eq(3)").html("&deg;C");
 	} // if
 }
