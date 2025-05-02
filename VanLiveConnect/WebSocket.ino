@@ -10,11 +10,6 @@
 // Useful Constants
 #define MINS_PER_HOUR (60)
 
-#ifdef WIFI_AP_MODE
-// Defined in Wifi.ino
-void WifiChangeChannel();
-#endif // WIFI_AP_MODE
-
 // Defined in PacketToJson.ino
 extern uint8_t mfdDistanceUnit;
 extern uint8_t mfdTemperatureUnit;
@@ -66,6 +61,8 @@ bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
   #if DEBUG_WEBSOCKET >= 3
     Serial.printf_P(PSTR("%s[webSocket %lu] Trying to send %zu-byte packet\n"), TimeStamp(), id, strlen(json));
   #endif // DEBUG_WEBSOCKET >= 3
+
+    if (! IsIdConnected(id)) return false;
 
     // Don't let any message overflow the queue. Messages written into a full queue are discarded by the
     // AsyncWebSocket class
@@ -563,18 +560,6 @@ void WebSocketEvent(
           #ifdef DEBUG_WEBSOCKET
             Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
           #endif // DEBUG_WEBSOCKET
-
-          #if 0
-          #ifdef WIFI_AP_MODE
-            static int countDisconnects = 0;
-            if (++countDisconnects == 3)
-            {
-                // Try another channel
-                WifiChangeChannel();
-                countDisconnects = 0;
-            } // if
-          #endif // WIFI_AP_MODE
-          #endif // 0
         }
         break;
 
@@ -629,10 +614,6 @@ void WebSocketEvent(
             // Send ESP system data to client
             // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:
             QueueJson(EspSystemDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
-
-            // Send Wi-Fi and IP data to client
-            // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:
-            QueueJson(WifiDataToJson(clientIp, jsonBuffer, JSON_BUFFER_SIZE));
 
             // Send equipment status data, e.g. presence of sat nav and other peripherals
             // Don't call 'SendJsonOnWebSocket' here, causes out-of-memory or stack overflow crash. Instead:

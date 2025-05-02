@@ -128,12 +128,6 @@ const char* SetupWifi()
 {
     WiFi.hostname(GetHostname());
 
-    // Seems to help in decreasing the jitter on the VAN bus bit timings
-    wifi_set_sleep_type(NONE_SLEEP_T);
-
-    WiFi.setOutputPower(20.5);  // Maximum
-
-
     static const char* wifiSsid = WIFI_SSID;
 
   #ifdef WIFI_AP_MODE
@@ -145,29 +139,24 @@ const char* SetupWifi()
 
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s', channel %d\n"), wifiSsid, WIFI_CHANNEL);
 
-    WiFi.softAPdisconnect (true);
-
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-
-    // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
-
-  #ifdef WIFI_PASSWORD
-    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 8);
-  #else
-    WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN, 8);
-  #endif
-
-    softap_config config;
-    wifi_softap_get_config(&config);
-    PrintSoftApConfig(config);
 
     // Register event handlers
     stationConnectedHandler = WiFi.onSoftAPModeStationConnected(&onStationConnected);
     stationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(&onStationDisconnected);
     //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequestPrint);
     //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequestBlink);
+
+  #ifdef WIFI_PASSWORD
+    WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN);
+  #else
+    WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN);
+  #endif
+
+    softap_config config;
+    wifi_softap_get_config(&config);
+    PrintSoftApConfig(config);
 
   #else  // ! WIFI_AP_MODE
 
@@ -195,47 +184,6 @@ const char* SetupWifi()
 
     return wifiSsid;
 } // SetupWifi
-
-#ifdef WIFI_AP_MODE
-int currentChannel = WIFI_CHANNEL;
-void WifiChangeChannel()
-{
-    const char* wifiSsid = WIFI_SSID;
-
-  #ifdef ON_DESK_MFD_ESP_MAC
-    // The test setup on the desk has a slightly different SSID
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
-  #endif // ON_DESK_MFD_ESP_MAC
-
-  #if 0
-    int newChannel =
-        currentChannel == 6 ? 11 :
-        currentChannel == 11 ? 1 :
-        6;
-  #endif // 0
-
-    // Let's not exclude in-between channels 3 and 8
-    int newChannel =
-        currentChannel == 6 ? 8 :
-        currentChannel == 8 ? 11 :
-        currentChannel == 11 ? 1 :
-        currentChannel == 1 ? 3 :
-        6;
-
-    Serial.printf_P(PSTR("%s[wifi] Changing channel from %d to %d\n"), TimeStamp(), currentChannel, newChannel);
-
-    // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    WiFi.setPhyMode(WIFI_PHY_MODE_11G);  // ESP offers on G, not N, in AP mode
-
-  #ifdef WIFI_PASSWORD
-    WiFi.softAP(wifiSsid, WIFI_PASSWORD, newChannel, WIFI_SSID_HIDDEN, 4);
-  #else
-    WiFi.softAP(wifiSsid, nullptr, newChannel, WIFI_SSID_HIDDEN, 4);
-  #endif
-
-    currentChannel = newChannel;
-} // WifiChangeChannel
-#endif // WIFI_AP_MODE
 
 void WifiCheckStatus()
 {
@@ -280,27 +228,3 @@ void WifiCheckStatus()
     } // if
 #endif // WIFI_AP_MODE
 } // WifiCheckStatus
-
-const char* WifiDataToJson(const IPAddress& client, char* buf, const int n)
-{
-    const static char jsonFormatter[] PROGMEM =
-    "{\n"
-        "\"event\": \"display\",\n"
-        "\"data\":\n"
-        "{\n"
-            "\"wifi_client_ip\": \"%u.%u.%u.%u\"\n"
-        "}\n"
-    "}\n";
-
-    int at = snprintf_P(buf, n, jsonFormatter, client[0], client[1], client[2], client[3]);
-
-    // JSON buffer overflow?
-    if (at >= n) return "";
-
-  #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
-    Serial.printf_P(PSTR("%sWi-Fi data as JSON object:\n"), TimeStamp());
-    PrintJsonText(buf);
-  #endif // PRINT_JSON_BUFFERS_ON_SERIAL
-
-    return buf;
-} // WifiDataToJson

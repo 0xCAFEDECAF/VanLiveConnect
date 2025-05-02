@@ -57,7 +57,6 @@ const char* EspRuntimeDataToJson(char* buf, const int n);
 
 // Defined in Wifi.ino
 const char* SetupWifi();
-const char* WifiDataToJson(const IPAddress& client, char* buf, const int n);
 const char* GetHostname();
 void WifiCheckStatus();
 

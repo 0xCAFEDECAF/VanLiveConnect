@@ -437,8 +437,6 @@ void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
   #endif // DEBUG_WEBSERVER
 } // ServeFontFromFile
 
-#endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
-
 // Convert the file extension to the MIME type
 const char* getContentType(const String& path)
 {
@@ -451,6 +449,8 @@ const char* getContentType(const String& path)
     if (path.endsWith(".png")) return "image/png";
     return "text/plain";
 } // getContentType
+
+#endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
 // Serve a specified document (text, html, css, javascript, ...) from program memory
 void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P content)
