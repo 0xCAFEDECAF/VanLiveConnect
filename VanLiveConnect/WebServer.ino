@@ -1,6 +1,5 @@
 
 #include <map>
-#include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
 
 #if defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 

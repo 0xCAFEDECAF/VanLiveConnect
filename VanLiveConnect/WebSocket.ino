@@ -1,7 +1,6 @@
 
 #include <map>
 #include <limits.h>
-#include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
 
 #ifdef PREPEND_TIME_STAMP_TO_DEBUG_OUTPUT
 #include <TimeLib.h>
@@ -763,6 +762,18 @@ void SetupWebSocket()
 
 void LoopWebSocket()
 {
+    static unsigned long lastPoke = 0;
+    if (millis() - lastPoke >= 1000UL)  // Arithmetic has safe roll-over
+    {
+        lastPoke = millis();
+
+        // Because sometimes, ESPAsyncTCP forgets about us...
+        for(const auto& c: webSocket.getClients())
+        {
+            if (c->status() == WS_CONNECTED && c->_messageQueue.length() > 0) c->_runQueue();
+        } // for
+    } // if
+
     // Somehow, webSocket.cleanupClients() sometimes causes out of memory condition
     if (system_get_free_heap_size() > 2 * 1024) webSocket.cleanupClients();
 

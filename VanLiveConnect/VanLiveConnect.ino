@@ -14,6 +14,11 @@
 #include "VanIden.h"
 #include "VanLiveConnectVersion.h"
 
+// We need access to class AsyncWebSocketClient private members _runQueue() and _messageQueue
+#define private public
+#include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
+#undef private
+
 #include <EEPROM.h>
 #include <VanBusRx.h>  // https://github.com/0xCAFEDECAF/VanBus
 
