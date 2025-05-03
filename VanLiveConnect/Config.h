@@ -22,13 +22,13 @@
   // - ESP requires more memory when WIFI_PASSWORD is defined, so it may be necessary to undefine this when
   //   setting one or more debug #defines.
   //
-  //#define WIFI_PASSWORD "99999999"
+  //#define WIFI_PASSWORD "12345678"
 
   // Set between (1) and (13). Note: some devices cannot connect to channels above 11. Channel 6 seems best for
   // avoiding interference with Bluetooth.
-  #define WIFI_CHANNEL (6)
+  #define WIFI_CHANNEL (1)
 
-  #define IP_ADDR "192.168.244.1"
+  #define IP_ADDR "192.168.4.1"
 
 #else  // Wi-Fi station (client) mode
   #define WIFI_SSID "WiFiHotspot"  // Choose yours

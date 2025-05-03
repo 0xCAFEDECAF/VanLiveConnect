@@ -464,7 +464,7 @@ To add the route:
 * In that same tab, under the 'IPv4' section:
   - Make sure that 'Use default route' is *not* selected
   - Tap 'Excluded Networks'
-  - Enter `192.168.244.0/24` (note: the `"192.168.244."` part must match with the IP address as specified in
+  - Enter `192.168.4.0/24` (note: the `"192.168.4."` part must match with the IP address as specified in
     [`Config.h`](VanLiveConnect/Config.h#L37)).
   - Tap 'OK'
 
@@ -490,7 +490,7 @@ Below are screenshots that show two macros which perform all the necessary actio
 
 Upon connection to the Wi-Fi SSID "PSA display AP", performs the following actions:
 * Set the screen timeout value to 500 minutes, to prevent the screen from going black while driving
-* Browse to the main screen (http://192.168.244.1/MFD.html)
+* Browse to the main screen (http://192.168.4.1/MFD.html)
 * Set the screen brightness to 100%
 * Go "full-screen"
 
