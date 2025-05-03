@@ -379,6 +379,35 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     request->send(404, F("text/plain;charset=utf-8"), message);
 } // HandleNotFound
 
+void HandleLowMemory(class AsyncWebServerRequest* request)
+{
+    AsyncWebServerResponse* response = request->beginResponse_P(429, F("text/html"),
+    PSTR(
+        "<html>"
+        "  <head>"
+        "    <title>Too Many Requests</title>"
+        "  </head>"
+        "  <body>"
+        "    <h1>Too Many Requests</h1>"
+        "    <p>We're nearly out of memory! Give us just a second to handle the current requests...</p>"
+        "  </body>"
+        "</html>"
+        )
+    );
+    response->addHeader(F("Retry-After"), F("1"));  // Try again after 1 second
+    request->send(response);
+
+  #ifdef DEBUG_WEBSERVER
+    Serial.printf_P(
+        PSTR("%s[webServer] File '%s': memory low (%u bytes), responding with 429 (too many requests - try again later)\n"),
+        TimeStamp(),
+        request->url().c_str(),
+        system_get_free_heap_size()
+    );
+
+  #endif // DEBUG_WEBSERVER
+} // HandleLowMemory
+
 // Serve a specified font from program memory
 void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t content_len)
 {
@@ -424,6 +453,8 @@ void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
     unsigned long start = millis();
   #endif // DEBUG_WEBSERVER
 
+    if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
+
     request->send(SPIFFS, fontWoffStr, path);
 
     VanBusRx.Enable();
@@ -466,6 +497,8 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     if (! eTagMatches)
     {
         DeleteAllQueuedJsons();  // Maximize free heap space
+
+        if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
 
         // Serve the complete document
         AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
@@ -516,6 +549,8 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
     if (! eTagMatches)
     {
         DeleteAllQueuedJsons();  // Maximize free heap space
+
+        if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
 
         // Get the MIME type, if necessary
         if (mimeType == 0) mimeType = getContentType(path);

@@ -385,7 +385,9 @@ void loop()
     if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket), true);
 
     static unsigned long lastPacketAt = 0;
-    if (sleepAfter > 0)
+    if (sleepAfter > 0
+        && VanBusRx.GetCount() > 0  // Only sleep in a "real" setup with VAN bus activity
+       )
     {
         if (millis() - lastPacketAt >= (unsigned long)sleepAfter)
         {
