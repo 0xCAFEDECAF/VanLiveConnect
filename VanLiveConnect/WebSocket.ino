@@ -789,9 +789,9 @@ void LoopWebSocket()
     static uint32_t packetNo = 0;
 
     if (IsIdConnected(websocketId_1)
-  #ifdef ASYNCWEBSOCKET_IMPLEMENTS_ALL_QUEUES_EMPTY_METHOD
-        && webSocket.areAllQueuesEmpty()  // Don't let the test frames overflow the queue
-  #endif // ASYNCWEBSOCKET_IMPLEMENTS_ALL_QUEUES_EMPTY_METHOD
+
+        // Only send test frames if there is nothing else in the queue
+        && webSocket.client(websocketId_1)->_messageQueue.length() == 0
        )
     {
         bool result = SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer), false, true);

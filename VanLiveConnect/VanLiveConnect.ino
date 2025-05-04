@@ -452,7 +452,6 @@ void loop()
       #endif // SHOW_VAN_RX_STATS
     } // if
 
-  #if VAN_BUS_VERSION_INT >= 000003002 || defined SHOW_ESP_RUNTIME_STATS || defined SHOW_VAN_RX_STATS
     static unsigned long lastUpdate = 0;
     if (millis() - lastUpdate >= 5000UL)  // Arithmetic has safe roll-over
     {
@@ -466,17 +465,14 @@ void loop()
         } // if
       #endif
 
-      #ifdef SHOW_ESP_RUNTIME_STATS
         // Send ESP runtime data to client
         SendJsonOnWebSocket(EspRuntimeDataToJson(jsonBuffer, JSON_BUFFER_SIZE));
-      #endif // SHOW_ESP_RUNTIME_STATS
 
       #ifdef SHOW_VAN_RX_STATS
         // Send VAN bus receiver status string to client
         SendJsonOnWebSocket(VanBusStatsToJson(jsonBuffer, JSON_BUFFER_SIZE));
       #endif // SHOW_VAN_RX_STATS
     } // if
-  #endif // VAN_BUS_VERSION_INT >= 000003002 || defined SHOW_ESP_RUNTIME_STATS || defined SHOW_VAN_RX_STATS
 
   #ifdef SHOW_VAN_RX_STATS
     static unsigned long lastUpdate2 = 0;
