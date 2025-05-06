@@ -4005,8 +4005,6 @@ function handleItemChange(item, value, changed)
 			// Legal value?
 			if (value !== "-" && (value < "1" || value > "6")) break;
 
-			if (! changed) break;
-
 			// Switch to head unit display if applicable
 			if ($("#clock").is(":visible")) selectDefaultScreen();
 
