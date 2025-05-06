@@ -105,11 +105,11 @@ This application creates a Wi-Fi access point to which you can connect with your
 It contains a captive portal so as soon as you are connected a message gets displayed on your phone to log in.
 If you tap the message, a browser opens, giving a live visual display of the data as read from the VAN bus.
 
-* The SSID of the Wi-Fi access point is: "PSA display AP" (with the spaces, without the quotes)
-* No password is needed.
+* The SSID of the Wi-Fi access point is: "PSA display AP" (with the spaces, without the quotes).
+* The password is "12345678" (without the quotes).
 
-Of course you can modify the SSID and choose your own password by editing the [`Config.h`](VanLiveConnect/Config.h#L31)
-file.
+Of course you can modify the SSID and choose your own password (or have no password at all) by editing
+the [`Config.h`](VanLiveConnect/Config.h#L31) file.
 
 ## 🕹️ MFD functions supported
 

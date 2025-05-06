@@ -18,11 +18,12 @@
   // Define to set password on access point
   //
   // Notes:
+  // - To have an open access point (without security), simply comment out or remove this #define.
   // - Many devices will only automatically connect to a Wi-Fi access point if it has a password on it.
   // - ESP requires more memory when WIFI_PASSWORD is defined, so it may be necessary to undefine this when
   //   setting one or more debug #defines.
   //
-  //#define WIFI_PASSWORD "12345678"
+  #define WIFI_PASSWORD "12345678"
 
   // Set between (1) and (13). Note: some devices cannot connect to channels above 11. Channel 6 seems best for
   // avoiding interference with Bluetooth.
