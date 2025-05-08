@@ -631,6 +631,8 @@ function changeLargeScreenTo(id)
 	var irFastRepeatValue = 0;
 	if (id === "satnav_choose_from_list")
 	{
+		satnavGrayOutList();
+
 		// Notify ESP so that it can use a slightly quicker repeat rate for the IR controller buttons
 
 		irFastRepeatValue = 1;
@@ -2265,8 +2267,6 @@ function satnavGotoListScreen()
 				break;
 		} // switch
 	} // if
-
-	satnavGrayOutList();
 }
 
 function satnavGotoListScreenEmpty()
@@ -5917,7 +5917,6 @@ function handleItemChange(item, value, changed)
 				satnavDownloading = false;
 				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
 				$("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
-				$("#satnav_main_menu_select_a_service_button").addClass("buttonDisabled");
 				$('[gid="satnav_to_mfd_list_size"]').empty();
 				$("#satnav_to_mfd_list_size").empty();
 			}
@@ -5925,6 +5924,7 @@ function handleItemChange(item, value, changed)
 			{
 				hidePopup();
 				if (satnavDownloading) $("#small_panel,#large_panel").hide();
+				$("#satnav_main_menu_select_a_service_button").addClass("buttonDisabled");
 			} // if
 		} // case
 		break;
