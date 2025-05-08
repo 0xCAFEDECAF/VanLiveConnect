@@ -877,7 +877,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     contactKeyPosition = statusBits & 0x03;
     economyMode = statusBits & 0x10;
     bool isCoolantTempValid = coolantTempRaw != 0xFF;
-    int16_t coolantTemp = (uint16_t)coolantTempRaw - 39;
+    int16_t coolantTemp = (uint16_t)coolantTempRaw - 38;
     float odometer = odometerRaw / 10.0;
     float exteriorTemp = exteriorTempRaw / 2.0 - 40;
 
