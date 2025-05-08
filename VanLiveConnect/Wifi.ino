@@ -127,6 +127,9 @@ const char* SetupWifi()
 {
     WiFi.hostname(GetHostname());
 
+    // Does this help in decreasing the jitter on the VAN bus bit timings?
+    //wifi_set_sleep_type(NONE_SLEEP_T);
+
     static const char* wifiSsid = WIFI_SSID;
 
   #ifdef WIFI_AP_MODE
@@ -214,8 +217,8 @@ void WifiCheckStatus()
         Serial.printf_P(PSTR("Connected to Wi-Fi SSID '%s'\n"), WIFI_SSID);
         Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
 
-        // Seems to help in decreasing the jitter on the VAN bus bit timings
-        wifi_set_sleep_type(NONE_SLEEP_T);
+        // Does this help in decreasing the jitter on the VAN bus bit timings?
+        //wifi_set_sleep_type(NONE_SLEEP_T);
 
         Serial.print(F("Please surf to: http://"));
         Serial.print(WiFi.localIP());

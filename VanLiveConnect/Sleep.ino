@@ -27,7 +27,8 @@ void WakeupCallback()
     gpio_pin_wakeup_disable();
     pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
 
-    wifi_set_sleep_type(NONE_SLEEP_T);
+    // Does this help in decreasing the jitter on the VAN bus bit timings?
+    //wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
 
 void GoToSleep()
@@ -43,8 +44,6 @@ void GoToSleep()
 
     IrDisable();
     VanBusRx.Disable();
-
-    WiFi.softAPdisconnect(true);
 
     wdt_reset();
     ESP.wdtFeed();
