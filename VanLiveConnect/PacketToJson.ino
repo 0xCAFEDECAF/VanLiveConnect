@@ -2860,25 +2860,32 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
     uint8_t contactKeyData = data[1];
 
     static uint16_t lastReportedCondenserPressure = 0xFFFF;  // Value that can never come from a packet itself
+    static uint16_t prevReportedCondenserPressure = 0xFFFF;
     condenserPressure = data[2];
     static uint8_t prevCondenserPressure = condenserPressure;
     if (condenserPressure == CONDENSER_PRESSURE_INVALID) condenserPressure = prevCondenserPressure;
 
     static uint32_t lastReportedEvaporatorTemp = 0xFFFFFFFF;  // Value that can never come from a packet itself
+    static uint32_t prevReportedEvaporatorTemp = 0xFFFFFFFF;
     evaporatorTemp = (uint16_t)data[3] << 8 | data[4];
     static uint16_t prevEvaporatorTemp = evaporatorTemp;
     if (evaporatorTemp == EVAPORATOR_TEMP_INVALID) evaporatorTemp = prevEvaporatorTemp;
 
+    // New data if:
+    // - valid value, and
+    // - different from last reported, and either:
+    //   - two times in a row the same value, or
+    //   - different from previously reported
     bool hasNewData =
         SkipAirCon2PktDupDetect
         || statusBits != prevStatusBits
         || contactKeyData != prevContactKeyData
-        || (condenserPressure != lastReportedCondenserPressure && condenserPressure == prevCondenserPressure)
-        || condenserPressure < lastReportedCondenserPressure - 1
-        || condenserPressure > lastReportedCondenserPressure + 1
-        || (evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp == prevEvaporatorTemp)
-        || evaporatorTemp < lastReportedEvaporatorTemp - 1
-        || evaporatorTemp > lastReportedEvaporatorTemp + 1;
+
+        || (condenserPressure != CONDENSER_PRESSURE_INVALID && condenserPressure != lastReportedCondenserPressure && condenserPressure == prevCondenserPressure)
+        || (condenserPressure != CONDENSER_PRESSURE_INVALID && condenserPressure != lastReportedCondenserPressure && condenserPressure != prevReportedCondenserPressure)
+
+        || (evaporatorTemp != EVAPORATOR_TEMP_INVALID && evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp == prevEvaporatorTemp)
+        || (evaporatorTemp != EVAPORATOR_TEMP_INVALID && evaporatorTemp != lastReportedEvaporatorTemp && evaporatorTemp != prevReportedEvaporatorTemp);
 
     SkipAirCon2PktDupDetect = false;
     prevStatusBits = statusBits;
@@ -2888,7 +2895,9 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
 
     if (! hasNewData) return VAN_PACKET_DUPLICATE;
 
+    prevReportedCondenserPressure = lastReportedCondenserPressure;
     lastReportedCondenserPressure = condenserPressure;
+    prevReportedEvaporatorTemp = lastReportedEvaporatorTemp;
     lastReportedEvaporatorTemp = evaporatorTemp;
 
     float evaporatorTempCelsius = evaporatorTemp / 10.0 - 40.0;
@@ -2922,18 +2931,16 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         contactKeyData == 0x00 ? onStr :
         ToHexStr(contactKeyData),
 
-        // This is not interior temperature. This rises quite rapidly if the aircon compressor is
-        // running, and drops again when the aircon compressor is off. So I think this is the condenser
-        // temperature.
         condenserPressure == CONDENSER_PRESSURE_INVALID ? notApplicable2Str :
             ToFloatStr(floatBuf[0], ToBar(condenserPressure), 1),
 
         condenserPressure == CONDENSER_PRESSURE_INVALID ? notApplicable2Str :
             ToFloatStr(floatBuf[1], ToPsi(condenserPressure), 0),
 
-        mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-            ToFloatStr(floatBuf[2], evaporatorTempCelsius, 1) :
-            ToFloatStr(floatBuf[2], ToFahrenheit(evaporatorTempCelsius), 0)
+        evaporatorTemp == EVAPORATOR_TEMP_INVALID ? notApplicable3Str :
+            mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
+                ToFloatStr(floatBuf[2], evaporatorTempCelsius, 1) :
+                ToFloatStr(floatBuf[2], ToFahrenheit(evaporatorTempCelsius), 0)
     );
 
     // JSON buffer overflow?
