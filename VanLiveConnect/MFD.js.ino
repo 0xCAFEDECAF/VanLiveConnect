@@ -894,6 +894,16 @@ function nextLargeScreen()
 	changeLargeScreenTo(screenIds[i]);
 }
 
+function largeScreenTapped()
+{
+	// If a popup is showing, hide it and return
+	if (hideTunerPresetsPopup()) return;
+	if (hideAudioSettingsPopup()) return;
+	if (hidePopup()) return;
+
+	nextLargeScreen();
+}
+
 // Functions setting the small screen (left hand side of the display)
 
 var currentSmallScreenId = "trip_info";  // Currently shown small screen. Initialize to the first screen visible.
@@ -3555,7 +3565,7 @@ function handleIrRc(button, held)
 	}
 	else if (button === "ESC_BUTTON")
 	{
-		// If a popup is showing, hide it and return
+		// If a popup is showing, exit it and return
 		if (hideTunerPresetsPopup()) return;
 		if (hideAudioSettingsPopup()) return;
 		if (escapePopup()) return;
@@ -3686,8 +3696,6 @@ function handleIrRc(button, held)
 			cycleColorTheme();  // "MODE" button cycles color palette (blue, orange, ...)
 			return;
 		} // if
-
-		if (inMenu()) return;  // Ignore when user is browsing the menus
 
 		nextLargeScreen();
 	} // if

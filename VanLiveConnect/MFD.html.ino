@@ -2581,7 +2581,7 @@ char mfd_html[] PROGMEM = R"=====(
 			</div>	<!-- "screen_brightness_popup" -->
 
 			<!-- A tap anywhere on the screen triggers a change to the next screen -->
-			<div style="display:block; position:absolute; width:960px; height:550px;" onclick="nextLargeScreen();"></div>
+			<div style="display:block; position:absolute; width:960px; height:550px;" onclick="largeScreenTapped();"></div>
 
 			<!-- "Gear" icon in the bottom right corner -->
 			<div style="display:block; position:absolute; left:870px; top:480px; width:90px; height:100px;"
