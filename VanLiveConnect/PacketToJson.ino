@@ -3207,9 +3207,9 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
     int dataLen = pkt.DataLen();
     if (dataLen != 0 && dataLen != 20) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
-    // Count number of times a a "read" frame did not get an in-frame response
-    static int nSatNavNotSeen = 0;
-    static int nBursts = 0;
+    // Count number of times a "read" packet did not get an in-frame response
+    static int nSinglePacketAttempts = 0;
+    static int nAttempts = 0;
 
     if (dataLen == 0)
     {
@@ -3226,7 +3226,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         {
             // As long as the MFD assumes the sat nav equipment is present (e.g. at boot time), it sends 5 bursts
             // of each 3 packets. Ater that it sends one packet per second.
-            nSatNavNotSeen = 0;
+            nSinglePacketAttempts = 0;
 
             return VAN_PACKET_NO_CONTENT;
         }
@@ -3235,15 +3235,16 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             // Already reported "no equipment present"?
             if (! satnavEquipmentDetected) return VAN_PACKET_NO_CONTENT;
 
-            // Count 7 bursts
-            nBursts++;
+            // Count 9 attempts: 5 bursty attempts followed by 4 single-packet attempts
+            nAttempts++;
+            nSinglePacketAttempts++;
 
-            // After the last burst, count 2 non-bursts
-            nSatNavNotSeen++;
-
-            #define SATNAV_NO_ANSWER_AFTER_BURSTS (7)
-            #define SATNAV_NO_ANSWER (2)
-            if (nBursts < SATNAV_NO_ANSWER_AFTER_BURSTS && nSatNavNotSeen < SATNAV_NO_ANSWER) return VAN_PACKET_NO_CONTENT;
+            #define SATNAV_NO_ANSWER_AFTER_ATTEMPTS (9)
+            #define SATNAV_NO_ANSWER_AFTER_SINGLE_PACKET_ATTEMPTS (4)
+            if (nAttempts < SATNAV_NO_ANSWER_AFTER_ATTEMPTS && nSinglePacketAttempts < SATNAV_NO_ANSWER_AFTER_SINGLE_PACKET_ATTEMPTS)
+            {
+                return VAN_PACKET_NO_CONTENT;
+            } // if
 
             satnavEquipmentDetected = false;
         } // if
@@ -3265,8 +3266,8 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
         return VAN_PACKET_PARSE_OK;
     } // if
 
-    nBursts = 0;
-    nSatNavNotSeen = 0;
+    nAttempts = 0;
+    nSinglePacketAttempts = 0;
 
     const uint8_t* data = pkt.Data();
 
