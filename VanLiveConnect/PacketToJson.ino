@@ -1118,7 +1118,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
             snprintf_P(buf + at, n - at, PSTR(",\n\"oil_temp\": \"%d\""), (int)data[6] - 40);  // Never seen this
     } // if
 
-    if (data[7] != 0xFF)
+    if (data[7] <= 120)
     {
         // Never seen this on my 406 HDI, only reported on 206 / petrol ?
 
@@ -1913,7 +1913,7 @@ VanPacketParseResult_t ParseDashboardButtonsPkt(TVanPacketRxDesc& pkt, char* buf
         data[2] & 0x0F,
         data[3] & 0x02 ? onStr : offStr);
 
-    if (fuelLevelPercentage == FUEL_LEVEL_PERCENTAGE_INVALID && data[4] != 0xFF && data[4] != 0x00)
+    if (data[4] > 0 && data[4] <= 200)
     {
         // Surely fuel level. Test with tank full shows definitely level is in litres.
         float fuelLevelFiltered = data[4] / 2.0;  // Averaged over time
