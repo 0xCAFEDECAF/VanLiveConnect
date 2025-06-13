@@ -277,12 +277,9 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 // -----
 // MIME type string constants
 
-//static const char PROGMEM textJavaScriptStr[] = "text/javascript";
-static const char textJavaScriptStr[] = "text/javascript";
-//static const char PROGMEM textCssStr[] = "text/css";
-static const char textCssStr[] = "text/css";
-//static const char PROGMEM fontWoffStr[] = "font/woff";
-static const char fontWoffStr[] = "application/font-woff";
+static const char PROGMEM textJavaScriptStr[] = "text/javascript";
+static const char PROGMEM textCssStr[] = "text/css";
+static const char PROGMEM fontWoffStr[] = "font/woff";
 
 // -----
 // Fonts
@@ -333,8 +330,6 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
     // http://detectportal.firefox.com/success.txt and http://detectportal.firefox.com/canonical.html .
 
-    // TODO - commented out because this occasionally crashes the ESP due to out-of-memory condition
-  #if 0
     DeleteAllQueuedJsons();  // Maximize free heap space
 
     AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
@@ -342,7 +337,6 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     request->send(response);
 
     return;
-  #endif // 0
   #endif // WIFI_AP_MODE
 
     if (request->url() == "/")
