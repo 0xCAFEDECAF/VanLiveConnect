@@ -4896,11 +4896,7 @@ function handleItemChange(item, value, changed)
 		{
 			satnavStatus3 = value;
 
-			if (value === "POWERING_OFF")
-			{
-				satnavPoweringOff(satnavMode);
-			}
-			else if (value === "COMPUTING_ROUTE")
+			if (value === "COMPUTING_ROUTE")
 			{
 				if (! satnavComputingRoute) satnavCalculatingRoute();
 				satnavComputingRoute = true;
@@ -4918,10 +4914,8 @@ function handleItemChange(item, value, changed)
 		{
 			if (! mfdDisableNavigationMenuWhileDriving) break;
 
-			let driving = satnavVehicleMoving();
-
 			// While driving, disable "Navigation / Guidance" button in main menu
-			toggleNavigationButtonInMainMenu(! driving);
+			toggleNavigationButtonInMainMenu(! satnavVehicleMoving());
 		} // case
 		break;
 
@@ -5028,7 +5022,6 @@ function handleItemChange(item, value, changed)
 		case "satnav_current_destination_city":
 		{
 			if (! $("#satnav_enter_city_characters").is(":visible")) break;
-
 			$("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 		} // case
 		break;
@@ -5036,9 +5029,7 @@ function handleItemChange(item, value, changed)
 		case "satnav_current_destination_street":
 		{
 			$("#satnav_current_destination_street_shown").text(value === "" ? cityCenterText : value);
-
 			if (! $("#satnav_enter_street_characters").is(":visible")) break;
-
 			$("#satnav_enter_characters_validate_button").toggleClass("buttonDisabled", value === "");
 		} // case
 		break;
@@ -5074,7 +5065,6 @@ function handleItemChange(item, value, changed)
 		case "satnav_curr_street":
 		{
 			satnavSetInitialized(true);
-
 			satnavCurrentStreet = value;
 
 			if (satnavMode === "IN_GUIDANCE_MODE")
@@ -5203,7 +5193,6 @@ function handleItemChange(item, value, changed)
 			} // if
 
 			satnavRollingBackEntryByCharacter = false;
-
 			satnavEnterByLetterMode();
 		} // case
 		break;
