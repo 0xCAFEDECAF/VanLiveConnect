@@ -4896,7 +4896,11 @@ function handleItemChange(item, value, changed)
 		{
 			satnavStatus3 = value;
 
-			if (value === "COMPUTING_ROUTE")
+			if (value === "POWERING_OFF")
+			{
+				satnavPoweringOff(satnavMode);
+			}
+			else if (value === "COMPUTING_ROUTE")
 			{
 				if (! satnavComputingRoute) satnavCalculatingRoute();
 				satnavComputingRoute = true;
