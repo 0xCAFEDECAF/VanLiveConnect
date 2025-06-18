@@ -209,7 +209,6 @@ class AsyncWebSocketClient {
     //data packets
     void message(AsyncWebSocketMessage *message){ _queueMessage(message); }
     bool queueIsFull();
-    bool queueIsEmpty();
 
     size_t printf(const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 #ifndef ESP32
@@ -264,9 +263,6 @@ class AsyncWebSocket: public AsyncWebHandler {
     bool enabled() const { return _enabled; }
     bool availableForWriteAll();
     bool availableForWrite(uint32_t id);
-
-  #define ASYNCWEBSOCKET_IMPLEMENTS_ALL_QUEUES_EMPTY_METHOD
-    bool areAllQueuesEmpty();
 
     size_t count() const;
     AsyncWebSocketClient * client(uint32_t id);
