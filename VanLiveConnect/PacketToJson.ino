@@ -3082,7 +3082,7 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
     return VAN_PACKET_PARSE_OK;
 } // ParseCdChangerPkt
 
-String satnavCurrentStreet;
+String satnavCurrentStreet = "";
 
 VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, const int n)
 {
@@ -3504,6 +3504,14 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             status == 0x0C02 ? PSTR("POWERING_OFF") :
             ToHexStr(status)
         );
+        if (status == 0x0C02)
+        {
+            satnavInitialized = false;
+            satnavStatus2Str = emptyStr;
+            satnavCurrentStreet = "";
+            isCurrentStreetKnown = false;
+        } // if
+
     }
     else if (dataLen == 3)
     {

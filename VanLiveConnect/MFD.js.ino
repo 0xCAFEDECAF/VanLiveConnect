@@ -953,32 +953,24 @@ function gotoSmallScreen(smallScreenName)
 	switch(smallScreenName)
 	{
 		case "TRIP_INFO_1":
-		{
 			changeSmallScreenTo("trip_info");
 			changeToTripCounter("trip_1");
-		} // case
-		break;
+			break;
 
 		case "TRIP_INFO_2":
-		{
 			changeSmallScreenTo("trip_info");
 			changeToTripCounter("trip_2");
-		} // case
-		break;
+			break;
 
 		case "GPS_INFO":
-		{
 			changeSmallScreenTo("gps_info");
-		} // case
-		break;
+			break;
 
 		case "FUEL_CONSUMPTION":
-		{
 			// Original MFD shows fuel consumption, but we already show that data permanently in the status bar.
 			// Instead, show one of these screens:
 			changeSmallScreenTo(isEngineRunning() ? "instrument_small" : "gps_info");
-		} // case
-		break;
+			break;
 	} // switch
 }
 
@@ -3428,6 +3420,8 @@ function satnavPoweringOff(satnavMode)
 		webSocket.send("ask_for_guidance_continuation:YES");
 	} // if
 
+	toggleNavigationButtonInMainMenu(false);
+
 	satnavInitialized = false;
 	nSatNavDiscUnreadable = 0;
 	satnavDisclaimerAccepted = false;
@@ -4896,21 +4890,27 @@ function handleItemChange(item, value, changed)
 		{
 			satnavStatus3 = value;
 
-			if (value === "POWERING_OFF")
+			switch(value)
 			{
-				satnavPoweringOff(satnavMode);
-			}
-			else if (value === "COMPUTING_ROUTE")
-			{
-				if (! satnavComputingRoute) satnavCalculatingRoute();
-				satnavComputingRoute = true;
-				satnavDestinationNotAccessible = false;
-				satnavDestinationNotAccessibleShown = false;
-			}
-			else if (value === "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT")
-			{
-				showAudioVolumePopup();
-			} // if
+				case "POWERING_OFF":
+					satnavPoweringOff(satnavMode);
+					break;
+
+				case "COMPUTING_ROUTE":
+					if (! satnavComputingRoute) satnavCalculatingRoute();
+					satnavComputingRoute = true;
+					satnavDestinationNotAccessible = false;
+					satnavDestinationNotAccessibleShown = false;
+					break;
+
+				case "VOCAL_SYNTHESIS_LEVEL_SETTING_VIA_HEAD_UNIT":
+					showAudioVolumePopup();
+					break;
+
+				case "SYSTEM_ID_READ":
+					toggleNavigationButtonInMainMenu(true);
+					break;
+			} // switch
 		} // case
 		break;
 
@@ -5917,7 +5917,6 @@ function handleItemChange(item, value, changed)
 				if (satnavDownloading) changeLargeScreenTo("clock");
 				satnavDownloading = false;
 				if (economyMode === "ON" && currentLargeScreenId !== "pre_flight" && engineRpm <= 0) showPowerSavePopup();
-				$("#main_menu_goto_satnav_button").removeClass("buttonDisabled");
 				$('[gid="satnav_to_mfd_list_size"]').empty();
 				$("#satnav_to_mfd_list_size").empty();
 			}
