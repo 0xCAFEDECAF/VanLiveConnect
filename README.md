@@ -109,7 +109,7 @@ If you tap the message, a browser opens, giving a live visual display of the dat
 * The password is "12345678" (without the quotes).
 
 Of course you can modify the SSID and choose your own password (or have no password at all) by editing
-the [`Config.h`](VanLiveConnect/Config.h#L31) file.
+the [`Config.h`](VanLiveConnect/Config.h#L26) file.
 
 ## 🕹️ MFD functions supported
 
@@ -180,8 +180,8 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
     * Using +12 Volt switched line (pin 4 of the "A" block of the ISO connector):
       ![schema](extras/Schematics/Schematic%20using%20MCP2551_bb.png)
     * Using +12 Volt permanent line (pin 7 of the "A" block of the ISO connector). To prevent battery drain,
-      the ESP board will go to sleep after 5 minutes ([configurable in `Config.h`](VanLiveConnect/Config.h#L87)).
-      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L123) to be connected, so that the ESP board
+      the ESP board will go to sleep after 5 minutes ([configurable in `Config.h`](VanLiveConnect/Config.h#L82)).
+      This setup requires [GPIO line D1](VanLiveConnect/Config.h#L118) to be connected, so that the ESP board
       wakes up as soon as any activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
@@ -414,14 +414,14 @@ automatically":
 
 To make it possible to use the Wi-Fi connection for the "PSA display AP", and the mobile data connection for
 access to the Internet, the web server ("WebServer.ino") in the ESP offers a special feature:
-[it will respond to any request for '.../generate_204'](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/aece0d71480ae534d1ff40c2043e673175219ed0/VanLiveConnect/WebServer.ino#L258).
+[it will respond to any request for '.../generate_204'](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/07993f7bd99c61f70cf326d0882f82bfa13e7644/VanLiveConnect/WebServer.ino#L267).
 This makes make Android believe that the Wi-Fi connection has an Internet connection, and therefore it chooses
 Wi-Fi as the preferred medium.
 
 Unfortunately, the effect is that now all apps will try to use the (non-Internet) Wi-Fi connection, so all apps will
 fail to access the Internet.
 
-The solution is to have the web server in the ESP [stop responding](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/20780182943b44f90241af8eb2d614e8ce9d53b9/VanLiveConnect/WebServer.ino#L248)
+The solution is to have the web server in the ESP [stop responding](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/07993f7bd99c61f70cf326d0882f82bfa13e7644/VanLiveConnect/WebServer.ino#L256)
 to requests for '.../generate_204' as soon as a data (WebSocket) connection between the ESP and the Android device
 is well established.
 
@@ -434,7 +434,7 @@ In this way, the following sequence of events takes place:
    Wi-Fi to connect.
 4. The JavaScript code in the landing page sets up a WebSocket connection: vehicle data is sent to the Android
    device and displayed in its browser.
-5. About [7 seconds](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/20780182943b44f90241af8eb2d614e8ce9d53b9/VanLiveConnect/WebServer.ino#L237)
+5. About [7 seconds](https://github.com/0xCAFEDECAF/VanLiveConnect/blob/07993f7bd99c61f70cf326d0882f82bfa13e7644/VanLiveConnect/WebServer.ino#L245)
    after the WebSocket connection is established, the web server on the ESP stops responding to the
    '.../generate_204' requests.
 6. After a few retries, Android now thinks that the Wi-Fi access point is no longer offering Internet connectivity.
@@ -465,7 +465,7 @@ To add the route:
   - Make sure that 'Use default route' is *not* selected
   - Tap 'Excluded Networks'
   - Enter `192.168.4.0/24` (note: the `"192.168.4."` part must match with the IP address as specified in
-    [`Config.h`](VanLiveConnect/Config.h#L37)).
+    [`Config.h`](VanLiveConnect/Config.h#L32)).
   - Tap 'OK'
 
 The 'ROUTING' tab will look like this:
@@ -514,7 +514,7 @@ In the Arduino IDE, the following libraries are used:
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
-  version 1.2.6 and 1.2.7 .
+  version 1.2.6, 1.2.7 and 1.2.9 . Skip version 1.2.8: it does not compile on the ESP8266.
 
 ### Attributions
 
