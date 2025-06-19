@@ -173,7 +173,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
    A board with the MCP2551 transceiver can be ordered e.g.
    [here](https://domoticx.net/webshop/can-bus-transceiver-module-5v-mcp2551/) or
-   [here](https://nl.aliexpress.com/item/1005004475976642.html).
+   [here](https://nl.aliexpress.com/item/1005003450161614.html).
 
    Two variants are possible:
 
@@ -340,7 +340,7 @@ OTA feature of the arduino-esp8266.
 ![Compile and upload](extras/Arduino%20IDE/Compile%20and%20upload.png)
 
 If you have no experience in compiling and uploading, have a look at this excellent
-[tutorial for the Wemos D1 mini board](https://averagemaker.com/2018/03/wemos-d1-mini-setup.html)
+[tutorial for the Wemos D1 mini board](https://www.youtube.com/watch?v=WnRk8w7SyTo)
 
 #### 7. First Run
 
