@@ -455,6 +455,8 @@ function hideNotificationPopup(timer)
 	if (timer === popupTimerId) hidePopup("notification_popup");
 }
 
+var notificationIcon;
+
 // Show the notification popup (with icon) with a message and an optional timeout. The shown icon is either "info"
 // (isWarning == false, default) or "warning" (isWarning == true).
 function showNotificationPopup(message, msec, isWarning)
@@ -1760,6 +1762,7 @@ function setDippedBeamIcon()
 	$('[gid="dipped_beam"]').toggle(dippedBeam || ! dashlightDimmed);
 	$('[gid="dipped_beam"]').toggleClass("ledOnGreen", dippedBeam).toggleClass("ledOff", ! dippedBeam);
 	$('[gid="parking_light"]').toggle(! dippedBeam && dashlightDimmed);
+	$("#lights").toggleClass("ledOn", dippedBeam).toggleClass("ledOff", ! dippedBeam);
 }
 
 function cycleColorTheme()
@@ -4721,6 +4724,24 @@ function handleItemChange(item, value, changed)
 
 			const message = isWarning ? value.slice(0, -1) : value;
 			handleItemChange.notificationMessagePopupTimer = showNotificationPopup(message, 8000, isWarning);
+		} // case
+		break;
+
+		case "notification_icon_on_mfd":
+		{
+			if (! changed) break;
+
+			$("#notification_icon").toggle(value !== "");
+			$("#notification_icon").removeClass(notificationIcon);
+			if (value !== "")
+			{
+				$("#notification_icon").addClass(value);
+				$("#notification_icon").toggleClass("glow", $("#notification_icon_warning").is(":visible"));
+				$("#notification_icon_warning").hide();
+				$("#notification_icon_info").hide();
+				$("#notification_icon").show();
+			}
+			notificationIcon = value;
 		} // case
 		break;
 

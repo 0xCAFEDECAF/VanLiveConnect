@@ -190,90 +190,6 @@ char faAll_css[] PROGMEM = R"=====(
 
 /* Font Awesome uses the Unicode Private Use Area (PUA) to ensure screen
 readers do not read off random characters that represent icons */
-.fa-500px:before {
-  content: "\f26e"; }
-
-.fa-accessible-icon:before {
-  content: "\f368"; }
-
-.fa-accusoft:before {
-  content: "\f369"; }
-
-.fa-acquisitions-incorporated:before {
-  content: "\f6af"; }
-
-.fa-ad:before {
-  content: "\f641"; }
-
-.fa-address-book:before {
-  content: "\f2b9"; }
-
-.fa-address-card:before {
-  content: "\f2bb"; }
-
-.fa-adjust:before {
-  content: "\f042"; }
-
-.fa-adn:before {
-  content: "\f170"; }
-
-.fa-adversal:before {
-  content: "\f36a"; }
-
-.fa-affiliatetheme:before {
-  content: "\f36b"; }
-
-.fa-air-freshener:before {
-  content: "\f5d0"; }
-
-.fa-airbnb:before {
-  content: "\f834"; }
-
-.fa-algolia:before {
-  content: "\f36c"; }
-
-.fa-align-center:before {
-  content: "\f037"; }
-
-.fa-align-justify:before {
-  content: "\f039"; }
-
-.fa-align-left:before {
-  content: "\f036"; }
-
-.fa-align-right:before {
-  content: "\f038"; }
-
-.fa-alipay:before {
-  content: "\f642"; }
-
-.fa-allergies:before {
-  content: "\f461"; }
-
-.fa-amazon:before {
-  content: "\f270"; }
-
-.fa-amazon-pay:before {
-  content: "\f42c"; }
-
-.fa-ambulance:before {
-  content: "\f0f9"; }
-
-.fa-american-sign-language-interpreting:before {
-  content: "\f2a3"; }
-
-.fa-amilia:before {
-  content: "\f36d"; }
-
-.fa-anchor:before {
-  content: "\f13d"; }
-
-.fa-android:before {
-  content: "\f17b"; }
-
-.fa-angellist:before {
-  content: "\f209"; }
-
 .fa-angle-double-down:before {
   content: "\f103"; }
 
@@ -298,41 +214,8 @@ readers do not read off random characters that represent icons */
 .fa-angle-up:before {
   content: "\f106"; }
 
-.fa-angry:before {
-  content: "\f556"; }
-
-.fa-angrycreative:before {
-  content: "\f36e"; }
-
-.fa-angular:before {
-  content: "\f420"; }
-
-.fa-ankh:before {
-  content: "\f644"; }
-
-.fa-app-store:before {
-  content: "\f36f"; }
-
-.fa-app-store-ios:before {
-  content: "\f370"; }
-
-.fa-apper:before {
-  content: "\f371"; }
-
-.fa-apple:before {
-  content: "\f179"; }
-
-.fa-apple-alt:before {
-  content: "\f5d1"; }
-
-.fa-apple-pay:before {
-  content: "\f415"; }
-
 .fa-archive:before {
   content: "\f187"; }
-
-.fa-archway:before {
-  content: "\f557"; }
 
 .fa-arrow-alt-circle-down:before {
   content: "\f358"; }
@@ -379,59 +262,8 @@ readers do not read off random characters that represent icons */
 .fa-arrows-alt-v:before {
   content: "\f338"; }
 
-.fa-artstation:before {
-  content: "\f77a"; }
-
-.fa-assistive-listening-systems:before {
-  content: "\f2a2"; }
-
-.fa-asterisk:before {
-  content: "\f069"; }
-
-.fa-asymmetrik:before {
-  content: "\f372"; }
-
-.fa-at:before {
-  content: "\f1fa"; }
-
-.fa-atlas:before {
-  content: "\f558"; }
-
-.fa-atlassian:before {
-  content: "\f77b"; }
-
-.fa-atom:before {
-  content: "\f5d2"; }
-
-.fa-audible:before {
-  content: "\f373"; }
-
-.fa-audio-description:before {
-  content: "\f29e"; }
-
-.fa-autoprefixer:before {
-  content: "\f41c"; }
-
-.fa-avianex:before {
-  content: "\f374"; }
-
-.fa-aviato:before {
-  content: "\f421"; }
-
-.fa-award:before {
-  content: "\f559"; }
-
-.fa-aws:before {
-  content: "\f375"; }
-
 .fa-baby:before {
   content: "\f77c"; }
-
-.fa-baby-carriage:before {
-  content: "\f77d"; }
-
-.fa-backspace:before {
-  content: "\f55a"; }
 
 .fa-backward:before {
   content: "\f04a"; }
@@ -439,65 +271,8 @@ readers do not read off random characters that represent icons */
 .fa-bacon:before {
   content: "\f7e5"; }
 
-.fa-bacteria:before {
-  content: "\e059"; }
-
-.fa-bacterium:before {
-  content: "\e05a"; }
-
-.fa-bahai:before {
-  content: "\f666"; }
-
-.fa-balance-scale:before {
-  content: "\f24e"; }
-
-.fa-balance-scale-left:before {
-  content: "\f515"; }
-
-.fa-balance-scale-right:before {
-  content: "\f516"; }
-
 .fa-ban:before {
   content: "\f05e"; }
-
-.fa-band-aid:before {
-  content: "\f462"; }
-
-.fa-bandcamp:before {
-  content: "\f2d5"; }
-
-.fa-barcode:before {
-  content: "\f02a"; }
-
-.fa-bars:before {
-  content: "\f0c9"; }
-
-.fa-baseball-ball:before {
-  content: "\f433"; }
-
-.fa-basketball-ball:before {
-  content: "\f434"; }
-
-.fa-bath:before {
-  content: "\f2cd"; }
-
-.fa-battery-empty:before {
-  content: "\f244"; }
-
-.fa-battery-full:before {
-  content: "\f240"; }
-
-.fa-battery-half:before {
-  content: "\f242"; }
-
-.fa-battery-quarter:before {
-  content: "\f243"; }
-
-.fa-battery-three-quarters:before {
-  content: "\f241"; }
-
-.fa-battle-net:before {
-  content: "\f835"; }
 
 .fa-bed:before {
   content: "\f236"; }
@@ -4566,6 +4341,150 @@ readers do not read off random characters that represent icons */
 
 .fa-zhihu:before {
   content: "\f63f"; }
+
+.md-air-conditioner:before {
+  content: "\f001b"; }
+
+.md-crosshairs-gps:before {
+  content: "\f01a4"; }
+
+.md-gas-station:before {
+  content: "\f0298"; }
+
+.md-gauge:before {
+  content: "\f029a"; }
+
+.md-oil:before {
+  content: "\f03c7"; }
+
+.md-coolant-temperature:before {
+  content: "\f03c8"; }
+
+.md-radio-tower:before {
+  content: "\f043b"; }
+
+.md-speedometer:before {
+  content: "\f04c5"; }
+
+.md-map-marker-distance:before {
+  content: "\f08f0"; }
+
+.md-cassette:before {
+  content: "\f09d4"; }
+
+.md-pinwheel:before {
+  content: "\f0ad5"; }
+
+.md-pinwheel-outline:before {
+  content: "\f0ad6"; }
+
+.md-wiper:before {
+  content: "\f0ae9"; }
+
+.md-car-key:before {
+  content: "\f0b6d"; }
+
+.md-airbag:before {
+  content: "\f0be9"; }
+
+.md-car-brake-abs:before {
+  content: "\f0c47"; }
+
+.md-car-brake-alert:before {
+  content: "\f0c48"; }
+
+.md-car-esp:before {
+  content: "\f0c49"; }
+
+.md-car-light-dimmed:before {
+  content: "\f0c4a"; }
+
+.md-car-light-fog:before {
+  content: "\f0c4b"; }
+
+.md-car-light-high:before {
+  content: "\f0c4c"; }
+
+.md-car-tire-alert:before {
+  content: "\f0c4d"; }
+
+.md-hazard-lights:before {
+  content: "\f0c89"; }
+
+.md-car-brake-hold:before {
+  content: "\f0d5e"; }
+
+.md-car-brake-parking:before {
+  content: "\f0d5f"; }
+
+.md-car-cruise-control:before {
+  content: "\f0d60"; }
+
+.md-car-defrost-front:before {
+  content: "\f0d61"; }
+
+.md-car-defrost-rear:before {
+  content: "\f0d62"; }
+
+.md-car-parking-lights:before {
+  content: "\f0d63"; }
+
+.md-car-traction-control:before {
+  content: "\f0d64"; }
+
+.md-wiper-wash:before {
+  content: "\f0da6"; }
+
+.md-car-shift-pattern:before {
+  content: "\f0f40"; }
+
+.md-oil-temperature:before {
+  content: "\f0ff8"; }
+
+.md-car-coolant-level:before {
+  content: "\f1019"; }
+
+.md-car-turbocharger:before {
+  content: "\f101a"; }
+
+.md-oil-level:before {
+  content: "\f1053"; }
+
+.md-car-door-lock:before {
+  content: "\f109d"; }
+
+.md-fan-remove:before {
+  content: "\f1471"; }
+
+.md-fan-speed-1:before {
+  content: "\f1472"; }
+
+.md-fan-speed-2:before {
+  content: "\f1473"; }
+
+.md-fan-speed-3:before {
+  content: "\f1474"; }
+
+.md-water-alert:before {
+  content: "\f1502"; }
+
+.md-wiper-wash-alert:before {
+  content: "\f18df"; }
+
+.md-car-brake-fluid-level:before {
+  content: "\f1909"; }
+
+.md-car-brake-temperature:before {
+  content: "\f190b"; }
+
+.md-car-brake-worn-linings:before {
+  content: "\f190c"; }
+
+.md-car-light-alert:before {
+  content: "\f190d"; }
+
+.md-car-speed-limiter:before {
+  content: "\f190e"; }
 
 .sr-only {
   border: 0;

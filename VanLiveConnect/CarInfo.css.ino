@@ -176,6 +176,12 @@ body
   width:70px;
   height:57px;
 }
+.iconSmallMaterialDesign
+{
+  font-size:60px;
+  width:70px;
+  height:57px;
+}
 .iconMedium
 {
   font-size:60px;

@@ -81,7 +81,7 @@ static const char msg_1_2_fr[] PROGMEM = "Niveau mini additif gasoil!";
 static const char msg_1_2_ger[] PROGMEM = "Stand der Krafstoff-Additif ist zu nierdrig!";  // [sic, 2 x]
 static const char msg_1_2_spa[] PROGMEM = "Nivel gasoil al minimo!";  // incorrect, should mention "additive"
 static const char msg_1_2_ita[] PROGMEM = "Livello minimo gasolio!";  // incorrect, should mention "additive"
-static const char msg_1_2_dut[] PROGMEM = "Minimum niveau aanvullende vloeistof diesel!";  // "aanvullende" is incorrect
+static const char msg_1_2_dut[] PROGMEM = "Minimum niveau aanvullende vloeistof diesel!";  // incorrect, should be "Minimum niveau dieseladditief"
 
 static const char msg_1_3_eng[] PROGMEM = "Fuel cap open!";
 static const char msg_1_3_fr[] PROGMEM = "Accès réservoir carburant mal verrouillé!";
@@ -214,7 +214,7 @@ static const char msg_3_7_fr[] PROGMEM = "Présence d'eau dans le filtre à gaso
 static const char msg_3_7_ger[] PROGMEM = "Wasser im Dieselfilter";
 static const char msg_3_7_spa[] PROGMEM = "Presencia de agua en el filtro de gasoil";
 static const char msg_3_7_ita[] PROGMEM = "Presenza d'acqua nel filtro del gasolio";
-static const char msg_3_7_dut[] PROGMEM = "Water aanwezig in dieselfilter";  // should be "brandstoffilter"
+static const char msg_3_7_dut[] PROGMEM = "Water aanwezig in dieselfilter";  // Should be "brandstoffilter"
 
 // -----
 // Byte 4, 0x20...0x27
@@ -303,14 +303,14 @@ static const char msg_5_5_fr[] PROGMEM = "Oubli clé de contact";
 static const char msg_5_5_ger[] PROGMEM = "Zündschlüssel vergessen";
 static const char msg_5_5_spa[] PROGMEM = "Llave de contacto olvidada";
 static const char msg_5_5_ita[] PROGMEM = "Chiave di contatto dimenticata";
-static const char msg_5_5_dut[] PROGMEM = "Contactsleutel ! ";
+static const char msg_5_5_dut[] PROGMEM = "Contactsleutel ! ";  // Trailing space intended: this is info, not warning
 
-static const char msg_5_6_eng[] PROGMEM = "Lights not on";
+static const char msg_5_6_eng[] PROGMEM = "Lights not on";  // Should be "Parking lights on"
 static const char msg_5_6_fr[] PROGMEM = "Oubli feux de position";
 static const char msg_5_6_ger[] PROGMEM = "Standlicht vergessen";
 static const char msg_5_6_spa[] PROGMEM = "Luces olvidadas";
 static const char msg_5_6_ita[] PROGMEM = "Fari accesi";
-static const char msg_5_6_dut[] PROGMEM = "Parkeerlichten ! ";
+static const char msg_5_6_dut[] PROGMEM = "Parkeerlichten ! ";  // Trailing space intended: this is info, not warning
 
 #define msg_5_7 emptyStr
 
@@ -673,4 +673,48 @@ const char *const msgTable_dut[] PROGMEM =
     msg_13_0, msg_13_1, msg_13_2, msg_13_3, msg_13_4, msg_13_5, msg_13_6, msg_13_7,
     msg_14_0, msg_14_1, msg_14_2, msg_14_3, msg_14_4, msg_14_5, msg_14_6, msg_14_7,
     msg_15_0, msg_15_1, msg_15_2, msg_15_3, msg_15_4, msg_15_5, msg_15_6, msg_15_7
+};
+
+// Icon string constants
+static const char PROGMEM carTireAlertIcon[] = "md-car-tire-alert";
+static const char PROGMEM carBrakeFluidLevelIcon[] = "md-car-brake-fluid-level";
+static const char PROGMEM oilTemperatureIcon[] = "md-oil-temperature";
+static const char PROGMEM coolantTemperatureIcon[] = "md-coolant-temperature";
+static const char PROGMEM carCoolantLevelIcon[] = "md-car-coolant-level";
+static const char PROGMEM oilIcon[] = "md-oil";
+static const char PROGMEM oilLevelIcon[] = "md-oil-level";
+static const char PROGMEM carBrakeWornLiningsIcon[] = "md-car-brake-worn-linings";
+static const char PROGMEM cogsIcon[] = "md-cogs";
+static const char PROGMEM carEspIcon[] = "md-car-esp";
+static const char PROGMEM carBrakeAbsIcon[] = "md-car-brake-abs";
+static const char PROGMEM carBrakeAlertIcon[] = "md-car-brake-alert";
+static const char PROGMEM airbagIcon[] = "md-airbag";
+static const char PROGMEM waterAlertIcon[] = "md-water-alert";
+static const char PROGMEM carLightAlertIcon[] = "md-car-light-alert";
+static const char PROGMEM wiperWashAlertIcon[] = "md-wiper-wash-alert";
+static const char PROGMEM speedometerIcon[] = "md-speedometer";
+static const char PROGMEM carKeyIcon[] = "md-car-key";
+static const char PROGMEM carParkingLightsIcon[] = "md-car-parking-lights";
+static const char PROGMEM gasPumpIcon[] = "fa-gas-pump";
+static const char PROGMEM carDoorLockIcon[] = "md-car-door-lock";
+static const char PROGMEM wiperIcon[] = "md-wiper";
+
+const char *const notificationIconTable[] PROGMEM =
+{
+    carTireAlertIcon, 0, 0, carBrakeFluidLevelIcon, 0, 0, oilTemperatureIcon, coolantTemperatureIcon,
+    0, 0, 0, 0, carTireAlertIcon, carCoolantLevelIcon, oilIcon, oilLevelIcon,
+    0, carBrakeWornLiningsIcon, 0, cogsIcon, carEspIcon, carBrakeAbsIcon, 0, carBrakeAlertIcon,
+    airbagIcon, airbagIcon, 0, coolantTemperatureIcon, 0, 0, 0, waterAlertIcon,
+    0, carLightAlertIcon, 0, 0, 0, 0, 0, 0,
+    carBrakeAlertIcon, 0, airbagIcon, wiperWashAlertIcon, speedometerIcon, carKeyIcon, carParkingLightsIcon, 0,
+    0, 0, 0, 0, 0, 0, 0, gasPumpIcon,
+    carLightAlertIcon, 0, 0, 0, 0, 0, 0, 0,
+    carDoorLockIcon, carEspIcon, carDoorLockIcon, carDoorLockIcon, carLightAlertIcon, wiperIcon, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
 };

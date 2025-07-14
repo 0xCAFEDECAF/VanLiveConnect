@@ -522,13 +522,21 @@ The application itself embeds:
 
 * Javascript library [jQuery v3.5.1 (compressed, production version)](https://code.jquery.com/jquery-3.5.1.min.js)
   by John Resig is [licensed](https://github.com/jquery/jquery/blob/main/LICENSE.txt) under the
-  [MIT License](https://opensource.org/licenses/MIT)
+  [MIT License](https://opensource.org/licenses/MIT).
 
 * Font/icons [Font Awesome v5.15.2](https://use.fontawesome.com/releases/v5.15.2/fontawesome-free-5.15.2-web.zip)
-  by Dave Gandy is [licensed](https://fontawesome.com/license/free) under the following licenses:
-  - Icons: [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/)
-  - Fonts: [SIL OFL 1.1 License](https://scripts.sil.org/OFL)
-  - Code: [MIT License](https://opensource.org/licenses/MIT)
+  by [Dave Gandy](https://davegandy.github.io/) is [licensed](https://fontawesome.com/license/free) under the following
+  licenses:
+  - Icons: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+  - Fonts: [SIL OFL 1.1](https://scripts.sil.org/OFL)
+  - Code: [MIT](https://opensource.org/licenses/MIT)
+
+* Font/icons [Material Design](https://github.com/Templarian/MaterialDesign)
+  by [Austin Andrews](https://github.com/Templarian) is
+  [licensed](https://github.com/Templarian/MaterialDesign/blob/master/LICENSE) under the following licenses:
+  - Icons: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+  - Fonts: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+  - Code: [MIT](https://opensource.org/licenses/MIT)
 
 * Font [Peugeot New](https://www.cdnfonts.com/peugeot-new.font)
   by Emmanuel Benoist for Peugeot Design Lab (http://www.peugeotdesignlab.com)<br />

@@ -1807,6 +1807,18 @@ VanPacketParseResult_t ParseCarStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             currentMsg <= 0x7F && strlen_P(msgTable[currentMsg]) > 0 ? msgTable[currentMsg] : emptyStr
         );
 
+    at += at >= n ? 0 :
+        snprintf_P(buf + at, n - at,
+            PSTR(",\n\"notification_icon_on_mfd\": \"%s\""),
+
+            // Relying on short-circuit boolean evaluation
+            currentMsg <= 0x7F
+            && notificationIconTable[currentMsg] != nullptr
+            && strlen_P(notificationIconTable[currentMsg]) > 0
+                ? notificationIconTable[currentMsg]
+                : emptyStr
+        );
+
     // Separately report "doors locked" status
     bool doorsLocked = data[8] & 0x01;
     at += at >= n ? 0 :

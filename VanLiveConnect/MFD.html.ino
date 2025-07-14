@@ -129,25 +129,24 @@ char mfd_html[] PROGMEM = R"=====(
 				<div gid="engine_rpm" class="dseg7" style="font-size:70px; left:10px; top:173px; width:260px;">0</div>
 				<div class="tag" style="text-align:left; left:280px; top:203px; font-size:30px;">rpm</div>
 
-				<div gid="fog_rear" class="iconSmall led ledOff" style="left:40px; top:280px;transform: scaleX(-1);">
-					<div class="centerAligned fas fa-volume-down"></div>
+				<div gid="fog_rear" class="iconSmallMaterialDesign led ledOff" style="left:40px; top:280px;transform: scaleX(-1);">
+					<div class="centerAligned fas md-car-light-fog"></div>
 				</div>
 
-				<div gid="parking_light" class="iconSmall led ledOff" style="left:120px; top:280px; color:rgb(119, 217, 64);">
-					<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:-3px;"></div>
-					<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:16px;"></div>
+				<div gid="parking_light" class="iconSmallMaterialDesign led ledOff" style="left:120px; top:280px; color:rgb(119, 217, 64);">
+					<div class="centerAligned fas md-car-parking-lights"></div>
 				</div>
 
-				<div gid="dipped_beam" class="iconSmall led ledOff" style="left:120px; top:280px;">
-					<div class="centerAligned fas fa-volume-down" style="transform:rotate(15deg); transform-origin:120px;"></div>
+				<div gid="dipped_beam" class="iconSmallMaterialDesign led ledOff" style="left:120px; top:280px;">
+					<div class="centerAligned fas md-car-light-dimmed"></div>
 				</div>
 
-				<div gid="high_beam" class="iconSmall led ledOff" style="left:200px; top:280px;">
-					<div class="centerAligned fas fa-volume-up"></div>
+				<div gid="high_beam" class="iconSmallMaterialDesign led ledOff" style="left:200px; top:280px;">
+					<div class="centerAligned fas md-car-light-high"></div>
 				</div>
 
-				<div gid="fog_front" class="iconSmall led ledOff" style="left:280px; top:280px;">
-					<div class="centerAligned fas fa-volume-up"></div>
+				<div gid="fog_front" class="iconSmallMaterialDesign led ledOff" style="left:280px; top:280px;">
+					<div class="centerAligned fas md-car-light-fog"></div>
 				</div>
 
 				<div class="icon iconSmall fas fa-gas-pump" style="left:30px; top:375px;"></div>
@@ -205,8 +204,8 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="cd_present" class="iconSmall led ledOn" style="left:870px; top:105px;">
 					<div class="centerAligned fas fa-compact-disc"></div>
 				</div>
-				<div id="tape_present" class="iconSmall led ledOff" style="left:870px; top:170px;">
-					<div class="centerAligned fas fa-vr-cardboard"></div>
+				<div id="tape_present" class="iconSmallMaterialDesign led ledOff" style="left:870px; top:170px;">
+					<div class="centerAligned fas md-cassette"></div>
 				</div>
 				<div id="cd_changer_cartridge_present" class="iconSmall led ledOff" style="left:870px; top:235px;">
 					<div class="centerAligned fas fa-archive"></div>
@@ -524,7 +523,7 @@ char mfd_html[] PROGMEM = R"=====(
 					</div>
 
 					<!-- Status LEDs -->
-					<div id="hazard_lights" class="led fas fa-exclamation-triangle" style="font-size:70px; line-height:2.6; top:390px; width:170px; height:160px;"></div>
+					<div id="hazard_lights" class="led fas md-hazard-lights" style="font-size:90px; line-height:2.6; top:365px; width:170px; height:180px;"></div>
 					<div id="door_open_led" class="led fas fa-door-open" style="font-size:70px; line-height:2.6; left:80px; top:390px; width:200px; height:160px;"></div>
 					<div id="diesel_glow_plugs" class="led ledOff fas fa-sun" style="font-size:70px; line-height:1.3; left:260px; top:440px; width:80px;"></div>
 					<div id="lights" class="led ledOff fas fa-lightbulb" style="font-size:70px; line-height:1.3; left:370px; top:440px; width:80px;"></div>
@@ -552,25 +551,24 @@ char mfd_html[] PROGMEM = R"=====(
 						<div class="centerAligned fas fa-angle-double-left"></div>
 					</div>
 
-					<div gid="fog_rear" class="iconSmall led ledOff" style="left:220px; top:400px;transform: scaleX(-1);">
-						<div class="centerAligned fas fa-volume-down"></div>
+					<div gid="fog_rear" class="iconSmallMaterialDesign led ledOff" style="left:220px; top:400px;transform: scaleX(-1);">
+						<div class="centerAligned fas md-car-light-fog"></div>
 					</div>
 
-					<div gid="parking_light" class="iconSmall led ledOff" style="left:300px; top:400px; color:rgb(119, 217, 64);">
-						<div class="centerAligned fas fa-volume-down" style="transform:scaleX(-1); font-size:30px; top:-3px;"></div>
-						<div class="centerAligned fas fa-volume-down" style="font-size:30px; top:16px;"></div>
+					<div gid="parking_light" class="iconSmallMaterialDesign led ledOff" style="left:300px; top:400px; color:rgb(119, 217, 64);">
+						<div class="centerAligned fas md-car-parking-lights"></div>
 					</div>
 
-					<div gid="dipped_beam" class="iconSmall led ledOff" style="left:300px; top:400px;">
-						<div class="centerAligned fas fa-volume-down" style="transform:rotate(15deg); transform-origin:120px;"></div>
+					<div gid="dipped_beam" class="iconSmallMaterialDesign led ledOff" style="left:300px; top:400px;">
+						<div class="centerAligned fas md-car-light-dimmed"></div>
 					</div>
 
-					<div gid="high_beam" class="iconSmall led ledOff" style="left:380px; top:400px;">
-						<div class="centerAligned fas fa-volume-up"></div>
+					<div gid="high_beam" class="iconSmallMaterialDesign led ledOff" style="left:380px; top:400px;">
+						<div class="centerAligned fas md-car-light-high"></div>
 					</div>
 
-					<div gid="fog_front" class="iconSmall led ledOff" style="left:460px; top:400px;">
-						<div class="centerAligned fas fa-volume-up"></div>
+					<div gid="fog_front" class="iconSmallMaterialDesign led ledOff" style="left:460px; top:400px;">
+						<div class="centerAligned fas md-car-light-fog"></div>
 					</div>
 
 					<div id="right_indicator" class="iconSmall led ledOff" style="left:610px; top:400px;">
@@ -588,8 +586,8 @@ char mfd_html[] PROGMEM = R"=====(
 					<div id="odometer_1" class="dseg7" style="font-size:45px; left:120px; top:480px; width:280px;">--.-</div>
 					<div gid="distance_unit" class="tag" style="font-size:30px; text-align:left; left:415px; top:490px;">km</div>
 
-					<div id="chosen_gear" class="dseg7" style="font-size:45px; left:470px; top:480px; width:100px;">-</div>
-					<div class="tag" style="font-size:30px; left:580px; top:490px;">Gear</div>
+					<div id="chosen_gear" class="dseg7" style="font-size:45px; left:480px; top:480px; width:100px;">-</div>
+					<div class="icon iconSmallMaterialDesign fas md-car-shift-pattern" style="left:575px; top:470px;"></div>
 
 
 					<!-- Delivered power (estimation) -->
@@ -2038,11 +2036,11 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="recirc" class="iconSmall led ledOff" style="left:450px; top:45px;">
 					<div class="centerAligned fas fa-sync-alt"></div>
 				</div>
-				<div id="rear_heater_2" class="iconSmall led ledOff" style="left:700px; top:45px;">
-					<div class="centerAligned fas fa-bars"></div>
+				<div id="rear_heater_2" class="iconSmallMaterialDesign led ledOff" style="font-size:57px; left:700px; top:45px;">
+					<div class="centerAligned fas md-car-defrost-rear"></div>
 				</div>
 				<div id="ac_enabled" class="iconSmall led ledOff" style="left:350px; top:125px;">
-					<div class="centerAligned fas fa-wind"></div>
+					<div class="centerAligned fas md-air-conditioner"></div>
 				</div>
 				<div id="ac_compressor" class="iconSmall led ledOff" style="left:700px; top:125px;">
 					<div class="centerAligned fas fa-snowflake"></div>
@@ -2409,9 +2407,11 @@ char mfd_html[] PROGMEM = R"=====(
 			<!-- Notification popup, with warning or information icon -->
 			<div id="notification_popup" class="icon notificationPopup">
 				<div id="notification_icon_warning" class="glow centerAligned icon iconVeryLarge fas fa-exclamation-triangle"
-					style="display:none; position:absolute; line-height:2.2; left:-20px; width:260px; height:260px"></div>
+					style="display:none; position:absolute; line-height:2.2; left:-20px; width:260px; height:260px;"></div>
 				<div id="notification_icon_info" class="centerAligned icon iconVeryLarge fas fa-info-circle"
 					style="display:block; position:absolute; left:30px;"></div>
+				<div id="notification_icon" class="centerAligned icon iconVeryLarge fas"
+					style="display:none; position:absolute; line-height:2.2; left:-20px; width:260px; height:260px;"></div>
 				<div id="last_notification_message_on_mfd" class="centerAligned" style="position:absolute; left:200px; width:610px;">
 				</div>
 			</div>

@@ -9,4 +9,6 @@ extern const char *const msgTable_spa[];
 extern const char *const msgTable_ita[];
 extern const char *const msgTable_dut[];
 
+extern const char *const notificationIconTable[];
+
 #endif // Notifications_h
