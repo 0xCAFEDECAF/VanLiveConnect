@@ -1,3 +1,31 @@
+1.2.0
+    User interface improvements:
+    * Add automotive icons from Material Design font (https://github.com/Templarian/MaterialDesign)
+    * Climate control popup shows readout of condenser pressure sensor in bar, not in degrees Celsius/Fahrenheit
+    * Sat nav: better emulation of the behaviour of the original MFD, by keeping list grayed out until the
+      actual content has been received from the sat nav unit
+    * Improve handling of IR remote control 'VAL' button on popups: match behaviour of original MFD
+    * Show popup 'Computing route in progress' also while driving, similar to original MFD
+    * Fix bug in trip computer cycling sequence when starting from "GPS info" screen
+    * In sat nav guidance mode, always show instruments in small screen. Trip computer is shown in popup,
+      like in the original MFD.
+    * When user is browsing the menu, only show popups for warnings, not for info
+    * Fix: screen occasionally switches back to 'clock' directly after switching to 'pre-flight'
+    * Fix bug where current station is not highlighted in tuner presets popup
+    * Tapping the screen when a popup is visible will exit the popup
+
+    "Under the hood" improvements:
+    * Improved Wi-Fi connectivity by working around an apparent bug in class AsyncWebSocketClient
+      (ESPAsyncWebSrv library and its interworking with EPSAsyncTCP library)
+    * Improved Wi-Fi connectivity by checking more often if there are queued JSON packets to be sent
+    * Web server handles low-memory conditions by responding with HTTP code 429 ("too many requests - try again later")
+    * Fixed captive portal handling
+    * Fixed infinite-loop bug, causing occasional software watchdog timeout
+
+    Minor changes:
+    * Wi-Fi access point (AP) IP address is changed to 192.168.4.1, and now is by default configured to have a password
+    * README.md: better explanation how to connect Android to both Wi-Fi and Mobile Data simultaneously
+
 1.1.0
     User interface improvements:
     * Use the [Peugeot-New](https://www.cdnfonts.com/peugeot-new.font) font in the Web-based user interface
