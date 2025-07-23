@@ -108,6 +108,7 @@ bool IRAM_ATTR IsVeryImportantPacket(const TVanPacketRxDesc& pkt)
             || pkt.Iden() == MFD_LANGUAGE_UNITS_IDEN
             || pkt.Iden() == AUDIO_SETTINGS_IDEN
             || pkt.Iden() == SATNAV_STATUS_1_IDEN
+            || pkt.Iden() == SATNAV_STATUS_2_IDEN
             || pkt.Iden() == SATNAV_GUIDANCE_IDEN
             || pkt.Iden() == SATNAV_REPORT_IDEN
             || pkt.Iden() == MFD_TO_SATNAV_IDEN
