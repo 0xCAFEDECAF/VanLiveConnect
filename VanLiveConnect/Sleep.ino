@@ -16,6 +16,8 @@ void CommitEeprom();
 // Defined in IRrecv.ino
 void IrDisable();
 
+unsigned long lastActivityAt = 0;
+
 void SetupSleep()
 {
     gpio_pin_wakeup_disable();

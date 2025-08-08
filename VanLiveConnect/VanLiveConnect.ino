@@ -40,6 +40,9 @@ char dummy_var_to_use_cppXX[] PROGMEM = R"==(")==";
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
+// Defined in Sleep.ino
+extern unsigned long lastActivityAt;
+
 // Over The Air (OTA) update, defined in BasicOTA.ino
 void SetupOta();
 void LoopOta();
@@ -385,15 +388,13 @@ void loop()
     TIrPacket irPacket;
     if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket), true);
 
-    static unsigned long lastPacketAt = 0;
     if (sleepAfter > 0
         && VanBusRx.GetCount() > 0  // Only sleep in a "real" setup with VAN bus activity
        )
     {
-        if (millis() - lastPacketAt >= (unsigned long)sleepAfter)
+        if (millis() - lastActivityAt >= (unsigned long)sleepAfter)
         {
             GoToSleep();
-            // lastPacketAt = millis();
             return;
         } // if
     } // if
@@ -404,7 +405,7 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
-        lastPacketAt = millis();
+        lastActivityAt = millis();
 
       #if VAN_BUS_VERSION_INT >= 000003001 && VAN_BUS_VERSION_INT < 000003003
 

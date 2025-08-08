@@ -3,6 +3,9 @@
 // Wifi
 const char* GetHostname();
 
+// Defined in Sleep.ino
+extern unsigned long lastActivityAt;
+
 void SetupOta()
 {
     Serial.print(F("Enabling over-the-air (OTA) update ..."));
@@ -19,6 +22,7 @@ void SetupOta()
     ArduinoOTA.onStart([]()
     {
         Serial.print(F("Start\n"));
+        lastActivityAt = millis();
     });
     ArduinoOTA.onEnd([]()
     {
@@ -31,6 +35,8 @@ void SetupOta()
         digitalWrite(LED_BUILTIN, progressPerc % 3 == 0 ? LOW : HIGH);  // Flash the LED
 
         Serial.printf_P(PSTR("Progress: %u%%\r"), progressPerc);
+
+        lastActivityAt = millis();
     });
     ArduinoOTA.onError([](ota_error_t error)
     {
