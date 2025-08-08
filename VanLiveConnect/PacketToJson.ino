@@ -832,9 +832,6 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
     const uint8_t* data = pkt.Data();
 
-    // Avoid continuous updates if the exterior temperature value is constantly toggling between 2 values, while
-    // the rest of the data is the same.
-
     static uint16_t prevDashLightStatus = 0xFFFF;  // Value that can never come from a packet itself
     uint8_t dashLightStatus = data[0];
 
@@ -854,6 +851,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     static uint16_t lastReportedExteriorTempRaw = 0xFFFF;  // Value that can never come from a packet itself
     uint8_t exteriorTempRaw = data[6];
     static uint8_t prevExteriorTempRaw = exteriorTempRaw;
+    if (exteriorTempRaw == 0xFF) exteriorTempRaw = prevExteriorTempRaw;
 
     bool hasNewData =
         SkipEnginePktDupDetect
@@ -861,7 +859,12 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
         || statusBits != prevStatusBits
         || coolantTempRaw != prevCoolantTempRaw
         || odometerRaw != prevOdometerRaw
-        || (exteriorTempRaw != lastReportedExteriorTempRaw && exteriorTempRaw == prevExteriorTempRaw);
+
+        // New data if:
+        // - valid value, and
+        // - different from last reported, and
+        // - two times in a row the same value
+        || (exteriorTempRaw != 0xFF && exteriorTempRaw != lastReportedExteriorTempRaw && exteriorTempRaw == prevExteriorTempRaw);
 
     SkipEnginePktDupDetect = false;
     prevDashLightStatus = dashLightStatus;
@@ -3283,18 +3286,19 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     const uint8_t* data = pkt.Data();
 
+    // If sat nav equipment detection was already reported (satnavEquipmentDetected == true), ignore further
+    // duplicates of the "long" (20 byte) packets.
+    // But if sat nav equipment was just detected (satnavEquipmentDetected == false), skip the duplicate check.
     if (satnavEquipmentDetected)
     {
-        // Ignore duplicates of the "long" (20 byte) packets
         static uint8_t packetData[VAN_MAX_DATA_BYTES];  // Previous packet data
         if (memcmp(data, packetData, dataLen) == 0) return VAN_PACKET_DUPLICATE;
         memcpy(packetData, data, dataLen);
     } // if
 
-    satnavStatus2 = data[1] & 0x0F;
+    // Parse packet data
 
-    bool downloadFinished = data[1] & 0x80;
-    if (downloadFinished) satnavDownloadProgress = 0;
+    satnavStatus2 = data[1] & 0x0F;
 
     satnavStatus2Str =
         satnavStatus2 == SATNAV_STATUS_2_INITIALIZING ? PSTR("INITIALIZING") :
@@ -3305,6 +3309,11 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     static bool wasSatnavGuidanceActive = false;
     isSatnavGuidanceActive = satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE;
+    if (satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE) askForGuidanceContinuation = false;
+
+    bool downloadFinished = data[1] & 0x80;
+    if (downloadFinished) satnavDownloadProgress = 0;
+
     satnavDiscRecognized = (data[2] & 0x70) == 0x30;
 
     // 0xE0 as boundary for "reverse": just guessing. Do we ever drive faster than 224 km/h?
@@ -3387,14 +3396,10 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             );
     } // if
 
-    if (! satnavEquipmentDetected)
-    {
-        // Large packet received, so sat nav equipment is obviously present. Add this to the JSON data.
-        // Variable 'satnavEquipmentDetected' is set to 'true' after successful return; see below.
-        at += at >= n ? 0 :
-            snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_equipment_present\": \"YES\""));
-    } // if
+    // Large packet received, so sat nav equipment is obviously present. Report this in the JSON data.
+    at += at >= n ? 0 : snprintf_P(buf + at, n - at, PSTR(",\n\"satnav_equipment_present\": \"YES\""));
 
+    // Keep track of which screen the original MFD is showing
     bool updateScreen = false;
     if (! wasSatnavGuidanceActive && isSatnavGuidanceActive)
     {
