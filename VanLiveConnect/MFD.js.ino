@@ -2198,12 +2198,12 @@ function satnavShowStreet(selector, content)
 
 function satnavGotoMainMenu()
 {
+	if (satnavStatus1.match(/DISC_UNREADABLE/)) return showStatusPopup(satnavDiscUnreadbleText, 10000);
+
 	if ($("#satnav_disc_recognized").hasClass("ledOff"))
 	{
 		return showStatusPopup(satnavDiscMissingText, 7200);
 	}
-
-	if (satnavStatus1.match(/DISC_UNREADABLE/)) return showStatusPopup(satnavDiscUnreadbleText, 10000);
 
 	// Show popup "Initializing navigator" as long as sat nav is not initialized
 	if (! satnavInitialized) return showPopupAndNotifyServer("satnav_initializing_popup", 82000);
@@ -4503,6 +4503,8 @@ function handleItemChange(item, value, changed)
 
 		case "economy_mode":
 		{
+			if (engineRunning === "YES" || engineRpm > 0) break;
+
 			if (value === economyMode) break;
 			economyMode = value;
 
