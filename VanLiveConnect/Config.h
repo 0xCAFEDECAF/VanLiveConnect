@@ -25,8 +25,8 @@
   //
   #define WIFI_PASSWORD "12345678"
 
-  // Set between (1) and (13). Note: some devices cannot connect to channels above 11. Channel 6 seems best for
-  // avoiding interference with Bluetooth.
+  // Set between (1) and (13). Note: some devices cannot connect to channels above 11.
+  // Channel 1 seems to give the most stable connection (in my setup, that is).
   #define WIFI_CHANNEL (1)
 
   #define IP_ADDR "192.168.4.1"
