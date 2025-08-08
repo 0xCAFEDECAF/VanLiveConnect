@@ -3309,7 +3309,6 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
     static bool wasSatnavGuidanceActive = false;
     isSatnavGuidanceActive = satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE;
-    if (satnavStatus2 == SATNAV_STATUS_2_IN_GUIDANCE_MODE) askForGuidanceContinuation = false;
 
     bool downloadFinished = data[1] & 0x80;
     if (downloadFinished) satnavDownloadProgress = 0;
