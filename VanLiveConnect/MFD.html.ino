@@ -2738,19 +2738,19 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="tag" style="top:100px; width:230px;">Flash size (IDE)</div>
 					<div class="tag" style="top:130px; width:230px;">Flash speed (IDE)</div>
 					<div class="tag" style="top:160px; width:230px;">Flash mode (IDE)</div>
-					<div class="tag" style="top:190px; width:230px;">Compiled @</div>
-					<div class="tag" style="top:220px; width:230px;">MD5 checksum</div>
-					<div class="tag" style="top:250px; width:230px;">SDK</div>
+					<div class="tag" style="top:190px; width:230px;">SDK</div>
+					<div class="tag" style="top:220px; width:230px;">Compiled @</div>
+					<div class="tag" style="top:250px; width:230px;">MD5 checksum</div>
 					<div class="tag" style="top:280px; width:230px;">Reset Reason</div>
 					<div class="tag" style="top:310px; width:230px;">Reset Info</div>
 					<div style="position:absolute; left:360px;">
-						<div class="tag" style="top:10px; width:260px;">CPU Speed</div>
-						<div class="tag" style="top:40px; width:260px;">Chip ID</div>
-						<div class="tag" style="top:70px; width:260px;">MAC address</div>
-						<div class="tag" style="top:100px; width:260px;">IP address</div>
-						<div class="tag" style="top:130px; width:260px;">Wi-Fi RSSI</div>
-						<div class="tag" style="top:160px; width:260px;">Free RAM</div>
-						<div class="tag" style="top:190px; width:260px;">Uptime</div>
+						<div class="tag" style="top:10px; width:280px;">CPU Speed</div>
+						<div class="tag" style="top:40px; width:280px;">Chip ID</div>
+						<div class="tag" style="top:70px; width:280px;">MAC address</div>
+						<div class="tag" style="top:100px; width:280px;">IP address</div>
+						<div class="tag" style="top:130px; width:280px;">Wi-Fi RSSI</div>
+						<div class="tag" style="top:160px; width:280px;">Free RAM</div>
+						<div class="tag" style="top:190px; width:280px;">Uptime</div>
 					</div>
 				</div>
 				<div id="esp_boot_version" class="tag" style="left:240px; top:7px;">---</div>
@@ -2759,18 +2759,18 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="esp_flash_size_ide" class="tag" style="left:240px; top:97px;">---</div>
 				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:127px;">---</div>
 				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:157px;">---</div>
-				<div id="img_compile_date" class="tag" style="left:240px; top:187px;">---</div>
-				<div id="img_md5_checksum" class="tag" style="left:240px; top:217px;">---</div>
-				<div id="esp_sdk_version" class="tag" style="left:240px; top:247px;">---</div>
+				<div id="esp_sdk_version" class="tag" style="left:240px; top:187px;">---</div>
+				<div id="img_compile_date" class="tag" style="left:240px; top:217px;">---</div>
+				<div id="img_md5_checksum" class="tag" style="left:240px; top:247px;">---</div>
 				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:277px;">---</div>
 				<div id="esp_last_reset_info" class="tag" style="left:240px; top:307px; width:660px; text-align:left; white-space:normal; height:60px;">---</div>
-				<div id="esp_cpu_speed" class="tag" style="left:630px; top:7px;">---</div>
-				<div id="esp_chip_id" class="tag" style="left:630px; top:37px;">---</div>
-				<div id="esp_mac_address" class="tag" style="left:630px; top:67px;">---</div>
-				<div id="esp_ip_address" class="tag" style="left:630px; top:97px;">---</div>
-				<div id="esp_wifi_rssi" class="tag" style="left:630px; top:127px;">---</div>
-				<div id="esp_free_ram" class="tag" style="left:630px; top:157px;">---</div>
-				<div id="uptime" class="tag" style="left:630px; top:187px;">---</div>
+				<div id="esp_cpu_speed" class="tag" style="left:650px; top:7px;">---</div>
+				<div id="esp_chip_id" class="tag" style="left:650px; top:37px;">---</div>
+				<div id="esp_mac_address" class="tag" style="left:650px; top:67px;">---</div>
+				<div id="esp_ip_address" class="tag" style="left:650px; top:97px;">---</div>
+				<div id="esp_wifi_rssi" class="tag" style="left:650px; top:127px;">---</div>
+				<div id="esp_free_ram" class="tag" style="left:650px; top:157px;">---</div>
+				<div id="uptime" class="tag" style="left:650px; top:187px;">---</div>
 			</div>
 
 			<div id="van_bus_stats" class="tag"
