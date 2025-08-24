@@ -849,6 +849,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
     uint32_t odometerRaw = (uint32_t)data[3] << 16 | (uint32_t)data[4] << 8 | data[5];
 
     static uint16_t lastReportedExteriorTempRaw = 0xFFFF;  // Value that can never come from a packet itself
+    static uint16_t prevReportedExteriorTempRaw = 0xFFFF;
     uint8_t exteriorTempRaw = data[6];
     static uint8_t prevExteriorTempRaw = exteriorTempRaw;
     if (exteriorTempRaw == 0xFF) exteriorTempRaw = prevExteriorTempRaw;
@@ -862,9 +863,11 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
         // New data if:
         // - valid value, and
-        // - different from last reported, and
-        // - two times in a row the same value
-        || (exteriorTempRaw != 0xFF && exteriorTempRaw != lastReportedExteriorTempRaw && exteriorTempRaw == prevExteriorTempRaw);
+        // - different from last reported, and either:
+        //   - two times in a row the same value, or
+        //   - different from previously reported
+        || (exteriorTempRaw != 0xFF && exteriorTempRaw != lastReportedExteriorTempRaw && exteriorTempRaw == prevExteriorTempRaw)
+        || (exteriorTempRaw != 0xFF && exteriorTempRaw != lastReportedExteriorTempRaw && exteriorTempRaw != prevReportedExteriorTempRaw);
 
     SkipEnginePktDupDetect = false;
     prevDashLightStatus = dashLightStatus;
@@ -875,6 +878,7 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
     if (! hasNewData) return VAN_PACKET_NO_CONTENT;
 
+    prevReportedExteriorTempRaw = lastReportedExteriorTempRaw;
     lastReportedExteriorTempRaw = exteriorTempRaw;
 
     contactKeyPosition = statusBits & 0x03;
