@@ -3,7 +3,7 @@
  *
  * Written by Erik Tromp
  *
- * Version 1.1.0 - November, 2024
+ * Version 1.2.0 - September, 2025
  *
  * MIT license, all text above must be included in any redistribution.
  *
