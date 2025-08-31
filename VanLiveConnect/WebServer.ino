@@ -281,6 +281,19 @@ static const char PROGMEM textJavaScriptStr[] = "text/javascript";
 static const char PROGMEM textCssStr[] = "text/css";
 static const char PROGMEM fontWoffStr[] = "font/woff";
 
+// Convert the file extension to the MIME type
+const char* getContentType(const String& path)
+{
+    if (path.endsWith(".html")) return "text/html";
+    if (path.endsWith(".woff")) return fontWoffStr;
+    if (path.endsWith(".css")) return textCssStr;
+    if (path.endsWith(".js")) return textJavaScriptStr;
+    if (path.endsWith(".ico")) return "image/x-icon";
+    if (path.endsWith(".jpg")) return "image/jpeg";
+    if (path.endsWith(".png")) return "image/png";
+    return "text/plain";
+} // getContentType
+
 // -----
 // Fonts
 
@@ -314,46 +327,48 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     printHttpRequest(request);
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] File '%s' not found\n"), TimeStamp(), request->url().c_str());
+    Serial.printf_P(PSTR("%s[webServer] File '%s' not found, "), TimeStamp(), request->url().c_str());
   #endif // DEBUG_WEBSERVER
 
     if (! request->client()->remoteIP()) return;  // No use to reply if there is no IP to reply to
 
-  #ifdef WIFI_AP_MODE // Wi-Fi access point mode
-    #define MY_IP String(IP_ADDR)
-  #else
-    #define MY_IP  WiFi.localIP().toString()
-  #endif // ifdef WIFI_AP_MODE
-
-  #ifdef WIFI_AP_MODE
-    // Redirect to the main HTML page ('/MFD.html').
-    // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
-    // http://detectportal.firefox.com/success.txt and http://detectportal.firefox.com/canonical.html .
-
-    DeleteAllQueuedJsons();  // Maximize free heap space
-
-    AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-    response->addHeader(F("Location"), "http://" + MY_IP + "/MFD.html");
-    request->send(response);
-
-    return;
-  #endif // WIFI_AP_MODE
-
-    if (request->url() == "/")
+    if (String(getContentType(request->url())).startsWith("text/"))  // No use to redirect anything else
     {
+      #ifdef WIFI_AP_MODE  // Wi-Fi access point mode
         // Redirect to the main HTML page ('/MFD.html').
+        // Useful for browsers that try to detect a captive portal, e.g. Firefox tries to browse to
+        // http://detectportal.firefox.com/success.txt and http://detectportal.firefox.com/canonical.html .
 
         DeleteAllQueuedJsons();  // Maximize free heap space
 
         AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-        response->addHeader(F("Location"), "http://" + MY_IP + "/MFD.html");
+        response->addHeader(F("Location"), "http://" + String(IP_ADDR) + "/MFD.html");
         request->send(response);
 
       #ifdef DEBUG_WEBSERVER
-        Serial.printf_P(PSTR("%s[webServer] Redirected (302) to 'http://%s/MFD.html'\n"), TimeStamp(), MY_IP.c_str());
+        Serial.printf_P(PSTR("redirected (302) to 'http://%s/MFD.html'\n"), IP_ADDR);
       #endif // DEBUG_WEBSERVER
 
         return;
+
+      #else
+        if (request->url() == "/")
+        {
+            // Redirect to the main HTML page ('/MFD.html').
+
+            DeleteAllQueuedJsons();  // Maximize free heap space
+
+            AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
+            response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
+            request->send(response);
+
+          #ifdef DEBUG_WEBSERVER
+            Serial.printf_P(PSTR("redirected (302) to 'http://%s/MFD.html'\n"), WiFi.localIP().toString()_str());
+          #endif // DEBUG_WEBSERVER
+
+            return;
+        } // if
+      #endif // ifdef WIFI_AP_MODE
     } // if
 
     // Gold-plated response
@@ -371,6 +386,10 @@ void HandleNotFound(class AsyncWebServerRequest* request)
     } // for
 
     request->send(404, F("text/plain;charset=utf-8"), message);
+
+  #ifdef DEBUG_WEBSERVER
+    Serial.print(F("responded with 'Not Found' (404)\n"));
+  #endif // DEBUG_WEBSERVER
 } // HandleNotFound
 
 void HandleLowMemory(class AsyncWebServerRequest* request)
@@ -460,19 +479,6 @@ void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
         millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeFontFromFile
-
-// Convert the file extension to the MIME type
-const char* getContentType(const String& path)
-{
-    if (path.endsWith(".html")) return "text/html";
-    if (path.endsWith(".woff")) return fontWoffStr;
-    if (path.endsWith(".css")) return textCssStr;
-    if (path.endsWith(".js")) return textJavaScriptStr;
-    if (path.endsWith(".ico")) return "image/x-icon";
-    if (path.endsWith(".jpg")) return "image/jpeg";
-    if (path.endsWith(".png")) return "image/png";
-    return "text/plain";
-} // getContentType
 
 #endif // defined SERVE_FROM_SPIFFS || defined SERVE_FROM_LITTLEFS
 
