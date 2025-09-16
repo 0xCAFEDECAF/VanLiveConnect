@@ -113,7 +113,7 @@ char mfd_html[] PROGMEM = R"=====(
 				<div id="satnav_curr_street_small"
 					on_enter="satnavCutoffBottomLines($('#satnav_curr_street_small [gid=\'satnav_curr_street_shown\']'));"
 					class="icon" style="word-wrap:break-word; top:270px; height:280px; width:390px;">
-					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:40px;"></div>
+					<div gid="satnav_curr_street_shown" class="centerAligned" style="font-size:30px;"></div>
 				</div>
 
 			</div>
