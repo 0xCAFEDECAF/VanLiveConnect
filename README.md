@@ -286,7 +286,7 @@ As an alternative to the just listed "ESPAsyncWebSrv" library, you can also use:
 
 * [ESP Async WebServer library fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
   Tested with version 3.8.0 . To use this library, uncomment the line `//#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC`
-  in the [`Config.h`](VanLiveConnect/Config.h#L211) file.
+  in the [`Config.h`](VanLiveConnect/Config.h#L207) file.
 
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
