@@ -1659,12 +1659,10 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
             "\"delivered_power\": \"%s\",\n"
             "\"delivered_torque\": \"%s\",\n"
             "\"inst_consumption\": \"%s\",\n"
-            "\"distance_to_empty\": \"%u\",\n"
-            "\"avg_speed_1\": \"%u\",\n"
-            "\"distance_1\": \"%s\",\n"
-            "\"avg_consumption_1\": \"%s\"";
+            "\"distance_to_empty\": \"%s\",\n"
+            "\"avg_speed_1\": \"%u\"";
 
-    char floatBuf[4][MAX_FLOAT_SIZE];
+    char floatBuf[3][MAX_FLOAT_SIZE];
     at += at >= n ? 0 :
         snprintf_P(buf + at, n - at, jsonFormatter2,
             data[7] & 0x80 ? openStr : closedStr,
@@ -1697,12 +1695,21 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
                     instConsumptionLt100_x10 <= 2 ? PSTR("&infin;") :
                     ToFloatStr(floatBuf[2], ToMilesPerGallon(instConsumptionLt100_x10), 0),
 
-            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                distanceToEmpty :
-                ToMiles(distanceToEmpty),
+            distanceToEmpty == 0xFFFF ? notApplicable2Str :
+                mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
+                    ToStr(distanceToEmpty) :
+                    ToStr(ToMiles(distanceToEmpty)),
 
-            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? avgSpeedTrip1 : ToMiles(avgSpeedTrip1),
+            mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? avgSpeedTrip1 : ToMiles(avgSpeedTrip1)
+        );
 
+    const static char jsonFormatter3[] PROGMEM =
+            ",\n"
+            "\"distance_1\": \"%s\",\n"
+            "\"avg_consumption_1\": \"%s\"";
+
+    at += at >= n ? 0 :
+        snprintf_P(buf + at, n - at, jsonFormatter3,
             distanceTrip1 == 0xFFFF ? notApplicable2Str :
                 mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                     ToStr(distanceTrip1) :
@@ -1710,13 +1717,13 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 avgConsumptionLt100Trip1_x10 == 0xFFFF ? notApplicableFloatStr :
-                    ToFloatStr(floatBuf[3], (float)avgConsumptionLt100Trip1_x10 / 10.0, 1) :
+                    ToFloatStr(floatBuf[0], (float)avgConsumptionLt100Trip1_x10 / 10.0, 1) :
                 avgConsumptionLt100Trip1_x10 == 0xFFFF ? notApplicable2Str :
                     avgConsumptionLt100Trip1_x10 <= 1 ? PSTR("&infin;") :
-                    ToFloatStr(floatBuf[3], ToMilesPerGallon(avgConsumptionLt100Trip1_x10), 0)
+                    ToFloatStr(floatBuf[0], ToMilesPerGallon(avgConsumptionLt100Trip1_x10), 0)
         );
 
-    const static char jsonFormatter3[] PROGMEM =
+    const static char jsonFormatter4[] PROGMEM =
             ",\n"
             "\"avg_speed_2\": \"%u\",\n"
             "\"distance_2\": \"%s\",\n"
@@ -1725,7 +1732,7 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
     "}\n";
 
     at += at >= n ? 0 :
-        snprintf_P(buf + at, n - at, jsonFormatter3,
+        snprintf_P(buf + at, n - at, jsonFormatter4,
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? avgSpeedTrip2 : ToMiles(avgSpeedTrip2),
 
