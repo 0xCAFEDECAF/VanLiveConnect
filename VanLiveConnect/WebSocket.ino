@@ -683,17 +683,14 @@ void WebSocketEvent(
         }
         break;
 
-        case WS_EVT_PONG:
-        {
-            // No further handling
-        }
-        break;
-
         case WS_EVT_ERROR:
         {
             uint16_t reasonCode = *(uint16_t*)arg;
             Serial.printf_P(PSTR("%s[webSocket %lu]: error %d occurred: '%s'\n"), TimeStamp(), id, reasonCode, data);
         }
+        break;
+
+        default:
         break;
 
     } // switch
@@ -772,10 +769,17 @@ void LoopWebSocket()
         lastPoke = millis();
 
         // Because sometimes, ESPAsyncTCP forgets about us...
+      #if defined (ASYNCWEBSERVER_FORK_ESP32Async)
+        for(auto& c: webSocket.getClients())
+        {
+            if (c.status() == WS_CONNECTED && ! c._messageQueue.empty()) c._runQueue();
+        } // for
+      #else
         for(const auto& c: webSocket.getClients())
         {
-            if (c->status() == WS_CONNECTED && c->_messageQueue.length() > 0) c->_runQueue();
+            if (c->status() == WS_CONNECTED && c->_messageQueue.isEmpty()) c->_runQueue();
         } // for
+      #endif
     } // if
 
     // Somehow, webSocket.cleanupClients() sometimes causes out of memory condition
@@ -795,7 +799,11 @@ void LoopWebSocket()
     if (IsIdConnected(websocketId_1)
 
         // Only send test frames if there is nothing else in the queue
-        && webSocket.client(websocketId_1)->_messageQueue.length() == 0
+      #if defined (ASYNCWEBSERVER_FORK_ESP32Async)
+        && webSocket.client(websocketId_1)->_messageQueue.empty()
+      #else
+        && webSocket.client(websocketId_1)->_messageQueue.isEmpty()
+      #endif
        )
     {
         bool result = SendJsonOnWebSocket(WebSocketPacketLossTestDataToJson(packetNo, jsonBuffer), false, true);

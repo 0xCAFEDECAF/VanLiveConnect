@@ -202,6 +202,11 @@
 #endif
 
 // -----
+// Define to use "ESP Async WebServer library fork by ESP32Async" instead of (default) "ESPAsyncWebSrv library
+// by me-no-dev, fork by dvarrel". To use the fork by ESP32Async, uncomment this line.
+//#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
+
+// -----
 // Define to disable (gray-out) the navigation menu while driving.
 //
 // Using the "Peugeot Planet 2000" software, the multi-functional display (MFD) parameter

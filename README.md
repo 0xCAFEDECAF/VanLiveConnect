@@ -282,6 +282,12 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
   version 1.2.6, 1.2.7 and 1.2.9 . Skip version 1.2.8: it does not compile on the ESP8266.
 
+As an alternative to the just listed "ESPAsyncWebSrv" library, you can also use:
+
+* [ESP Async WebServer library fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
+  Tested with version 3.8.0 . To use this library, uncomment the line `//#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC`
+  in the [`Config.h`](VanLiveConnect/Config.h#L211) file.
+
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
 * this [explanation from Adafruit](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager)
