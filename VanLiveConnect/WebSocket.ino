@@ -608,6 +608,10 @@ void WebSocketEvent(
 
           #ifdef DEBUG_WEBSOCKET
             Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("%s[webSocket %lu] Free RAM: %u\n"),
+                TimeStamp(),
+                id,
+                system_get_free_heap_size());
           #endif // DEBUG_WEBSOCKET
 
             // Send ESP system data to client
