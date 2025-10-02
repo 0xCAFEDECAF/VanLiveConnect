@@ -158,6 +158,24 @@ char mfd_html[] PROGMEM = R"=====(
 				<div gid="coolant_temp" class="dseg7" style="font-size:50px; left:100px; top:442px; width:170px;">--.-</div>
 				<div gid="coolant_temp_unit" class="tag" style="text-align:left; left:280px; top:455px; font-size:30px;">&deg;C</div>
 			</div>
+
+			<!-- Fuel consumption -->
+
+			<div id="fuel_consumption" style="display:none;"
+				on_enter="$('#inst_consumption').hide(); $('#fuel_consumption_unit_sm').hide(); $('#distance_to_empty').hide(); $('#distance_to_empty_icon').hide()"
+				on_exit="$('#inst_consumption').show(); $('#fuel_consumption_unit_sm').show(); $('#distance_to_empty').show(); $('#distance_to_empty_icon').show()">
+
+				<div class="icon iconSmall fas fa-share" style="top:160px;"></div>
+				<div class="icon iconSmall fas fa-fire-alt" style="left:50px; top:160px;"></div>
+				<div gid="inst_consumption" class="dots" style="font-size:75px; left:120px; top:135px; width:220px; text-align:right;">--.-</div>
+				<div gid="fuel_consumption_unit" class="tag tripComputerTag" style="left:200px; top:205px;">l/100 km</div>
+
+				<div class="icon iconSmall" style="top:320px;">...</div>
+				<div class="icon iconSmall fas fa-gas-pump" style="left:50px; top:320px;"></div>
+				<div gid="distance_to_empty" class="dots" style="font-size:75px; left:120px; top:295px; width:220px; text-align:right;">--</div>
+				<div gid="distance_unit" class="tag tripComputerTag" style="left:200px; top:365px;">km</div>
+
+			</div>
 		</div>	<!-- "Small" information panel -->
 
 		<!-- "Large" information panel -->
@@ -545,7 +563,9 @@ char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Instrument cluster -->
 
-				<div id="instruments" style="display:none;">
+				<div id="instruments" style="display:none;"
+					on_enter="if (currentSmallScreenId === 'instrument_small') changeSmallScreenTo('fuel_consumption');"
+					on_exit="if (currentSmallScreenId === 'fuel_consumption') changeSmallScreenTo('instrument_small');">
 
 					<div id="left_indicator" class="iconSmall led ledOff" style="left:70px; top:400px;">
 						<div class="centerAligned fas fa-angle-double-left"></div>
@@ -2793,13 +2813,13 @@ char mfd_html[] PROGMEM = R"=====(
 		</div>
 
 		<div style="left:100px; top:560px; width:230px; position:absolute;">
-			<div gid="inst_consumption" style="width:140px; font-size:55px; text-align:right; position:absolute;">--.-</div>
+			<div id="inst_consumption" gid="inst_consumption" style="width:140px; font-size:55px; text-align:right; position:absolute;">--.-</div>
 			<div id="fuel_consumption_unit_sm" class="tag" style="left:150px; top:24px; width:90px; font-size:31px; text-align:left;">/100</div>
 		</div>
 
 		<div style="left:345px; top:560px; width:220px; position:absolute; height:80px;">
-			<div gid="distance_to_empty" style="width:150px; font-size:55px; text-align:right;">---</div>
-			<div class="icon iconSmall" style="top:8px; left:145px;">
+			<div id="distance_to_empty" gid="distance_to_empty" style="width:150px; font-size:55px; text-align:right;">---</div>
+			<div id="distance_to_empty_icon" class="icon iconSmall" style="top:8px; left:145px;">
 				<div class="fas fa-gas-pump"></div>
 			</div>
 		</div>

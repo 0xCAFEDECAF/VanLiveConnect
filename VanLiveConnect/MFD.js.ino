@@ -916,8 +916,17 @@ function changeSmallScreenTo(id)
 	if (currentSmallScreenId === id) return;
 
 	setVisibilityOfElementAndParents(currentSmallScreenId, "none");
+
+	// Perform current screen's "on_exit" action, if specified
+	var onExit = $("#" + currentSmallScreenId).attr("on_exit");
+	if (onExit) eval(onExit);
+
 	setVisibilityOfElementAndParents(id, "block");
 	currentSmallScreenId = id;
+
+	// Perform new screen's "on_enter" action, if specified
+	var onEnter = $("#" + currentSmallScreenId).attr("on_enter");
+	if (onEnter) eval(onEnter);
 }
 
 // Open a "trip_info" tab in the small (left) information panel
@@ -969,9 +978,7 @@ function gotoSmallScreen(smallScreenName)
 			break;
 
 		case "FUEL_CONSUMPTION":
-			// Original MFD shows fuel consumption, but we already show that data permanently in the status bar.
-			// Instead, show one of these screens:
-			changeSmallScreenTo(isEngineRunning() ? "instrument_small" : "gps_info");
+			changeSmallScreenTo(currentLargeScreenId === "instruments" ? "fuel_consumption" : "instrument_small");
 			break;
 	} // switch
 }
@@ -5847,7 +5854,7 @@ function handleItemChange(item, value, changed)
 			if (value === localStorage.smallScreen) break;
 			localStorage.smallScreen = value;
 
-			if (currentLargeScreenId !== "satnav_guidance") gotoSmallScreen(value);
+			gotoSmallScreen(value);
 		} // case
 		break;
 
