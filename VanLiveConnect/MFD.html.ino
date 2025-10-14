@@ -2715,6 +2715,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 		<div id="satnav_downloading_popup" style="left:445px;"
 			on_enter="satnavDownloading = true;"
+			on_exit="$('#large_panel').show(); satnavDownloading = false;"
 			class="icon notificationPopup">
 			<div class="centerAligned messagePopupArea">
 				DOWNLOAD IN PROGRESS... <span id="satnav_download_progress"></span>
