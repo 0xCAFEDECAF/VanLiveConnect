@@ -105,7 +105,7 @@ char mfd_html[] PROGMEM = R"=====(
 
 			<div id="gps_info" style="display:none;">
 
-				<div gid="satnav_gps_fix" class="iconVeryLarge led ledOff" style="left:120px; top:100px; height:160px; line-height:1;">
+				<div id="satnav_gps_fix_large" class="iconVeryLarge led ledOff" style="left:120px; top:100px; height:160px; line-height:1;">
 					<div class="centerAligned fas fa-satellite-dish"></div>
 				</div>
 
@@ -970,11 +970,11 @@ char mfd_html[] PROGMEM = R"=====(
 					<div class="centerAligned fas fa-search-location"></div>
 				</div>
 
-				<div gid="satnav_gps_fix" class="iconSmall led ledOff" style="left:560px; top:30px;">
+				<div id="satnav_gps_fix" class="iconSmall led ledOff" style="left:560px; top:30px;">
 					<div class="centerAligned fas fa-satellite-dish"></div>
 				</div>
 
-				<div id="satnav_gps_fix_lost" class="iconSmall led ledOff" style="display:block; left:655px; top:30px;">
+				<div id="satnav_gps_low_signal" class="iconSmall led ledOff" style="display:block; left:655px; top:30px;">
 					<div class="centerAligned fas fa-smog"></div>
 				</div>
 

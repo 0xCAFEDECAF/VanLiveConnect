@@ -2121,7 +2121,6 @@ var satnavServiceListSize = -1;
 var satnavLastEnteredChar = null;
 var satnavToMfdResponse;
 var satnavDestinationReachable = false;
-var satnavGpsFix = false;
 var satnavOnMap = true;
 var satnavDownloading = false;
 var satnavStatus1 = "";
@@ -4997,8 +4996,11 @@ function handleItemChange(item, value, changed)
 		break;
 
 		case "satnav_gps_fix":
+		case "satnav_gps_low_signal":
 		{
-			satnavGpsFix = value === "YES";
+			let on = $("#satnav_gps_fix").hasClass("ledOn") ||  $("#satnav_gps_low_signal").hasClass("ledOn");
+			$("#satnav_gps_fix_large").toggleClass("ledOn", on);
+			$("#satnav_gps_fix_large").toggleClass("ledOff", ! on);
 		} // case
 		break;
 

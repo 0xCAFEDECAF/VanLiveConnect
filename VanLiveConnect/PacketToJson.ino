@@ -3341,7 +3341,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
             "\"satnav_download_finished\": \"%s\",\n"
             "\"satnav_disc_recognized\": \"%s\",\n"
             "\"satnav_gps_fix\": \"%s\",\n"
-            "\"satnav_gps_fix_lost\": \"%s\",\n"
+            "\"satnav_gps_low_signal\": \"%s\",\n"
             "\"satnav_gps_scanning\": \"%s\",\n"
             "\"satnav_language\": \"%s\",\n"
             "\"satnav_gps_speed\": \"%s%s\"";
