@@ -4737,8 +4737,6 @@ function handleItemChange(item, value, changed)
 
 		case "notification_icon_on_mfd":
 		{
-			if (! changed) break;
-
 			$("#notification_icon").toggle(value !== "");
 			$("#notification_icon").removeClass(notificationIcon);
 			if (value !== "")
