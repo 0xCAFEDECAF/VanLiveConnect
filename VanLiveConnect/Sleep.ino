@@ -29,8 +29,9 @@ void WakeupCallback()
     gpio_pin_wakeup_disable();
     pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
 
-    // Seems to help in decreasing the jitter on the VAN bus bit timings
-    wifi_set_sleep_type(NONE_SLEEP_T);
+    // Seems to help in decreasing the jitter on the VAN bus bit timings. But also seems to
+    // deteriorate Wi-Fi connectivity.
+    //wifi_set_sleep_type(NONE_SLEEP_T);
 } // WakeupCallback
 
 void GoToSleep()
