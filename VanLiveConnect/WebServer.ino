@@ -116,7 +116,7 @@ void SetupStore()
         fileMd5[fileMd5Last].md5 = md5.toString();
         if (++fileMd5Last >= MAX_FILE_MD5)
         {
-            Serial.print("====> Too many files found: please increase MAX_FILE_MD5\n");
+            Serial.print(F("====> Too many files found: please increase MAX_FILE_MD5\n"));
             break;
         } // if
     } // while
@@ -176,7 +176,7 @@ bool checkETag(class AsyncWebServerRequest* request, const String& etag)
     if (etag == "") return false;
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] request->headers = %lu\n"), TimeStamp(), request->headers());
+    Serial.printf_P(PSTR("%s[webServer] request->headers = %zu\n"), TimeStamp(), request->headers());
 
     Serial.printf_P(PSTR("%s[webServer] all request headers:\n"), TimeStamp());
     for (int i = 0; i < 100; i++)
@@ -298,29 +298,29 @@ const char* getContentType(const String& path)
 // Fonts
 
 // Defined in PeugeotNewRegular.woff.woff.ino
-extern char PeugeotNewRegular_woff[];
+extern const char PeugeotNewRegular_woff[];
 extern unsigned int PeugeotNewRegular_woff_len;
 
 // Defined in fa-solid-900.woff.ino
-extern char webfonts_fa_solid_900_woff[];
+extern const char webfonts_fa_solid_900_woff[];
 extern unsigned int webfonts_fa_solid_900_woff_len;
 
 // -----
 // JavaScript files
 
-extern char jQuery_js[];  // Defined in jquery-3.5.1.min.js.ino
-extern char mfd_js[];  // Defined in MFD.js.ino
+extern const char jQuery_js[];  // Defined in jquery-3.5.1.min.js.ino
+extern const char mfd_js[];  // Defined in MFD.js.ino
 
 // -----
 // Cascading style sheet files
 
-extern char faAll_css[];  // Defined in fa-all.css.ino
-extern char carInfo_css[];  // Defined in CarInfo.css.ino
+extern const char faAll_css[];  // Defined in fa-all.css.ino
+extern const char carInfo_css[];  // Defined in CarInfo.css.ino
 
 // -----
 // HTML files
 
-extern char mfd_html[];  // Defined in MFD.html.ino
+extern const char mfd_html[];  // Defined in MFD.html.ino
 
 void HandleNotFound(class AsyncWebServerRequest* request)
 {
@@ -363,7 +363,7 @@ void HandleNotFound(class AsyncWebServerRequest* request)
             request->send(response);
 
           #ifdef DEBUG_WEBSERVER
-            Serial.printf_P(PSTR("redirected (302) to 'http://%s/MFD.html'\n"), WiFi.localIP().toString()_str());
+            Serial.printf_P(PSTR("redirected (302) to 'http://%s/MFD.html'\n"), WiFi.localIP().toString().c_str());
           #endif // DEBUG_WEBSERVER
 
             return;
@@ -412,7 +412,7 @@ void HandleLowMemory(class AsyncWebServerRequest* request)
 
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(
-        PSTR("%s[webServer] File '%s': memory low (%u bytes), responding with 429 (too many requests - try again later)\n"),
+        PSTR("%s[webServer] File '%s': memory low (%" PRIu32 " bytes), responding with 429 (too many requests - try again later)\n"),
         TimeStamp(),
         request->url().c_str(),
         system_get_free_heap_size()

@@ -1,5 +1,5 @@
 
-char carInfo_css[] PROGMEM = R"=====(
+const char carInfo_css[] PROGMEM = R"=====(
 @font-face
 {
   /* New 'Peugot' font */

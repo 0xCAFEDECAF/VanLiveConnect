@@ -11,7 +11,7 @@
 #define TOGGLE_COMMS_LED ""
 #endif // DEBUG_WEBSOCKET
 
-char mfd_js[] PROGMEM = R"=====(
+const char mfd_js[] PROGMEM = R"=====(
 
 // JavaScript functions to drive the browser-based Multi-Function Display (MFD)
 

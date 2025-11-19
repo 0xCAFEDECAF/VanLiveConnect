@@ -75,7 +75,8 @@ String EspGetResetInfo()
 void PrintSystemSpecs()
 {
     Serial.printf_P(PSTR("Reset reason: %s\n"), EspGetResetInfo().c_str());
-    Serial.printf_P(PSTR("CPU Speed: %u MHz (CPU_F_FACTOR = %d)\n"), system_get_cpu_freq(), CPU_F_FACTOR);
+    Serial.printf_P(PSTR("CPU Speed: %" PRIu32 " MHz (CPU_F_FACTOR = %ld)\n"), ESP.getCpuFreqMHz(), CPU_F_FACTOR);
+
   #if defined ARDUINO_ESP8266_RELEASE
     Serial.printf_P(PSTR("Arduino ESP8266 board package version: %s\n"), ARDUINO_ESP8266_RELEASE);
   #elif defined ARDUINO_ESP8266_DEV
@@ -90,8 +91,8 @@ void PrintSystemSpecs()
     uint32_t ideSize = ESP.getFlashChipSize();
 
     char floatBuf[MAX_FLOAT_SIZE];
-    Serial.printf_P(PSTR("Flash real size: %s MBytes\n"), FloatToStr(floatBuf, realSize/1024.0/1024.0, 2));
-    Serial.printf_P(PSTR("Flash ide size: %s MBytes\n"), FloatToStr(floatBuf, ideSize/1024.0/1024.0, 2));
+    Serial.printf_P(PSTR("Flash real size: %s MBytes\n"), FloatToStr(floatBuf, flashSizeReal/1024.0/1024.0, 2));
+    Serial.printf_P(PSTR("Flash ide size: %s MBytes\n"), FloatToStr(floatBuf, flashSizeIde/1024.0/1024.0, 2));
     Serial.printf_P(PSTR("Flash ide speed: %s MHz\n"), FloatToStr(floatBuf, ESP.getFlashChipSpeed()/1000000.0, 2));
     FlashMode_t ideMode = ESP.getFlashChipMode();
     Serial.printf_P(PSTR("Flash ide mode: %s\n"),
@@ -100,7 +101,7 @@ void PrintSystemSpecs()
         ideMode == FM_DIO ? dioStr :
         ideMode == FM_DOUT ? doutStr :
         unknownStr);
-    Serial.printf_P(PSTR("Flash chip configuration %s\n"), ideSize != realSize ? PSTR("wrong!") : PSTR("ok."));
+    Serial.printf_P(PSTR("Flash chip configuration %s\n"), flashSizeIde != flashSizeReal ? PSTR("wrong!") : PSTR("ok."));
 
     Serial.print(F("Software image MD5 checksum: "));
     Serial.print(md5Checksum);
@@ -129,7 +130,7 @@ const char* EspSystemDataToJson(char* buf, const int n)
             "\"esp_last_reset_reason\": \"%s\",\n"
             "\"esp_last_reset_info\": \"%s\",\n"
             "\"esp_boot_version\": \"%u\",\n"
-            "\"esp_cpu_speed\": \"%u MHz\",\n"
+            "\"esp_cpu_speed\": \"%" PRIu32 " MHz\",\n"
             "\"esp_sdk_version\": \"%s\",\n"
             "\"esp_chip_id\": \"0x%08X\",\n"
 
@@ -144,7 +145,7 @@ const char* EspSystemDataToJson(char* buf, const int n)
             "\"esp_ip_address\": \"%s\",\n"
             "\"esp_wifi_rssi\": \"%d dB\",\n"
 
-            "\"esp_free_ram\": \"%u bytes\",\n"
+            "\"esp_free_ram\": \"%" PRIu32 " bytes\",\n"
 
             "\"img_md5_checksum\": \"%s\",\n"
             "\"img_compile_date\": \"%s\"\n"

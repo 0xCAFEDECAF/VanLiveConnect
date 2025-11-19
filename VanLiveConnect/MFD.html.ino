@@ -11,7 +11,7 @@
 #define COMMS_LED ""
 #endif // DEBUG_WEBSOCKET
 
-char mfd_html[] PROGMEM = R"=====(
+const char mfd_html[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html lang="en">
 	<head>

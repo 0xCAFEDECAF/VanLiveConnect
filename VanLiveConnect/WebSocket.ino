@@ -511,7 +511,7 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
         if (SetTime(epoch, msec))
         {
             Serial.printf_P(
-                PSTR("==> Current date-time received from WebSocket client %lu: %04d-%02d-%02d %02d:%02d:%02d.%03u UTC\n"),
+                PSTR("==> Current date-time received from WebSocket client %lu: %04d-%02d-%02d %02d:%02d:%02d.%03" PRIu32 " UTC\n"),
                 id, year(epoch), month(epoch), day(epoch), hour(epoch), minute(epoch), second(epoch), msec
             );
         } // if
@@ -608,7 +608,7 @@ void WebSocketEvent(
 
           #ifdef DEBUG_WEBSOCKET
             Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
-            Serial.printf_P(PSTR("%s[webSocket %lu] Free RAM: %u\n"),
+            Serial.printf_P(PSTR("%s[webSocket %" PRIu32 "] Free RAM: %" PRIu32 "\n"),
                 TimeStamp(),
                 id,
                 system_get_free_heap_size());
@@ -826,7 +826,7 @@ void LoopWebSocket()
 
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket] %zu client%s currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%u\n"),
+            PSTR("%s[webSocket] %zu client%s currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%" PRIu32 "\n"),
             TimeStamp(), webSocket.count(),
             webSocket.count() == 1 ? PSTR(" is") : PSTR("s are"),
             countQueuedJsons(), websocketId_1, websocketId_2,
