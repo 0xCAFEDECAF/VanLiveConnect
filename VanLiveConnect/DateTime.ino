@@ -16,7 +16,7 @@ inline boolean IsTimeValid(time_t t)
     return (t >= 1451606400);  // 2016-01-01 0:00:00
 } // IsTimeValid 
 
-char _dt[20];
+static char _dt[30] = {0};
 const char* DateTime(time_t t, boolean full)
 {
     if (! IsTimeValid(t))
@@ -28,7 +28,7 @@ const char* DateTime(time_t t, boolean full)
         m = m % 3600;
         unsigned long minutes = m / 60;
         unsigned long seconds = m % 60;
-        sprintf_P(_dt, PSTR("%02d:%02d:%02d"), hours, minutes, seconds);
+        sprintf_P(_dt, PSTR("%02d:%02d:%02d\0"), hours, minutes, seconds);
 
         // Replace leading '00' by '--' to indicate this is not real time of day
         if (_dt[0] == '0' && _dt[1] == '0')
@@ -46,13 +46,13 @@ const char* DateTime(time_t t, boolean full)
         if (t >= previousMidnight(n) && t < nextMidnight(n))
         {
             // Today
-            sprintf_P(_dt, PSTR("%02d:%02d:%02d"), hour(t), minute(t), second(t));
+            sprintf_P(_dt, PSTR("%02d:%02d:%02d\0"), hour(t), minute(t), second(t));
             return _dt;
         }
     } // if
 
     // Other day, or 'full' format requested
-    sprintf_P(_dt, PSTR("%04d-%02d-%02d %02d:%02d:%02d"), year(t), month(t), day(t), hour(t), minute(t), second(t));
+    sprintf_P(_dt, PSTR("%04d-%02d-%02d %02d:%02d:%02d\0"), year(t), month(t), day(t), hour(t), minute(t), second(t));
 
     return _dt;
 } // DateTime
@@ -81,7 +81,7 @@ bool SetTime(uint32_t epoch, uint32_t msec)
     return true;
 } // SetTime
 
-char _ts[sizeof(_dt) + 7];
+static char _ts[sizeof(_dt) + 7] = {0};
 const char* TimeStamp()
 {
     time_t t = now();
@@ -95,7 +95,7 @@ const char* TimeStamp()
         msec -= 1000;
     } // if
 
-    sprintf_P(_ts, "[%s.%03lu] ", DateTime(t), msec);
+    sprintf(_ts, "[%s.%03lu] \0", DateTime(t), msec);
     return _ts;
 } // TimeStamp
 

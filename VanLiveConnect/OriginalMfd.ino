@@ -468,8 +468,8 @@ void UpdateLargeScreenForHeadUnitOn()
     } // if
 
   #ifdef DEBUG_ORIGINAL_MFD
-    char popupDurationStr[20];
-    sprintf_P(popupDurationStr, PSTR(" (%lu msec)"), popupDuration);
+    static char popupDurationStr[20] = {0};
+    sprintf_P(popupDurationStr, PSTR(" (%lu msec)\0"), popupDuration);
     Serial.printf_P(
         PSTR("[originalMfd] Head unit powered on; NotificationPopupShowing = %s%s; largeScreen := %s\n"),
         IsNotificationPopupShowing() ? yesStr : noStr,

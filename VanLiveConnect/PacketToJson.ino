@@ -201,9 +201,9 @@ float ToGallons(float litres)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(uint8_t data)
 {
-    #define MAX_UINT8_STR_SIZE 4
+    #define MAX_UINT8_STR_SIZE 8
     static char buffer[MAX_UINT8_STR_SIZE];
-    sprintf_P(buffer, PSTR("%u"), data);
+    sprintf(buffer, "%u\0", data);
 
     return buffer;
 } // ToStr
@@ -211,9 +211,9 @@ char* ToStr(uint8_t data)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(uint16_t data)
 {
-    #define MAX_UINT16_STR_SIZE 6
+    #define MAX_UINT16_STR_SIZE 8
     static char buffer[MAX_UINT16_STR_SIZE];
-    sprintf_P(buffer, PSTR("%u"), data);
+    sprintf(buffer, "%u\0", data);
 
     return buffer;
 } // ToStr
@@ -221,9 +221,9 @@ char* ToStr(uint16_t data)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToStr(int16_t data)
 {
-    #define MAX_INT16_STR_SIZE 7
+    #define MAX_INT16_STR_SIZE 8
     static char buffer[MAX_INT16_STR_SIZE];
-    sprintf_P(buffer, PSTR("%d"), data);
+    sprintf(buffer, "%d\0", data);
 
     return buffer;
 } // ToStr
@@ -231,9 +231,9 @@ char* ToStr(int16_t data)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToBcdStr(uint8_t data)
 {
-    #define MAX_UINT8_BCD_STR_SIZE 3
+    #define MAX_UINT8_BCD_STR_SIZE 8
     static char buffer[MAX_UINT8_BCD_STR_SIZE];
-    sprintf_P(buffer, PSTR("%X"), data);
+    sprintf(buffer, "%X\0", data);
 
     return buffer;
 } // ToBcdStr
@@ -241,9 +241,9 @@ char* ToBcdStr(uint8_t data)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToHexStr(uint8_t data)
 {
-    #define MAX_UINT8_HEX_STR_SIZE 5
+    #define MAX_UINT8_HEX_STR_SIZE 8
     static char buffer[MAX_UINT8_HEX_STR_SIZE];
-    sprintf_P(buffer, PSTR("0x%02X"), data);
+    sprintf(buffer, "0x%02X\0", data);
 
     return buffer;
 } // ToHexStr
@@ -251,9 +251,9 @@ char* ToHexStr(uint8_t data)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToHexStr(uint8_t data1, uint8_t data2)
 {
-    #define MAX_2_UINT8_HEX_STR_SIZE 10
+    #define MAX_2_UINT8_HEX_STR_SIZE 12
     static char buffer[MAX_2_UINT8_HEX_STR_SIZE];
-    sprintf_P(buffer, PSTR("0x%02X-0x%02X"), data1, data2);
+    sprintf_P(buffer, PSTR("0x%02X-0x%02X\0"), data1, data2);
 
     return buffer;
 } // ToHexStr
@@ -261,9 +261,9 @@ char* ToHexStr(uint8_t data1, uint8_t data2)
 // Uses statically allocated buffer, so don't call twice within the same printf invocation
 char* ToHexStr(uint16_t data)
 {
-    #define MAX_UINT16_HEX_STR_SIZE 7
+    #define MAX_UINT16_HEX_STR_SIZE 8
     static char buffer[MAX_UINT16_HEX_STR_SIZE];
-    sprintf_P(buffer, PSTR("0x%04X"), data);
+    sprintf(buffer, "0x%04X\0", data);
 
     return buffer;
 } // ToHexStr
@@ -696,8 +696,8 @@ void GuidanceInstructionIconJson(const char* iconName, const uint8_t data[8], ch
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR("%s\"%u_%u\": \"%s\""),
                 legBit == 1 ? emptyStr : PSTR(",\n"),
-                degrees10 / 10,
-                degrees10 % 10,
+                degrees10 / 10U,
+                degrees10 % 10U,
                 legBits & (1 << legBit) ? onStr : offStr
             );
     } // for
@@ -2028,9 +2028,9 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
             // data[2]: radio band and preset position
             uint8_t band = data[2] & 0x07;
-            uint8_t presetMemory = data[2] >> 3 & 0x0F;
-            char presetMemoryBuffer[3];
-            sprintf_P(presetMemoryBuffer, PSTR("%1u"), presetMemory);
+            uint16_t presetMemory = data[2] >> 3 & 0x000F;
+            static char presetMemoryBuffer[8] = {0};
+            sprintf(presetMemoryBuffer, "%1u\0", presetMemory);
 
             // data[3]: search bits
             bool dxSensitivity = data[3] & 0x02;  // Tuner sensitivity: distant (Dx) or local (Lo)
@@ -2085,8 +2085,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
             // & 0x0F = signal strength: increases with antenna plugged in and decreases with antenna plugged
             //          out. Updated when a station is being tuned in to, or when the MAN button is pressed.
             uint8_t signalStrength = data[6] & 0x0F;
-            char signalStrengthBuffer[3];
-            sprintf_P(signalStrengthBuffer, PSTR("%u"), signalStrength);
 
             const static char jsonFormatterCommon[] PROGMEM =
             "{\n"
@@ -2144,7 +2142,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 // Also applicable in AM mode
                 signalStrength == 15 && (searchMode == TS_BY_FREQUENCY || searchMode == TS_BY_MATCHING_PTY)
                     ? notApplicable2Str
-                    : signalStrengthBuffer,
+                    : String(signalStrength).c_str(),
 
                 TunerSearchModeStr(searchMode),
                 searchMode == TS_MANUAL ? onStr : offStr,
@@ -2183,8 +2181,8 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 uint16_t piCode = (uint16_t)data[8] << 8 | data[9];
                 uint8_t countryCode = piCode >> 12 & 0x0F;
                 uint8_t coverageCode = piCode >> 8 & 0x0F;
-                char piBuffer[5];
-                sprintf_P(piBuffer, PSTR("%04X"), piCode);
+                static char piBuffer[8] = {0};
+                sprintf(piBuffer, "%04X\0", piCode);
 
                 // data[10]: for PTY-based search mode
                 // & 0x1F: PTY code to search
@@ -2342,8 +2340,8 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
             if (dataLen != 19) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
-            char trackTimeStr[7];
-            sprintf_P(trackTimeStr, PSTR("%X:%02X"), data[5], data[6]);
+            static char trackTimeStr[8] = {0};
+            sprintf(trackTimeStr, "%X:%02X\0", data[5], data[6]);
 
             static bool loading = false;
             bool searching = data[3] & 0x10;
@@ -2354,14 +2352,14 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
             uint8_t totalTracks = data[8];
             bool totalTracksValid = totalTracks != 0xFF;
-            char totalTracksStr[3];
-            if (totalTracksValid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
+            static char totalTracksStr[8] = {0};
+            if (totalTracksValid) sprintf(totalTracksStr, "%X\0", totalTracks);
 
-            char totalTimeStr[7];
+            static char totalTimeStr[8] = {0};
             uint8_t totalTimeMin = data[9];
             uint8_t totalTimeSec = data[10];
             bool totalTimeValid = totalTimeMin != 0xFF && totalTimeSec != 0xFF;
-            if (totalTimeValid) sprintf_P(totalTimeStr, PSTR("%X:%02X"), totalTimeMin, totalTimeSec);
+            if (totalTimeValid) sprintf(totalTimeStr, "%X:%02X\0", totalTimeMin, totalTimeSec);
 
             const static char jsonFormatter[] PROGMEM =
             "{\n"
@@ -2999,13 +2997,13 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
     uint8_t trackTimeMin = data[4];
     uint8_t trackTimeSec = data[5];
     bool trackTimeValid = trackTimeMin != 0xFF && trackTimeSec != 0xFF;
-    char trackTimeStr[7];
-    if (trackTimeValid) sprintf_P(trackTimeStr, PSTR("%X:%02X"), trackTimeMin, trackTimeSec);
+    static char trackTimeStr[8] = {0};
+    if (trackTimeValid) sprintf(trackTimeStr, "%X:%02X\0", trackTimeMin, trackTimeSec);
 
     uint8_t totalTracks = data[8];
     bool totalTracksValid = totalTracks != 0xFF;
-    char totalTracksStr[3];
-    if (totalTracksValid) sprintf_P(totalTracksStr, PSTR("%X"), totalTracks);
+    static char totalTracksStr[8] = {0};
+    if (totalTracksValid) sprintf(totalTracksStr, "%X\0", totalTracks);
 
     uint8_t currentTrack = data[6];
     uint8_t currentDisc = data[7];
@@ -4708,8 +4706,8 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     if (data[3] != 0x00)
     {
-        char buffer[2];
-        sprintf_P(buffer, PSTR("%c"), data[3]);
+        static char buffer[8] = {0};
+        sprintf(buffer, "%c\0", data[3]);
 
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR
