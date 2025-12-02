@@ -1,7 +1,11 @@
 #ifndef Config_h
 #define Config_h
 
-#include <ESP8266WiFi.h>
+#ifdef ARDUINO_ARCH_ESP32
+  #include <WiFi.h>
+#else
+  #include <ESP8266WiFi.h>
+#endif // ARDUINO_ARCH_ESP32
 
 // -----
 // Wi-Fi and IP configuration
@@ -115,7 +119,12 @@
 //   the ESP to become completely unresponsive (caused by ground loop??). Instead, just disconnect the +12V line
 //   to simulate a power-off event.
 //
-#define LIGHT_SLEEP_WAKE_PIN D1
+#ifdef ARDUINO_ARCH_ESP32
+  // Only GPIOs which are have RTC functionality can be used: 0,2,4,12-15,25-27,32-39.
+  #define LIGHT_SLEEP_WAKE_PIN GPIO_NUM_13
+#else
+  #define LIGHT_SLEEP_WAKE_PIN D1
+#endif // ARDUINO_ARCH_ESP32
 
 // -----
 // Web server
@@ -202,9 +211,9 @@
 #endif
 
 // -----
-// Define to use "ESP Async WebServer library fork by ESP32Async" instead of (default) "ESPAsyncWebSrv library
-// by me-no-dev, fork by dvarrel". To use the fork by ESP32Async, uncomment this line.
-//#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
+// Define to use "ESP Async WebServer library fork by ESP32Async" (default) instead of "ESPAsyncWebSrv library
+// by me-no-dev, fork by dvarrel". To use the fork by dvarrel, comment out this line.
+#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
 
 // -----
 // Define to disable (gray-out) the navigation menu while driving.
@@ -232,14 +241,20 @@
 #ifdef IR_TSOP48XX
 
   // IR receiver data pin
-  #define IR_RECV_PIN D5
+  #ifdef ARDUINO_ARCH_ESP32
+    #define IR_RECV_PIN GPIO_NUM_18
+    #define IR_VCC GPIO_NUM_23
+    #define IR_GND GPIO_NUM_19
+  #else
+    #define IR_RECV_PIN D5
 
-  // Using D7 as VCC and D6 as ground pin for the IR receiver. Should be possible with e.g. the
-  // TSOP4838 IR receiver as it typically uses only 0.7 mA (maximum GPIO current is 12 mA;
-  // see https://tttapa.github.io/ESP8266/Chap04%20-%20Microcontroller.html for ESP8266 and
-  // https://esp32.com/viewtopic.php?f=2&t=2027 for ESP32).
-  #define IR_VCC D7
-  #define IR_GND D6
+    // Using D7 as VCC and D6 as ground pin for the IR receiver. Should be possible with e.g. the
+    // TSOP4838 IR receiver as it typically uses only 0.7 mA (maximum GPIO current is 12 mA;
+    // see https://tttapa.github.io/ESP8266/Chap04%20-%20Microcontroller.html for ESP8266 and
+    // https://esp32.com/viewtopic.php?f=2&t=2027 for ESP32).
+    #define IR_VCC D7
+    #define IR_GND D6
+  #endif // ARDUINO_ARCH_ESP32
 
 #endif // IR_TSOP48XX
 
@@ -247,21 +262,37 @@
 #ifdef IR_TSOP312XX
 
   // IR receiver data pin
-  #define IR_RECV_PIN D7
+  #ifdef ARDUINO_ARCH_ESP32
+    #define IR_RECV_PIN GPIO_NUM_23
+    #define IR_VCC GPIO_NUM_18
+    #define IR_GND GPIO_NUM_26
+  #else
+    // Using D5 as VCC and D0 as ground pin for the IR receiver. Should be possible with e.g. the
+    // TSOP31238 IR receiver as it typically uses only 0.35 mA.
+    #define IR_VCC D5
+    #define IR_GND D0
 
-  // Using D5 as VCC and D0 as ground pin for the IR receiver. Should be possible with e.g. the
-  // TSOP31238 IR receiver as it typically uses only 0.35 mA.
-  #define IR_VCC D5
-  #define IR_GND D0
+    #define IR_RECV_PIN D7
+  #endif // ARDUINO_ARCH_ESP32
 
 #endif // IR_TSOP312XX
 
 #ifdef ON_DESK_MFD_ESP_MAC
 
   // Used only by test setup on desk
-  #define TEST_IR_RECV_PIN D7
-  #define TEST_IR_VCC_TEST D5
-  #define TEST_IR_GND D0
+  #ifdef ARDUINO_ARCH_ESP32
+    #define TEST_IR_RECV_PIN GPIO_NUM_23
+    #define TEST_IR_VCC_TEST GPIO_NUM_18
+    #define TEST_IR_GND GPIO_NUM_26 // TODO - also VanBus ANALYSER_PIN
+  #else
+    #define TEST_IR_RECV_PIN D7
+    #define TEST_IR_VCC_TEST D5
+    #define TEST_IR_GND D0
+  #endif // ARDUINO_ARCH_ESP32
+
+  #ifdef ARDUINO_ARCH_ESP32
+  #else
+  #endif // ARDUINO_ARCH_ESP32
 
 #endif // ON_DESK_MFD_ESP_MAC
 

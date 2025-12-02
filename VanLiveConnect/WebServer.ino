@@ -8,7 +8,11 @@
 #ifdef SERVE_FROM_LITTLEFS
   #include <LittleFS.h>
   #define SPIFFS LittleFS
-#endif
+#else
+  #ifdef ARDUINO_ARCH_ESP32
+    #include <SPIFFS.h>
+  #endif // ARDUINO_ARCH_ESP32
+#endif // SERVE_FROM_LITTLEFS
 
 // Use the following #defines to define which type of web documents will be served from the
 // flash file system (SPIFFS or LittleFS)
@@ -79,31 +83,53 @@ void SetupStore()
     } // if
 
     // Print file system size
+    char b[MAX_FLOAT_SIZE];
+  #ifdef ARDUINO_ARCH_ESP32
+    Serial.printf_P(PSTR(" OK, total %s MByes\n"), FloatToStr(b, SPIFFS.totalBytes() / 1024.0 / 1024.0, 2));
+  #else
     FSInfo fs_info;
     SPIFFS.info(fs_info);
-    char b[MAX_FLOAT_SIZE];
     Serial.printf_P(PSTR(" OK, total %s MByes\n"), FloatToStr(b, fs_info.totalBytes / 1024.0 / 1024.0, 2));
+  #endif // ARDUINO_ARCH_ESP32
 
     // Print the contents of the root directory
+  #ifdef ARDUINO_ARCH_ESP32
+    File dir = SPIFFS.open("/");
+  #else
     Dir dir = SPIFFS.openDir("/");
-    while (dir.next())
+  #endif // ARDUINO_ARCH_ESP32
+
+#ifdef ARDUINO_ARCH_ESP32
+    File entry = dir.openNextFile();
+    while(entry)
     {
+#else
+    while(dir.next())
+    {
+        fs::File entry = dir.openFile("r");
+#endif // ARDUINO_ARCH_ESP32
+
       #ifdef SERVE_FROM_LITTLEFS
-        String fileName = "/" + dir.fileName();
+        String fileName = String("/") + entry.name();
       #else
-        String fileName = dir.fileName();
+        String fileName = entry.name();
       #endif // SERVE_FROM_LITTLEFS
 
         // Create a table with the MD5 hash value of each file
         // Inspired by https://github.com/esp8266/Arduino/issues/3003
-        File file = SPIFFS.open(fileName, "r");
-        size_t fileSize = file.size();
+
+        size_t fileSize = entry.size();
         MD5Builder md5;
         md5.begin();
-        md5.addStream(file, fileSize);
+        md5.addStream(entry, fileSize);
         md5.calculate();
         md5.toString();
-        file.close();
+
+      #ifdef ARDUINO_ARCH_ESP32
+        entry = dir.openNextFile();
+      #else
+        entry.close();
+      #endif // ARDUINO_ARCH_ESP32
 
         Serial.printf_P(
             PSTR("FS File: '%s', size: %s, MD5: %s\n"),
@@ -120,6 +146,10 @@ void SetupStore()
             break;
         } // if
     } // while
+
+  #ifdef ARDUINO_ARCH_ESP32
+    dir.close();
+  #endif
 
     VanBusRx.Enable();
 } // SetupStore
@@ -394,7 +424,11 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 
 void HandleLowMemory(class AsyncWebServerRequest* request)
 {
+  #ifdef ESP8266
     AsyncWebServerResponse* response = request->beginResponse_P(429, F("text/html"),
+  #else
+    AsyncWebServerResponse* response = request->beginResponse(429, F("text/html"),
+  #endif // ESP8266
     PSTR(
         "<html>"
         "  <head>"
@@ -434,7 +468,11 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
     unsigned long start = millis();
   #endif // DEBUG_WEBSERVER
 
+  #ifdef ESP8266
     request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
+  #else
+    request->send(200, fontWoffStr, (const uint8_t*)content, content_len);
+  #endif // ESP8266
 
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] Serving font '%s' took: %lu msec\n"),
@@ -501,7 +539,11 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
         if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
 
         // Serve the complete document
+      #ifdef ESP8266
         AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
+      #else
+        AsyncWebServerResponse* response = request->beginResponse(200, mimeType, (const uint8_t *)content, strlen(content));
+      #endif // ESP8266
         response->addHeader("ETag", String("\"") + md5Checksum + "\"");
 
         // Tells the client that it can cache the asset, but it cannot use the cached asset without
@@ -512,11 +554,12 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] %s '%s' took: %lu msec\n"),
+    Serial.printf_P(PSTR("%s[webServer] %s '%s' took: %lu msec, content length=%d\n"),
         TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         request->url().c_str(),
-        millis() - start);
+        millis() - start,
+        strlen(content));
   #endif // DEBUG_WEBSERVER
 } // ServeDocument
 

@@ -1,6 +1,11 @@
 
 // ESP system data
 
+#ifdef ARDUINO_ARCH_ESP32
+  #include "esp_system.h"
+  #include "lwip/init.h"
+#endif // ARDUINO_ARCH_ESP32
+
 #ifdef PRINT_JSON_BUFFERS_ON_SERIAL
 // Defined in PacketToJson.ino
 void PrintJsonText(const char* jsonBuffer);
@@ -14,14 +19,37 @@ const char PROGMEM unknownStr[] = "UNKNOWN";
 
 const String md5Checksum = ESP.getSketchMD5();
 
+#ifndef ARDUINO_ARCH_ESP32
 const uint32_t flashChipId = ESP.getFlashChipId();
 const uint32_t flashSizeReal = ESP.getFlashChipRealSize();
+#endif // ARDUINO_ARCH_ESP32
 const uint32_t flashSizeIde = ESP.getFlashChipSize();
 const FlashMode_t flashModeIde = ESP.getFlashChipMode();
 const uint32_t flashChipSpeed = ESP.getFlashChipSpeed();
 
 const char PROGMEM compileDate[] = __DATE__ ", " __TIME__;
 
+#ifdef ARDUINO_ARCH_ESP32
+const char* ResetReasonStr(esp_reset_reason_t r)
+{
+  switch (r)
+  {
+    case ESP_RST_UNKNOWN:   return "Unknown";
+    case ESP_RST_POWERON:   return "PowerOn";    //Power on or RST pin toggled
+    case ESP_RST_EXT:       return "ExtPin";     //External pin - not applicable for ESP32
+    case ESP_RST_SW:        return "Reboot";     //esp_restart()
+    case ESP_RST_PANIC:     return "Crash";      //Exception/panic
+    case ESP_RST_INT_WDT:   return "WDT_Int";    //Interrupt watchdog (software or hardware)
+    case ESP_RST_TASK_WDT:  return "WDT_Task";   //Task watchdog
+    case ESP_RST_WDT:       return "WDT_Other";  //Other watchdog
+    case ESP_RST_DEEPSLEEP: return "Sleep";      //Reset after exiting deep sleep mode
+    case ESP_RST_BROWNOUT:  return "BrownOut";   //Brownout reset (software or hardware)
+    case ESP_RST_SDIO:      return "SDIO";       //Reset over SDIO
+    default:                return "Unknown";
+  } // switch
+} // ResetReasonStr
+
+#else
 String EspGetResetInfo()
 {
     struct rst_info* espResetInfo = ESP.getResetInfoPtr();
@@ -71,27 +99,36 @@ String EspGetResetInfo()
 
     return String(buf);
 } // EspGetResetInfo
+#endif // ARDUINO_ARCH_ESP32
 
 void PrintSystemSpecs()
 {
+  #ifdef ARDUINO_ARCH_ESP32
+    Serial.printf_P(PSTR("Reset reason: %s\n"), ResetReasonStr(esp_reset_reason()));
+    Serial.printf_P(PSTR("CPU Speed: %" PRIu32 " MHz (CPU_F_FACTOR = %ld)\n"), ESP.getCpuFreqMHz(), CPU_F_FACTOR);
+    Serial.printf_P(PSTR("Arduino ESP32 chip model: %s\n"), CONFIG_IDF_TARGET);
+    Serial.printf_P(PSTR("Arduino ESP32 board package version: %s\n"), ESP_ARDUINO_VERSION_STR);
+
+  #else // ! ARDUINO_ARCH_ESP32
     Serial.printf_P(PSTR("Reset reason: %s\n"), EspGetResetInfo().c_str());
     Serial.printf_P(PSTR("CPU Speed: %" PRIu32 " MHz (CPU_F_FACTOR = %ld)\n"), ESP.getCpuFreqMHz(), CPU_F_FACTOR);
 
-  #if defined ARDUINO_ESP8266_RELEASE
+   #if defined ARDUINO_ESP8266_RELEASE
     Serial.printf_P(PSTR("Arduino ESP8266 board package version: %s\n"), ARDUINO_ESP8266_RELEASE);
-  #elif defined ARDUINO_ESP8266_DEV
+   #elif defined ARDUINO_ESP8266_DEV
     Serial.printf_P(PSTR("Arduino ESP8266 board package version: DEV\n"));
-  #else
+   #else
     Serial.printf_P(PSTR("Arduino ESP8266 board package version: UNKNOWN\n"));
-  #endif
-    Serial.printf_P(PSTR("\"NONOS\" SDK version: %s\n"), system_get_sdk_version());
+   #endif
+
+  #endif // ARDUINO_ARCH_ESP32
+    Serial.printf_P(PSTR("\"NONOS\" SDK version: %s\n"), ESP.getSdkVersion());
     Serial.printf_P(PSTR("lwIP (lightweight IP) version: %s\n"), LWIP_VERSION_STRING);
 
-    uint32_t realSize = ESP.getFlashChipRealSize();
-    uint32_t ideSize = ESP.getFlashChipSize();
-
     char floatBuf[MAX_FLOAT_SIZE];
+  #ifndef ARDUINO_ARCH_ESP32
     Serial.printf_P(PSTR("Flash real size: %s MBytes\n"), FloatToStr(floatBuf, flashSizeReal/1024.0/1024.0, 2));
+  #endif // ARDUINO_ARCH_ESP32
     Serial.printf_P(PSTR("Flash ide size: %s MBytes\n"), FloatToStr(floatBuf, flashSizeIde/1024.0/1024.0, 2));
     Serial.printf_P(PSTR("Flash ide speed: %s MHz\n"), FloatToStr(floatBuf, ESP.getFlashChipSpeed()/1000000.0, 2));
     FlashMode_t ideMode = ESP.getFlashChipMode();
@@ -101,7 +138,9 @@ void PrintSystemSpecs()
         ideMode == FM_DIO ? dioStr :
         ideMode == FM_DOUT ? doutStr :
         unknownStr);
+  #ifndef ARDUINO_ARCH_ESP32
     Serial.printf_P(PSTR("Flash chip configuration %s\n"), flashSizeIde != flashSizeReal ? PSTR("wrong!") : PSTR("ok."));
+  #endif // ARDUINO_ARCH_ESP32
 
     Serial.print(F("Software image MD5 checksum: "));
     Serial.print(md5Checksum);
@@ -128,14 +167,19 @@ const char* EspSystemDataToJson(char* buf, const int n)
         "\"data\":\n"
         "{\n"
             "\"esp_last_reset_reason\": \"%s\",\n"
+          #ifndef ARDUINO_ARCH_ESP32
             "\"esp_last_reset_info\": \"%s\",\n"
             "\"esp_boot_version\": \"%u\",\n"
+          #endif // ARDUINO_ARCH_ESP32
             "\"esp_cpu_speed\": \"%" PRIu32 " MHz\",\n"
             "\"esp_sdk_version\": \"%s\",\n"
+          #ifdef ARDUINO_ARCH_ESP32
+            "\"esp_chip_id\": \"0x%016" PRIX64 "\",\n"
+          #else
             "\"esp_chip_id\": \"0x%08X\",\n"
-
             "\"esp_flash_id\": \"0x%08X\",\n"
             "\"esp_flash_size_real\": \"%s MBytes\",\n"
+          #endif // ARDUINO_ARCH_ESP32
             "\"esp_flash_size_ide\": \"%s MBytes\",\n"
             "\"esp_flash_speed_ide\": \"%s MHz\",\n"
 
@@ -155,16 +199,26 @@ const char* EspSystemDataToJson(char* buf, const int n)
     char floatBuf[3][MAX_FLOAT_SIZE];
     int at = snprintf_P(buf, n, jsonFormatter,
 
+      #ifdef ARDUINO_ARCH_ESP32
+        ResetReasonStr(esp_reset_reason()),
+      #else
         ESP.getResetReason().c_str(),
-        EspGetResetInfo().c_str(),
+      #endif // ARDUINO_ARCH_ESP32
 
+      #ifndef ARDUINO_ARCH_ESP32
+        EspGetResetInfo().c_str(),
         ESP.getBootVersion(),
+      #endif // ARDUINO_ARCH_ESP32
+
         ESP.getCpuFreqMHz(), // system_get_cpu_freq(),
         ESP.getSdkVersion(),
+      #ifdef ARDUINO_ARCH_ESP32
+        ESP.getEfuseMac(),
+      #else
         ESP.getChipId(),
-
         flashChipId,
         FloatToStr(floatBuf[0], flashSizeReal/1024.0/1024.0, 2),
+      #endif // ARDUINO_ARCH_ESP32
         FloatToStr(floatBuf[1], flashSizeIde/1024.0/1024.0, 2),
         FloatToStr(floatBuf[2], flashChipSpeed/1000000.0, 2),
 

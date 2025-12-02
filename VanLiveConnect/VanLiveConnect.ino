@@ -10,6 +10,8 @@
  * Documentation, details: see the 'README.md' file.
  */
 
+#include <Arduino.h>
+
 #include "Config.h"
 #include "VanIden.h"
 #include "VanLiveConnectVersion.h"
@@ -43,6 +45,15 @@ char dummy_var_to_use_cppXX[] PROGMEM = R"==(")==";
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
+
+#ifdef ARDUINO_ARCH_ESP32
+  #define system_get_free_heap_size esp_get_free_heap_size
+  #define LED_ON HIGH
+  #define LED_OFF LOW
+#else
+  #define LED_ON LOW
+  #define LED_OFF HIGH
+#endif // ARDUINO_ARCH_ESP32
 
 // Defined in Sleep.ino
 extern unsigned long lastActivityAt;
@@ -157,8 +168,13 @@ void SetupVanReceiver()
     VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsVeryImportantPacket);
   #endif
 
-    #define TX_PIN D3  // GPIO pin connected to VAN bus transceiver input
-    #define RX_PIN D2  // GPIO pin connected to VAN bus transceiver output
+  #ifdef ARDUINO_ARCH_ESP32
+    const int TX_PIN = GPIO_NUM_16; // GPIO pin connected to VAN bus transceiver input
+    const int RX_PIN = GPIO_NUM_21; // GPIO pin connected to VAN bus transceiver output
+  #else // ! ARDUINO_ARCH_ESP32
+    const int TX_PIN = D3; // GPIO pin connected to VAN bus transceiver input
+    const int RX_PIN = D2; // GPIO pin connected to VAN bus transceiver output
+  #endif // ARDUINO_ARCH_ESP32
 
     Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%u)\n"), XSTR(RX_PIN), RX_PIN);
 
@@ -287,10 +303,17 @@ void PrintDebugDefines()
 // After a few minutes of VAN bus inactivity, go to sleep to save power
 long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
 
+#ifdef ARDUINO_ARCH_ESP32
+// This sets Arduino Stack Size - comment this line to use default 8K stack size
+SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
+#endif // ARDUINO_ARCH_ESP32
+
 void setup()
 {
+  #ifdef LED_BUILTIN
     pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+    digitalWrite(LED_BUILTIN, LED_OFF);
+  #endif
 
     SetupSleep();
 
@@ -304,6 +327,7 @@ void setup()
     Serial.printf_P(PSTR("\nStarting VAN bus \"Live Connect\" server version %s\n"), VAN_LIVE_CONNECT_VERSION);
 
     PrintDebugDefines();
+    const char* wifiSsid = SetupWifi();
     PrintSystemSpecs();
 
     Serial.print(F("Initializing EEPROM\n"));
@@ -320,8 +344,6 @@ void setup()
   #ifdef WIFI_AP_MODE
     apIP.fromString(IP_ADDR);
   #endif // WIFI_AP_MODE
-
-    const char* wifiSsid = SetupWifi();
 
   #ifdef WIFI_AP_MODE
     // If DNSServer is started with "*" for domain name, it will reply with provided IP to all DNS request
@@ -409,6 +431,10 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
+      #ifdef LED_BUILTIN
+        digitalWrite(LED_BUILTIN, LED_ON);
+      #endif
+
         lastActivityAt = millis();
 
       #if VAN_BUS_VERSION_INT >= 000003001 && VAN_BUS_VERSION_INT < 000003003
@@ -437,6 +463,9 @@ void loop()
       #endif // VAN_RX_IFS_DEBUGGING
 
         SendJsonOnWebSocket(ParseVanPacketToJson(pkt), IsImportantPacket(pkt));
+      #ifdef LED_BUILTIN
+        digitalWrite(LED_BUILTIN, LED_OFF);
+      #endif
     }
 
     if (isQueueOverrun)

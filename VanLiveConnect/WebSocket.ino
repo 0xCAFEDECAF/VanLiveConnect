@@ -67,10 +67,7 @@ bool TryToSendJsonOnWebSocket(uint32_t id, const char* json)
     // AsyncWebSocket class
     if (! webSocket.availableForWrite(id)) return false;
 
-    digitalWrite(LED_BUILTIN, LOW);  // Turn the LED on
-
     webSocket.text(id, json);
-    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
 
     IPAddress clientIp = webSocket.client(id)->remoteIP();
     lastWebSocketCommunication[clientIp] = millis();

@@ -277,16 +277,10 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Tested with versions
   0.2.4 and higher. Best to use [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
-* [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
-  version 1.2.4 .
-* [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
-  version 1.2.6, 1.2.7 and 1.2.9 . Skip version 1.2.8: it does not compile on the ESP8266.
-
-As an alternative to the just listed "ESPAsyncWebSrv" library, you can also use:
-
-* [ESP Async WebServer library fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
-  Tested with version 3.8.0 . To use this library, uncomment the line `//#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC`
-  in the [`Config.h`](VanLiveConnect/Config.h#L207) file.
+* ["ESP Async TCP" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncTCP) - Tested with
+  version 2.0.0 .
+* ["ESP Async WebServer" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
+  Tested with version 3.8.0, 3.9.0 and 3.9.2 .
 
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and

@@ -1,5 +1,10 @@
 
-#include <ESP8266WiFi.h>
+#ifdef ARDUINO_ARCH_ESP32
+  #include <WiFi.h>
+  #include <esp_wifi.h>
+#else
+  #include <ESP8266WiFi.h>
+#endif // ARDUINO_ARCH_ESP32
 
 #include "Config.h"
 
@@ -20,15 +25,44 @@ String macToString(const unsigned char* mac)
   return String(buf);
 } // macToString
 
+#ifdef ARDUINO_ARCH_ESP32
+// WARNING: This function is called from a separate FreeRTOS task (thread)!
+void onStationConnected(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+  #ifdef LED_BUILTIN
+    digitalWrite(LED_BUILTIN, LED_OFF);
+  #endif
+
+    Serial.printf_P(PSTR("%sWi-Fi client connected: "), TimeStamp());
+    // wifi_event_ap_staconnected_t evt = info.wifi_ap_staconnected;
+    Serial.print(macToString(info.wifi_ap_staconnected.mac));
+    Serial.print("\n");
+}
+
+#else
 void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 {
-    digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+  #ifdef LED_BUILTIN
+    digitalWrite(LED_BUILTIN, LED_OFF);
+  #endif
 
     Serial.printf_P(PSTR("%sWi-Fi client connected: "), TimeStamp());
     Serial.print(macToString(evt.mac));
     Serial.print("\n");
 } // onStationConnected
 
+#endif // ARDUINO_ARCH_ESP32
+
+#ifdef ARDUINO_ARCH_ESP32
+// WARNING: This function is called from a separate FreeRTOS task (thread)!
+void onStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+    Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
+    Serial.print(macToString(info.wifi_ap_stadisconnected.mac));
+    Serial.print("\n");
+}
+
+#else
 void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
 {
     Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
@@ -47,6 +81,9 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
   #endif // 0
 } // onStationDisconnected
 
+#endif // ARDUINO_ARCH_ESP32
+
+#if 0
 void onProbeRequestPrint(const WiFiEventSoftAPModeProbeRequestReceived& evt)
 {
     Serial.printf_P(PSTR("%sProbe request from: "), TimeStamp());
@@ -61,6 +98,7 @@ void onProbeRequestBlink(const WiFiEventSoftAPModeProbeRequestReceived&)
     // Flash the LED
     digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN) == LOW ? HIGH : LOW);
 } // onProbeRequestBlink
+#endif // 0
 
 #ifndef WIFI_AP_MODE // Wi-Fi access point mode
 void WifiConfig()
@@ -75,11 +113,17 @@ void WifiConfig()
 } // WifiConfig
 #endif // ifdef WIFI_AP_MODE
 
+#ifndef ARDUINO_ARCH_ESP32
 WiFiEventHandler stationConnectedHandler;
 WiFiEventHandler stationDisconnectedHandler;
 WiFiEventHandler probeRequestHandler;
+#endif // ARDUINO_ARCH_ESP32
 
 const char* const AUTH_MODE_NAMES[]{ "AUTH_OPEN", "AUTH_WEP", "AUTH_WPA_PSK", "AUTH_WPA2_PSK", "AUTH_WPA_WPA2_PSK", "AUTH_MAX" };
+
+#ifdef ARDUINO_ARCH_ESP32
+  #define softap_config wifi_ap_config_t
+#endif // ARDUINO_ARCH_ESP32
 
 void PrintSoftApConfig(softap_config const& config)
 {
@@ -146,10 +190,15 @@ const char* SetupWifi()
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
     // Register event handlers
-    stationConnectedHandler = WiFi.onSoftAPModeStationConnected(&onStationConnected);
-    stationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(&onStationDisconnected);
-    //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequestPrint);
-    //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(&onProbeRequestBlink);
+  #ifdef ARDUINO_ARCH_ESP32
+    WiFi.onEvent(onStationConnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STACONNECTED);
+    WiFi.onEvent(onStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
+  #else
+    stationConnectedHandler = WiFi.onSoftAPModeStationConnected(onStationConnected);
+    stationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(onStationDisconnected);
+    //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(onProbeRequestPrint);
+    //probeRequestHandler = WiFi.onSoftAPModeProbeRequestReceived(onProbeRequestBlink);
+  #endif // ARDUINO_ARCH_ESP32
 
   #ifdef WIFI_PASSWORD
     WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN);
@@ -157,9 +206,15 @@ const char* SetupWifi()
     WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN);
   #endif
 
-    softap_config config;
-    wifi_softap_get_config(&config);
-    PrintSoftApConfig(config);
+    softap_config config_ap;
+  #ifdef ARDUINO_ARCH_ESP32
+    wifi_config_t config;
+    esp_wifi_get_config(WIFI_IF_AP, &config);
+    config_ap = config.ap;
+  #else
+    wifi_softap_get_config(&config_ap);
+  #endif // ARDUINO_ARCH_ESP32
+    PrintSoftApConfig(config_ap);
 
   #else  // ! WIFI_AP_MODE
 
@@ -170,10 +225,18 @@ const char* SetupWifi()
     WiFi.mode(WIFI_STA);  // Otherwise it may be in WIFI_AP_STA mode, broadcasting an SSID like AI_THINKER_XXXXXX
     WiFi.disconnect();  // After reset via HW button sometimes cannot seem to reconnect without this
     WiFi.persistent(false);
+  #ifdef ARDUINO_ARCH_ESP32
+   #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+    WiFi.setAutoReconnect(true);
+   #else // ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
     WiFi.setAutoConnect(true);
+   #endif // ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+  #else // ! ARDUINO_ARCH_ESP32
+    WiFi.setAutoConnect(true);
+  #endif // ARDUINO_ARCH_ESP32
 
     // See https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html :
-    WiFi.setPhyMode(WIFI_PHY_MODE_11N);
+    //WiFi.setPhyMode(WIFI_PHY_MODE_11N);
 
   #ifdef WIFI_PASSWORD
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -205,15 +268,19 @@ void WifiCheckStatus()
     static bool wasConnected = false;
     bool isConnected = wifiStatus == WL_CONNECTED;
 
+  #ifdef LED_BUILTIN
     // Flash the LED as long as Wi-Fi is not connected
     if (! isConnected) digitalWrite(LED_BUILTIN, digitalRead(LED_BUILTIN) == LOW ? HIGH : LOW);  // Toggle the LED
+  #endif
 
     if (isConnected == wasConnected) return;
     wasConnected = isConnected;
 
     if (isConnected)
     {
-        digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off
+      #ifdef LED_BUILTIN
+        digitalWrite(LED_BUILTIN, LED_OFF);
+      #endif
 
         Serial.printf_P(PSTR("Connected to Wi-Fi SSID '%s'\n"), WIFI_SSID);
         Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
