@@ -489,7 +489,7 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
         SetTimeZoneOffset(offsetMinutes);
 
         Serial.printf_P(
-            PSTR("==> Time zone received from WebSocket client %lu: UTC %+2d:%02d\n"),
+            PSTR("==> Time zone received from WebSocket client %" PRIu32 ": UTC %+2d:%02d\n"),
             id, offsetMinutes / MINS_PER_HOUR, abs(offsetMinutes % MINS_PER_HOUR)
         );
     }
@@ -508,7 +508,7 @@ void ProcessWebSocketClientMessage(const char* payload, uint32_t id)
         if (SetTime(epoch, msec))
         {
             Serial.printf_P(
-                PSTR("==> Current date-time received from WebSocket client %lu: %04d-%02d-%02d %02d:%02d:%02d.%03" PRIu32 " UTC\n"),
+                PSTR("==> Current date-time received from WebSocket client %" PRIu32 ": %04d-%02d-%02d %02d:%02d:%02d.%03" PRIu32 " UTC\n"),
                 id, year(epoch), month(epoch), day(epoch), hour(epoch), minute(epoch), second(epoch), msec
             );
         } // if
@@ -535,7 +535,7 @@ void WebSocketEvent(
     {
         case WS_EVT_DISCONNECT:
         {
-            Serial.printf_P(PSTR("%s[webSocket %lu] Disconnected!\n"), TimeStamp(), id);
+            Serial.printf_P(PSTR("%s[webSocket %" PRIu32 "] Disconnected!\n"), TimeStamp(), id);
 
             if (id == websocketId_1)
             {
@@ -554,7 +554,8 @@ void WebSocketEvent(
             } // if
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("%s[webSocket] id_1=%" PRIu32 ", id_2=%" PRIu32 "\n"),
+                TimeStamp(), websocketId_1, websocketId_2);
           #endif // DEBUG_WEBSOCKET
         }
         break;
@@ -562,7 +563,7 @@ void WebSocketEvent(
         case WS_EVT_CONNECT:
         {
             IPAddress clientIp = client->remoteIP();
-            Serial.printf_P(PSTR("%s[webSocket %lu] Connection request from %s"),
+            Serial.printf_P(PSTR("%s[webSocket %" PRIu32 "] Connection request from %s"),
                 TimeStamp(),
                 id,
                 clientIp.toString().c_str());
@@ -580,7 +581,7 @@ void WebSocketEvent(
                 nWebSocketConnections++;
 
                 webSocketIdJustConnected = id;
-                Serial.printf_P(PSTR(" --> will start serving %lu\n"), id);
+                Serial.printf_P(PSTR(" --> will start serving %" PRIu32 "\n"), id);
 
                 // Use as much as possible an empty slot
                 if (websocketId_1 == WEBSOCKET_INVALID_ID || ! webSocket.hasClient(websocketId_1))
@@ -600,11 +601,12 @@ void WebSocketEvent(
             }
             else
             {
-                Serial.printf_P(PSTR(" --> already serving %lu\n"), id);
+                Serial.printf_P(PSTR(" --> already serving %" PRIu32 "\n"), id);
             } // if
 
           #ifdef DEBUG_WEBSOCKET
-            Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
+            Serial.printf_P(PSTR("%s[webSocket] id_1=%" PRIu32 ", id_2=%" PRIu32 "\n"),
+                TimeStamp(), websocketId_1, websocketId_2);
             Serial.printf_P(PSTR("%s[webSocket %" PRIu32 "] Free RAM: %" PRIu32 "\n"),
                 TimeStamp(),
                 id,
@@ -644,7 +646,7 @@ void WebSocketEvent(
                 if (id != websocketId_1 && id != websocketId_2)
                 {
                     Serial.printf_P(
-                        PSTR("%s[webSocket %lu] received text: '%s' --> switching to %lu\n"),
+                        PSTR("%s[webSocket %" PRIu32 "] received text: '%s' --> switching to %" PRIu32 "\n"),
                         TimeStamp(), id, data, id
                     );
 
@@ -683,7 +685,7 @@ void WebSocketEvent(
         case WS_EVT_ERROR:
         {
             uint16_t reasonCode = *(uint16_t*)arg;
-            Serial.printf_P(PSTR("%s[webSocket %lu]: error %d occurred: '%s'\n"), TimeStamp(), id, reasonCode, data);
+            Serial.printf_P(PSTR("%s[webSocket %" PRIu32 "]: error %d occurred: '%s'\n"), TimeStamp(), id, reasonCode, data);
         }
         break;
 
@@ -823,7 +825,7 @@ void LoopWebSocket()
 
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket] %zu client%s currently connected, queued_jsons=%d, id_1=%lu, id_2=%lu, ram=%" PRIu32 "\n"),
+            PSTR("%s[webSocket] %zu client%s currently connected, queued_jsons=%d, id_1=%" PRIu32 ", id_2=%" PRIu32 ", ram=%" PRIu32 "\n"),
             TimeStamp(), webSocket.count(),
             webSocket.count() == 1 ? PSTR(" is") : PSTR("s are"),
             countQueuedJsons(), websocketId_1, websocketId_2,

@@ -327,7 +327,10 @@ void setup()
     Serial.printf_P(PSTR("\nStarting VAN bus \"Live Connect\" server version %s\n"), VAN_LIVE_CONNECT_VERSION);
 
     PrintDebugDefines();
-    const char* wifiSsid = SetupWifi();
+  #ifdef WIFI_AP_MODE
+    const char* wifiSsid =
+  #endif
+    SetupWifi();
     PrintSystemSpecs();
 
     Serial.print(F("Initializing EEPROM\n"));

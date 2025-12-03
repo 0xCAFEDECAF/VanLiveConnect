@@ -283,7 +283,7 @@ void WifiCheckStatus()
       #endif
 
         Serial.printf_P(PSTR("Connected to Wi-Fi SSID '%s'\n"), WIFI_SSID);
-        Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %ld dB\n"), WiFi.RSSI());
+        Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %" PRId32 " dB\n"), WiFi.RSSI());
 
         // Seems to help in decreasing the jitter on the VAN bus bit timings. But also seems to
         // deteriorate Wi-Fi connectivity.

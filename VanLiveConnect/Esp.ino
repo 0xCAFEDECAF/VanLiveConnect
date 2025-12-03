@@ -30,6 +30,15 @@ const uint32_t flashChipSpeed = ESP.getFlashChipSpeed();
 const char PROGMEM compileDate[] = __DATE__ ", " __TIME__;
 
 #ifdef ARDUINO_ARCH_ESP32
+
+ #ifndef ESP_ARDUINO_VERSION_STR
+  // Current ARDUINO version, as string
+  #define df2xstr(s)              #s
+  #define df2str(s)               df2xstr(s)
+  #define ESP_ARDUINO_VERSION_STR \
+    df2str(ESP_ARDUINO_VERSION_MAJOR) "." df2str(ESP_ARDUINO_VERSION_MINOR) "." df2str(ESP_ARDUINO_VERSION_PATCH)
+ #endif
+
 const char* ResetReasonStr(esp_reset_reason_t r)
 {
   switch (r)

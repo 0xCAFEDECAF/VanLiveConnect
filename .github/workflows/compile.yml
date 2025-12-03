@@ -16,8 +16,8 @@ jobs:
 
         # The matrix will produce one job for each configuration
         # parameter of type `arduino-platform`, in this case a
-        # total of 2.
-        arduino-platform: ["esp8266:esp8266", "esp32:esp32"]
+        # total of 3.
+        arduino-platform: ["esp8266:esp8266", "esp32:esp32@2.0.17", "esp32:esp32"]
 
         # This is usually optional but we need to statically define the
         # FQBN of the boards we want to test for each platform. In the
@@ -32,6 +32,10 @@ jobs:
             fqbn: "esp8266:esp8266:d1_mini"
             url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
             board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
+          - arduino-platform: "esp32:esp32@2.0.17"
+            url: "https://dl.espressif.com/dl/package_esp32_index.json"
+            fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
+            board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=min_spiffs,DebugLevel=none"
           - arduino-platform: "esp32:esp32"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
