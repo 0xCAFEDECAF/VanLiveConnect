@@ -424,11 +424,11 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 
 void HandleLowMemory(class AsyncWebServerRequest* request)
 {
-  #ifdef ESP8266
-    AsyncWebServerResponse* response = request->beginResponse_P(429, F("text/html"),
-  #else
+  #ifdef USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
     AsyncWebServerResponse* response = request->beginResponse(429, F("text/html"),
-  #endif // ESP8266
+  #else
+    AsyncWebServerResponse* response = request->beginResponse_P(429, F("text/html"),
+  #endif // USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
     PSTR(
         "<html>"
         "  <head>"
@@ -468,11 +468,11 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
     unsigned long start = millis();
   #endif // DEBUG_WEBSERVER
 
-  #ifdef ESP8266
-    request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
-  #else
+  #ifdef USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
     request->send(200, fontWoffStr, (const uint8_t*)content, content_len);
-  #endif // ESP8266
+  #else
+    request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
+  #endif // USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
 
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] Serving font '%s' took: %lu msec\n"),
@@ -539,11 +539,11 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
         if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
 
         // Serve the complete document
-      #ifdef ESP8266
-        AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
-      #else
+      #ifdef USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
         AsyncWebServerResponse* response = request->beginResponse(200, mimeType, (const uint8_t *)content, strlen(content));
-      #endif // ESP8266
+      #else
+        AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
+      #endif // USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
         response->addHeader("ETag", String("\"") + md5Checksum + "\"");
 
         // Tells the client that it can cache the asset, but it cannot use the cached asset without

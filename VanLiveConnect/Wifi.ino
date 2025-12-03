@@ -34,8 +34,11 @@ void onStationConnected(WiFiEvent_t event, WiFiEventInfo_t info)
   #endif
 
     Serial.printf_P(PSTR("%sWi-Fi client connected: "), TimeStamp());
-    // wifi_event_ap_staconnected_t evt = info.wifi_ap_staconnected;
+  #if defined ESP_ARDUINO_VERSION && ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0)
     Serial.print(macToString(info.wifi_ap_staconnected.mac));
+  #else
+    Serial.print(macToString(info.sta_connected.mac));
+  #endif
     Serial.print("\n");
 }
 
@@ -58,7 +61,11 @@ void onStationConnected(const WiFiEventSoftAPModeStationConnected& evt)
 void onStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info)
 {
     Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
+  #if defined ESP_ARDUINO_VERSION && ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0)
     Serial.print(macToString(info.wifi_ap_stadisconnected.mac));
+  #else
+    Serial.print(macToString(info.sta_disconnected.mac));
+  #endif
     Serial.print("\n");
 }
 
@@ -283,7 +290,7 @@ void WifiCheckStatus()
       #endif
 
         Serial.printf_P(PSTR("Connected to Wi-Fi SSID '%s'\n"), WIFI_SSID);
-        Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %" PRId32 " dB\n"), WiFi.RSSI());
+        Serial.printf_P(PSTR("Wi-Fi signal strength (RSSI): %d dB\n"), WiFi.RSSI());
 
         // Seems to help in decreasing the jitter on the VAN bus bit timings. But also seems to
         // deteriorate Wi-Fi connectivity.

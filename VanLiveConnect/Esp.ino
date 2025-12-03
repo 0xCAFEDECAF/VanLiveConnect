@@ -31,6 +31,8 @@ const char PROGMEM compileDate[] = __DATE__ ", " __TIME__;
 
 #ifdef ARDUINO_ARCH_ESP32
 
+ // Old Arduino ESP32 board packages do not have all the VERSION macros
+
  #ifndef ESP_ARDUINO_VERSION_STR
   // Current ARDUINO version, as string
   #define df2xstr(s)              #s

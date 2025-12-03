@@ -303,10 +303,12 @@ void PrintDebugDefines()
 // After a few minutes of VAN bus inactivity, go to sleep to save power
 long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
 
-#ifdef ARDUINO_ARCH_ESP32
-// This sets Arduino Stack Size - comment this line to use default 8K stack size
-SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
-#endif // ARDUINO_ARCH_ESP32
+#if defined ARDUINO_ARCH_ESP32
+ #if defined ESP_ARDUINO_VERSION && ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0)
+  // This sets Arduino Stack Size - comment this line to use default 8K stack size
+  SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
+ #endif
+#endif
 
 void setup()
 {
