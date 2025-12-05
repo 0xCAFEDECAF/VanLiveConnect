@@ -211,9 +211,18 @@
 #endif
 
 // -----
-// Define to use "ESP Async WebServer library fork by ESP32Async" (default) instead of "ESPAsyncWebSrv library
-// by me-no-dev, fork by dvarrel". To use the fork by dvarrel, comment out this line.
-#define USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC
+// Define to use "ESPAsyncWebSrv library by me-no-dev, fork by dvarrel" instead of (default) "ESP Async WebServer
+// library fork by ESP32Async". To use the fork by dvarrel, uncomment this line.
+//#define USE_OLD_ESP_ASYNC_WEB_SERVER
+
+#ifdef ARDUINO_ARCH_ESP32
+ #if ! defined ESP_ARDUINO_VERSION  // Older versions ( <= 1.0.6 )
+  #undef USE_OLD_ESP_ASYNC_WEB_SERVER
+
+  // On older ESP Arduino versions we have no other choice
+  #define USE_OLD_ESP_ASYNC_WEB_SERVER
+ #endif
+#endif
 
 // -----
 // Define to disable (gray-out) the navigation menu while driving.

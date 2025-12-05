@@ -198,8 +198,13 @@ const char* SetupWifi()
 
     // Register event handlers
   #ifdef ARDUINO_ARCH_ESP32
+   #if defined ESP_ARDUINO_VERSION && ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(2, 0, 0)
     WiFi.onEvent(onStationConnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STACONNECTED);
     WiFi.onEvent(onStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
+   #else
+    WiFi.onEvent(onStationConnected, WiFiEvent_t::SYSTEM_EVENT_AP_STACONNECTED);
+    WiFi.onEvent(onStationDisconnected, WiFiEvent_t::SYSTEM_EVENT_AP_STADISCONNECTED);
+   #endif
   #else
     stationConnectedHandler = WiFi.onSoftAPModeStationConnected(onStationConnected);
     stationDisconnectedHandler = WiFi.onSoftAPModeStationDisconnected(onStationDisconnected);

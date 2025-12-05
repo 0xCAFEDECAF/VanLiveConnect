@@ -18,10 +18,10 @@
 
 // We need access to class AsyncWebSocketClient private members _runQueue() and _messageQueue
 #define private public
-#ifdef USE_ESP_ASYNC_WEB_SERVER_BY_ESP32ASYNC  // See line 211 of Config.h
-  #include <ESPAsyncWebServer.h>  // https://github.com/ESP32Async/ESPAsyncWebServer or https://github.com/lacamera/ESPAsyncWebServer
-#else
+#ifdef USE_OLD_ESP_ASYNC_WEB_SERVER  // See line 216 of Config.h
   #include <ESPAsyncWebSrv.h>  // https://github.com/dvarrel/ESPAsyncWebSrv
+#else
+  #include <ESPAsyncWebServer.h>  // https://github.com/ESP32Async/ESPAsyncWebServer or https://github.com/lacamera/ESPAsyncWebServer
 #endif
 #undef private
 
