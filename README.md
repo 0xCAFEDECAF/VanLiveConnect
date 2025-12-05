@@ -9,6 +9,7 @@ the VAN bus.</p>
 [![Release Date](https://img.shields.io/github/release-date/0xCAFEDECAF/VanLiveConnect.svg?style=plastic)](https://github.com/0xCAFEDECAF/VanLiveConnect/releases/latest/)
 
 [![Platform ESP8266](https://img.shields.io/badge/Platform-Espressif8266-yellow)](https://github.com/esp8266/Arduino)
+[![Platform ESP32](https://img.shields.io/badge/Platform-Espressif32-orange)](https://github.com/espressif/arduino-esp32)
 
 [![Framework](https://img.shields.io/badge/Framework-Arduino-blue)](https://www.arduino.cc/)
 
@@ -145,8 +146,8 @@ supposedly fitted with a VAN (comfort) bus.
 
 The application will tap in on the vehicle's VAN bus and visualize the captured data in a browser on your
 smartphone, tablet, laptop or any other device that runs a web browser. The application will run on any
-ESP8266 / ESP8285 based board, e.g. [Wemos/Lolin D1 mini](https://www.wemos.cc/en/latest/d1/d1_mini.html)
-is supported.
+ESP8266 / ESP8285 based board, e.g. [Wemos/Lolin D1 mini] is supported. ESP32 is also supported,
+e.g. [LilyGO TTGO T7 Mini32].
 
 The application will host a HTML web page on standard port 80. It will also host a WebSocket server on
 standard port 81. The served web page comes with some JavaScript that connects to this WebSocket server
@@ -165,11 +166,11 @@ As said, the served web page self-hosts all resources. No Internet connection is
 You can usually find the VAN bus on pins 2 and 3 of ISO block "A" of your head unit (car radio). See
 https://en.wikipedia.org/wiki/Connectors_for_car_audio and https://github.com/morcibacsi/esp32_rmt_van_rx#schematics .
 
-There are various possibilities to hook up a ESP8266 based board to your vehicle's VAN bus:
+There are various possibilities to hook up a ESP32/ESP8266 based board to your vehicle's VAN bus:
 
 1. Use a [MCP2551] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    As the MCP2551 has 5V logic, a 5V ↔ 3.3V [level converter] is needed to connect the CRX / RXD / R pin of the
-   transceiver, via the level converter, to a GPIO pin of your ESP8266 board.
+   transceiver, via the level converter, to a GPIO pin of your ESP board.
 
    A board with the MCP2551 transceiver can be ordered e.g.
    [here](https://domoticx.net/webshop/can-bus-transceiver-module-5v-mcp2551/) or
@@ -184,6 +185,8 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
       This setup requires [GPIO line D1](VanLiveConnect/Config.h#L118) to be connected, so that the ESP board
       wakes up as soon as any activity occurs on the VAN bus.
       ![schema](extras/Schematics/Schematic%20using%20MCP2551%20permanent%20%2B12V_bb.png)
+    * The same as above (using +12 Volt permanent line), with an ESP32 board:
+      ![schema](extras/Schematics/Schematic%20with%20ESP32%20using%20MCP2551%20permanent%20%2B12V_bb.png)
 
 > 👉 Notes:
 >  * <img src="extras/Schematics/MCP2551%20terminator%20resistors.jpg" align="right" width="200px"/>The two terminator
@@ -199,7 +202,7 @@ There are various possibilities to hook up a ESP8266 based board to your vehicle
 
 2. Use a [SN65HVD230] transceiver, connected with its CANH and CANL pins to the vehicle's VAN bus.
    The SN65HVD230 transceiver already has 3.3V logic, so it is possible to directly connect the CRX / RXD / R pin of
-   the transceiver to a GPIO pin of your ESP8266 board.
+   the transceiver to a GPIO pin of your ESP32/ESP8266 board.
 
    A board with the SN65HVD230 transceiver can be ordered e.g.
    [here](https://domoticx.net/webshop/can-bus-transceiver-module-3-3v-sn65hvd230-vp230/) or
@@ -238,7 +241,7 @@ presented.
 
 To see the navigation through the menus and lists also on the browser screen, simply connect an infra-red
 receiver, e.g. like [this one](https://www.tinytronics.nl/shop/en/communication/infrared/hx1838-ir-receiver-38khz),
-on pins D5, D6 and D7, facing outward; see also the above schematics.
+on pins D5, D6 and D7 (ESP8266) or 18, 19 and 23 (ESP32), facing outward; see also the above schematics.
 
 > 👉 Notes:
 >  * Don't remove or unsolder the infra-red receiver (PCB) from the original MFD type C display. The original
@@ -252,13 +255,17 @@ on pins D5, D6 and D7, facing outward; see also the above schematics.
 
 Before proceeding with this project, make sure you check all the following prerequisites.
 
-#### 1. Install Arduino IDE
+### Install Arduino IDE
 
 See [Arduino IDE](https://www.arduino.cc/en/software). I am currently using
 [version 1.8.19](https://downloads.arduino.cc/arduino-1.8.19-windows.exe) but other versions
 may also be working fine.
 
-#### 2. Install ESP8266 Board in Arduino IDE
+### ESP8266-based board
+
+An example of an ESP8266-based board is the [Wemos D1 mini].
+
+#### 1. Install Board Package in Arduino IDE
 
 We’ll program the ESP8266 using Arduino IDE, so you must have the ESP8266 add-on installed. You will need:
 
@@ -271,7 +278,7 @@ Follow the next tutorial to install the IDE and the ESP8266 Board Package:
 
 * [Install ESP8266 Board in Arduino IDE (Windows, Mac OS X, Linux)](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
 
-#### 3. Install Libraries
+#### 2. Install Libraries<a id="install_libraries"></a>
 
 In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
 
@@ -291,7 +298,7 @@ For more explanation on using the Arduino library manager, you can browse to:
 the indicated directories in your system. In my experience, these patched files significantly improve the stability
 of the WebSocket (TCP/IP over Wi-Fi) communication.
 
-#### 4. Board Settings
+#### 3. Board Settings
 
 I tested with board "LOLIN(WEMOS) D1 R2 & mini". Other ESP8266-based boards may also work.
 
@@ -315,7 +322,7 @@ inside the following file:
     %LOCALAPPDATA%\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\platform.txt (Windows)
     $HOME/.arduino15/packages/esp8266/hardware/esp8266/3.1.2/platform.txt (Linux)
 
-#### 5. Compiling
+#### 4. Compiling
 
 Download https://github.com/0xCAFEDECAF/VanLiveConnect/archive/refs/heads/main.zip and unzip it. Navigate into its
 sub-folder `VanLiveConnect` and double-click the `ESP8266_IDE.bat` file (Windows) or `ESP8266_IDE.sh`
@@ -326,7 +333,7 @@ file (Linux). This will open the Arduino IDE with all the correct board settings
 update the [`ArduinoIdeEnv.bat`](extras/Scripts/ArduinoIdeEnv.bat#L16) file (Windows) resp. the
 [`ArduinoIdeEnv.sh`](extras/Scripts/ArduinoIdeEnv.sh#L16) file (Linux).
 
-#### 6. Uploading
+#### 5. Uploading<a id="uploading"></a>
 
 To upload the compiled project you will need the following:
 
@@ -342,11 +349,56 @@ OTA feature of the arduino-esp8266.
 If you have no experience in compiling and uploading, have a look at this excellent
 [tutorial for the Wemos D1 mini board](https://www.youtube.com/watch?v=WnRk8w7SyTo)
 
-#### 7. First Run
+#### 6. First Run
 
 When the compiled sketch is started for the first time on fresh hardware, it will take a few seconds to initialize
 the flash-based file system. In my experience, a sketch binary uploaded to fresh hardware sometimes causes the board to
 crash the very first time, but after that it works (uploads) fine.
+
+### ESP32-based board
+
+An example of an ESP32-based board is the [LilyGO TTGO T7 Mini32].
+
+#### 1. Install Board Package in Arduino IDE
+
+For an ESP32-based board you will need the ESP32 board package installed.
+
+I am currently using [version 3.3.3](https://github.com/espressif/arduino-esp32/releases/tag/3.3.3) but other versions
+may also be working fine. (I tested with version 1.0.6, 2.0.17 and 3.3.3 .)
+
+Follow [this tutorial](https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/)
+to install the ESP32 Board Package. Alternatively, turn to
+[this page](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html) for instructions.
+
+#### 2. Install Libraries
+
+See section ['Install Libraries', above](#install_libraries).
+
+#### 3. Board settings
+
+In the Arduino IDE, go to the "Tools" menu, and choose:
+
+* CPU frequency: 240 MHz (WiFi/BT)
+* Partition scheme: Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)
+
+Here is a picture of board settings that have been tested to work:
+
+![Board settings](extras/Arduino%20IDE/Board%20settings%20ESP32.png)
+
+#### 4. Compiling
+
+Download https://github.com/0xCAFEDECAF/VanLiveConnect/archive/refs/heads/main.zip and unzip it. Navigate into its
+sub-folder `VanLiveConnect` and double-click the `ESP32_IDE.bat` file (Windows) or `ESP32_IDE.sh`
+file (Linux). This will open the Arduino IDE with all the correct board settings.
+
+> 👉 Note: the `ESP32_IDE.*` scripts assume that the Arduino IDE was installed in `C:\Program Files (x86)\Arduino`
+(Windows) or `/usr/local/bin` (Linux). If you installed the Arduino IDE in a different location, you will need to
+update the [`ArduinoIdeEnv.bat`](extras/Scripts/ArduinoIdeEnv.bat#L16) file (Windows) resp. the
+[`ArduinoIdeEnv.sh`](extras/Scripts/ArduinoIdeEnv.sh#L16) file (Linux).
+
+#### 5. Uploading
+
+See section ['Uploading', above](#uploading).
 
 ## 💡 Hints, tips<a name = "hints_tips"></a>
 
@@ -511,10 +563,17 @@ Of course, the above actions are just a suggestion. Customize as you like!
 In the Arduino IDE, the following libraries are used:
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Need at least version 0.2.4 .
+* ["ESP Async TCP" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncTCP) - Tested with
+  version 2.0.0 .
+* ["ESP Async WebServer" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
+  Tested with version 3.8.0, 3.9.0 and 3.9.2 .
+
+For ESP32 board package versions 1.0.6 and below, you will need:
+
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
-  version 1.2.6, 1.2.7 and 1.2.9 . Skip version 1.2.8: it does not compile on the ESP8266.
+  version 1.2.6 and 1.2.7. Skip version 1.2.8 and 1.2.9: they do not compile on the ESP32 1.0.6 and below.
 
 ### Attributions
 
@@ -601,6 +660,8 @@ This application is open-source and licensed under the [MIT license](http://open
 Do whatever you like with it, but contributions are appreciated!
 
 ["VAN" bus]: https://en.wikipedia.org/wiki/Vehicle_Area_Network
+[Wemos/Lolin D1 mini]: https://www.wemos.cc/en/latest/d1/d1_mini.html
+[LilyGO TTGO T7 Mini32]: https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/lilygo-ttgo-t7-mini32-v1.3-esp32-4mb-flash
 [MCP2551]: http://ww1.microchip.com/downloads/en/devicedoc/21667d.pdf
 [level converter]: https://www.tinytronics.nl/shop/en/dc-dc-converters/level-converters/i2c-uart-bi-directional-logic-level-converter-5v-3.3v-2-channel-with-supply
 [SN65HVD230]: https://www.ti.com/lit/ds/symlink/sn65hvd230.pdf?ts=1592992149874
