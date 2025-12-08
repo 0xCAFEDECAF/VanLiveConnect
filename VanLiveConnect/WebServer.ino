@@ -554,12 +554,11 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     } // if
 
   #ifdef DEBUG_WEBSERVER
-    Serial.printf_P(PSTR("%s[webServer] %s '%s' took: %lu msec, content length=%d\n"),
+    Serial.printf_P(PSTR("%s[webServer] %s '%s' took: %lu msec\n"),
         TimeStamp(),
         eTagMatches ? PSTR("Responding to request for") : PSTR("Serving"),
         request->url().c_str(),
-        millis() - start,
-        strlen(content));
+        millis() - start);
   #endif // DEBUG_WEBSERVER
 } // ServeDocument
 
