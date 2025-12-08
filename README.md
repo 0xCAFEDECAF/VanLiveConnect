@@ -289,6 +289,13 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 * ["ESP Async WebServer" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
   Tested with version 3.8.0, 3.9.0 and 3.9.2 .
 
+For ESP8266 boards and for ESP32 board package versions 1.0.6 and below, you will still need the older fork:
+
+* [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
+  version 1.2.4 .
+* [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
+  version 1.2.6 and 1.2.7. Skip version 1.2.8 and 1.2.9: they do not compile on the ESP32 1.0.6 and below.
+
 For more explanation on using the Arduino library manager, you can browse to:
 * this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
 * this [explanation from Adafruit](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager)
@@ -568,7 +575,7 @@ In the Arduino IDE, the following libraries are used:
 * ["ESP Async WebServer" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
   Tested with version 3.8.0, 3.9.0 and 3.9.2 .
 
-For ESP32 board package versions 1.0.6 and below, you will need:
+For ESP8266 boards and for ESP32 board package versions 1.0.6 and below, you will still need the older fork:
 
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .

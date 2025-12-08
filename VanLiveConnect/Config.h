@@ -216,12 +216,19 @@
 //#define USE_OLD_ESP_ASYNC_WEB_SERVER
 
 #ifdef ARDUINO_ARCH_ESP32
- #if ! defined ESP_ARDUINO_VERSION  // Older versions ( <= 1.0.6 )
+ #if ! defined ESP_ARDUINO_VERSION  // ESP32 older versions ( <= 1.0.6 )
   #undef USE_OLD_ESP_ASYNC_WEB_SERVER
 
   // On older ESP Arduino versions we have no other choice
   #define USE_OLD_ESP_ASYNC_WEB_SERVER
  #endif
+#endif
+
+#if defined ARDUINO_ARCH_ESP8266
+ #undef USE_OLD_ESP_ASYNC_WEB_SERVER
+
+ // On older ESP8266 we have no other choice; it has too little memory for the newer fork
+ #define USE_OLD_ESP_ASYNC_WEB_SERVER
 #endif
 
 // -----

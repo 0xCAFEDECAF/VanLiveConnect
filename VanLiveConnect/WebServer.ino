@@ -542,7 +542,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
       #ifdef USE_OLD_ESP_ASYNC_WEB_SERVER
         AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
       #else
-        AsyncWebServerResponse* response = request->beginResponse(200, mimeType, (const uint8_t *)content, strlen(content));
+        AsyncWebServerResponse* response = request->beginResponse(200, mimeType, (const uint8_t *)content, strlen_P(content));
       #endif // USE_OLD_ESP_ASYNC_WEB_SERVER
         response->addHeader("ETag", String("\"") + md5Checksum + "\"");
 
