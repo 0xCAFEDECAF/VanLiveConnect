@@ -324,12 +324,15 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
             if (thisDuration < duration) duration = thisDuration;
 
           #if DEBUG_WEBSOCKET >= 2
-            Serial.printf_P(
-                PSTR("%s[webSocket %lu] Sent %zu-byte packet\n"),
-                TimeStamp(),
-                id,
-                strlen(json)
-            );
+           #if DEBUG_WEBSOCKET == 2
+            if (! isTestMessage)
+           #endif
+                Serial.printf_P(
+                    PSTR("%s[webSocket %lu] Sent %zu-byte packet\n"),
+                    TimeStamp(),
+                    id,
+                    strlen(json)
+                );
           #endif // DEBUG_WEBSOCKET >= 2
 
             result = true;
