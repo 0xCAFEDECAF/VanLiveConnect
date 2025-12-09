@@ -168,12 +168,13 @@ void SetupVanReceiver()
     VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsVeryImportantPacket);
   #endif
 
+  // Define these as #defines so that the Serial.printf_P below shows the correct pin name on the console
   #ifdef ARDUINO_ARCH_ESP32
-    const int TX_PIN = GPIO_NUM_16; // GPIO pin connected to VAN bus transceiver input
-    const int RX_PIN = GPIO_NUM_21; // GPIO pin connected to VAN bus transceiver output
+    #define TX_PIN GPIO_NUM_16 // GPIO pin connected to VAN bus transceiver input
+    #define RX_PIN GPIO_NUM_21 // GPIO pin connected to VAN bus transceiver output
   #else // ! ARDUINO_ARCH_ESP32
-    const int TX_PIN = D3; // GPIO pin connected to VAN bus transceiver input
-    const int RX_PIN = D2; // GPIO pin connected to VAN bus transceiver output
+    #define TX_PIN D3 // GPIO pin connected to VAN bus transceiver input
+    #define RX_PIN D2 // GPIO pin connected to VAN bus transceiver output
   #endif // ARDUINO_ARCH_ESP32
 
     Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%u)\n"), XSTR(RX_PIN), RX_PIN);
