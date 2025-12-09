@@ -424,11 +424,11 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 
 void HandleLowMemory(class AsyncWebServerRequest* request)
 {
-  #ifdef USE_OLD_ESP_ASYNC_WEB_SERVER
+  #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
     AsyncWebServerResponse* response = request->beginResponse_P(429, F("text/html"),
   #else
     AsyncWebServerResponse* response = request->beginResponse(429, F("text/html"),
-  #endif // USE_OLD_ESP_ASYNC_WEB_SERVER
+  #endif
     PSTR(
         "<html>"
         "  <head>"
@@ -468,11 +468,11 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
     unsigned long start = millis();
   #endif // DEBUG_WEBSERVER
 
-  #ifdef USE_OLD_ESP_ASYNC_WEB_SERVER
+  #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
     request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
   #else
     request->send(200, fontWoffStr, (const uint8_t*)content, content_len);
-  #endif // USE_OLD_ESP_ASYNC_WEB_SERVER
+  #endif
 
   #ifdef DEBUG_WEBSERVER
     Serial.printf_P(PSTR("%s[webServer] Serving font '%s' took: %lu msec\n"),
@@ -539,11 +539,11 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
         if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
 
         // Serve the complete document
-      #ifdef USE_OLD_ESP_ASYNC_WEB_SERVER
+      #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
         AsyncWebServerResponse* response = request->beginResponse_P(200, mimeType, content);
       #else
         AsyncWebServerResponse* response = request->beginResponse(200, mimeType, (const uint8_t *)content, strlen_P(content));
-      #endif // USE_OLD_ESP_ASYNC_WEB_SERVER
+      #endif
         response->addHeader("ETag", String("\"") + md5Checksum + "\"");
 
         // Tells the client that it can cache the asset, but it cannot use the cached asset without
