@@ -284,13 +284,6 @@ In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Li
 
 * [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Tested with versions
   0.2.4 and higher. Best to use [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
-* ["ESP Async TCP" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncTCP) - Tested with
-  version 2.0.0 .
-* ["ESP Async WebServer" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
-  Tested with version 3.8.0, 3.9.0 and 3.9.2 .
-
-For ESP8266 boards and for ESP32 board package versions 1.0.6 and below, you will still need the older fork:
-
 * [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
   version 1.2.4 .
 * [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
@@ -379,7 +372,25 @@ to install the ESP32 Board Package. Alternatively, turn to
 
 #### 2. Install Libraries
 
-See section ['Install Libraries', above](#install_libraries).
+In the Arduino IDE, go to the "Sketch" menu → "Include Library" → "Manage Libraries...". Make sure to install:
+
+* [Arduino Library for the ESP8266 VAN Bus](https://github.com/0xCAFEDECAF/VanBus) - Tested with versions
+  0.2.4 and higher. Best to use [latest](https://github.com/0xCAFEDECAF/VanBus/archive/refs/heads/master.zip).
+* ["ESP Async TCP" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncTCP) - Tested with
+  version 2.0.0 .
+* ["ESP Async WebServer" library by me-no-dev, fork by ESP32Async](https://github.com/ESP32Async/ESPAsyncWebServer) -
+  Tested with version 3.8.0, 3.9.0 and 3.9.2 .
+
+For ESP32 board package versions 1.0.6 and below, you will still need the older fork:
+
+* [ESPAsyncTCP library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncTCP) - Tested with
+  version 1.2.4 .
+* [ESPAsyncWebSrv library by me-no-dev, fork by dvarrel](https://github.com/dvarrel/ESPAsyncWebSrv) - Tested with
+  version 1.2.6 and 1.2.7. Skip version 1.2.8 and 1.2.9: they do not compile on the ESP32 1.0.6 and below.
+
+For more explanation on using the Arduino library manager, you can browse to:
+* this [tutorial from Arduino](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries), and
+* this [explanation from Adafruit](https://learn.adafruit.com/adafruit-all-about-arduino-libraries-install-use/library-manager)
 
 #### 3. Board settings
 
