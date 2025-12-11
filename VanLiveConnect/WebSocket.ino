@@ -202,7 +202,7 @@ void SendQueuedJson(uint32_t id)
 
       #ifdef DEBUG_WEBSOCKET
         Serial.printf_P(
-            PSTR("%s[webSocket %lu] Sent stored %zu-byte packet no. '%d'\n"),
+            PSTR("%s[webSocket %" PRIu32 "] Sent stored %zu-byte packet no. '%d'\n"),
             TimeStamp(),
             id,
             strlen(entry->packet),
@@ -328,7 +328,7 @@ bool SendJsonOnWebSocket(const char* json, bool saveForLater, bool isTestMessage
             if (! isTestMessage)
            #endif
                 Serial.printf_P(
-                    PSTR("%s[webSocket %lu] Sent %zu-byte packet\n"),
+                    PSTR("%s[webSocket %" PRIu32 "] Sent %zu-byte packet\n"),
                     TimeStamp(),
                     id,
                     strlen(json)
@@ -670,13 +670,14 @@ void WebSocketEvent(
                     } // if
 
                   #ifdef DEBUG_WEBSOCKET
-                    Serial.printf_P(PSTR("%s[webSocket] id_1=%lu, id_2=%lu\n"), TimeStamp(), websocketId_1, websocketId_2);
+                    Serial.printf_P(PSTR("%s[webSocket] id_1=%" PRIu32 ", id_2=%" PRIu32 "\n"),
+                        TimeStamp(), websocketId_1, websocketId_2);
                   #endif // DEBUG_WEBSOCKET
                 }
                 else
                 {
                   #if DEBUG_WEBSOCKET >= 2
-                    Serial.printf_P(PSTR("%s[webSocket %lu] received text: '%s'\n"), TimeStamp(), id, data);
+                    Serial.printf_P(PSTR("%s[webSocket %" PRIu32 "] received text: '%s'\n"), TimeStamp(), id, data);
                   #endif // DEBUG_WEBSOCKET >= 2
                 } // if
 
