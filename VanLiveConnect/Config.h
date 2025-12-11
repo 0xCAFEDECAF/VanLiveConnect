@@ -224,13 +224,6 @@
  #endif
 #endif
 
-#if defined ARDUINO_ARCH_ESP8266
- #undef USE_OLD_ESP_ASYNC_WEB_SERVER
-
- // On older ESP8266 we have no other choice; it has too little memory for the newer fork
- #define USE_OLD_ESP_ASYNC_WEB_SERVER
-#endif
-
 // -----
 // Define to disable (gray-out) the navigation menu while driving.
 //
