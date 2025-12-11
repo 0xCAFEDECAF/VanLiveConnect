@@ -30,7 +30,6 @@ body
   font-size:33px;
   white-space:nowrap;
 
-  background-image: url('background.jpg');
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: 100%;

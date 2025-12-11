@@ -24,13 +24,10 @@ const char mfd_html[] PROGMEM = R"=====(
 		<title>Multi-functional Display</title>
 		<link rel='icon' href='data:,' />
 
+		<link rel="preload" href="CarInfo.css" as="style"/>
 		<link rel="stylesheet" href="CarInfo.css" />
+		<link rel="preload" href="css/all.css" as="style"/>
 		<link rel="stylesheet" href="css/all.css" async />	<!-- Font Awesome -->
-
-		<script src="jquery-3.5.1.min.js"></script>	<!-- jQuery -->
-
-		<!-- Our own stuff. Added '?foo=1' to force Chrome reload; see also https://stackoverflow.com/a/70410178 -->
-		<script src="MFD.js?foo=1" async></script>
 	</head>
 
 	<body id="body" translate="no" onload="htmlBodyOnLoad();" onresize="resizeScreenToFit();">
@@ -2832,7 +2829,10 @@ const char mfd_html[] PROGMEM = R"=====(
 COMMS_LED
 
 R"=====(
+		<script src="jquery-3.5.1.min.js"></script>	<!-- jQuery -->
 
+		<!-- Our own stuff. Added '?foo=1' to force Chrome reload; see also https://stackoverflow.com/a/70410178 -->
+		<script src="MFD.js?foo=1" async></script>
 	</body>
 </html>
 )=====";

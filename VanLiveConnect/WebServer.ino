@@ -228,6 +228,11 @@ bool checkETag(class AsyncWebServerRequest* request, const String& etag)
 
             AsyncWebServerResponse* response = request->beginResponse(304, F("text/plain"), F("Not Modified"));
 
+          #ifndef USE_OLD_ESP_ASYNC_WEB_SERVER
+            response->addHeader(F("Connection"), F("keep-alive"), true);
+            response->addHeader(F("Keep-Alive"), F("timeout=5, max=1"), true);
+          #endif
+
             // This needs to be repeated; see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match :
             //   "Note that the server generating a 304 response MUST generate any of the following header fields
             //   that would have been sent in a 200 (OK) response to the same request: Cache-Control, Content-Location,
@@ -441,7 +446,7 @@ void HandleLowMemory(class AsyncWebServerRequest* request)
         "</html>"
         )
     );
-    response->addHeader(F("Retry-After"), F("1"));  // Try again after 1 second
+    response->addHeader(F("Retry-After"), F("2"));  // Try again after 2 seconds
     request->send(response);
 
   #ifdef DEBUG_WEBSERVER
@@ -544,6 +549,12 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
       #else
         AsyncWebServerResponse* response = request->beginResponse(200, mimeType, (const uint8_t *)content, strlen_P(content));
       #endif
+
+      #ifndef USE_OLD_ESP_ASYNC_WEB_SERVER
+        response->addHeader(F("Connection"), F("keep-alive"), true);
+        response->addHeader(F("Keep-Alive"), F("timeout=5, max=1"), true);
+      #endif
+
         response->addHeader("ETag", String("\"") + md5Checksum + "\"");
 
         // Tells the client that it can cache the asset, but it cannot use the cached asset without
@@ -599,6 +610,12 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
 
         // Serve the complete document
         AsyncWebServerResponse* response = request->beginResponse(SPIFFS, path, mimeType);
+
+      #ifndef USE_OLD_ESP_ASYNC_WEB_SERVER
+        response->addHeader(F("Connection"), F("keep-alive"), true);
+        response->addHeader(F("Keep-Alive"), F("timeout=5, max=1"), true);
+      #endif
+
         response->addHeader("ETag", String("\"") + md5 + "\"");
         response->addHeader(F("Cache-Control"), F("no-cache"));
 
