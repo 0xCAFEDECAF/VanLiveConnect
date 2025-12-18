@@ -193,8 +193,10 @@ const char* SetupWifi()
 
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s', channel %d\n"), wifiSsid, WIFI_CHANNEL);
 
-    WiFi.mode(WIFI_AP);
+  #if ! defined ARDUINO_ARCH_ESP32 || ! defined CONFIG_IDF_TARGET_ESP32S2
+    // For some reason, this seems to break DHCP on ESP32S2
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  #endif
 
     // Register event handlers
   #ifdef ARDUINO_ARCH_ESP32
@@ -216,6 +218,11 @@ const char* SetupWifi()
     WiFi.softAP(wifiSsid, WIFI_PASSWORD, WIFI_CHANNEL, WIFI_SSID_HIDDEN);
   #else
     WiFi.softAP(wifiSsid, nullptr, WIFI_CHANNEL, WIFI_SSID_HIDDEN);
+  #endif
+
+  #ifdef ARDUINO_ARCH_ESP32
+    // Set STA interface bandwidth to 20 MHz
+    esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20);
   #endif
 
     softap_config config_ap;

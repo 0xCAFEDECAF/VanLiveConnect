@@ -174,8 +174,13 @@ void SetupVanReceiver()
 
   // Define these as #defines so that the Serial.printf_P below shows the correct pin name on the console
   #ifdef ARDUINO_ARCH_ESP32
+   #ifdef CONFIG_IDF_TARGET_ESP32S2
+    #define TX_PIN GPIO_NUM_18 // GPIO pin connected to VAN bus transceiver input
+    #define RX_PIN GPIO_NUM_33 // GPIO pin connected to VAN bus transceiver output
+   #else
     #define TX_PIN GPIO_NUM_16 // GPIO pin connected to VAN bus transceiver input
     #define RX_PIN GPIO_NUM_21 // GPIO pin connected to VAN bus transceiver output
+   #endif
   #else // ! ARDUINO_ARCH_ESP32
     #define TX_PIN D3 // GPIO pin connected to VAN bus transceiver input
     #define RX_PIN D2 // GPIO pin connected to VAN bus transceiver output
@@ -329,7 +334,11 @@ void setup()
     // (see also: https://github.com/espressif/esp-azure/issues/17 )
     Serial.setDebugOutput(false);
 
-    delay(1000);
+  #if defined ARDUINO_ARCH_ESP32 && defined CONFIG_IDF_TARGET_ESP32S2
+    // Give COM port device driver time to start
+    delay(3000);
+  #endif
+
     Serial.begin(115200);
     Serial.printf_P(PSTR("\nStarting VAN bus \"Live Connect\" server version %s\n"), VAN_LIVE_CONNECT_VERSION);
 

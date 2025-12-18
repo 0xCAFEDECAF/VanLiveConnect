@@ -120,8 +120,12 @@
 //   to simulate a power-off event.
 //
 #ifdef ARDUINO_ARCH_ESP32
+ #ifdef CONFIG_IDF_TARGET_ESP32S2
+  #define LIGHT_SLEEP_WAKE_PIN GPIO_NUM_35
+ #else
   // Only GPIOs which are have RTC functionality can be used: 0,2,4,12-15,25-27,32-39.
   #define LIGHT_SLEEP_WAKE_PIN GPIO_NUM_13
+ #endif
 #else
   #define LIGHT_SLEEP_WAKE_PIN D1
 #endif // ARDUINO_ARCH_ESP32
@@ -251,9 +255,15 @@
 
   // IR receiver data pin
   #ifdef ARDUINO_ARCH_ESP32
+   #ifdef CONFIG_IDF_TARGET_ESP32S2
+    #define IR_RECV_PIN GPIO_NUM_7
+    #define IR_VCC GPIO_NUM_11
+    #define IR_GND GPIO_NUM_9
+   #else
     #define IR_RECV_PIN GPIO_NUM_18
     #define IR_VCC GPIO_NUM_23
     #define IR_GND GPIO_NUM_19
+   #endif
   #else
     #define IR_RECV_PIN D5
 
@@ -272,16 +282,23 @@
 
   // IR receiver data pin
   #ifdef ARDUINO_ARCH_ESP32
+   #ifdef CONFIG_IDF_TARGET_ESP32S2
+    #define IR_RECV_PIN GPIO_NUM_11
+    #define IR_VCC GPIO_NUM_7
+    #define IR_GND GPIO_NUM_5
+   #else
     #define IR_RECV_PIN GPIO_NUM_23
     #define IR_VCC GPIO_NUM_18
     #define IR_GND GPIO_NUM_26
+   #endif
   #else
+    #define IR_RECV_PIN D7
+
     // Using D5 as VCC and D0 as ground pin for the IR receiver. Should be possible with e.g. the
     // TSOP31238 IR receiver as it typically uses only 0.35 mA.
     #define IR_VCC D5
     #define IR_GND D0
 
-    #define IR_RECV_PIN D7
   #endif // ARDUINO_ARCH_ESP32
 
 #endif // IR_TSOP312XX
