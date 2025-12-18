@@ -306,7 +306,7 @@ void IrSetup()
     Serial.print(F("Setting up IR receiver\n"));
 
   #ifdef ON_DESK_MFD_ESP_MAC
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
+    if (Network.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
         pinMode(TEST_IR_VCC_TEST, OUTPUT);
         digitalWrite(TEST_IR_VCC_TEST, HIGH);

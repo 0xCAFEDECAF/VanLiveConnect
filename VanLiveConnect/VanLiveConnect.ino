@@ -47,10 +47,14 @@ char dummy_var_to_use_cppXX[] PROGMEM = R"==(")==";
 #define STR(x) #x
 
 #ifdef ARDUINO_ARCH_ESP32
+ #if ! defined ESP_ARDUINO_VERSION || ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3, 0, 0)
+  #define Network WiFi
+ #endif
   #define system_get_free_heap_size esp_get_free_heap_size
   #define LED_ON HIGH
   #define LED_OFF LOW
 #else
+  #define Network WiFi
   #define LED_ON LOW
   #define LED_OFF HIGH
 #endif // ARDUINO_ARCH_ESP32
@@ -379,12 +383,12 @@ void setup()
 
   #ifdef ON_DESK_MFD_ESP_MAC
     // On the desk test setup, go to sleep much quicker
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
+    if (Network.macAddress() == ON_DESK_MFD_ESP_MAC) sleepAfter = 10000;
   #endif // ON_DESK_MFD_ESP_MAC
 
   #ifdef WIFI_STRESS_TEST_MFD_ESP_MAC
     // Wi-Fi stress test: don't go to sleep
-    if (WiFi.macAddress() == WIFI_STRESS_TEST_MFD_ESP_MAC) sleepAfter = -1;
+    if (Network.macAddress() == WIFI_STRESS_TEST_MFD_ESP_MAC) sleepAfter = -1;
   #endif // WIFI_STRESS_TEST_MFD_ESP_MAC
 
     if (sleepAfter > 0)

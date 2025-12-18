@@ -5624,7 +5624,7 @@ const char* ParseVanPacketToJson(TVanPacketRxDesc& pkt)
     if (dataLen < 0 || dataLen > VAN_MAX_DATA_BYTES) return ""; // Unexpected packet length
 
   #ifdef ON_DESK_MFD_ESP_MAC
-    if (WiFi.macAddress() == ON_DESK_MFD_ESP_MAC)
+    if (Network.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
       // On the desk test setup, we want to see a lot of detailed output
         if (! pkt.CheckCrc())
