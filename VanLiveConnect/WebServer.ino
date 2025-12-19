@@ -312,6 +312,19 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 // -----
 // MIME type string constants
 
+#ifdef USE_OLD_ESP_ASYNC_WEB_SERVER
+namespace asyncsrv {
+    static constexpr const char *T_text_html = "text/html";
+    static constexpr const char *T_font_woff = "font/woff";
+    static constexpr const char *T_text_css = "text/css";
+    static constexpr const char *T_text_javascript = "text/javascript";
+    static constexpr const char *T_image_x_icon = "image/x-icon";
+    static constexpr const char *T_image_jpeg = "image/jpeg";
+    static constexpr const char *T_image_png = "image/png";
+    static constexpr const char *T_text_plain = "text/plain";
+}
+#endif // USE_OLD_ESP_ASYNC_WEB_SERVER
+
 // Convert the file extension to the MIME type
 const char* getContentType(const String& path)
 {
