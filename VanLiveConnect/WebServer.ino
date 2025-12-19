@@ -386,24 +386,6 @@ void HandleNotFound(class AsyncWebServerRequest* request)
       #endif // DEBUG_WEBSERVER
 
         return;
-
-      #else
-        if (request->url() == "/")
-        {
-            // Redirect to the main HTML page ('/MFD.html').
-
-            DeleteAllQueuedJsons();  // Maximize free heap space
-
-            AsyncWebServerResponse* response = request->beginResponse(302, F("text/plain"), F("Found"));
-            response->addHeader(F("Location"), "http://" + WiFi.localIP().toString() + "/MFD.html");
-            request->send(response);
-
-          #ifdef DEBUG_WEBSERVER
-            Serial.printf_P(PSTR("redirected (302) to 'http://%s/MFD.html'\n"), WiFi.localIP().toString().c_str());
-          #endif // DEBUG_WEBSERVER
-
-            return;
-        } // if
       #endif // ifdef WIFI_AP_MODE
     } // if
 
@@ -719,6 +701,7 @@ void SetupWebServer()
     // -----
     // HTML files
 
+    webServer.on("/", ServeMainHtml);
     webServer.on("/MFD.html", ServeMainHtml);
 
     // -----
