@@ -312,22 +312,17 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 // -----
 // MIME type string constants
 
-static const char textHtmlStr[] = "text/html";
-static const char textJavaScriptStr[] = "text/javascript";
-static const char textCssStr[] = "text/css";
-static const char fontWoffStr[] = "font/woff";
-
 // Convert the file extension to the MIME type
 const char* getContentType(const String& path)
 {
-    if (path.endsWith(".html")) return textHtmlStr;
-    if (path.endsWith(".woff")) return fontWoffStr;
-    if (path.endsWith(".css")) return textCssStr;
-    if (path.endsWith(".js")) return textJavaScriptStr;
-    if (path.endsWith(".ico")) return "image/x-icon";
-    if (path.endsWith(".jpg")) return "image/jpeg";
-    if (path.endsWith(".png")) return "image/png";
-    return "text/plain";
+    if (path.endsWith(".html")) return asyncsrv::T_text_html;
+    if (path.endsWith(".woff")) return asyncsrv::T_font_woff;
+    if (path.endsWith(".css")) return asyncsrv::T_text_css;
+    if (path.endsWith(".js")) return asyncsrv::T_text_javascript;
+    if (path.endsWith(".ico")) return asyncsrv::T_image_x_icon;
+    if (path.endsWith(".jpg")) return asyncsrv::T_image_jpeg;
+    if (path.endsWith(".png")) return asyncsrv::T_image_png;
+    return asyncsrv::T_text_plain;
 } // getContentType
 
 // -----
@@ -413,9 +408,9 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 void HandleLowMemory(class AsyncWebServerRequest* request)
 {
   #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
-    AsyncWebServerResponse* response = request->beginResponse_P(429, textHtmlStr,
+    AsyncWebServerResponse* response = request->beginResponse_P(429, asyncsrv::T_text_html,
   #else
-    AsyncWebServerResponse* response = request->beginResponse(429, textHtmlStr,
+    AsyncWebServerResponse* response = request->beginResponse(429, asyncsrv::T_text_html,
   #endif
     PSTR(
         "<html>"
@@ -457,9 +452,9 @@ void ServeFont(class AsyncWebServerRequest* request, const char* content, size_t
   #endif // DEBUG_WEBSERVER
 
   #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
-    request->send_P(200, fontWoffStr, (const uint8_t*)content, content_len);
+    request->send_P(200, asyncsrv::T_font_woff, (const uint8_t*)content, content_len);
   #else
-    request->send(200, fontWoffStr, (const uint8_t*)content, content_len);
+    request->send(200, asyncsrv::T_font_woff, (const uint8_t*)content, content_len);
   #endif
 
   #ifdef DEBUG_WEBSERVER
@@ -492,9 +487,9 @@ void ServeFontFromFile(class AsyncWebServerRequest* request, const char* path)
     unsigned long start = millis();
   #endif // DEBUG_WEBSERVER
 
-    if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
+    if (system_get_free_heap_size() < 8 * 1024) return HandleLowMemory(request);
 
-    request->send(SPIFFS, fontWoffStr, path);
+    request->send(SPIFFS, asyncsrv::T_font_woff, path);
 
     VanBusRx.Enable();
 
@@ -524,7 +519,7 @@ void ServeDocument(class AsyncWebServerRequest* request, PGM_P mimeType, PGM_P c
     {
         DeleteAllQueuedJsons();  // Maximize free heap space
 
-        if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
+        if (system_get_free_heap_size() < 8 * 1024) return HandleLowMemory(request);
 
         // Serve the complete document
       #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
@@ -586,7 +581,7 @@ void ServeDocumentFromFile(class AsyncWebServerRequest* request, const char* url
     {
         DeleteAllQueuedJsons();  // Maximize free heap space
 
-        if (system_get_free_heap_size() < 10240) return HandleLowMemory(request);
+        if (system_get_free_heap_size() < 8 * 1024) return HandleLowMemory(request);
 
         // Get the MIME type, if necessary
         if (mimeType == 0) mimeType = getContentType(path);
@@ -629,7 +624,7 @@ void ServeMainHtml(class AsyncWebServerRequest* request)
   #else
 
     // Serve from program memory, so updating is easy and does not need the flash file system uploader
-    ServeDocument(request, textHtmlStr, mfd_html);
+    ServeDocument(request, asyncsrv::T_text_html, mfd_html);
 
   #endif // SERVE_MAIN_FILES_FROM_FFS
 } // ServeMainHtml

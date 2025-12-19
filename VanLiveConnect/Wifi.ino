@@ -8,11 +8,6 @@
 
 #include "Config.h"
 
-// Defined in WebSocket.ino
-extern AsyncWebSocket webSocket;
-extern uint32_t websocketId_1;
-extern uint32_t websocketId_2;
-
 const char* GetHostname()
 {
     return HOST_NAME;
@@ -75,17 +70,6 @@ void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected& evt)
     Serial.printf_P(PSTR("%sWi-Fi client disconnected: "), TimeStamp());
     Serial.print(macToString(evt.mac));
     Serial.print("\n");
-
-  #if 0
-    // Note: even though the webSocket is closed here, the resources will be freed only after a re-connection.
-    // This is because the resources are associated to a TCP/IP connection, which can only be closed successfully
-    // when there is a connection.
-    if (websocketId_1 != WEBSOCKET_INVALID_ID) webSocket.close(websocketId_1);
-    if (websocketId_2 != WEBSOCKET_INVALID_ID) webSocket.close(websocketId_2);
-
-    websocketId_1 = WEBSOCKET_INVALID_ID;
-    websocketId_2 = WEBSOCKET_INVALID_ID;
-  #endif // 0
 } // onStationDisconnected
 
 #endif // ARDUINO_ARCH_ESP32

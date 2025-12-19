@@ -151,7 +151,7 @@ void QueueJson(const char* json, uint32_t lastSentOnId_1 = 0, uint32_t lastSentO
 
         if (++nextJsonPacketIdx == N_QUEUED_JSON) nextJsonPacketIdx = 0;
 
-    } while (system_get_free_heap_size() < 20 * 1024 && countQueuedJsons() > 0);
+    } while (system_get_free_heap_size() < 15 * 1024 && countQueuedJsons() > 0);
 
     // Try to allocate memory
     entry->packet = (char*) malloc(strlen(json) + 1);
