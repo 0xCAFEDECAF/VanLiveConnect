@@ -312,14 +312,15 @@ void HandleAndroidConnectivityCheck(class AsyncWebServerRequest* request)
 // -----
 // MIME type string constants
 
-static const char PROGMEM textJavaScriptStr[] = "text/javascript";
-static const char PROGMEM textCssStr[] = "text/css";
-static const char PROGMEM fontWoffStr[] = "font/woff";
+static const char textHtmlStr[] = "text/html";
+static const char textJavaScriptStr[] = "text/javascript";
+static const char textCssStr[] = "text/css";
+static const char fontWoffStr[] = "font/woff";
 
 // Convert the file extension to the MIME type
 const char* getContentType(const String& path)
 {
-    if (path.endsWith(".html")) return "text/html";
+    if (path.endsWith(".html")) return textHtmlStr;
     if (path.endsWith(".woff")) return fontWoffStr;
     if (path.endsWith(".css")) return textCssStr;
     if (path.endsWith(".js")) return textJavaScriptStr;
@@ -430,9 +431,9 @@ void HandleNotFound(class AsyncWebServerRequest* request)
 void HandleLowMemory(class AsyncWebServerRequest* request)
 {
   #if defined USE_OLD_ESP_ASYNC_WEB_SERVER || defined ESP8266
-    AsyncWebServerResponse* response = request->beginResponse_P(429, F("text/html"),
+    AsyncWebServerResponse* response = request->beginResponse_P(429, textHtmlStr,
   #else
-    AsyncWebServerResponse* response = request->beginResponse(429, F("text/html"),
+    AsyncWebServerResponse* response = request->beginResponse(429, textHtmlStr,
   #endif
     PSTR(
         "<html>"
@@ -646,7 +647,7 @@ void ServeMainHtml(class AsyncWebServerRequest* request)
   #else
 
     // Serve from program memory, so updating is easy and does not need the flash file system uploader
-    ServeDocument(request, PSTR("text/html"), mfd_html);
+    ServeDocument(request, textHtmlStr, mfd_html);
 
   #endif // SERVE_MAIN_FILES_FROM_FFS
 } // ServeMainHtml
