@@ -659,7 +659,7 @@ void SetupWebServer()
       #ifdef SERVE_JAVASCRIPT_FROM_FFS
         ServeDocumentFromFile(request, "/jquery-3.5.1.min.js");
       #else
-        ServeDocument(request, textJavaScriptStr, jQuery_js);
+        ServeDocument(request, asyncsrv::T_text_javascript, jQuery_js);
       #endif // SERVE_JAVASCRIPT_FROM_FFS
     });
 
@@ -668,7 +668,7 @@ void SetupWebServer()
       #ifdef SERVE_MAIN_FILES_FROM_FFS
         ServeDocumentFromFile(request, "/MFD.js");
       #else
-        ServeDocument(request, textJavaScriptStr, mfd_js);
+        ServeDocument(request, asyncsrv::T_text_javascript, mfd_js);
       #endif // SERVE_MAIN_FILES_FROM_FFS
     });
 
@@ -680,7 +680,7 @@ void SetupWebServer()
       #ifdef SERVE_CSS_FROM_FFS
         ServeDocumentFromFile(request, "/all.css");
       #else
-        ServeDocument(request, textCssStr, faAll_css);
+        ServeDocument(request, asyncsrv::T_text_css, faAll_css);
       #endif // SERVE_CSS_FROM_FFS
     });
 
@@ -689,7 +689,7 @@ void SetupWebServer()
       #ifdef SERVE_CSS_FROM_FFS
         ServeDocumentFromFile(request, "/CarInfo.css");
       #else
-        ServeDocument(request, textCssStr, carInfo_css);
+        ServeDocument(request, asyncsrv::T_text_css, carInfo_css);
       #endif // SERVE_CSS_FROM_FFS
     });
 
