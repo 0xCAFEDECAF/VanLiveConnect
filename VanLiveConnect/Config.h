@@ -133,6 +133,12 @@
 // -----
 // Web server
 
+// Below #defines can also be passed on the command line; e.g. like this:
+//   --build-property compiler.cpp.extra_flags="-DSERVE_FROM_LITTLEFS"
+// If that is the case, don't let the below #defines overrule it.
+//
+#if ! defined SERVE_FROM_SPIFFS && ! defined SERVE_FROM_LITTLEFS
+
 // Define SERVE_FROM_SPIFFS to make the web server to use the SPI Flash File system (SPIFFS) to serve its web
 // documents from. When neither SERVE_FROM_SPIFFS nor SERVE_FROM_LITTLEFS is defined (commented out), the
 // web server serves the web documents from program space.
@@ -209,6 +215,8 @@
 //   Filesystem Uploader".
 //
 //#define SERVE_FROM_LITTLEFS
+
+#endif // ! defined SERVE_FROM_SPIFFS && ! defined SERVE_FROM_LITTLEFS
 
 #if defined SERVE_FROM_SPIFFS && defined SERVE_FROM_LITTLEFS
 #error "Either #define SERVE_FROM_SPIFFS or #define SERVE_FROM_LITTLEFS, but not both"

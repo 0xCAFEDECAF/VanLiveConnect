@@ -16,14 +16,9 @@ jobs:
 
         # The matrix will produce one job for each configuration
         # parameter of type `arduino-platform`, plus optional extra variants as listed
-        # in the 'include' list. In this case a total of 5.
-        arduino-platform: ["esp8266:esp8266", "esp32:esp32@1.0.6", "esp32:esp32@2.0.17" ]
+        # in the 'include' list. In this case a total of 7
+        arduino-platform: ["esp32:esp32@1.0.6", "esp32:esp32@2.0.17" ]
 
-        # This is usually optional but we need to statically define the
-        # FQBN of the boards we want to test for each platform. In the
-        # future the CLI might automatically detect and download the core
-        # needed to compile against a certain FQBN, at that point the
-        # following 'Install platform' section will be useless.
         include:
 
           # This works like this: when the platform is "esp8266:esp8266", the
@@ -34,6 +29,22 @@ jobs:
             board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
             async-tcp-library-version: "\"ESP Async TCP\""
             webserver-library-version: "\"ESP Async WebServer\""
+            compiler-warnings: "--warnings all"
+          - arduino-platform: "esp8266:esp8266"
+            fqbn: "esp8266:esp8266:d1_mini"
+            url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
+            board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
+            async-tcp-library-version: "\"ESP Async TCP\""
+            webserver-library-version: "\"ESP Async WebServer\""
+            build-property: "--build-property compiler.cpp.extra_flags=\"-DSERVE_FROM_SPIFFS\""
+            compiler-warnings: "--warnings all"
+          - arduino-platform: "esp8266:esp8266"
+            fqbn: "esp8266:esp8266:d1_mini"
+            url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
+            board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
+            async-tcp-library-version: "\"ESP Async TCP\""
+            webserver-library-version: "\"ESP Async WebServer\""
+            build-property: "--build-property compiler.cpp.extra_flags=\"-DSERVE_FROM_LITTLEFS\""
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp32:esp32@1.0.6"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
@@ -91,4 +102,4 @@ jobs:
       # in the build matrix.
       - name: Build sketch
         run: |
-          arduino-cli compile --fqbn ${{ matrix.fqbn }} --board-options ${{ matrix.board-options }} ${{ matrix.compiler-warnings }} ./VanLiveConnect
+          arduino-cli compile --fqbn ${{ matrix.fqbn }} --board-options ${{ matrix.board-options }} ${{ matrix.build-property }} ${{ matrix.compiler-warnings }} ./VanLiveConnect
