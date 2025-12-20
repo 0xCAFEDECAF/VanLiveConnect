@@ -177,10 +177,7 @@ const char* SetupWifi()
 
     Serial.printf_P(PSTR("Setting up captive portal on Wi-Fi access point '%s', channel %d\n"), wifiSsid, WIFI_CHANNEL);
 
-  #if ! defined ARDUINO_ARCH_ESP32 || ! defined CONFIG_IDF_TARGET_ESP32S2
-    // For some reason, this seems to break DHCP on ESP32S2
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  #endif
 
     // Register event handlers
   #ifdef ARDUINO_ARCH_ESP32

@@ -343,7 +343,10 @@ void setup()
     Serial.printf_P(PSTR("\nStarting VAN bus \"Live Connect\" server version %s\n"), VAN_LIVE_CONNECT_VERSION);
 
     PrintDebugDefines();
+
   #ifdef WIFI_AP_MODE
+    apIP.fromString(IP_ADDR);
+
     const char* wifiSsid =
   #endif
     SetupWifi();
@@ -359,10 +362,6 @@ void setup()
 
     // Setup "Over The Air" (OTA) update
     SetupOta();
-
-  #ifdef WIFI_AP_MODE
-    apIP.fromString(IP_ADDR);
-  #endif // WIFI_AP_MODE
 
   #ifdef WIFI_AP_MODE
     // If DNSServer is started with "*" for domain name, it will reply with provided IP to all DNS request
