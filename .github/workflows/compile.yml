@@ -70,7 +70,7 @@ jobs:
           - arduino-platform: "esp32:esp32"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
-            board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=default,DebugLevel=none"
+            board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=no_ota,DebugLevel=none"
             async-tcp-library-version: "\"Async TCP\""
             webserver-library-version: "\"ESP Async WebServer\""
             build-property: "--build-property compiler.cpp.extra_flags=\"-DSERVE_FROM_LITTLEFS\""
