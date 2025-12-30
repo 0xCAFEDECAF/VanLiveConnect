@@ -233,6 +233,14 @@ There are various possibilities to hook up a ESP32/ESP8266 based board to your v
 > 👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
      cause your car to explode! (or anything less catastrophic)
 
+### Wi-Fi connectivity and heat
+
+After many hours of debugging, I discovered that the Wi-Fi connectivity of the ESP boards degrades heavily
+when its surrounding temperature is high (&gt;&nbsp;40&nbsp;&deg;C). Therefore, **do not** place the ESP board
+near a place  where heat is present or generated. Unfortunately, the MFD and radio are placed in locations where
+there is a lot of heat, especially in the winter season when the air heater is on. Take care not to place the
+ESP board in that area.
+
 ### Infra-red control
 
 When the IR remote control is used to navigate, e.g. through the sat nav menus, this is usually not reflected on the
