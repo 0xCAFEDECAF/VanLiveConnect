@@ -91,7 +91,7 @@ void onProbeRequestBlink(const WiFiEventSoftAPModeProbeRequestReceived&)
 } // onProbeRequestBlink
 #endif // 0
 
-#ifndef WIFI_AP_MODE // Wi-Fi access point mode
+#ifndef WIFI_AP_MODE // Wi-Fi client mode?
 void WifiConfig()
 {
   #ifndef USE_DHCP
@@ -102,7 +102,7 @@ void WifiConfig()
     WiFi.config(ip, gateway, subnet);
   #endif // ifndef USE_DHCP
 } // WifiConfig
-#endif // ifdef WIFI_AP_MODE
+#endif // ifndef WIFI_AP_MODE
 
 #ifndef ARDUINO_ARCH_ESP32
 WiFiEventHandler stationConnectedHandler;

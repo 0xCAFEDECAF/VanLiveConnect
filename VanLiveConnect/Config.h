@@ -222,18 +222,22 @@
 #error "Either #define SERVE_FROM_SPIFFS or #define SERVE_FROM_LITTLEFS, but not both"
 #endif
 
+#if defined SERVE_FROM_LITTLEFS
+ #if defined ARDUINO_ARCH_ESP32 && ! defined ESP_ARDUINO_VERSION  // ESP32 older versions ( <= 1.0.6 ) ?
+  #error "#define SERVE_FROM_LITTLEFS defined, but ESP32 version < 2.0.0 does not support LittleFS"
+ #endif
+#endif
+
 // -----
 // Define to use "ESPAsyncWebSrv library by me-no-dev, fork by dvarrel" instead of (default) "ESP Async WebServer
 // library fork by ESP32Async". To use the fork by dvarrel, uncomment this line.
 //#define USE_OLD_ESP_ASYNC_WEB_SERVER
 
-#ifdef ARDUINO_ARCH_ESP32
- #if ! defined ESP_ARDUINO_VERSION  // ESP32 older versions ( <= 1.0.6 )
+#if defined ARDUINO_ARCH_ESP32 && ! defined ESP_ARDUINO_VERSION  // ESP32 older versions ( <= 1.0.6 ) ?
   #undef USE_OLD_ESP_ASYNC_WEB_SERVER
 
   // On older ESP Arduino versions we have no other choice
   #define USE_OLD_ESP_ASYNC_WEB_SERVER
- #endif
 #endif
 
 // -----
@@ -264,16 +268,16 @@
   // IR receiver data pin
   #ifdef ARDUINO_ARCH_ESP32
    #ifdef CONFIG_IDF_TARGET_ESP32S2
-    #define IR_RECV_PIN GPIO_NUM_7
+    #define IR_RECV_PIN GPIO_NUM_7 // IR receiver data pin
     #define IR_VCC GPIO_NUM_11
     #define IR_GND GPIO_NUM_9
    #else
-    #define IR_RECV_PIN GPIO_NUM_18
+    #define IR_RECV_PIN GPIO_NUM_18 // IR receiver data pin
     #define IR_VCC GPIO_NUM_23
     #define IR_GND GPIO_NUM_19
    #endif
   #else
-    #define IR_RECV_PIN D5
+    #define IR_RECV_PIN D5 // IR receiver data pin
 
     // Using D7 as VCC and D6 as ground pin for the IR receiver. Should be possible with e.g. the
     // TSOP4838 IR receiver as it typically uses only 0.7 mA (maximum GPIO current is 12 mA;
@@ -288,19 +292,18 @@
 // TSOP312XX
 #ifdef IR_TSOP312XX
 
-  // IR receiver data pin
   #ifdef ARDUINO_ARCH_ESP32
    #ifdef CONFIG_IDF_TARGET_ESP32S2
-    #define IR_RECV_PIN GPIO_NUM_11
+    #define IR_RECV_PIN GPIO_NUM_11 // IR receiver data pin
     #define IR_VCC GPIO_NUM_7
     #define IR_GND GPIO_NUM_5
    #else
-    #define IR_RECV_PIN GPIO_NUM_23
+    #define IR_RECV_PIN GPIO_NUM_23 // IR receiver data pin
     #define IR_VCC GPIO_NUM_18
     #define IR_GND GPIO_NUM_26
    #endif
   #else
-    #define IR_RECV_PIN D7
+    #define IR_RECV_PIN D7 // IR receiver data pin
 
     // Using D5 as VCC and D0 as ground pin for the IR receiver. Should be possible with e.g. the
     // TSOP31238 IR receiver as it typically uses only 0.35 mA.

@@ -32,8 +32,8 @@
 // Create AsyncWebServer on port 80
 AsyncWebServer webServer(80);
 
-// Defined in Esp.ino
-extern const String md5Checksum;
+// Defined in VanLiveConnect.ino
+extern String md5Checksum;
 
 // Defined in WebSocket.ino
 extern std::map<uint32_t, unsigned long> lastWebSocketCommunication;

@@ -11,13 +11,14 @@
 void PrintJsonText(const char* jsonBuffer);
 #endif // PRINT_JSON_BUFFERS_ON_SERIAL
 
+// Defined in VanLiveConnect.ino
+extern String md5Checksum;
+
 const char PROGMEM qioStr[] = "QIO";
 const char PROGMEM qoutStr[] = "QOUT";
 const char PROGMEM dioStr[] = "DIO";
 const char PROGMEM doutStr[] = "DOUT";
 const char PROGMEM unknownStr[] = "UNKNOWN";
-
-const String md5Checksum = ESP.getSketchMD5();
 
 #ifndef ARDUINO_ARCH_ESP32
 const uint32_t flashChipId = ESP.getFlashChipId();

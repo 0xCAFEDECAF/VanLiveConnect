@@ -116,6 +116,8 @@ void IrSetup();
 const char* ParseIrPacketToJson(const TIrPacket& pkt);
 bool IrReceive(TIrPacket& irPacket);
 
+String md5Checksum = "";
+
 // The following VAN bus packets are considered very important, and should not be skipped when the VAN bus RX queue
 // is overrunning
 bool IRAM_ATTR IsVeryImportantPacket(const TVanPacketRxDesc& pkt)
@@ -326,6 +328,8 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LED_OFF);
   #endif
+
+    md5Checksum = ESP.getSketchMD5();
 
     SetupSleep();
 
