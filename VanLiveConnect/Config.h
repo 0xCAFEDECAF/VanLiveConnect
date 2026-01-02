@@ -318,9 +318,15 @@
 
   // Used only by test setup on desk
   #ifdef ARDUINO_ARCH_ESP32
+   #ifdef CONFIG_IDF_TARGET_ESP32S2
+    #define IR_RECV_PIN GPIO_NUM_11 // IR receiver data pin
+    #define IR_VCC GPIO_NUM_7
+    #define IR_GND GPIO_NUM_5
+   #else
     #define TEST_IR_RECV_PIN GPIO_NUM_23
     #define TEST_IR_VCC_TEST GPIO_NUM_18
     #define TEST_IR_GND GPIO_NUM_26 // TODO - also VanBus ANALYSER_PIN
+   #endif
   #else
     #define TEST_IR_RECV_PIN D7
     #define TEST_IR_VCC_TEST D5

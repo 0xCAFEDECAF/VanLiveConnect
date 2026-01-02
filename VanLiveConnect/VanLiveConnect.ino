@@ -174,7 +174,7 @@ void SetupVanReceiver()
     VanBusRx.SetDropPolicy(VAN_PACKET_QUEUE_SIZE * 8 / 10, &IsVeryImportantPacket);
   #endif
 
-  // Define these as #defines so that the Serial.printf_P below shows the correct pin name on the console
+  // Use #defines, not const int, so that the Serial.printf_P below shows the correct pin name on the console.
   #ifdef ARDUINO_ARCH_ESP32
    #ifdef CONFIG_IDF_TARGET_ESP32S2
     #define TX_PIN GPIO_NUM_18 // GPIO pin connected to VAN bus transceiver input

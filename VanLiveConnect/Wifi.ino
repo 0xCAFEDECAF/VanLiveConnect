@@ -297,5 +297,5 @@ void WifiCheckStatus()
     {
         Serial.print(F("Wi-Fi DISconnected!\n"));
     } // if
-#endif // WIFI_AP_MODE
+  #endif // WIFI_AP_MODE
 } // WifiCheckStatus
