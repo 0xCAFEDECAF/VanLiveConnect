@@ -164,7 +164,8 @@ As said, the served web page self-hosts all resources. No Internet connection is
 ## 🔌 Schematics <a name = "schematics"></a>
 
 You can usually find the VAN bus on pins 2 and 3 of ISO block "A" of your head unit (car radio). See
-https://en.wikipedia.org/wiki/Connectors_for_car_audio and https://github.com/morcibacsi/esp32_rmt_van_rx#schematics .
+http://web.archive.org/web/20230315215552/https://en.wikipedia.org/wiki/Connectors_for_car_audio and
+https://github.com/morcibacsi/esp32_rmt_van_rx#schematics .
 
 There are various possibilities to hook up a ESP32/ESP8266 based board to your vehicle's VAN bus:
 
@@ -233,13 +234,18 @@ There are various possibilities to hook up a ESP32/ESP8266 based board to your v
 > 👉 Note: I used this schematic during many long debugging hours, but I cannot guarantee that it won't ultimately
      cause your car to explode! (or anything less catastrophic)
 
-### Wi-Fi connectivity and heat
+### Wi-Fi connectivity
 
-After many hours of debugging, I discovered that the Wi-Fi connectivity of the ESP boards degrades heavily
-when its surrounding temperature is high (&gt;&nbsp;40&nbsp;&deg;C). Therefore, **do not** place the ESP board
-near a place  where heat is present or generated. Unfortunately, the MFD and radio are placed in locations where
-there is a lot of heat, especially in the winter season when the air heater is on. Take care not to place the
-ESP board in that area.
+After many hours of experimenting, I discovered that the Wi-Fi connectivity of the ESP boards degrades heavily
+when the power supply is flaky or bad. Wi-Fi power load is spiky, so make sure to use a high-quality power supply.
+Minimize the usage of power-consuming devices and peripherals, such as the built-in LED.
+
+#### Heat
+
+I seem to have noticed that the Wi-Fi connectivity of the ESP boards degrades when its surrounding temperature is
+high (&gt;&nbsp;40&nbsp;&deg;C). Therefore, do not place the ESP board near a place where heat is present or
+generated. Unfortunately, the MFD and radio are placed in locations where there is a lot of heat, especially
+in the winter season when the air heater is on. Take care not to place the ESP board in that area.
 
 ### Infra-red control
 

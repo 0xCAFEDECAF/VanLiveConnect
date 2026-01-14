@@ -324,6 +324,8 @@ long sleepAfter = SLEEP_MS_AFTER_NO_VAN_BUS_ACTIVITY;
 
 void setup()
 {
+    // Experiments show that Wi-Fi connectivity degrades when the power supply is unstable.
+    // Therefore, try to use as little power as possible: keep built-in LED off.
   #ifdef LED_BUILTIN
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LED_OFF);
@@ -453,10 +455,6 @@ void loop()
     bool isQueueOverrun = false;
     if (VanBusRx.Receive(pkt, &isQueueOverrun))
     {
-      #ifdef LED_BUILTIN
-        digitalWrite(LED_BUILTIN, LED_ON);
-      #endif
-
         lastActivityAt = millis();
 
       #if VAN_BUS_VERSION_INT >= 000003001 && VAN_BUS_VERSION_INT < 000003003
@@ -485,9 +483,6 @@ void loop()
       #endif // VAN_RX_IFS_DEBUGGING
 
         SendJsonOnWebSocket(ParseVanPacketToJson(pkt), IsImportantPacket(pkt));
-      #ifdef LED_BUILTIN
-        digitalWrite(LED_BUILTIN, LED_OFF);
-      #endif
     }
 
     if (isQueueOverrun)
