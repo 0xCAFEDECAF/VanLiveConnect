@@ -104,7 +104,6 @@ function showViewportSizes()
 	$("#window_height").text(window.innerHeight);
 }
 
-
 // -----
 // Functions for parsing and handling VAN bus packet data as received in JSON format
 
@@ -4022,9 +4021,6 @@ function handleItemChange(item, value, changed)
 			// Un-highlight any previous entry in the "tuner_presets_popup"
 			$('div[id^=presets_memory_][id$=_select]').hide();
 
-			// Make sure the audio settings popup is hidden
-			hideAudioSettingsPopup();
-
 			// Changed to a non-preset frequency? Or just changed audio source? Then suppress the tuner presets popup.
 			if (value === "-" || hideHeadUnitPopupsTimer !== null)
 			{
@@ -4032,6 +4028,9 @@ function handleItemChange(item, value, changed)
 			}
 			else
 			{
+				// Make sure the audio settings popup is hidden
+				hideAudioSettingsPopup();
+
 				// Highlight the corresponding entry in the "tuner_presets_popup", in case that is currently visible
 				// due to a recent preset button press on the head unit
 				let highlightId = "presets_memory_" + value + "_select";
@@ -4061,7 +4060,7 @@ function handleItemChange(item, value, changed)
 
 			tunerSearchMode = value;
 
-			hideAudioSettingsPopup();
+			//hideAudioSettingsPopup();
 			hideTunerPresetsPopup();
 
 			showAudioPopup();
@@ -5710,7 +5709,6 @@ function handleItemChange(item, value, changed)
 				let line_1 = value.substr(0, splitAt);
 				let line_2 = value.substr(splitAt);
 
-
 				$("#satnav_to_mfd_show_characters_line_1").text(line_1);
 				$("#satnav_to_mfd_show_characters_line_2").text(line_2);
 
@@ -5986,6 +5984,7 @@ function handleItemChange(item, value, changed)
 			}
 			else
 			{
+				hideAllPopups();
 				showPopup("climate_control_popup", 5000);
 			} // if
 		} // case
