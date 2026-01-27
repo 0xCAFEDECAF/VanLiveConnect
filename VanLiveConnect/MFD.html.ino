@@ -195,7 +195,7 @@ const char mfd_html[] PROGMEM = R"=====(
 
 				<!-- Also show exterior temperature -->
 				<div gid="exterior_temp_shown" class="tag"
-					style="font-size:100px; top:330px; width:960px; height:220px; line-height:1.8; text-align:center;"></div>
+					style="font-size:100px; top:310px; width:960px; height:220px; line-height:2.2; text-align:center;"></div>
 
 
 				<!--
