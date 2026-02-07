@@ -170,14 +170,6 @@ const char* SetupWifi()
 
   #ifdef WIFI_AP_MODE
 
-    // Experiments show that Wi-Fi connectivity degrades when the power supply is unstable.
-    // Therefore, try to use as little power as possible: set WiFi RF power output to lowest level
-   #ifdef ARDUINO_ARCH_ESP32
-    WiFi.setTxPower(WIFI_POWER_MINUS_1dBm);
-   #else
-    WiFi.setOutputPower(0.0);
-   #endif
-
   #ifdef ON_DESK_MFD_ESP_MAC
     // The test setup on the desk has a slightly different SSID
     if (Network.macAddress() == ON_DESK_MFD_ESP_MAC) wifiSsid = WIFI_SSID" test";
