@@ -3960,9 +3960,8 @@ function handleItemChange(item, value, changed)
 		{
 			if (! changed) break;
 
-			// Hide the audio and tuner presets popup when changing band
+			// Hide the tuner presets popup when changing band
 			hideTunerPresetsPopup();
-			hideAudioSettingsPopup();
 
 			showAudioPopup();
 		} // case
@@ -4028,9 +4027,6 @@ function handleItemChange(item, value, changed)
 			}
 			else
 			{
-				// Make sure the audio settings popup is hidden
-				hideAudioSettingsPopup();
-
 				// Highlight the corresponding entry in the "tuner_presets_popup", in case that is currently visible
 				// due to a recent preset button press on the head unit
 				let highlightId = "presets_memory_" + value + "_select";
