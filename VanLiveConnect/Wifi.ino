@@ -168,6 +168,12 @@ const char* SetupWifi()
 
     static const char* wifiSsid = WIFI_SSID;
 
+    WiFi.forceSleepWake();
+    delay(1);
+
+    // Disable the WiFi persistence. The ESP8266 will not load and save WiFi settings in the flash memory.
+    WiFi.persistent(false);
+
   #ifdef WIFI_AP_MODE
 
   #ifdef ON_DESK_MFD_ESP_MAC
@@ -224,7 +230,6 @@ const char* SetupWifi()
 
     WiFi.mode(WIFI_STA);  // Otherwise it may be in WIFI_AP_STA mode, broadcasting an SSID like AI_THINKER_XXXXXX
     WiFi.disconnect();  // After reset via HW button sometimes cannot seem to reconnect without this
-    WiFi.persistent(false);
   #ifdef ARDUINO_ARCH_ESP32
    #if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3, 0, 0)
     WiFi.setAutoReconnect(true);

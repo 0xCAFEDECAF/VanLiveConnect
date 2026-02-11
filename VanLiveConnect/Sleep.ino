@@ -64,6 +64,9 @@ void GoToSleep()
     );
     Serial.flush();
 
+    WiFi.disconnect(true);
+    delay(1);
+
     IrDisable();
     VanBusRx.Disable();
 

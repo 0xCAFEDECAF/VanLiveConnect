@@ -331,6 +331,10 @@ void setup()
     digitalWrite(LED_BUILTIN, LED_OFF);
   #endif
 
+    WiFi.mode(WIFI_OFF);
+    WiFi.forceSleepBegin();
+    delay(1);
+
     md5Checksum = ESP.getSketchMD5();
 
     SetupSleep();
@@ -537,4 +541,6 @@ void loop()
         VanBusRx.DumpStats(Serial);
     } // if
   #endif // SHOW_VAN_RX_STATS
+
+    delay(9);
 } // loop
