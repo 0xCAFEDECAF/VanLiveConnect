@@ -332,7 +332,9 @@ void setup()
   #endif
 
     WiFi.mode(WIFI_OFF);
+  #ifndef ARDUINO_ARCH_ESP32
     WiFi.forceSleepBegin();
+  #endif
     delay(1);
 
     md5Checksum = ESP.getSketchMD5();

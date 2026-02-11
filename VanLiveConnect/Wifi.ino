@@ -168,8 +168,10 @@ const char* SetupWifi()
 
     static const char* wifiSsid = WIFI_SSID;
 
+  #ifndef ARDUINO_ARCH_ESP32
     WiFi.forceSleepWake();
     delay(1);
+  #endif
 
     // Disable the WiFi persistence. The ESP8266 will not load and save WiFi settings in the flash memory.
     WiFi.persistent(false);
