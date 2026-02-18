@@ -236,16 +236,23 @@ There are various possibilities to hook up a ESP32/ESP8266 based board to your v
 
 ### Wi-Fi connectivity
 
+#### Power supply
+
 After many hours of experimenting, I discovered that the Wi-Fi connectivity of the ESP boards degrades heavily
 when the power supply is flaky or bad. Wi-Fi power load is spiky, so make sure to use a high-quality power supply.
 Minimize the usage of power-consuming devices and peripherals, such as the built-in LED.
 
-#### Heat
+#### Location
 
-I seem to have noticed that the Wi-Fi connectivity of the ESP boards degrades when its surrounding temperature is
-high (&gt;&nbsp;40&nbsp;&deg;C). Therefore, do not place the ESP board near a place where heat is present or
-generated. Unfortunately, the MFD and radio are placed in locations where there is a lot of heat, especially
-in the winter season when the air heater is on. Take care not to place the ESP board in that area.
+I noticed that the Wi-Fi connectivity of the ESP boards degrades when it is surrounded by other electronic devices
+or wiring. Degrading may be caused by electronic interference, or maybe just the higher ambient temperature inside
+those areas. The Wi-Fi access point likes to have a lot of air around it!
+
+Advice is to not place the ESP board near other electronics or near a lot of wiring (for example inside the center
+console, behind the original MFD or head unit). A good place seems to be the footwell (e.g. under the glove
+compartment). I used
+[this wire set](https://www.tinytronics.nl/en/cables-and-connectors/cables-and-adapters/prototyping-wires/dupont-compatible-and-jumper/dupont-jumper-wire-female-female-100cm-10-wires)
+to connect the board and its peripherals to the ISO 10487 connector.
 
 ### Infra-red control
 
