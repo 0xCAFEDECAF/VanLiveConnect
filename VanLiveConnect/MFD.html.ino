@@ -546,7 +546,7 @@ const char mfd_html[] PROGMEM = R"=====(
 					<!-- Contact key position -->
 					<div class="icon iconSmall fas fa-key" style="left:20px; top:373px;"></div>
 
-					<div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;">OFF</div>
+					<div id="contact_key_position" class="dots" style="padding-left:50px; line-height:2.7; left:90px; top:315px; width:300px; height:160px;">---</div>
 
 					<!-- Dashboard illumination level -->
 					<div class="icon iconSmall fas fa-tachometer-alt" style="left:710px; top:373px;"></div>

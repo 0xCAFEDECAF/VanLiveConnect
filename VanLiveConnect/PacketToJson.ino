@@ -822,7 +822,7 @@ PGM_P ContactKeyPositionStr(int data)
 // Set to true to disable (once) duplicate detection. For use when switching to other units.
 bool SkipEnginePktDupDetect = false;
 
-int contactKeyPosition = CKP_OFF;
+int contactKeyPosition = CKP_UNKNOWN;
 bool economyMode = false;
 
 VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const int n)
@@ -5353,7 +5353,6 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         "\"event\": \"display\",\n"
         "\"data\":\n"
         "{\n"
-            "\"contact_key_position\": \"%s\",\n"
             "\"door_open\": \"%s\",\n"
             "\"lights\": \"%s\",\n"
             "\"small_screen\": \"%s\",\n"
@@ -5366,7 +5365,6 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
             "\"satnav_guidance_preference\": \"%s\"";
 
     int at = snprintf_P(buf, n, jsonFormatter,
-        ContactKeyPositionStr(contactKeyPosition),
         doorOpen ? yesStr : noStr,
         lightsStr,
         SmallScreenStr(),  // Small screen (left hand side of the display) to start with
@@ -5378,6 +5376,14 @@ const char* EquipmentStatusDataToJson(char* buf, const int n)
         satnavInitialized ? yesStr : noStr,
         SatNavGuidancePreferenceStr(satnavGuidancePreference)
     );
+
+    if (contactKeyPosition != CKP_UNKNOWN)
+    {
+        at += at >= n ? 0 :
+            snprintf(buf + at, n - at, PSTR(",\n\"contact_key_position\": \"%s\""),
+                ContactKeyPositionStr(contactKeyPosition)
+            );
+    } // if
 
     if (satnavDisclaimerAccepted)
     {
