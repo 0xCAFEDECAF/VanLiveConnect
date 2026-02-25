@@ -342,6 +342,10 @@
 // -----
 // Debugging
 
+// If defined, prevents the ESP board from going to sleep as long as no VAN bus packets were received
+// (which often happens in the test setup).
+//#define TEST_SETUP_KEEP_AWAKE
+
 // Define to see infrared key hash values and timing on the serial port.
 //#define DEBUG_IR_RECV
 

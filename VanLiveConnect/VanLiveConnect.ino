@@ -445,7 +445,13 @@ void loop()
     if (IrReceive(irPacket)) SendJsonOnWebSocket(ParseIrPacketToJson(irPacket), true);
 
     if (sleepAfter > 0
-        && VanBusRx.GetCount() > 0  // Only sleep in a "real" setup with VAN bus activity
+
+      #ifdef TEST_SETUP_KEEP_AWAKE
+        // Prevent the ESP board from going to sleep as long as no VAN bus packets were received,
+        // as often happens in the test setup. In a "real" setup, this might drain the battery
+        // when the board wakes up by accident (although I have never seen that happen).
+        && VanBusRx.GetCount() > 0
+      #endif
        )
     {
         if (millis() - lastActivityAt >= (unsigned long)sleepAfter)
