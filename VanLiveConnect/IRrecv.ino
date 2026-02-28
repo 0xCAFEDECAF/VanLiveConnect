@@ -305,32 +305,58 @@ void IrSetup()
 {
     Serial.print(F("Setting up IR receiver\n"));
 
+    uint8_t vccPin = IR_VCC;
+    uint8_t gndPin = IR_GND;
+    uint8_t recvPin = IR_RECV_PIN;
+
   #ifdef ON_DESK_MFD_ESP_MAC
     if (Network.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
-        pinMode(TEST_IR_VCC_TEST, OUTPUT);
-        digitalWrite(TEST_IR_VCC_TEST, HIGH);
-        pinMode(TEST_IR_GND, OUTPUT);
-        digitalWrite(TEST_IR_GND, LOW);
+        vccPin = TEST_IR_VCC_TEST;
+        gndPin = TEST_IR_GND;
+        recvPin = TEST_IR_RECV_PIN;
 
-        irrecv = new IRrecv(TEST_IR_RECV_PIN);
-        irrecv->enableIRIn(); // Start the receiver
-
-        Serial.print(F("On-desk IR receiver has been set up\n"));
-
-        return;
+        Serial.printf_P
+        (
+            PSTR("IR receiver pins: VCC = %s (GPIO%u); GND = %s (GPIO%u); RECV = %s (GPIO%u)\n"),
+            XSTR(TEST_IR_VCC_TEST),
+            TEST_IR_VCC_TEST,
+            XSTR(TEST_IR_GND),
+            TEST_IR_GND,
+            XSTR(TEST_IR_RECV_PIN),
+            TEST_IR_RECV_PIN
+        );
+    }
+    else
+    {
+  #endif // ON_DESK_MFD_ESP_MAC
+        Serial.printf_P
+        (
+            PSTR("IR receiver pins: VCC = %s (GPIO%u); GND = %s (GPIO%u); RECV = %s (GPIO%u)\n"),
+            XSTR(IR_VCC),
+            IR_VCC,
+            XSTR(IR_GND),
+            IR_GND,
+            XSTR(IR_RECV_PIN),
+            IR_RECV_PIN
+        );
+  #ifdef ON_DESK_MFD_ESP_MAC
     } // if
   #endif // ON_DESK_MFD_ESP_MAC
 
     // Using GPIO pins to feed the IR receiver. Should be possible with e.g. the TSOP4838 IR receiver as
     // it typically uses only 0.7 mA.
-    pinMode(IR_VCC, OUTPUT);
-    digitalWrite(IR_VCC, HIGH);
-    pinMode(IR_GND, OUTPUT);
-    digitalWrite(IR_GND, LOW);
+    pinMode(vccPin, OUTPUT);
+    digitalWrite(vccPin, HIGH);
+    pinMode(gndPin, OUTPUT);
+    digitalWrite(gndPin, LOW);
 
-    irrecv = new IRrecv(IR_RECV_PIN);
+    irrecv = new IRrecv(recvPin);
     irrecv->enableIRIn(); // Start the receiver
+
+  #ifdef ON_DESK_MFD_ESP_MAC
+    if (Network.macAddress() == ON_DESK_MFD_ESP_MAC) Serial.print(F("On-desk IR receiver has been set up\n"));
+  #endif
 } // IrSetup
 
 void IrEnable()
