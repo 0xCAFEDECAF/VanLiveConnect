@@ -111,7 +111,15 @@ typedef struct
     unsigned long millis_;
 } TIrPacket;
 
+typedef struct
+{
+    uint8_t vccPin;
+    uint8_t gndPin;
+    uint8_t recvPin;
+} TIrPinAssignment;
+
 // Defined in IRrecv.ino
+TIrPinAssignment* IrGetPinAssignment(bool print = false);
 void IrSetup();
 const char* ParseIrPacketToJson(const TIrPacket& pkt);
 bool IrReceive(TIrPacket& irPacket);

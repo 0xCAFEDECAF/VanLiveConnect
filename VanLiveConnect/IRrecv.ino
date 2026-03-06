@@ -299,23 +299,33 @@ const char* ParseIrPacketToJson(const TIrPacket& pkt)
     return jsonBuffer;
 } // ParseIrPacketToJson
 
-IRrecv* irrecv;
+TIrPinAssignment* irPinAssignment = NULL;
 
-void IrSetup()
+TIrPinAssignment* IrGetPinAssignment(bool print)
 {
-    Serial.print(F("Setting up IR receiver\n"));
+    if (irPinAssignment == NULL)
+    {
+        irPinAssignment = new TIrPinAssignment;
 
-    uint8_t vccPin = IR_VCC;
-    uint8_t gndPin = IR_GND;
-    uint8_t recvPin = IR_RECV_PIN;
+        irPinAssignment->vccPin = IR_VCC;
+        irPinAssignment->gndPin = IR_GND;
+        irPinAssignment->recvPin = IR_RECV_PIN;
+
+      #ifdef ON_DESK_MFD_ESP_MAC
+        if (Network.macAddress() == ON_DESK_MFD_ESP_MAC)
+        {
+            irPinAssignment->vccPin = TEST_IR_VCC_TEST;
+            irPinAssignment->gndPin = TEST_IR_GND;
+            irPinAssignment->recvPin = TEST_IR_RECV_PIN;
+        } // if
+      #endif // ON_DESK_MFD_ESP_MAC
+    } // if
+
+    if (! print) return irPinAssignment;
 
   #ifdef ON_DESK_MFD_ESP_MAC
     if (Network.macAddress() == ON_DESK_MFD_ESP_MAC)
     {
-        vccPin = TEST_IR_VCC_TEST;
-        gndPin = TEST_IR_GND;
-        recvPin = TEST_IR_RECV_PIN;
-
         Serial.printf_P
         (
             PSTR("IR receiver pins: VCC = %s (GPIO%u); GND = %s (GPIO%u); RECV = %s (GPIO%u)\n"),
@@ -344,14 +354,25 @@ void IrSetup()
     } // if
   #endif // ON_DESK_MFD_ESP_MAC
 
+    return irPinAssignment;
+} // IrGetPinAssignment
+
+IRrecv* irrecv;
+
+void IrSetup()
+{
+    Serial.print(F("Setting up IR receiver\n"));
+
+    TIrPinAssignment* pins = IrGetPinAssignment(true);
+
     // Using GPIO pins to feed the IR receiver. Should be possible with e.g. the TSOP4838 IR receiver as
     // it typically uses only 0.7 mA.
-    pinMode(vccPin, OUTPUT);
-    digitalWrite(vccPin, HIGH);
-    pinMode(gndPin, OUTPUT);
-    digitalWrite(gndPin, LOW);
+    pinMode(pins->vccPin, OUTPUT);
+    digitalWrite(pins->vccPin, HIGH);
+    pinMode(pins->gndPin, OUTPUT);
+    digitalWrite(pins->gndPin, LOW);
 
-    irrecv = new IRrecv(recvPin);
+    irrecv = new IRrecv(pins->recvPin);
     irrecv->enableIRIn(); // Start the receiver
 
   #ifdef ON_DESK_MFD_ESP_MAC
