@@ -37,6 +37,7 @@ void SetupSleep()
   #else
     gpio_pin_wakeup_disable();
     pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
+    pinMode(LIGHT_SLEEP_WAKE_PIN_ALT, INPUT_PULLUP);
 
   #endif // ARDUINO_ARCH_ESP32
 } // SetupSleep
@@ -46,6 +47,7 @@ void WakeupCallback()
 {
     gpio_pin_wakeup_disable();
     pinMode(LIGHT_SLEEP_WAKE_PIN, INPUT_PULLUP);
+    pinMode(LIGHT_SLEEP_WAKE_PIN_ALT, INPUT_PULLUP);
 
     // Seems to help in decreasing the jitter on the VAN bus bit timings. But also seems to
     // deteriorate Wi-Fi connectivity.
