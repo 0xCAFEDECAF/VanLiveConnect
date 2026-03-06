@@ -27,60 +27,60 @@ jobs:
             fqbn: "esp8266:esp8266:d1_mini"
             url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
             board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
-            async-tcp-library-version: "\"ESP Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"ESP Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp8266:esp8266"
             fqbn: "esp8266:esp8266:d1_mini"
             url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
             board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
-            async-tcp-library-version: "\"ESP Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"ESP Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             build-property: "--build-property compiler.cpp.extra_flags=\"-DSERVE_FROM_SPIFFS\""
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp8266:esp8266"
             fqbn: "esp8266:esp8266:d1_mini"
             url: "https://arduino.esp8266.com/stable/package_esp8266com_index.json"
             board-options: "xtal=160,ssl=basic,mmu=3232,non32xfer=fast,eesz=4M1M,ip=hb2n"
-            async-tcp-library-version: "\"ESP Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"ESP Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             build-property: "--build-property compiler.cpp.extra_flags=\"-DSERVE_FROM_LITTLEFS\""
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp32:esp32@1.0.6"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
             board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=min_spiffs,DebugLevel=none"
-            async-tcp-library-version: "AsyncTCP"
-            webserver-library-version: "ESPAsyncWebSrv@1.2.7"
+            async-tcp-library-version: "AsyncTCP"  # https://github.com/dvarrel/AsyncTCP
+            webserver-library-version: "ESPAsyncWebSrv@1.2.7"  # https://github.com/dvarrel/ESPAsyncWebSrv/releases/tag/1.2.7
             compiler-warnings: ""
           - arduino-platform: "esp32:esp32@2.0.17"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
             board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=min_spiffs,DebugLevel=none"
-            async-tcp-library-version: "\"Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp32:esp32"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
             board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=min_spiffs,DebugLevel=none"
-            async-tcp-library-version: "\"Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp32:esp32"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:ttgo-t7-v13-mini32"
             board-options: "CPUFreq=240,FlashFreq=80,FlashSize=4M,PartitionScheme=no_ota,DebugLevel=none"
-            async-tcp-library-version: "\"Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             build-property: "--build-property compiler.cpp.extra_flags=\"-DSERVE_FROM_LITTLEFS\""
             compiler-warnings: "--warnings all"
           - arduino-platform: "esp32:esp32"
             url: "https://dl.espressif.com/dl/package_esp32_index.json"
             fqbn: "esp32:esp32:esp32s2"
             board-options: "CPUFreq=240,CDCOnBoot=cdc,FlashFreq=80,FlashSize=4M,PartitionScheme=min_spiffs,DebugLevel=none"
-            async-tcp-library-version: "\"Async TCP\""
-            webserver-library-version: "\"ESP Async WebServer\""
+            async-tcp-library-version: "\"Async TCP\""  # https://github.com/ESP32Async/AsyncTCP.git
+            webserver-library-version: "\"ESP Async WebServer\""  # https://github.com/ESP32Async/ESPAsyncWebServer
             compiler-warnings: "--warnings all"
 
     steps:
