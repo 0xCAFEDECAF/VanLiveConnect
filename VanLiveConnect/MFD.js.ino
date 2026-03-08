@@ -4631,6 +4631,8 @@ function handleItemChange(item, value, changed)
 
 		case "engine_running":
 		{
+			if (value === "YES") economyMode = "OFF";
+
 			// Has anything changed?
 			if (value === engineRunning) break;
 			engineRunning = value;
