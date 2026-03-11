@@ -185,15 +185,15 @@ void SetupVanReceiver()
   // Use #defines, not const int, so that the Serial.printf_P below shows the correct pin name on the console.
   #ifdef ARDUINO_ARCH_ESP32
    #ifdef CONFIG_IDF_TARGET_ESP32S2
-    #define TX_PIN GPIO_NUM_18 // GPIO pin connected to VAN bus transceiver input
     #define RX_PIN GPIO_NUM_33 // GPIO pin connected to VAN bus transceiver output
+    #define TX_PIN GPIO_NUM_18 // GPIO pin connected to VAN bus transceiver input
    #else
-    #define TX_PIN GPIO_NUM_16 // GPIO pin connected to VAN bus transceiver input
     #define RX_PIN GPIO_NUM_21 // GPIO pin connected to VAN bus transceiver output
+    #define TX_PIN GPIO_NUM_16 // GPIO pin connected to VAN bus transceiver input
    #endif
   #else // ! ARDUINO_ARCH_ESP32
-    #define TX_PIN D3 // GPIO pin connected to VAN bus transceiver input
     #define RX_PIN D2 // GPIO pin connected to VAN bus transceiver output
+    #define TX_PIN D3 // GPIO pin connected to VAN bus transceiver input
   #endif // ARDUINO_ARCH_ESP32
 
     Serial.printf_P(PSTR("Setting up VAN bus receiver on pin %s (GPIO%u)\n"), XSTR(RX_PIN), RX_PIN);

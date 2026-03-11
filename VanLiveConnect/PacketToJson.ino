@@ -198,75 +198,14 @@ float ToGallons(float litres)
     return litres / 4.546;  // Assuming imperial gallons
 } // ToGallons
 
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToStr(uint8_t data)
+String CdPlayerTime(uint8_t min, uint8_t sec)
 {
-    #define MAX_UINT8_STR_SIZE 8
-    static char buffer[MAX_UINT8_STR_SIZE];
-    sprintf(buffer, "%u\0", data);
-
-    return buffer;
-} // ToStr
-
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToStr(uint16_t data)
-{
-    #define MAX_UINT16_STR_SIZE 8
-    static char buffer[MAX_UINT16_STR_SIZE];
-    sprintf(buffer, "%u\0", data);
-
-    return buffer;
-} // ToStr
-
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToStr(int16_t data)
-{
-    #define MAX_INT16_STR_SIZE 8
-    static char buffer[MAX_INT16_STR_SIZE];
-    sprintf(buffer, "%d\0", data);
-
-    return buffer;
-} // ToStr
-
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToBcdStr(uint8_t data)
-{
-    #define MAX_UINT8_BCD_STR_SIZE 8
-    static char buffer[MAX_UINT8_BCD_STR_SIZE];
-    sprintf(buffer, "%X\0", data);
-
-    return buffer;
-} // ToBcdStr
-
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToHexStr(uint8_t data)
-{
-    #define MAX_UINT8_HEX_STR_SIZE 8
-    static char buffer[MAX_UINT8_HEX_STR_SIZE];
-    sprintf(buffer, "0x%02X\0", data);
-
-    return buffer;
-} // ToHexStr
-
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToHexStr(uint8_t data1, uint8_t data2)
-{
-    #define MAX_2_UINT8_HEX_STR_SIZE 12
-    static char buffer[MAX_2_UINT8_HEX_STR_SIZE];
-    sprintf_P(buffer, PSTR("0x%02X-0x%02X\0"), data1, data2);
-
-    return buffer;
-} // ToHexStr
-
-// Uses statically allocated buffer, so don't call twice within the same printf invocation
-char* ToHexStr(uint16_t data)
-{
-    #define MAX_UINT16_HEX_STR_SIZE 8
-    static char buffer[MAX_UINT16_HEX_STR_SIZE];
-    sprintf(buffer, "0x%04X\0", data);
-
-    return buffer;
-} // ToHexStr
+    // min and sec are coded in BCD
+    String m = String(min, HEX);
+    String s = String(sec, HEX);
+    if (sec < 10) s = "0" + s;
+    return m + ":" + s;
+} // CdPlayerTime
 
 // Generate a string representation of a float value.
 // Note: passed buffer size must be (at least) MAX_FLOAT_SIZE bytes, e.g. declare like this:
@@ -615,7 +554,7 @@ PGM_P SatNavRequestStr(uint8_t data)
         data == SR_PERSONAL_ADDRESS_LIST ? PSTR("personal_address_list") :
         data == SR_PROFESSIONAL_ADDRESS_LIST ? PSTR("professional_address_list") :
         data == SR_DESTINATION ? PSTR("current_destination") :  // TODO - change to SR_NEW_DESTINATION - "new_destination"
-        ToHexStr(data);
+        notApplicable2Str;
 } // SatNavRequestStr
 
 enum SatNavRequestType_t
@@ -634,7 +573,7 @@ PGM_P SatNavRequestTypeStr(uint8_t data)
         data == SRT_REQ_ITEMS ? PSTR("REQ_ITEMS") :
         data == SRT_SELECT ? PSTR("SELECT") :
         data == SRT_SELECT_CITY_CENTER ? PSTR("SELECT_CITY_CENTER") :
-        ToStr(data);
+        notApplicable2Str;
 } // SatNavRequestTypeStr
 
 enum SatNavGuidancePreference_t
@@ -929,8 +868,8 @@ VanPacketParseResult_t ParseEnginePkt(TVanPacketRxDesc& pkt, char* buf, const in
 
         ! isCoolantTempValid ? notApplicable3Str :
             mfdTemperatureUnit == MFD_TEMPERATURE_UNIT_CELSIUS ?
-                ToStr(coolantTemp) :
-                ToStr(ToFahrenheit(coolantTemp)),
+                String(coolantTemp).c_str() :
+                String(ToFahrenheit(coolantTemp)).c_str(),
 
         // TODO - hard coded value 130 degrees Celsius for 100%
         #define MAX_COOLANT_TEMP (130)
@@ -1111,7 +1050,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                 (data[4] & 0x70) == 0x50 ? PSTR("3") :
                 (data[4] & 0x70) == 0x60 ? PSTR("2") :
                 (data[4] & 0x70) == 0x70 ? PSTR("1") :
-                ToHexStr((uint8_t)(data[4] & 0x70)),
+                notApplicable1Str,
 
                 data[4] & 0x08 ? PSTR(" - Snow") : emptyStr,
                 data[4] & 0x04 ? PSTR(" - Sport") : emptyStr,
@@ -1198,7 +1137,7 @@ VanPacketParseResult_t ParseLightsStatusPkt(TVanPacketRxDesc& pkt, char* buf, co
                 data[11] == 0x59 ? PSTR("Cruise - speed") :
                 data[11] == 0x81 ? PSTR("Limiter") :
                 data[11] == 0x89 ? PSTR("Limiter - speed") :
-                ToHexStr(data[11])
+                notApplicable2Str
             );
 
         at += at >= n ? 0 :
@@ -1255,7 +1194,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             data[1] == 0xC2 ? PSTR("INTERNAL_CD_PLAYING_BUTTON_PRESS_ANNOUNCE") :
             data[1] == 0xC4 ? PSTR("INTERNAL_CD_PLAYING_SEARCHING") :
             data[1] == 0xD0 ? PSTR("INTERNAL_CD_PLAYING_TRACK_INFO") :
-            ToHexStr(data[1])
+            notApplicable2Str
         );
 
         // Button-press announcement?
@@ -1284,7 +1223,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
                     (data[2] & 0x1F) == 0x1C ? PSTR("TAPE") :
                     (data[2] & 0x1F) == 0x1D ? PSTR("CD") :
                     (data[2] & 0x1F) == 0x1E ? PSTR("CD_CHANGER") :
-                    ToHexStr(data[2]),
+                    notApplicable2Str,
 
                     (data[2] & 0xC0) == 0xC0 ? PSTR(" (held)") :
                     data[2] & 0x40 ? PSTR(" (released)") :
@@ -1421,7 +1360,7 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             // (Or: select from list using "Val"?)
             code == 0x2000 ? PSTR("Request_next_sat_nav_report_packet") :
 
-            code == 0x2100 ? ToHexStr(code) :  // ??
+            code == 0x2100 ? notApplicable3Str :  // ??
 
             // User selects city from list
             code == 0x2101 ? PSTR("Selected_city_from_list") :
@@ -1434,9 +1373,9 @@ VanPacketParseResult_t ParseDeviceReportPkt(TVanPacketRxDesc& pkt, char* buf, co
             code == 0x4400 ? PSTR("Request_sat_nav_guidance_data") :
 
             code == 0x4700 ? PSTR("Route_computed") :
-            code == 0x6000 ? ToHexStr(code) :  // ??
+            code == 0x6000 ? notApplicable3Str :  // ??
 
-            ToHexStr(code),
+            notApplicable3Str,
 
             data[1] & 0x01 ? yesStr : noStr,
             data[1] & 0x40 ? yesStr : noStr,
@@ -1697,8 +1636,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
             distanceToEmpty == 0xFFFF ? notApplicable2Str :
                 mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                    ToStr(distanceToEmpty) :
-                    ToStr(ToMiles(distanceToEmpty)),
+                    String(distanceToEmpty).c_str() :
+                    String(ToMiles(distanceToEmpty)).c_str(),
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ? avgSpeedTrip1 : ToMiles(avgSpeedTrip1)
         );
@@ -1712,8 +1651,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
         snprintf_P(buf + at, n - at, jsonFormatter3,
             distanceTrip1 == 0xFFFF ? notApplicable2Str :
                 mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                    ToStr(distanceTrip1) :
-                    ToStr(ToMiles(distanceTrip1)),
+                    String(distanceTrip1).c_str() :
+                    String(ToMiles(distanceTrip1)).c_str(),
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 avgConsumptionLt100Trip1_x10 == 0xFFFF ? notApplicableFloatStr :
@@ -1738,8 +1677,8 @@ VanPacketParseResult_t ParseCarStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, cons
 
             distanceTrip2 == 0xFFFF ? notApplicable2Str :
                 mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
-                    ToStr(distanceTrip2) :
-                    ToStr(ToMiles(distanceTrip2)),
+                    String(distanceTrip2).c_str() :
+                    String(ToMiles(distanceTrip2)).c_str(),
 
             mfdDistanceUnit == MFD_DISTANCE_UNIT_METRIC ?
                 avgConsumptionLt100Trip2_x10 == 0xFFFF ? notApplicableFloatStr :
@@ -2029,8 +1968,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
             // data[2]: radio band and preset position
             uint8_t band = data[2] & 0x07;
             uint16_t presetMemory = data[2] >> 3 & 0x000F;
-            static char presetMemoryBuffer[8] = {0};
-            sprintf(presetMemoryBuffer, "%1u\0", presetMemory);
 
             // data[3]: search bits
             bool dxSensitivity = data[3] & 0x02;  // Tuner sensitivity: distant (Dx) or local (Lo)
@@ -2122,7 +2059,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 band == TB_FM2 ? onStr : offStr,
                 band == TB_FMAST ? onStr : offStr,
                 band == TB_AM ? onStr : offStr,
-                presetMemory == 0 ? notApplicable1Str : presetMemoryBuffer,
+                presetMemory == 0 ? notApplicable1Str : String(presetMemory).c_str(),
 
                 frequency == 0x07FF ? notApplicable3Str :
                     band == TB_AM
@@ -2181,8 +2118,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 uint16_t piCode = (uint16_t)data[8] << 8 | data[9];
                 uint8_t countryCode = piCode >> 12 & 0x0F;
                 uint8_t coverageCode = piCode >> 8 & 0x0F;
-                static char piBuffer[8] = {0};
-                sprintf(piBuffer, "%04X\0", piCode);
 
                 // data[10]: for PTY-based search mode
                 // & 0x1F: PTY code to search
@@ -2210,7 +2145,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                     "\"pty_8\": \"%s\",\n"
                     "\"pty_16\": \"%s\",\n"
                     "\"pty_full\": \"%s\",\n"
-                    "\"pi_code\": \"%s\",\n"
                     "\"pi_country\": \"%s\",\n"
                     "\"pi_area_coverage\": \"%s\",\n"
                     "\"regional\": \"%s\",\n"
@@ -2235,7 +2169,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                         currPty == 0x00 ? notApplicable3Str : PtyStr16(currPty),
                         currPty == 0x00 ? notApplicable3Str : PtyStrFull(currPty),
 
-                        piCode == 0xFFFF ? notApplicable3Str : piBuffer,
                         piCode == 0xFFFF ? notApplicable2Str : RadioPiCountry(countryCode),
                         piCode == 0xFFFF ? notApplicable3Str : RadioPiAreaCoverage(coverageCode),
 
@@ -2290,7 +2223,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 status == 0x14 ? PSTR("NEXT_TRACK") :
                 status == 0x30 ? PSTR("REWIND") :
                 status == 0x34 ? PSTR("PREVIOUS_TRACK") :
-                ToHexStr(status),
+                notApplicable2Str,
 
                 status == 0x00 ? onStr : offStr,
                 status == 0x04 ? onStr : offStr,
@@ -2340,9 +2273,6 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
             if (dataLen != 19) return VAN_PACKET_PARSE_UNEXPECTED_LENGTH;
 
-            static char trackTimeStr[8] = {0};
-            sprintf(trackTimeStr, "%X:%02X\0", data[5], data[6]);
-
             static bool loading = false;
             bool searching = data[3] & 0x10;
 
@@ -2352,14 +2282,10 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
             uint8_t totalTracks = data[8];
             bool totalTracksValid = totalTracks != 0xFF;
-            static char totalTracksStr[8] = {0};
-            if (totalTracksValid) sprintf(totalTracksStr, "%X\0", totalTracks);
 
-            static char totalTimeStr[8] = {0};
             uint8_t totalTimeMin = data[9];
             uint8_t totalTimeSec = data[10];
             bool totalTimeValid = totalTimeMin != 0xFF && totalTimeSec != 0xFF;
-            if (totalTimeValid) sprintf(totalTimeStr, "%X:%02X\0", totalTimeMin, totalTimeSec);
 
             const static char jsonFormatter[] PROGMEM =
             "{\n"
@@ -2393,7 +2319,7 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
                 data[3] == 0x03 ? PSTR("PLAY") :
                 data[3] == 0x04 ? PSTR("FAST_FORWARD") :
                 data[3] == 0x05 ? PSTR("REWIND") :
-                ToHexStr(data[3]),
+                notApplicable2Str,
 
                 loading ? onStr : offStr,
                 data[3] == 0x00 ? onStr : offStr,
@@ -2404,11 +2330,11 @@ VanPacketParseResult_t ParseHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, const 
 
                 (data[3] == 0x12 || data[3] == 0x13) && ! loading ? onStr : offStr,
 
-                searching ? PSTR("--:--") : trackTimeStr,
+                searching ? PSTR("--:--") : CdPlayerTime(data[5], data[6]).c_str(),
 
                 data[7],
-                totalTracksValid ? totalTracksStr : notApplicable2Str,
-                totalTimeValid ? totalTimeStr : PSTR("--:--"),
+                totalTracksValid ? String(totalTracks, HEX).c_str() : notApplicable2Str,
+                totalTimeValid ? CdPlayerTime(totalTimeMin, totalTimeSec).c_str() : PSTR("--:--"),
 
                 data[2] & 0x01 ? onStr : offStr  // CD track shuffle: long-press "CD" button
             );
@@ -2590,7 +2516,7 @@ VanPacketParseResult_t ParseAudioSettingsPkt(TVanPacketRxDesc& pkt, char* buf, c
         // whenever this source is chosen.
         (data[4] & 0x0F) == 0x05 ? PSTR("NAVIGATION") :
 
-        ToHexStr((uint8_t)(data[4] & 0x0F)),
+        notApplicable2Str,
 
         // External mute. Activated when head unit ISO connector A pin 1 ("Phone mute") is pulled LOW (to Ground).
         data[1] & 0x02 ? onStr : offStr,
@@ -2657,7 +2583,7 @@ VanPacketParseResult_t ParseMfdStatusPkt(TVanPacketRxDesc& pkt, char* buf, const
         mfdStatus == MFD_SCREEN_ON ? PSTR("MFD_SCREEN_ON") :
         mfdStatus == TRIP_COUTER_1_RESET ? PSTR("TRIP_COUTER_1_RESET") :
         mfdStatus == TRIP_COUTER_2_RESET ? PSTR("TRIP_COUTER_2_RESET") :
-        ToHexStr(mfdStatus)
+        notApplicable2Str
     );
 
     if (mfdStatus == TRIP_COUTER_1_RESET || mfdStatus == TRIP_COUTER_2_RESET)
@@ -2953,7 +2879,7 @@ VanPacketParseResult_t ParseAirCon2Pkt(TVanPacketRxDesc& pkt, char* buf, const i
         contactKeyData == 0x18 ? PSTR("ACC-->OFF") :
         contactKeyData == 0x04 ? PSTR("ON-->ACC") :
         contactKeyData == 0x00 ? onStr :
-        ToHexStr(contactKeyData),
+        notApplicable2Str,
 
         condenserPressure == CONDENSER_PRESSURE_INVALID ? notApplicable2Str :
             ToFloatStr(floatBuf[0], ToBar(condenserPressure), 1),
@@ -2997,13 +2923,9 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
     uint8_t trackTimeMin = data[4];
     uint8_t trackTimeSec = data[5];
     bool trackTimeValid = trackTimeMin != 0xFF && trackTimeSec != 0xFF;
-    static char trackTimeStr[8] = {0};
-    if (trackTimeValid) sprintf(trackTimeStr, "%X:%02X\0", trackTimeMin, trackTimeSec);
 
     uint8_t totalTracks = data[8];
     bool totalTracksValid = totalTracks != 0xFF;
-    static char totalTracksStr[8] = {0};
-    if (totalTracksValid) sprintf(totalTracksStr, "%X\0", totalTracks);
 
     uint8_t currentTrack = data[6];
     uint8_t currentDisc = data[7];
@@ -3065,7 +2987,7 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
             // an error condition, e.g. disc inserted wrong way round
             currentDisc == 0xFF && currentTrack == 0xFF ? PSTR("ERROR") :
             PSTR("PLAY-SEARCHING") :
-        ToHexStr(data[2]),
+        notApplicable2Str,
 
         (data[2] & 0x07) == 0x01 && ! ejecting && ! loading ? onStr : offStr,  // Pause
         (data[2] & 0x07) == 0x03 && ! searching && ! loading ? onStr : offStr,  // Play
@@ -3074,10 +2996,10 @@ VanPacketParseResult_t ParseCdChangerPkt(TVanPacketRxDesc& pkt, char* buf, const
 
         cdChangerCartridgePresent ? yesStr : noStr,
 
-        trackTimeValid ? trackTimeStr : PSTR("--:--"),
+        trackTimeValid ? CdPlayerTime(trackTimeMin, trackTimeSec).c_str() : PSTR("--:--"),
 
-        currentTrack == 0xFF ? notApplicable2Str : ToBcdStr(currentTrack),
-        totalTracksValid ? totalTracksStr : notApplicable2Str,
+        currentTrack == 0xFF ? notApplicable2Str : String(currentTrack, HEX).c_str(),
+        totalTracksValid ? String(totalTracks, HEX).c_str() : notApplicable2Str,
 
         data[10] & 0x01 ? yesStr : noStr,
         data[10] & 0x02 ? yesStr : noStr,
@@ -3151,9 +3073,9 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         status == 0x0000 ? noneStr :
         status == 0x0001 ? PSTR("DESTINATION_NOT_ON_MAP") :
-        status == 0x0020 ? ToHexStr(status) :  // Seen this but what is it?? Nearly at destination ??
+        status == 0x0020 ? notApplicable3Str :  // Seen this but what is it?? Nearly at destination ??
         status == 0x0080 ? PSTR("READY") :
-        status == 0x0101 ? ToHexStr(status) :  // Seen this but what is it??
+        status == 0x0101 ? notApplicable3Str :  // Seen this but what is it??
         status == 0x0200 ? PSTR("READING_DISC") :
         status == 0x0220 ? PSTR("READING_DISC") :  // TODO - guessing
         status == 0x0300 ? PSTR("IN_GUIDANCE_MODE") :
@@ -3175,7 +3097,7 @@ VanPacketParseResult_t ParseSatNavStatus1Pkt(TVanPacketRxDesc& pkt, char* buf, c
         status == 0x9000 ? PSTR("READING_DISC") :
         status == 0x9080 ? PSTR("START_COMPUTING_ROUTE") : // TODO - guessing
         status == 0xD001 ? PSTR("DESTINATION_NOT_ON_MAP") :  // TODO - guessing
-        ToHexStr(status),
+        notApplicable3Str,
 
         data[4] == 0x0B ? emptyStr :  // Seen with status 0x4001 and 0xD001
         data[4] == 0x0C ? PSTR(" DISC_UNREADABLE") :
@@ -3357,7 +3279,7 @@ VanPacketParseResult_t ParseSatNavStatus2Pkt(TVanPacketRxDesc& pkt, char* buf, c
 
         satnavDiscRecognized ? yesStr :
         (data[2] & 0x70) == 0x70 ? noStr :
-        ToHexStr((uint8_t)(data[2] & 0x70)),
+        notApplicable2Str,
 
         data[2] & 0x01 ? yesStr : noStr,
         data[2] & 0x02 ? yesStr : noStr,
@@ -3518,7 +3440,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             status == 0x0110 ? PSTR("VOCAL_SYNTHESIS_LEVEL_SETTING") :
             status == 0x0120 ? PSTR("ACCEPTED_TERMS_AND_CONDITIONS") :
             status == 0x0140 ? PSTR("SYSTEM_ID_READ") : // TODO - not sure
-            status == 0x0180 ? ToHexStr(status) :  // Changing distance unit (km <--> mi)?
+            status == 0x0180 ? notApplicable3Str :  // Changing distance unit (km <--> mi)?
             status == 0x0300 ? PSTR("SATNAV_LANGUAGE_SET_TO_FRENCH") :
             status == 0x0301 ? PSTR("SATNAV_LANGUAGE_SET_TO_ENGLISH") :
             status == 0x0302 ? PSTR("SATNAV_LANGUAGE_SET_TO_GERMAN") :
@@ -3527,7 +3449,7 @@ VanPacketParseResult_t ParseSatNavStatus3Pkt(TVanPacketRxDesc& pkt, char* buf, c
             status == 0x0306 ? PSTR("SATNAV_LANGUAGE_SET_TO_DUTCH") :
             status == 0x0C01 ? PSTR("CD_ROM_FOUND") :
             status == 0x0C02 ? PSTR("POWERING_OFF") :
-            ToHexStr(status)
+            notApplicable3Str
         );
         if (status == 0x0C02)
         {
@@ -4706,9 +4628,6 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
 
     if (data[3] != 0x00)
     {
-        static char buffer[8] = {0};
-        sprintf(buffer, "%c\0", data[3]);
-
         at += at >= n ? 0 :
             snprintf_P(buf + at, n - at, PSTR
                 (
@@ -4719,7 +4638,7 @@ VanPacketParseResult_t ParseMfdToSatNavPkt(TVanPacketRxDesc& pkt, char* buf, con
                 (data[3] >= 'A' && data[3] <= 'Z') ||
                 (data[3] >= '0' && data[3] <= '9') ||
                 data[3] == '.' || data[3] == '\'' ?
-                    buffer :
+                    String((char)data[3]).c_str() :
                 data[3] == ' ' ? "_" : // Space
                 data[3] == 0x01 ? "Esc" :
                 "?"
@@ -5064,7 +4983,7 @@ VanPacketParseResult_t ParseCdChangerCmdPkt(TVanPacketRxDesc& pkt, char* buf, co
         cdcCommand == 0x4106 ? PSTR("CD_6") :
         cdcCommand == 0x41FE ? PSTR("PREVIOUS_CD") :
         cdcCommand == 0x41FF ? PSTR("NEXT_CD") :
-        ToHexStr(cdcCommand)
+        notApplicable3Str
     );
 
     // JSON buffer overflow?
@@ -5140,7 +5059,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             // whenever this source is chosen.
             data[1] == 0x05 ? PSTR("NAVIGATION") :
 
-            ToHexStr(data[1])
+            notApplicable2Str
         );
 
         if (dataLen == 11)
@@ -5173,7 +5092,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
                 // whenever this source is chosen.
                 (data[4] & 0x0F) == 0x05 ? PSTR("NAVIGATION") :
 
-                ToHexStr((uint8_t)(data[4] & 0x0F)),
+                notApplicable2Str,
 
                 data[5] & 0x7F,
                 data[5] & 0x80 ? updatedStr : emptyStr,
@@ -5281,7 +5200,7 @@ VanPacketParseResult_t ParseMfdToHeadUnitPkt(TVanPacketRxDesc& pkt, char* buf, c
             data[1] == 0x03 ? PSTR("PLAY") :
             data[3] == 0xFF ? PSTR("NEXT") :
             data[3] == 0xFE ? PSTR("PREVIOUS") :
-            ToHexStr(data[3])
+            notApplicable2Str
         );
     }
     else if (data[0] == 0xD1)
