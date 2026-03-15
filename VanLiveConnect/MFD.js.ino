@@ -1759,6 +1759,7 @@ function showTunerPresetsPopup(msec)
 // Color theme and dimming
 
 var dashlightDimmed = false;
+var skipDashBrightnessPopup = true;
 var headlightStatus = "";
 var chosenColorPalette = localStorage.colorPalette;
 
@@ -3600,6 +3601,7 @@ function handleIrRc(button, held)
 			let dimLevel = $("#" + id).text();
 
 			// Show very short popup
+			$("#screen_brightness_popup_icon").removeClass("fa-sun").removeClass("fa-tachometer-alt").addClass("fa-sun");
 			$("#screen_brightness_popup_value").text(dimLevel);
 			$("#screen_brightness_perc").css("transform", "scaleX(" + dimLevel/14 + ")");
 			showPopup("screen_brightness_popup", 3000);
@@ -4527,7 +4529,26 @@ function handleItemChange(item, value, changed)
 		case "dash_light":
 		{
 			dashlightDimmed = value !== "FULL";
+			if (changed && dashlightDimmed) skipDashBrightnessPopup = true;
 			setDippedBeamIcon();
+		} // case
+		break;
+
+		case "dash_actual_brightness":
+		{
+			if (skipDashBrightnessPopup)
+			{
+				skipDashBrightnessPopup = false;
+				break;
+			} // if
+			if (! dashlightDimmed) break;
+			if (! changed) break;
+
+			// Show very short popup
+			$("#screen_brightness_popup_icon").removeClass("fa-sun").removeClass("fa-tachometer-alt").addClass("fa-tachometer-alt");
+			$("#screen_brightness_popup_value").text(value);
+			$("#screen_brightness_perc").css("transform", "scaleX(" + value/15 + ")");
+			showPopup("screen_brightness_popup", 3000);
 		} // case
 		break;
 

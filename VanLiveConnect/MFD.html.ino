@@ -2580,7 +2580,7 @@ const char mfd_html[] PROGMEM = R"=====(
 			<!-- Screen brightness popup -->
 
 			<div id="screen_brightness_popup" class="icon notificationPopup">
-				<div class="icon iconLarge fas fa-sun" style="left:70px; top:50px;"></div>
+				<div id="screen_brightness_popup_icon" class="icon iconLarge fas fa-sun" style="left:70px; top:50px;"></div>
 				<div id="screen_brightness_popup_value" class="dseg7" style="left:580px; top:55px; width:150px; text-align:right; font-size:90px">14</div>
 
 				<div style="position:absolute; left:240px; top:60px; width:350px; height:80px;">
