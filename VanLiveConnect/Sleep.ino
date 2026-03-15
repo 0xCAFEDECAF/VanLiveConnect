@@ -59,8 +59,13 @@ void GoToSleep()
 {
     Serial.printf_P
     (
-        PSTR("%s===> Entering light sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%u)\n"),
+        PSTR("%s===> Entering %s sleep mode; will wake up when detecting VAN bus activity on pin %s (GPIO%u)\n"),
         TimeStamp(),
+      #ifdef ARDUINO_ARCH_ESP32
+        PSTR("deep"),
+      #else
+        PSTR("light"),
+      #endif
         XSTR(LIGHT_SLEEP_WAKE_PIN),
         LIGHT_SLEEP_WAKE_PIN
     );
@@ -113,9 +118,14 @@ void GoToSleep()
 
     Serial.printf_P
     (
-        PSTR("\n===> VAN bus activity on pin %s (GPIO%u) detected: waking up from light sleep mode\n"),
+        PSTR("\n===> VAN bus activity on pin %s (GPIO%u) detected: waking up from %s sleep mode\n"),
         XSTR(LIGHT_SLEEP_WAKE_PIN),
-        LIGHT_SLEEP_WAKE_PIN
+        LIGHT_SLEEP_WAKE_PIN,
+      #ifdef ARDUINO_ARCH_ESP32
+        PSTR("deep")
+      #else
+        PSTR("light")
+      #endif
     );
     Serial.flush();
 

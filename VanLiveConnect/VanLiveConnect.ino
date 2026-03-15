@@ -425,9 +425,14 @@ void setup()
         (
             PSTR
             (
-                "ESP will enter light sleep mode after %lu:%02lu minutes of inactivity; "
+                "ESP will enter %s sleep mode after %lu:%02lu minutes of inactivity; "
                 "listening on pin %s (GPIO%u) for VAN bus activity to wake up from sleep.\n"
             ),
+          #ifdef ARDUINO_ARCH_ESP32
+            PSTR("deep"),
+          #else
+            PSTR("light"),
+          #endif
             sleepAfter / 1000 / 60, sleepAfter / 1000 % 60,
             XSTR(LIGHT_SLEEP_WAKE_PIN),
             LIGHT_SLEEP_WAKE_PIN
