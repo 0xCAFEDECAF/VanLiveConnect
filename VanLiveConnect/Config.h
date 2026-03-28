@@ -49,6 +49,7 @@
     // Note: Neither Windows ICS nor Android Wi-Fi hotspot seem to support registering the host name on their
     // DHCP server implementation. Moreover, Windows ICS DHCP will NOT assign the previously assigned IP address to
     // the same MAC address upon new connection, so it is always guessing what IP address the ESP will get.
+    // Note that the obtained IP address *is* printed on the serial console.
 
   #else // ! USE_DHCP
 
@@ -56,7 +57,7 @@
 
     // Define when using a Windows Internet Connection Sharing (ICS) Wi-Fi. Comment out when using Android
     // Wi-Fi hotspot.
-    // Note: only applicable when using a static (fixed) IP address, not when using DHCP.
+    // Note: below is only applicable when using a static (fixed) IP address, not when using DHCP.
     //#define WINDOWS_ICS
 
     #ifdef WINDOWS_ICS  // When using a Windows ICS hotspot

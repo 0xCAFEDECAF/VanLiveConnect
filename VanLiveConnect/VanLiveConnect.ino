@@ -282,11 +282,15 @@ const char* VanBusStatsToJson(char* buf, const int n)
 void PrintDebugDefines()
 {
     Serial.print(F("Compiled with following debug #define's (see file 'Config.h'):\n"));
-  #if defined DEBUG_IR_RECV || defined DEBUG_WEBSERVER || defined DEBUG_WEBSOCKET \
+  #if defined TEST_SETUP_KEEP_AWAKE || defined DEBUG_IR_RECV \
+    || defined DEBUG_WEBSERVER || defined DEBUG_WEBSOCKET \
     || defined DEBUG_ORIGINAL_MFD || defined WIFI_STRESS_TEST \
     || defined SHOW_VAN_RX_STATS || defined PRINT_RAW_PACKET_DATA \
     || defined PRINT_JSON_BUFFERS_ON_SERIAL || defined PRINT_VAN_CRC_ERROR_PACKETS_ON_SERIAL
 
+  #ifdef TEST_SETUP_KEEP_AWAKE
+    Serial.print(F("- TEST_SETUP_KEEP_AWAKE\n"));
+  #endif // TEST_SETUP_KEEP_AWAKE
   #ifdef DEBUG_IR_RECV
     Serial.print(F("- DEBUG_IR_RECV\n"));
   #endif // DEBUG_IR_RECV
@@ -437,6 +441,12 @@ void setup()
             XSTR(LIGHT_SLEEP_WAKE_PIN),
             LIGHT_SLEEP_WAKE_PIN
         );
+
+      #ifdef TEST_SETUP_KEEP_AWAKE
+        Serial.print(
+            F("==> TEST_SETUP_KEEP_AWAKE defined: will stay awake as long as no VAN bus packets were received\n")
+        );
+      #endif
     } // if
 } // setup
 
