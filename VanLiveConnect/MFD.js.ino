@@ -5967,8 +5967,6 @@ function handleItemChange(item, value, changed)
 			{
 				handleItemChange.lastIrButtonCount++;
 
-				$("#ir_button_pressed").text(button.substring(0, 3));  // Debug info
-
 				// Ignore remote control buttons if contact key is off, or when in power-save mode
 				if ($("#contact_key_position").text() === "OFF") break;
 				if (economyMode === "ON") break;
