@@ -179,6 +179,15 @@ function processJsonObject(item, jsonObject)
 	handleItemChange(item, jsonObject, changed);
 }
 
+// For replaying console logs
+function sleep(ms)
+{
+	return new Promise(resolve => setTimeout(resolve, Math.min(ms, 300)));
+
+	// Alternative, with actual intervals
+	// return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function writeToDom(jsonObj)
 {
 )====="
@@ -625,8 +634,6 @@ var mfdToSatnavRequest;
 // Switch to a specific large screen
 function changeLargeScreenTo(id)
 {
-	if (id === undefined || id === currentLargeScreenId) return;
-
 	if ($("#" + id).length === 0) return alert("Oops: screen '" + id + "'does not exist!!");
 
 	var irFastRepeatValue = 0;
@@ -646,6 +653,8 @@ function changeLargeScreenTo(id)
 		} // if
 	} // if
 	if (webSocket) webSocket.send("ir_button_faster_repeat:" + irFastRepeatValue);
+
+	if (id === undefined || id === currentLargeScreenId) return;
 
 	hidePopup("audio_popup");
 	setVisibilityOfElementAndParents(currentLargeScreenId, "none");
@@ -2311,6 +2320,12 @@ function satnavGotoListScreenProfessionalAddressList()
 	highlightFirstLine("satnav_choice_list");
 }
 
+function satnavEscapeListScreen()
+{
+	if ($('#satnav_tag_street_list').is(':visible')) ignoringIrEscCommand = true;
+	upMenu();
+}
+
 // Select the first line of available characters and highlight the first letter in the "satnav_enter_characters" screen
 function satnavSelectFirstAvailableCharacter()
 {
@@ -2642,6 +2657,8 @@ function satnavListItemClicked()
 	// When choosing a city or street from the list, hide the current destination house number, so that the
 	// entry format ("_ _ _") will be shown.
 	$("#satnav_current_destination_house_number").empty();
+
+	if (satnavToMfdResponse === "service") return;
 
 	var comingFromMenu = menuStack[menuStack.length - 1];
 	if (comingFromMenu === "satnav_enter_city_characters" || comingFromMenu === "satnav_enter_street_characters")
@@ -5344,6 +5361,13 @@ function handleItemChange(item, value, changed)
 			}
 			else if (mfdToSatnavRequest === "enter_street")
 			{
+				if (menuStack.indexOf("satnav_show_last_destination") >= 0)
+				{
+					// User just selected a street for "Select a Service"
+					satnavGotoListScreenServiceList();
+					break;
+				}
+
 				// Already copy the selected street into the "satnav_show_current_destination" screen, in case the
 				// "satnav_report" packet is missed
 

@@ -1260,7 +1260,7 @@ const char mfd_html[] PROGMEM = R"=====(
 
 					<div id="satnav_choose_from_list"
 						on_enter="if (highlightIndexes['satnav_choice_list'] === 0) $('#satnav_choice_list').scrollTop(0);"
-						on_esc="if ($('#satnav_tag_street_list').is(':visible')) ignoringIrEscCommand = true; upMenu();"
+						on_esc="satnavEscapeListScreen();"
 						style="display:none;">
 
 						<!-- What is being entered? (city, street) -->
