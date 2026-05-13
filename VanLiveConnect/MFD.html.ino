@@ -2125,7 +2125,7 @@ const char mfd_html[] PROGMEM = R"=====(
 				<!-- Tape popup -->
 				<div id="tape_popup" style="display:none;">
 
-					<div class="icon fas fa-vr-cardboard" style="left:20px; top:25px; font-size:160px; color:#576171;"></div>
+					<div class="icon fas md-cassette" style="left:20px; top:25px; font-size:160px;"></div>
 
 					<div class="tag" style="left:180px; top:113px; width:200px;">Side</div>
 					<div gid="tape_side" class="dseg7" style="font-size:120px; left:380px; top:40px; width:140px;">-</div>
@@ -2158,7 +2158,7 @@ const char mfd_html[] PROGMEM = R"=====(
 
 				<div id="cd_player_popup" style="display:none;">
 
-					<div class="icon fas fa-compact-disc" style="left:20px; top:25px; font-size:160px; color:#576171;"></div>
+					<div class="icon fas fa-compact-disc" style="left:20px; top:25px; width: 160px; font-size:160px;"></div>
 
 					<div gid="cd_track_time" class="dseg7" style="font-size:123px; left:140px; top:40px; width:420px;">-:--</div>
 
@@ -2199,9 +2199,9 @@ const char mfd_html[] PROGMEM = R"=====(
 
 				<div id="cd_changer_popup" style="display:none;">
 
-					<div class="icon fas fa-compact-disc" style="left:20px; top:25px; font-size:70px; color:#576171;"></div>
-					<div class="icon fas fa-compact-disc" style="left:65px; top:70px; font-size:70px; color:#576171;"></div>
-					<div class="icon fas fa-compact-disc" style="left:110px; top:115px; font-size:70px; color:#576171;"></div>
+					<div class="icon fas fa-compact-disc" style="left:20px; top:25px; width: 80px; font-size:70px;"></div>
+					<div class="icon fas fa-compact-disc" style="left:65px; top:70px; width: 80px; font-size:70px;"></div>
+					<div class="icon fas fa-compact-disc" style="left:110px; top:115px; width: 80px; font-size:70px;"></div>
 
 					<div gid="cd_changer_track_time" class="dseg7" style="font-size:120px; left:140px; top:40px; width:420px;">-:--</div>
 
@@ -2607,6 +2607,91 @@ const char mfd_html[] PROGMEM = R"=====(
 
 		</div>	<!-- "Large" information panel -->
 
+		<!-- Full-screen panels -->
+
+		<!-- System -->
+
+		<div id="system" style="position:absolute; font-size:22px; background-color:var(--selected-element-color);
+			display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
+			on_enter="$('#web_socket_server_host').text(webSocketServerHost);">
+
+			<div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
+
+			<div class="tabTop tabActive" style="position:absolute; font-size:35px; left:30px; top:60px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
+			<div class="iconBorder" style="display:block; position:absolute; left:20px; top:110px; width:340px; height:270px;">
+				<div class="tag" style="left:130px; top:10px; width:120px;">Width</div>
+				<div class="tag" style="left:240px; top:10px; width:120px;">Height</div>
+				<div class="tag" style="top:60px; width:150px;">Screen</div>
+				<div class="tag" style="top:100px; width:150px;">Viewport</div>
+				<div class="tag" style="top:140px; width:150px;">Window</div>
+				<div id="screen_width" class="tag" style="left:130px; top:60px; width:120px;">---</div>
+				<div id="viewport_width" class="tag" style="left:130px; top:100px; width:120px;">---</div>
+				<div id="window_width" class="tag" style="left:130px; top:140px; width:120px;">---</div>
+				<div id="screen_height" class="tag" style="left:240px; top:60px; width:120px;">---</div>
+				<div id="viewport_height" class="tag" style="left:240px; top:100px; width:120px;">---</div>
+				<div id="window_height" class="tag" style="left:240px; top:140px; width:120px;">---</div>
+
+				<div class="tag" style="left:10px; top:200px; width:370px; text-align:left; font-size:25px;">Websocket server host:</div>
+				<div id="web_socket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
+			</div>
+
+			<div class="tabTop tabActive" style="position:absolute; font-size:35px; left:430px; top:60px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
+			<div class="iconBorder" style="display:block; position:absolute; left:420px; top:110px; width:910px; height:380px;">
+				<div style="font-size:20px; line-height: 1.2;">
+					<div class="tag" style="top:10px; width:230px;">Boot Version</div>
+					<div class="tag" style="top:40px; width:230px;">Flash ID</div>
+					<div class="tag" style="top:70px; width:230px;">Flash size (real)</div>
+					<div class="tag" style="top:100px; width:230px;">Flash size (IDE)</div>
+					<div class="tag" style="top:130px; width:230px;">Flash speed (IDE)</div>
+					<div class="tag" style="top:160px; width:230px;">Flash mode (IDE)</div>
+					<div class="tag" style="top:190px; width:230px;">SDK</div>
+					<div class="tag" style="top:220px; width:230px;">Compiled @</div>
+					<div class="tag" style="top:250px; width:230px;">MD5 checksum</div>
+					<div class="tag" style="top:280px; width:230px;">Reset Reason</div>
+					<div class="tag" style="top:310px; width:230px;">Reset Info</div>
+					<div style="position:absolute; left:300px;">
+						<div class="tag" style="top:10px; width:280px;">CPU Speed</div>
+						<div class="tag" style="top:40px; width:280px;">Chip ID</div>
+						<div class="tag" style="top:70px; width:280px;">MAC address</div>
+						<div class="tag" style="top:100px; width:280px;">IP address</div>
+						<div class="tag" style="top:130px; width:280px;">Wi-Fi RSSI</div>
+						<div class="tag" style="top:160px; width:280px;">Free RAM</div>
+					</div>
+					<div style="position:absolute; left:390px;">
+						<div class="tag" style="top:190px; width:280px;">Uptime</div>
+						<div class="tag" style="top:220px; width:280px;">nConnects</div>
+					</div>
+				</div>
+				<div id="esp_boot_version" class="tag" style="left:240px; top:7px;">---</div>
+				<div id="esp_flash_id" class="tag" style="left:240px; top:37px;">---</div>
+				<div id="esp_flash_size_real" class="tag" style="left:240px; top:67px;">---</div>
+				<div id="esp_flash_size_ide" class="tag" style="left:240px; top:97px;">---</div>
+				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:127px;">---</div>
+				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:157px;">---</div>
+				<div id="esp_sdk_version" class="tag" style="left:240px; top:187px;">---</div>
+				<div id="img_compile_date" class="tag" style="left:240px; top:217px;">---</div>
+				<div id="img_md5_checksum" class="tag" style="left:240px; top:247px;">---</div>
+				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:277px;">---</div>
+				<div id="esp_last_reset_info" class="tag" style="left:240px; top:307px; width:660px; text-align:left; white-space:normal; height:60px;">---</div>
+				<div id="esp_cpu_speed" class="tag" style="left:590px; top:7px;">---</div>
+				<div id="esp_chip_id" class="tag" style="left:590px; top:37px;">---</div>
+				<div id="esp_mac_address" class="tag" style="left:590px; top:67px;">---</div>
+				<div id="esp_ip_address" class="tag" style="left:590px; top:97px;">---</div>
+				<div id="esp_wifi_rssi" class="tag" style="left:590px; top:127px;">---</div>
+				<div id="esp_free_ram" class="tag" style="left:590px; top:157px;">---</div>
+				<div id="uptime" class="tag" style="left:680px; top:187px;">---</div>
+				<div id="websocket_n_connects" class="tag" style="left:680px; top:217px">---</div>
+			</div>
+
+			<div id="van_bus_stats" class="tag"
+				style="left:420px; top:470px; width:830px; text-align:left; font-size:25px; white-space:normal;"></div>
+
+			<!-- "Back" icon in the bottom right corner -->
+			<div class="iconSmall led ledOn" style="left:1260px; top:480px;">
+				<div class="centerAligned fas fa-undo" onclick="gearIconAreaClicked();"></div>
+			</div>
+		</div>	<!-- "system" -->
+
 		<!-- Small area in the top right of the screen which triggers changing to full-screen mode -->
 		<div onclick="toggleFullScreen();"
 			style="position:absolute; left:800px; width:900px; height:250px; opacity:50%">
@@ -2617,7 +2702,9 @@ const char mfd_html[] PROGMEM = R"=====(
 
 		<!-- "Popup" window for tuner presets -->
 
-		<div id="tuner_presets_popup" class="icon notificationPopup" style="left:150px; top:140px; width:1040px; height:310px; text-align:left;">
+		<div id="tuner_presets_popup" class="icon notificationPopup"
+			style="left:150px; top:140px; width:1040px; height:310px; text-align:left;"
+			onclick="largeScreenTapped();">
 
 			<!-- Highlight boxes -->
 			<div id="presets_memory_1_select" class="highlight icon iconBorder" style="left:20px; top:10px; width:470px; height:75px;"></div>
@@ -2718,87 +2805,6 @@ const char mfd_html[] PROGMEM = R"=====(
 				DOWNLOAD IN PROGRESS... <span id="satnav_download_progress"></span>
 			</div>
 		</div>	<!-- "satnav_downloading_popup" -->
-
-		<!-- Full-screen panels -->
-
-		<!-- System -->
-
-		<div id="system" style="position:absolute; font-size:22px; background-color:var(--selected-element-color);
-			display:none; left:0px; top:0px; width:1350px; height:550px; text-align:left;"
-			on_enter="$('#web_socket_server_host').text(webSocketServerHost);">
-
-			<div style="font-size:50px; text-align:center; padding-top:10px;">System</div>
-
-			<div class="tabTop tabActive" style="position:absolute; font-size:35px; left:30px; top:60px; height:50px; padding-left:20px; padding-right:20px;">Browser</div>
-			<div class="iconBorder" style="display:block; position:absolute; left:20px; top:110px; width:380px; height:270px;">
-				<div class="tag" style="left:130px; top:10px; width:120px;">Width</div>
-				<div class="tag" style="left:240px; top:10px; width:120px;">Height</div>
-				<div class="tag" style="top:60px; width:150px;">Screen</div>
-				<div class="tag" style="top:100px; width:150px;">Viewport</div>
-				<div class="tag" style="top:140px; width:150px;">Window</div>
-				<div id="screen_width" class="tag" style="left:130px; top:60px; width:120px;">---</div>
-				<div id="viewport_width" class="tag" style="left:130px; top:100px; width:120px;">---</div>
-				<div id="window_width" class="tag" style="left:130px; top:140px; width:120px;">---</div>
-				<div id="screen_height" class="tag" style="left:240px; top:60px; width:120px;">---</div>
-				<div id="viewport_height" class="tag" style="left:240px; top:100px; width:120px;">---</div>
-				<div id="window_height" class="tag" style="left:240px; top:140px; width:120px;">---</div>
-
-				<div class="tag" style="left:10px; top:200px; width:370px; text-align:left; font-size:25px;">Websocket server host:</div>
-				<div id="web_socket_server_host" class="tag" style="left:10px; top:230px; width:370px; text-align:left; font-size:25px;">---</div>
-			</div>
-
-			<div class="tabTop tabActive" style="position:absolute; font-size:35px; left:430px; top:60px; height:50px; padding-left:20px; padding-right:20px;">ESP</div>
-			<div class="iconBorder" style="display:block; position:absolute; left:420px; top:110px; width:910px; height:360px;">
-				<div style="font-size:20px; line-height: 1.2;">
-					<div class="tag" style="top:10px; width:230px;">Boot Version</div>
-					<div class="tag" style="top:40px; width:230px;">Flash ID</div>
-					<div class="tag" style="top:70px; width:230px;">Flash size (real)</div>
-					<div class="tag" style="top:100px; width:230px;">Flash size (IDE)</div>
-					<div class="tag" style="top:130px; width:230px;">Flash speed (IDE)</div>
-					<div class="tag" style="top:160px; width:230px;">Flash mode (IDE)</div>
-					<div class="tag" style="top:190px; width:230px;">SDK</div>
-					<div class="tag" style="top:220px; width:230px;">Compiled @</div>
-					<div class="tag" style="top:250px; width:230px;">MD5 checksum</div>
-					<div class="tag" style="top:280px; width:230px;">Reset Reason</div>
-					<div class="tag" style="top:310px; width:230px;">Reset Info</div>
-					<div style="position:absolute; left:360px;">
-						<div class="tag" style="top:10px; width:280px;">CPU Speed</div>
-						<div class="tag" style="top:40px; width:280px;">Chip ID</div>
-						<div class="tag" style="top:70px; width:280px;">MAC address</div>
-						<div class="tag" style="top:100px; width:280px;">IP address</div>
-						<div class="tag" style="top:130px; width:280px;">Wi-Fi RSSI</div>
-						<div class="tag" style="top:160px; width:280px;">Free RAM</div>
-						<div class="tag" style="top:190px; width:280px;">Uptime</div>
-					</div>
-				</div>
-				<div id="esp_boot_version" class="tag" style="left:240px; top:7px;">---</div>
-				<div id="esp_flash_id" class="tag" style="left:240px; top:37px;">---</div>
-				<div id="esp_flash_size_real" class="tag" style="left:240px; top:67px;">---</div>
-				<div id="esp_flash_size_ide" class="tag" style="left:240px; top:97px;">---</div>
-				<div id="esp_flash_speed_ide" class="tag" style="left:240px; top:127px;">---</div>
-				<div id="esp_flash_mode_ide" class="tag" style="left:240px; top:157px;">---</div>
-				<div id="esp_sdk_version" class="tag" style="left:240px; top:187px;">---</div>
-				<div id="img_compile_date" class="tag" style="left:240px; top:217px;">---</div>
-				<div id="img_md5_checksum" class="tag" style="left:240px; top:247px;">---</div>
-				<div id="esp_last_reset_reason" class="tag" style="left:240px; top:277px;">---</div>
-				<div id="esp_last_reset_info" class="tag" style="left:240px; top:307px; width:660px; text-align:left; white-space:normal; height:60px;">---</div>
-				<div id="esp_cpu_speed" class="tag" style="left:650px; top:7px;">---</div>
-				<div id="esp_chip_id" class="tag" style="left:650px; top:37px;">---</div>
-				<div id="esp_mac_address" class="tag" style="left:650px; top:67px;">---</div>
-				<div id="esp_ip_address" class="tag" style="left:650px; top:97px;">---</div>
-				<div id="esp_wifi_rssi" class="tag" style="left:650px; top:127px;">---</div>
-				<div id="esp_free_ram" class="tag" style="left:650px; top:157px;">---</div>
-				<div id="uptime" class="tag" style="left:650px; top:187px;">---</div>
-			</div>
-
-			<div id="van_bus_stats" class="tag"
-				style="left:420px; top:485px; width:830px; text-align:left; font-size:25px; white-space:normal;"></div>
-
-			<!-- "Back" icon in the bottom right corner -->
-			<div class="iconSmall led ledOn" style="left:1260px; top:480px;">
-				<div class="centerAligned fas fa-undo" onclick="gearIconAreaClicked();"></div>
-			</div>
-		</div>	<!-- "system" -->
 
 		<!-- "Status" line: fixed element in each screen -->
 

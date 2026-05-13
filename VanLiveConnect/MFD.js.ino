@@ -18,6 +18,7 @@ const char mfd_js[] PROGMEM = R"=====(
 // -----
 // General
 
+var decimalSeparator = ".";
 var thousandsSeparator = ",";
 
 function addThousandsSeparator(x)
@@ -3307,12 +3308,12 @@ function satnavFormatDistance(distanceStr)
 		// Reported in metres, and 1000 metres or more: show in kilometres, with decimal notation.
 		// Round upwards, e.g. 6901 metres must be shown as "7.0 km", but 6900 metres must be shown as "6.9 km".
 		// Note that 'toFixed' also performs rounding. So we need to add only 49.
-		return [ ((+distance + 49) / 1000).toFixed(1), "km" ];
+		return [ ((+distance + 49) / 1000).toFixed(1).replace(".", decimalSeparator), "km" ];
 	}
 	else if (unit === "yd" && +distance >= 880)
 	{
 		// Reported in yards, and 880 yards or more: show in miles, with decimal notation. Round upwards.
-		return [ ((+distance + 87) / 1760).toFixed(1), "mi" ];  // Original MFD shows "ml"
+		return [ ((+distance + 87) / 1760).toFixed(1).replace(".", decimalSeparator), "mi" ];  // Original MFD shows "ml"
 	}
 	else
 	{
@@ -4899,7 +4900,7 @@ function handleItemChange(item, value, changed)
 				// Show popup not directly
 				if (nSatNavDiscUnreadable >= 1)
 				{
-					showStatusPopup(satnavDiscUnreadbleText, 5000);
+					showStatusPopup(satnavDiscUnreadbleText, 10000);
 					if (inSatnavMenuOrGuidanceScreen()) selectDefaultScreen();
 				}
 			}
@@ -5072,7 +5073,7 @@ function handleItemChange(item, value, changed)
 			if (nSatNavDiscUnreadable == 6 || nSatNavDiscUnreadable == 14)
 			{
 				hidePopup("satnav_initializing_popup");
-				showStatusPopup(satnavDiscUnreadbleText, 5000);
+				showStatusPopup(satnavDiscUnreadbleText, 10000);
 			} // if
 		} // case
 		break;
@@ -5609,10 +5610,13 @@ function handleItemChange(item, value, changed)
 		case "satnav_distance_to_dest_via_straight_line":
 		case "satnav_turn_at":
 		{
+			let parts = value.split(" ");
+			let distance = parts[0];
+
 			let a = satnavFormatDistance(value);
-			let distance = a[0];
+			let distanceLocalized = a[0];
 			let unit = a[1];
-			$("#" + item + "_number").text(distance);
+			$("#" + item + "_number").text(distanceLocalized);
 			$("#" + item + "_unit").text(unit);
 
 			if (item === "satnav_distance_to_dest_via_road")
@@ -5625,21 +5629,25 @@ function handleItemChange(item, value, changed)
 
 			if (item === "satnav_turn_at" && ! satnavGuidanceOffMap)
 			{
-				// Near junction: make sure to show the satnav guidance screen
+				// Near junction: make sure to show the satnav guidance screen on time
 
-				let parts = value.split(" ");
 				let reportedUnits = parts[1]; // 5000 m and less is reported in metres/yards
 				if (reportedUnits === "m" || reportedUnits === "yd")
 				{
-					let distance = parts[0];
 					let change = distance <= 300;
 					if (localStorage.mfdDistanceUnit === "set_units_mph")
 					{
-						change = change || (vehicleSpeed > 35 && distance <= 800) || (vehicleSpeed > 50 && distance <= 2000);
+						change = change ||
+							(vehicleSpeed > 35 && distance <= 800) ||
+							(vehicleSpeed > 50 && distance <= 2000) ||
+							(vehicleSpeed > 60 && distance <= 5000);
 					}
 					else
 					{
-						change = change || (vehicleSpeed > 60 && distance <= 800) || (vehicleSpeed > 80 && distance <= 2000);
+						change = change ||
+							(vehicleSpeed > 60 && distance <= 800) ||
+							(vehicleSpeed > 80 && distance <= 2000) ||
+							(vehicleSpeed > 100 && distance <= 5000);
 					} // if
 					if (change) temporarilyChangeLargeScreenTo("satnav_guidance", 60000);
 				} // if
@@ -6049,12 +6057,14 @@ function setLanguage(language)
 {
 	var languageSelections = "D E F GB NL I ".replace(/(.*?) /g, "<span class='languageIcon'>$1</span>");
 
+	decimalSeparator = ",";  // Default
 	thousandsSeparator = ".";  // Default
 
 	switch(language)
 	{
 		case "set_language_english":
 		{
+			decimalSeparator = ".";
 			thousandsSeparator = ",";
 
 			doorOpenText = "Door open";
